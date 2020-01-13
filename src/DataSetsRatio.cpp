@@ -60,6 +60,8 @@ void DataSetsRatio::_pruneBadRatios()
     numPoints = numBins;
     auto it   = ratios.begin();
     while (it != ratios.end()) {
+        // Use TMath::Finite instead of std::is_finite() because for some reason including the ROOT headers makes
+        // std::is_finite(-inf) sometimes return true...
         if (!TMath::Finite(*it) || *it == 0.0) {
             size_t index = it - ratios.begin();
 
