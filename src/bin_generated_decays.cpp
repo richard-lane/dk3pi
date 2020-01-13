@@ -61,6 +61,8 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
     }
 }
 
+// Hide this program's main() function from ROOT's Cling interpreter
+#ifndef __CINT__
 int main(int argc, char *argv[])
 {
     if (argc != 3) {
@@ -71,3 +73,4 @@ int main(int argc, char *argv[])
     TFile *favouredDecays = new TFile(argv[2]);
     bin_generated_decays(mixedDecays, favouredDecays);
 }
+#endif // __CINT__
