@@ -8,9 +8,12 @@
 #include <vector>
 
 #include "TCanvas.h"
+#include "TF1.h"
 #include "TGraphErrors.h"
+#include "TMath.h"
+#include "TROOT.h"
 
-#include "DataSetsRatio.h"
+#include "../include/DataSetsRatio.h"
 
 DataSetsRatio::DataSetsRatio(std::vector<size_t> &myNumeratorData,
                              std::vector<size_t> &myDenominatorData,
@@ -19,8 +22,7 @@ DataSetsRatio::DataSetsRatio(std::vector<size_t> &myNumeratorData,
 {
     verifyInputs(myNumeratorData, myDenominatorData, myBinCentres, myBinErrors);
 
-    // Set bin limits; verifyInputs ensures that the numerator and denominator bin limits are the same so just set it to
-    // one of these
+    // Set bin limits
     binCentres = myBinCentres;
     binErrors  = myBinErrors;
 
@@ -58,7 +60,7 @@ void DataSetsRatio::_pruneBadRatios()
     numPoints = numBins;
     auto it   = ratios.begin();
     while (it != ratios.end()) {
-        if (!std::isfinite(*it) || *it == 0.0) {
+        if (!TMath::Finite(*it) || *it == 0.0) {
             size_t index = it - ratios.begin();
 
             ratios.erase(ratios.begin() + index);
@@ -151,7 +153,17 @@ void DataSetsRatio::fitToData(bool draw, std::string plotTitle)
         TCanvas *c = new TCanvas();
         _ratioPlot->Draw("*ap");
     }
-    _ratioPlot->Fit("pol2");
+
+    // ROOT is terrible and will often fail to fit when the TGraph contains x-errors, unless the initial fit parameters
+    // are reasonably close to the true values. We can get around this by perfoming an initial fit ignoring error bars
+    // ("W"), then fitting again.
+    TF1 *graph_fit = ((TF1 *)(gROOT->GetFunction("pol2")));
+
+    _ratioPlot->Fit(graph_fit, "WQRN");
+    _ratioPlot->Fit(graph_fit);
+
+    // Print a newline after the fitter output to make things easier to read.
+    std::cout << std::endl;
 }
 
 #endif // DATA_SETS_RATIO_CPP

@@ -3,12 +3,12 @@
 
 #include <iostream>
 
-#include "DecaysData.h"
+#include "../include/DecaysData.h"
 
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TH1D.h"
-#include "k3pi_binning.h"
+#include "../include/k3pi_binning.h"
 
 /*
  * All the information we need to extract is in the ROOT file on a given Tree, so this is all the constructor needs.

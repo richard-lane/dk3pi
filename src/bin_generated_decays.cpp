@@ -14,10 +14,10 @@
 #include "TH1D.h"
 #include "TRandom.h"
 
+#include "../include/DataSetsRatio.h"
+#include "../include/DecaysData.h"
 #include "DataSetsRatio.cpp"
-#include "DataSetsRatio.h"
 #include "DecaysData.cpp"
-#include "DecaysData.h"
 #include "plottingHelpers.cpp"
 
 /*
@@ -59,4 +59,15 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
         std::string title = "Phase Space Bin " + std::to_string(bin);
         dataSetRatios[bin].fitToData(true, title);
     }
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc != 3) {
+        std::cerr << "Usage: <executable> <Mixed decays ROOT file> <Favoured decays ROOT file>" << std::endl;
+        throw;
+    }
+    TFile *mixedDecays    = new TFile(argv[1]);
+    TFile *favouredDecays = new TFile(argv[2]);
+    bin_generated_decays(mixedDecays, favouredDecays);
 }

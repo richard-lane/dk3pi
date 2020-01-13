@@ -1,6 +1,5 @@
 #ifndef BIN_GENERATED_DECAYS_HPP
 #define BIN_GENERATED_DECAYS_HPP
-
 #include <complex>
 #include <string>
 
@@ -70,8 +69,8 @@ class D2K3PiData : public DecaysData
     std::vector<double>                           binErrors{};
 
   private:
-    const std::string          dcsFile{"binning/dcs.so"};
-    const std::string          cfFile{"binning/cf.so"};
+    const std::string          dcsFile{"AmpGenTools/dcs.so"};
+    const std::string          cfFile{"AmpGenTools/cf.so"};
     const std::complex<double> dcs_offset = DCS_MAGNITUDE * exp(std::complex<double>(0, 1) * DCS_PHASE * M_PI / 180.);
 
     // Particle data methods
