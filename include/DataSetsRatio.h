@@ -20,7 +20,7 @@ class DataSetsRatio
                            std::vector<double> &myBinErrors);
 
     void _setRatios();
-    void fitToData(bool draw, std::string plotTitle);
+    void fitToData(bool draw, std::string plotTitle, std::string plotDir="tmp");
 
   private:
     void verifyInputs(std::vector<size_t> &myNumeratorData,

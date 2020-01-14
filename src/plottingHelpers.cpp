@@ -10,6 +10,8 @@
 #include "TH1D.h"
 #include "TLorentzVector.h"
 
+#include "../include/util.h"
+
 /*
  * From a vector of TLorentzVectors and the desired index (0,1,2,3), find a C-style array of data
  *
@@ -65,10 +67,13 @@ void plot_hist(const std::string &title,
 {
 
     const char *titleStr = title.c_str();
-    auto        kCanvas  = new TCanvas(titleStr, titleStr, 600, 600);
     TH1D *      hist     = new TH1D(titleStr, titleStr, nBins, xmin, xmax);
+
     hist->FillN(length, myData, 0);
-    hist->Draw();
+
+    util::saveToFile(hist, title + ".pdf");
+
+    delete hist;
 }
 
 /*
@@ -85,9 +90,9 @@ void plot_things(const std::vector<TLorentzVector> &kVectors,
     plot_hist("K energies", vector2Array(kVectors, 3), length, 0.45, 1, 100);
 
     // Plot CoM energies on a new canvas
-    auto                      comCanvas = new TCanvas("CoM Energies", "CoM Energies", 600, 600);
-    const std::vector<double> s01       = s(kVectors, pi1Vectors);
-    const std::vector<double> s02       = s(kVectors, pi2Vectors);
-    TGraph *                  myGraph   = new TGraph(length, s01.data(), s02.data());
-    myGraph->Draw("AP");
+    const std::vector<double> s01     = s(kVectors, pi1Vectors);
+    const std::vector<double> s02     = s(kVectors, pi2Vectors);
+    TGraph *                  myGraph = new TGraph(length, s01.data(), s02.data());
+    util::saveToFile(myGraph, "CoM_Energies.pdf", "AP");
+    delete myGraph;
 }

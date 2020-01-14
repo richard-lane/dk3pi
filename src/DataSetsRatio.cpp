@@ -2,6 +2,7 @@
 #define DATA_SETS_RATIO_CPP
 
 #include <algorithm>
+#include <boost/filesystem.hpp>
 #include <cmath>
 #include <functional>
 #include <iostream>
@@ -14,6 +15,7 @@
 #include "TROOT.h"
 
 #include "../include/DataSetsRatio.h"
+#include "../include/util.h"
 
 DataSetsRatio::DataSetsRatio(std::vector<size_t> &myNumeratorData,
                              std::vector<size_t> &myDenominatorData,
@@ -141,20 +143,19 @@ void DataSetsRatio::plotBinRatios()
 }
 
 /*
- * Fit a second order polynomial to a plot of ratios in each bin
+ * Fit a second order polynomial to a plot of ratios in each bin.
+ *
+ * If draw == true; saves a PDF plot into plotDir.
  *
  * @param draw: whether to draw the graph or just fit to its data.
+ * @param plotTitle: title of the plot, if one is to be made. Also used in the filepath to save the plot to.
+ * @param plotDir: directory to save plots to (relative path).
  */
-void DataSetsRatio::fitToData(bool draw, std::string plotTitle)
+void DataSetsRatio::fitToData(bool draw, std::string plotTitle, std::string plotDir)
 {
     // Create a plot for our data, giving it a custom global title and titling the x and y axes with time and ratio
     plotBinRatios();
     _ratioPlot->SetTitle((plotTitle + ";time/ns;CF/DCS ratio").c_str());
-
-    if (draw) {
-        TCanvas *c = new TCanvas();
-        _ratioPlot->Draw("*ap");
-    }
 
     // ROOT is terrible and will often fail to fit when the TGraph contains x-errors, unless the initial fit parameters
     // are reasonably close to the true values. We can get around this by perfoming an initial fit ignoring error bars
@@ -166,6 +167,18 @@ void DataSetsRatio::fitToData(bool draw, std::string plotTitle)
 
     // Print a newline after the fitter output to make things easier to read.
     std::cout << std::endl;
+
+    if (draw) {
+        // Create plot dir if it doesnt exist
+        boost::filesystem::path dir(plotDir);
+        boost::filesystem::create_directory(dir);
+
+        // Use Boost to safely combine filepaths in a (hopefully) OS-agnostic way.
+        boost::filesystem::path plotPath = util::concatPaths(plotDir, plotTitle, ".pdf");
+
+        // Draw the graph on a new Canvas and save it to file.
+        util::saveToFile(_ratioPlot, plotPath.string());
+    }
 }
 
 #endif // DATA_SETS_RATIO_CPP

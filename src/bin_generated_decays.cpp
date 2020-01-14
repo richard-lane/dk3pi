@@ -19,6 +19,7 @@
 #include "DataSetsRatio.cpp"
 #include "DecaysData.cpp"
 #include "plottingHelpers.cpp"
+#include "util.cpp"
 
 /*
  * Bin the CF and Mixed decays modelled in an AmpGen generated inputFile into phase bins as defined by $BIN_LIMITS
@@ -57,7 +58,7 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
 
         // Boolean arg tells us whether to draw the graphs (useful for debugging) or to just fit the data
         std::string title = "Phase Space Bin " + std::to_string(bin);
-        dataSetRatios[bin].fitToData(true, title);
+        dataSetRatios[bin].fitToData(true, title, "tmp");
     }
 }
 

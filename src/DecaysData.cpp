@@ -4,11 +4,12 @@
 #include <iostream>
 
 #include "../include/DecaysData.h"
+#include "../include/util.h"
 
+#include "../include/k3pi_binning.h"
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TH1D.h"
-#include "../include/k3pi_binning.h"
 
 /*
  * All the information we need to extract is in the ROOT file on a given Tree, so this is all the constructor needs.
@@ -253,13 +254,14 @@ void D2K3PiData::setNumPointsPerTimeBin()
  */
 void D2K3PiData::plotBinnedTimes(size_t bin)
 {
-    size_t   numTimeBins = timeBinLimits.size() - 1;
-    TCanvas *c           = new TCanvas();
-    TH1D *   MyHist      = new TH1D("Decay Times", "", numTimeBins, timeBinLimits.data());
+    size_t numTimeBins = timeBinLimits.size() - 1;
+    TH1D * MyHist      = new TH1D("Decay Times", "", numTimeBins, timeBinLimits.data());
     for (size_t i = 0; i < numTimeBins; ++i) {
         MyHist->SetBinContent(i, numPointsPerTimeBin[bin][i]);
     }
-    MyHist->Draw();
+
+    util::saveToFile(MyHist, "binnedTimes" + std::to_string(bin) + ".pdf");
+    delete MyHist;
 }
 
 /*
