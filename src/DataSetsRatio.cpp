@@ -10,8 +10,10 @@
 
 #include "TCanvas.h"
 #include "TF1.h"
+#include "TFitResult.h"
 #include "TGraphErrors.h"
 #include "TMath.h"
+#include "TMatrixD.h"
 #include "TROOT.h"
 
 #include "../include/DataSetsRatio.h"
@@ -161,9 +163,14 @@ void DataSetsRatio::fitToData(bool draw, std::string plotTitle, std::string plot
     // are reasonably close to the true values. We can get around this by perfoming an initial fit ignoring error bars
     // ("W"), then fitting again.
     TF1 *graph_fit = ((TF1 *)(gROOT->GetFunction("pol2")));
-
     _ratioPlot->Fit(graph_fit, "WQRN");
-    _ratioPlot->Fit(graph_fit);
+
+    // "S" option tells ROOT to return the result of the fit as a TFitResultPtr
+    TFitResultPtr fitResult = _ratioPlot->Fit(graph_fit, "S");
+
+    // Find the correlation matrix for this fit
+    TMatrixD cov = fitResult->GetCorrelationMatrix();
+    cov.Print();
 
     // Print a newline after the fitter output to make things easier to read.
     std::cout << std::endl;
@@ -177,7 +184,7 @@ void DataSetsRatio::fitToData(bool draw, std::string plotTitle, std::string plot
         boost::filesystem::path plotPath = util::concatPaths(plotDir, plotTitle, ".pdf");
 
         // Draw the graph on a new Canvas and save it to file.
-        util::saveToFile(_ratioPlot, plotPath.string());
+        util::saveToFile(_ratioPlot, plotPath.string(), "AP");
     }
 }
 
