@@ -5,6 +5,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/filesystem/path.hpp>
+#include <utility>
 
 #include "../include/D2K3PiError.h"
 #include "../include/MCGenerator.h"
@@ -31,7 +32,7 @@ struct SpecialGenerator {
     SpecialGenerator(double a, double b, double c, double d)
     {
         Generator  = new MCGenerator;
-        *Generator = MCGenerator(a, b, c, d);
+        *Generator = MCGenerator(std::make_pair(a, b), std::make_pair(c, d));
     }
     ~SpecialGenerator() { delete Generator; }
     MCGenerator *Generator;
@@ -167,4 +168,21 @@ BOOST_AUTO_TEST_CASE(test_y_out_of_range_exception)
 
     // Provided x value is larger than the allowed maximum
     BOOST_CHECK_THROW(Gen.Generator->isAccepted(0.5, 6, &quadratic), D2K3PiException);
+}
+
+/*
+ * Check that a malformed std::pair is detected
+ */
+BOOST_AUTO_TEST_CASE(test_x_pair_malformed_exception)
+{
+    SpecialGenerator Gen(0, 1, 0, 5);
+
+    BOOST_CHECK_THROW(Gen.Generator->setXRange(std::make_pair(1, 0)), D2K3PiException);
+}
+
+BOOST_AUTO_TEST_CASE(test_y_pair_malformed_exception)
+{
+    SpecialGenerator Gen(0, 1, 0, 5);
+
+    BOOST_CHECK_THROW(Gen.Generator->setYRange(std::make_pair(1, 0)), D2K3PiException);
 }

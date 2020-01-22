@@ -7,40 +7,39 @@
 #include "../include/D2K3PiError.h"
 #include "../include/MCGenerator.h"
 
-MCGenerator::MCGenerator(const double XRangeMin, const double XRangeMax, const double YRangeMin, const double YRangeMax)
+MCGenerator::MCGenerator(const std::pair<double, double> &xRange, const std::pair<double, double> &yRange)
 {
-    _setMinXValue(XRangeMin);
-    _setMaxXValue(XRangeMax);
-
-    _setMinYValue(YRangeMin);
-    _setMaxYValue(YRangeMax);
+    setXRange(xRange);
+    setYRange(yRange);
 }
 
-void MCGenerator::_setMinXValue(const double minValue)
+void MCGenerator::setXRange(const std::pair<double, double> &xRange)
 {
-    _minX = minValue;
-    _setDistributions();
+    if (xRange.first > xRange.second) {
+        std::cerr << "Provided X values (" + std::to_string(xRange.first) + ", " + std::to_string(xRange.second) +
+                         ") do not define a range. Have you created your std::pair backwards?"
+                  << std::endl;
+        throw D2K3PiException();
+    }
+    _minX = xRange.first;
+    _maxX = xRange.second;
+    setDistributions();
 }
 
-void MCGenerator::_setMaxXValue(const double maxValue)
+void MCGenerator::setYRange(const std::pair<double, double> &yRange)
 {
-    _maxX = maxValue;
-    _setDistributions();
+    if (yRange.first > yRange.second) {
+        std::cerr << "Provided Y values (" + std::to_string(yRange.first) + ", " + std::to_string(yRange.second) +
+                         ") do not define a range. Have you created your std::pair backwards?"
+                  << std::endl;
+        throw D2K3PiException();
+    }
+    _minY = yRange.first;
+    _maxY = yRange.second;
+    setDistributions();
 }
 
-void MCGenerator::_setMinYValue(const double minValue)
-{
-    _minY = minValue;
-    _setDistributions();
-}
-
-void MCGenerator::_setMaxYValue(const double maxValue)
-{
-    _maxY = maxValue;
-    _setDistributions();
-}
-
-void MCGenerator::_setDistributions(void)
+void MCGenerator::setDistributions(void)
 {
     // Seed our Mersenne twister engine with a random device
     std::random_device rd;
@@ -67,7 +66,7 @@ bool MCGenerator::isAccepted(const double xVal, const double yVal, const double 
 
     // Our Maximum Y value is not large enough to accomodate the function
     if (funcVal > _maxY) {
-        std::cout << "Function value " + std::to_string(funcVal) + " is larger than maximum allowed value " +
+        std::cerr<< "Function value " + std::to_string(funcVal) + " is larger than maximum allowed value " +
                          std::to_string(_maxY)
                   << std::endl;
 
@@ -76,7 +75,7 @@ bool MCGenerator::isAccepted(const double xVal, const double yVal, const double 
 
     // Our Maximum X or Y values are smaller than the provided x and y val
     if (xVal > _maxX || xVal < _minX || yVal > _maxY || yVal < _minY) {
-        std::cout << "Generated value (" + std::to_string(xVal) + ", " + std::to_string(yVal) +
+        std::cerr<< "Generated value (" + std::to_string(xVal) + ", " + std::to_string(yVal) +
                          ") is outside of allowed region X(" + std::to_string(_minX) + ", " + std::to_string(_maxX) +
                          "); Y(" + std::to_string(_minY) + ", " + std::to_string(_maxY) + ")"
                   << std::endl;

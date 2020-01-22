@@ -6,6 +6,7 @@
 #define MCGENERATOR_HPP
 
 #include <random>
+#include <utility>
 
 /*
  * Base class for generation of points using Monte Carlo
@@ -16,35 +17,23 @@
 class MCGenerator
 {
   public:
-    MCGenerator(const double XRangeMin = 0,
-                const double XRangeMax = 1,
-                const double YRangeMin = 0,
-                const double YRangeMax = 1);
+    MCGenerator(const std::pair<double, double> &xRange = std::make_pair(0.0, 1.0),
+                const std::pair<double, double> &yRange = std::make_pair(0.0, 1.0));
 
     /*
-     * Set the minimum X value that can be generated
+     * Set the range of X values that can be generated
      */
-    void _setMinXValue(const double value);
+    void setXRange(const std::pair<double, double> &xRange);
 
     /*
-     * Set the maximum X value that can be generated
+     * Set the range of Y values that can be generated
      */
-    void _setMaxXValue(const double value);
-
-    /*
-     * Set the minimum Y value that can be generated
-     */
-    void _setMinYValue(const double value);
-
-    /*
-     * Set the maximum Y value that can be generated
-     */
-    void _setMaxYValue(const double value);
+    void setYRange(const std::pair<double, double> &yRange);
 
     /*
      * Set the distributions to draw numbers from
      */
-    void _setDistributions(void);
+    void setDistributions(void);
 
     /*
      * Generate a random number in [_minX, _maxX)
