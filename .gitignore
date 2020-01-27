@@ -36,3 +36,8 @@ build/
 
 # Profiler
 *.data
+
+# Coverage files
+cov/
+*.gcda
+*.gcno

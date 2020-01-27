@@ -7,9 +7,9 @@
 #include <boost/filesystem/path.hpp>
 #include <utility>
 
-#include "../include/D2K3PiError.h"
-#include "../include/MCGenerator.h"
-#include "../src/MCGenerator.cpp"
+#include "../../include/D2K3PiError.h"
+#include "../../include/MCGenerator.h"
+#include "../../src/MCGenerator.cpp"
 
 // ---- Fixtures
 /*

@@ -4,8 +4,8 @@
 
 #include <boost/filesystem/path.hpp>
 
-#include "../include/util.h"
-#include "../src/util.cpp"
+#include "../../include/util.h"
+#include "../../src/util.cpp"
 
 BOOST_AUTO_TEST_CASE(test_concat_paths_no_extension)
 {
