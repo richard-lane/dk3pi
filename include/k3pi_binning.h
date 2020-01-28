@@ -1,4 +1,5 @@
 #include "TGenPhaseSpace.h"
+#include "TRandom.h"
 
 #include <dlfcn.h>
 

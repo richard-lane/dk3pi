@@ -2,13 +2,9 @@
  * Perform a pull study for our fitter
  */
 
-#include <iostream>
 #include <vector>
 
-#include "TFile.h"
-#include "TGraph.h"
 #include "TH1D.h"
-#include "TRandom.h"
 
 #include "util.cpp"
 
