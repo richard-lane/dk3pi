@@ -109,7 +109,6 @@ void Fitter::pol2fit(const std::string& options)
 
     // Assign some memory to our correlation matrix
     fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());
-    fitParams.correlationMatrix->Print();
 }
 
 void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)
