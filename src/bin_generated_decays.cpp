@@ -14,51 +14,67 @@
 #include "TH1D.h"
 #include "TRandom.h"
 
-#include "../include/DataSetsRatio.h"
-#include "../include/DecaysData.h"
-#include "DataSetsRatio.cpp"
-#include "DecaysData.cpp"
-#include "plottingHelpers.cpp"
 #include "util.cpp"
+
+#include "../include/Fitter.h"
+#include "../include/PhaseSpaceBinning.h"
+#include "../include/RatioCalculator.h"
+#include "../include/ReadAmpGen.h"
+
+#include "../src/Fitter.cpp"
+#include "../src/PhaseSpaceBinning.cpp"
+#include "../src/RatioCalculator.cpp"
+#include "../src/ReadAmpGen.cpp"
 
 /*
  * Bin the CF and Mixed decays modelled in an AmpGen generated inputFile into phase bins as defined by $BIN_LIMITS
+ * Using new APIs
  *
- * This function is far too long but i think its probably ok for now
+ * This should be split into functions
  *
  */
 void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
 {
-
-    // Create D2K3piData class instances to encapsulate the data in our ROOT file
+    // Create D2K3PiData classes to represent our data and populate them.
     D2K3PiData MixedData    = D2K3PiData(mixedDecays, "DalitzEventList");
     D2K3PiData FavouredData = D2K3PiData(favouredDecays, "DalitzEventList");
+    MixedData.populate("D_decayTime");
+    FavouredData.populate("Dbar0_decayTime");
 
-    // Bin decays in phase space; find a distribution of decay times in each of these bins
-    MixedData.performBinning("D_decayTime");
-    FavouredData.performBinning("Dbar0_decayTime");
+    // Pass the times and kinematic data into the phase space binner and perform binning
+    PhaseSpaceBinning MixedDataBinner = PhaseSpaceBinning(
+        MixedData.decayTimes, MixedData.kVectors, MixedData.pi1Vectors, MixedData.pi2Vectors, MixedData.pi3Vectors);
+    PhaseSpaceBinning FavouredDataBinner = PhaseSpaceBinning(FavouredData.decayTimes,
+                                                             FavouredData.kVectors,
+                                                             FavouredData.pi1Vectors,
+                                                             FavouredData.pi2Vectors,
+                                                             FavouredData.pi3Vectors);
+    MixedDataBinner.performBinning();
+    FavouredDataBinner.performBinning();
 
-    // Make some plots to check that the data from ROOT has been read in correctly
-    // plot_things(MixedData.kVectors, MixedData.pi1Vectors, MixedData.pi2Vectors);
-    // plot_things(FavouredData.kVectors, FavouredData.pi1Vectors, FavouredData.pi2Vectors);
+    // Define time-space bin limits to perform ratio calculation with
+    std::vector<double> timeBinLimits{};
+    for (size_t i = 0; i < 200; ++i) {
+        timeBinLimits.push_back(i * i * i * 0.006 / (200 * 200 * 200));
+    }
 
-    // Plot the hist of times in each bin
-    // for (size_t bin = 0; bin < NUM_BINS; bin++) {
-    //    MixedData.plotBinnedTimes(bin);
-    //    FavouredData.plotBinnedTimes(bin);
-    //}
+    // Calculate the ratios between the datasets in each bin
+    std::vector<RatioCalculator> ratios{};
+    for (int bin = 0; bin < NUM_BINS; ++bin) {
+        ratios.push_back(
+            RatioCalculator(FavouredDataBinner._binnedTimes[bin], MixedDataBinner._binnedTimes[bin], timeBinLimits));
+        ratios[bin].calculateRatios();
+    }
 
-    // Create a vector of DataSetsRatio objects to compare our two datasets
-    std::vector<DataSetsRatio> dataSetRatios{};
-    for (int bin = 0; bin < NUM_BINS; bin++) {
-        dataSetRatios.push_back(DataSetsRatio(MixedData.numPointsPerTimeBin[bin],
-                                              FavouredData.numPointsPerTimeBin[bin],
-                                              MixedData.binCentres,
-                                              MixedData.binErrors));
-
-        // Boolean arg tells us whether to draw the graphs (useful for debugging) or to just fit the data
-        std::string title = "Phase Space Bin " + std::to_string(bin);
-        dataSetRatios[bin].fitToData(true, title, "tmp");
+    // Fit each ratio to a plot
+    std::vector<Fitter> fitters{};
+    for (int bin = 0; bin < NUM_BINS; ++bin) {
+        FitData_t thisBinFitData =
+            FitData(ratios[bin].binCentres, ratios[bin].binWidths, ratios[bin].ratio, ratios[bin].error);
+        fitters.push_back(Fitter(thisBinFitData));
+        fitters[bin].pol2fit();
+        std::string title = "PhaseSpaceBin" + std::to_string(bin) + ".pdf";
+        fitters[bin].saveFitPlot(title, title);
     }
 }
 

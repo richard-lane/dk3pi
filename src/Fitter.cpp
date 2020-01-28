@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <boost/filesystem.hpp>
+#include <functional>
 #include <iostream>
 #include <vector>
 
@@ -41,11 +42,12 @@ FitData::FitData(const std::vector<double>& myBinCentres,
     }
 
     // Check that none of our bins overlap
-    // This might cause issues when bins share edges so I might have to think of something Cleverer
     for (size_t i = 0; i < binWidthSize - 1; ++i) {
         double leftEdge  = myBinCentres[i] + 0.5 * myBinWidths[i];
         double rightEdge = myBinCentres[i + 1] - 0.5 * myBinWidths[i + 1];
-        if (leftEdge > rightEdge) {
+
+        // An overlap is when the upper edge of a lower bin is higher than the lower edge of a higher bin.
+        if (leftEdge > rightEdge + DBL_EPSILON) {
             std::cerr << "Bins may not overlap; bin " << i << " and bin " << i + 1 << " have values " << leftEdge
                       << " and " << rightEdge << std::endl;
             throw D2K3PiException();
@@ -64,10 +66,16 @@ FitData::FitData(const std::vector<double>& myBinCentres,
 
     // Now that all the checks have passed, set the class attributes
     binCentres = myBinCentres;
-    binWidths  = myBinWidths;
     data       = myData;
     errors     = myErrors;
     numPoints  = binCentreSize;
+
+    // Divide bin widths by 2 to get bin errors
+    binErrors = myBinWidths;
+    std::transform(binErrors.begin(),
+                   binErrors.end(),
+                   binErrors.begin(),
+                   std::bind(std::multiplies<double>(), std::placeholders::_1, 0.5));
 }
 
 Fitter::Fitter(const FitData_t& fitData)
@@ -77,36 +85,37 @@ Fitter::Fitter(const FitData_t& fitData)
     _fitData = fitData;
 }
 
-void Fitter::pol2fit(void)
+void Fitter::pol2fit(const std::string& options)
 {
     // Set our TGraph thing to the right thing
-    _plot = TGraphErrors(_fitData.numPoints,
-                         _fitData.binCentres.data(),
-                         _fitData.data.data(),
-                         _fitData.binWidths.data(),
-                         _fitData.errors.data());
+    _plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
+                                           _fitData.binCentres.data(),
+                                           _fitData.data.data(),
+                                           _fitData.binErrors.data(),
+                                           _fitData.errors.data());
 
     // ROOT is terrible and will often fail to fit when the TGraph contains x-errors, unless the initial fit parameters
     // are reasonably close to the true values. We can get around this by perfoming an initial fit ignoring error bars
     // ("W"), then fitting again.
     TF1* graph_fit = ((TF1*)(gROOT->GetFunction("pol2")));
-    _plot.Fit(graph_fit, "WQRN");
+    _plot->Fit(graph_fit, "WQRN");
 
     // "S" option tells ROOT to return the result of the fit as a TFitResultPtr
-    TFitResultPtr fitResult = _plot.Fit(graph_fit, "S");
+    TFitResultPtr fitResult = _plot->Fit(graph_fit, (options + "S").c_str());
 
     // Populate the results struct
     fitParams.fitParams      = {graph_fit->GetParameter(0), graph_fit->GetParameter(1), graph_fit->GetParameter(2)};
     fitParams.fitParamErrors = {graph_fit->GetParError(0), graph_fit->GetParError(1), graph_fit->GetParError(2)};
 
-    // TODO fix this, it doesn't work at the moment
-    fitParams.correlationMatrix = fitResult->GetCorrelationMatrix();
+    // Assign some memory to our correlation matrix
+    fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());
+    fitParams.correlationMatrix->Print();
 }
 
 void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)
 {
     // Check that a fit has been made
-    if (fitParams.fitParams.empty()) {
+    if (fitParams.fitParams.empty() || _plot == nullptr) {
         std::cerr << "Run the fitter before plotting" << std::endl;
         throw D2K3PiException();
     }
@@ -118,10 +127,10 @@ void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)
     }
 
     // Set the plot title; for some reason this is also how to set axis labels?
-    _plot.SetTitle((plotTitle + ";time/ns;CF/DCS ratio").c_str());
+    _plot->SetTitle((plotTitle + ";time/ns;CF/DCS ratio").c_str());
 
     // Save our fit to file
-    util::saveToFile(&_plot, path, "AP");
+    util::saveToFile(_plot.get(), path, "AP");
 }
 
 #endif // FITTER_CPP

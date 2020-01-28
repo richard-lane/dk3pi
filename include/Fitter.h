@@ -4,9 +4,10 @@
 #ifndef FITTER_H
 #define FITTER_H
 
+#include <memory>
 #include <vector>
 
-#include "TGraph.h"
+#include "TGraphErrors.h"
 #include "TMatrixD.h"
 
 /*
@@ -33,7 +34,11 @@ typedef struct FitData {
             const std::vector<double>& myErrors);
 
     std::vector<double> binCentres{0.0};
-    std::vector<double> binWidths{0.0};
+
+    /*
+     * This is not the total width of the bins; it is the error in the bin, or half the width
+     */
+    std::vector<double> binErrors{0.0};
 
     std::vector<double> data{0.0};
     std::vector<double> errors{0.0};
@@ -61,9 +66,9 @@ typedef struct PolynomialFitResults {
     std::vector<double> fitParamErrors{};
 
     /*
-     * Correlation matrix of fit parameters
+     * Pointer to correlation matrix of fit parameters
      */
-    TMatrixD correlationMatrix{};
+    std::unique_ptr<TMatrixD> correlationMatrix{};
 } FitResults_t;
 
 /*
@@ -79,9 +84,11 @@ class Fitter
 
     /*
      * Fit our data to a second order polynomial.
-     * Sets fitParams attribute
+     * Sets fitParams attribute and allocates memory to _plot.
+     *
+     * Fit options can be passed via the options argument.
      */
-    void pol2fit(void);
+    void pol2fit(const std::string& options = "");
 
     /*
      * Save a plot of our data and fit to file
@@ -102,7 +109,7 @@ class Fitter
     /*
      * ROOT TGraph object used for performing the fit
      */
-    TGraph _plot;
+    std::unique_ptr<TGraphErrors> _plot = nullptr;
 };
 
 #endif // FITTER_H

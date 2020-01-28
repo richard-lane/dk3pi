@@ -37,7 +37,7 @@ class PhaseSpaceBinning
     /*
      * Bin events into predefined phase space bins.
      */
-    void performBinning(const std::string& timesBranchName);
+    void performBinning();
 
     /*
      * Vector of vectors holding binned times.

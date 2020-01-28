@@ -1,10 +1,13 @@
 #ifndef PHASE_SPACE_BINNING_CPP
 #define PHASE_SPACE_BINNING_CPP
 
+#include <boost/filesystem.hpp>
+#include <iostream>
 #include <vector>
 
 #include "TLorentzVector.h"
 
+#include "../include/D2K3PiError.h"
 #include "../include/PhaseSpaceBinning.h"
 #include "../include/k3pi_binning.h"
 
@@ -24,8 +27,13 @@ PhaseSpaceBinning::PhaseSpaceBinning(const std::vector<double> &        decayTim
     _numEvents = decayTimes.size();
 }
 
-void PhaseSpaceBinning::performBinning(const std::string &timesBranchName)
+void PhaseSpaceBinning::performBinning()
 {
+    // Check that _dcsFile and _cfFile exist
+    if (!boost::filesystem::exists(_dcsFile) || !boost::filesystem::exists(_cfFile)) {
+        std::cerr << _dcsFile << " or " << _cfFile << " not found." << std::endl;
+        throw D2K3PiException();
+    }
     // Define our bins
     k3pi_binning::binning bins(_dcsFile, _cfFile, _dcs_offset, {BIN_LIMITS});
 
@@ -44,6 +52,11 @@ void PhaseSpaceBinning::performBinning(const std::string &timesBranchName)
         // TODO A marginally cleverer implementation might set binnedTimes[bin] to the number of points we have, and
         // then just reshape the whole thing once we've finished binning.
         _binnedTimes[bin].push_back(_decayTimes[i]);
+    }
+
+    // Output how many points are in each bin
+    for (size_t bin = 0; bin < NUM_BINS; ++bin) {
+        std::cout << "points in bin " << bin << ": " << _binnedTimes[bin].size() << std::endl;
     }
 }
 

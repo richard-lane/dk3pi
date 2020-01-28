@@ -10,6 +10,7 @@
 
 #include "../../include/D2K3PiError.h"
 #include "../../include/Fitter.h"
+#include "../../include/RatioCalculator.h"
 #include "../../src/Fitter.cpp"
 
 /*
@@ -50,6 +51,32 @@ BOOST_AUTO_TEST_CASE(test_overlapping_bins)
     std::vector<double> widths{1.5, 1.5, 1.5};
 
     BOOST_CHECK_THROW(FitData MyData(linspace, widths, linspace, linspace), D2K3PiException);
+}
+
+/*
+ * Test that creating a FitData object with nearly overlapping bins doesn't cause an error
+ * This is an integration test? lol?
+ */
+BOOST_AUTO_TEST_CASE(test_nearly_overlapping_bins)
+{
+    // Create some realistic bin limits and decay times
+    std::vector<double> timeBinLimits{};
+    std::vector<double> times{};
+    for (size_t i = 0; i < 200; ++i) {
+        timeBinLimits.push_back(i * i * i * 0.006 / (200 * 200 * 200));
+        times.push_back(0.0059 * i / 200);
+    }
+
+    // Create a RatioCalculator to turn our bin limits into widths and centres
+    RatioCalculator Calculator(times, times, timeBinLimits);
+    Calculator.calculateRatios();
+
+    std::vector<double> widths  = Calculator.binWidths;
+    std::vector<double> centres = Calculator.binCentres;
+    std::vector<double> ratios  = Calculator.ratio;
+
+    // Pass our stuff into FitData; the widths will be close but shouldn't cause an error.
+    BOOST_CHECK_NO_THROW(FitData MyData(centres, widths, ratios, ratios));
 }
 
 /*
@@ -123,7 +150,7 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit, *boost::unit_test::tolerance(0.01))
     Fitter    MyFitter(fitData);
 
     // Perform a fit and check that our coefficients are all 1
-    MyFitter.pol2fit();
+    MyFitter.pol2fit("Q");
     CHECK_CLOSE_COLLECTIONS(MyFitter.fitParams.fitParams, expectedFitCoefficients, 0.001);
 }
 
@@ -167,6 +194,7 @@ BOOST_AUTO_TEST_CASE(test_plot_already_exists)
 /*
  * Test that a file is created when saveFitPlot is called
  * Doesn't check that the plot is sensible- just checks that it is created.
+ * This definitely isn't UT
  */
 BOOST_AUTO_TEST_CASE(test_plot_created)
 {
@@ -175,16 +203,37 @@ BOOST_AUTO_TEST_CASE(test_plot_created)
     FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
     Fitter              MyFitter(fitData);
 
-    // Change the fit parameter to a non empty vector so that we will not hit the plot before fit error
-    MyFitter.fitParams.fitParams = {1};
+    // Run the fit, which allows us to attempt to save the plot
+    MyFitter.pol2fit("Q");
 
     // Create a temporary file and attempt to save a plot there
     boost::filesystem::path temp   = boost::filesystem::unique_path();
     std::string             native = temp.native();
     MyFitter.saveFitPlot("foo", native);
+    BOOST_CHECK(boost::filesystem::exists(native));
 
     // Remove the temporary file
     remove(native.c_str());
+}
+
+/*
+ * Test that the correlation matrix gets assigned correctly
+ */
+BOOST_AUTO_TEST_CASE(test_matrix_assigned)
+{
+    std::vector<double> oneTwo{1, 2};
+    std::vector<double> zeros{0, 0};
+    FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
+    Fitter              MyFitter(fitData);
+
+    // Run the fit, which allows us to attempt to save the plot
+    MyFitter.pol2fit("Q");
+
+    // Check that the correlation matrix has been assigned some memory
+    BOOST_CHECK(MyFitter.fitParams.correlationMatrix != nullptr);
+
+    // Check that the correlation matrix can be used
+    BOOST_CHECK_NO_THROW(MyFitter.fitParams.correlationMatrix->Print());
 }
 
 #endif // TEST_FITTER_CPP

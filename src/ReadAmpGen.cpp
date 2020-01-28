@@ -51,4 +51,22 @@ const std::vector<TLorentzVector> D2K3PiData::particleData(std::string particleN
     return myVector;
 }
 
+void D2K3PiData::setDecayTimes(std::string timesBranchName)
+{
+
+    // Init our decay times to -1; it should then be obvious if something has gone wrong.
+    double myData{0.0};
+    decayTimes = std::vector<double>(numEvents, -1);
+
+    myTree->SetBranchAddress(timesBranchName.c_str(), &myData);
+    for (size_t i = 0; i < numEvents; ++i) {
+        myTree->GetEntry(i);
+        decayTimes[i] = myData;
+    }
+
+    // Reset all branch addresses to avoid a bug where repeatedly calling this function would set an array to the wrong
+    // values
+    myTree->ResetBranchAddresses();
+}
+
 #endif // READAMPGEN_CPP
