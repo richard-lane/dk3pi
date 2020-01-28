@@ -48,7 +48,7 @@ class MCGenerator
     /*
      * Check whether a number is accepted as a sample drawn from a distribution described by func
      */
-    bool isAccepted(const double xVal, const double yVal, const double (*func)(double));
+    bool isAccepted(const double xVal, const double yVal, double (*func)(double));
 
   protected:
     /*

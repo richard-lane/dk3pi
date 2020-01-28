@@ -41,7 +41,7 @@ struct SpecialGenerator {
 /*
  * A quadratic function y = x^2 + 1
  */
-const double quadratic(double x)
+double quadratic(double x)
 {
     return (x * x) + 1;
 }

@@ -60,7 +60,7 @@ double MCGenerator::getRandomY(void)
     return _yDistribution(_gen);
 }
 
-bool MCGenerator::isAccepted(const double xVal, const double yVal, const double (*func)(double))
+bool MCGenerator::isAccepted(const double xVal, const double yVal, double (*func)(double))
 {
     double funcVal = (*func)(xVal);
 
