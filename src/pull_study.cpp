@@ -27,6 +27,7 @@ void plot_parameter_distribution(std::string title, std::vector<double> paramete
 {
     TH1D *MyGraph = new TH1D(title.c_str(), title.c_str(), 200, -2, 2);
     MyGraph->FillN(nExperiments, parameter.data(), 0);
+    MyGraph->SetTitle((title + ";Normalised Pull;Count").c_str());
     util::saveToFile(MyGraph, (title + ".pdf").c_str());
     delete MyGraph;
 }
