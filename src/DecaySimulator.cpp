@@ -13,16 +13,11 @@
 
 SimulatedDecays::SimulatedDecays(const std::pair<double, double> &timeRange,
                                  const std::pair<double, double> &decayRateRange,
-                                 const DecayParams_t &            DecayParams,
-                                 size_t                           numDecays)
+                                 const DecayParams_t &            DecayParams)
 {
     // The parent class implementations will suffice to set the allowed ranges of values.
     setXRange(timeRange);
     setYRange(decayRateRange);
-
-    // Initialise our vectors of times to zero vectors of the right length.
-    RSDecayTimes = std::vector<double>(numDecays, 0);
-    WSDecayTimes = std::vector<double>(numDecays, 0);
 
     _DecayParams = DecayParams;
 }
@@ -58,6 +53,40 @@ bool SimulatedDecays::isAccepted(const double xVal, const double yVal, bool righ
     }
 
     return yVal < funcVal;
+}
+
+void SimulatedDecays::findDcsDecayTimes(size_t numEvents)
+{
+    // Initialise our vector of wrong-sign decay times to the right length
+    WSDecayTimes        = std::vector<double>(numEvents, -1);
+    size_t numGenerated = 0;
+
+    while (numGenerated < numEvents) {
+        double time  = getRandomX();
+        double ratio = getRandomY();
+
+        if (isAccepted(time, ratio, false)) {
+            WSDecayTimes[numGenerated] = time;
+            numGenerated++;
+        }
+    }
+}
+
+void SimulatedDecays::findCfDecayTimes(size_t numEvents)
+{
+    // Initialise our vector of right-sign decay times to the right length
+    RSDecayTimes        = std::vector<double>(numEvents, -1);
+    size_t numGenerated = 0;
+
+    while (numGenerated < numEvents) {
+        double time  = getRandomX();
+        double ratio = getRandomY();
+
+        if (isAccepted(time, ratio, true)) {
+            RSDecayTimes[numGenerated] = time;
+            numGenerated++;
+        }
+    }
 }
 
 double SimulatedDecays::_rightSignDecayRate(const double time)

@@ -35,18 +35,30 @@ class SimulatedDecays : public MCGenerator
   public:
     /*
      * Set the allowed time and decay rate values for our simulated decay.
-     * Also set the number of decays to be simulated and the parameters to be used in the decay.
      */
     SimulatedDecays(const std::pair<double, double> &timeRange,
                     const std::pair<double, double> &decayRateRange,
-                    const DecayParams_t &            DecayParams,
-                    size_t                           numDecays);
+                    const DecayParams_t &            DecayParams);
 
     /*
      * Check whether a point is accepted as being from one of the distributions.
      * Boolean flag rightSign indicates whether to use the RS or WS decay model.
      */
     bool isAccepted(const double xVal, const double yVal, bool rightSign);
+
+    /*
+     * Generate a vector of numEvents decay times representing DCS decay times.
+     *
+     * Sets WSDecayTimes
+     */
+    void findDcsDecayTimes(size_t numEvents);
+
+    /*
+     * Generate a vector of numEvents decay times representing CF decay times.
+     *
+     * Sets RSDecayTimes
+     */
+    void findCfDecayTimes(size_t numEvents);
 
     /*
      * Plot graphs of the WS and RS decay rates

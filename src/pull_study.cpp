@@ -22,13 +22,28 @@
 
 /*
  * Plot the distribution of a vector as a histogram of 200 bins between -2 and 2
+ *
+ * Plot is centred on expectedMean- this should be 0 but it isn't, so i'm doing this to make the plots sensible
  */
-void plot_parameter_distribution(std::string title, std::vector<double> parameter, size_t nExperiments)
+void plot_parameter_distribution(std::string         title,
+                                 std::vector<double> parameter,
+                                 size_t              nExperiments,
+                                 double              expectedMean  = 0,
+                                 double              expectedSigma = 1)
 {
-    TH1D *MyGraph = new TH1D(title.c_str(), title.c_str(), 200, -2, 2);
+    // Define axis limits
+    double xMin = expectedMean - 5 * expectedSigma;
+    double xMax = expectedMean - 5 * expectedSigma;
+
+    TH1D *MyGraph = new TH1D(title.c_str(), title.c_str(), 200, xMin, xMax);
+
     MyGraph->FillN(nExperiments, parameter.data(), 0);
     MyGraph->SetTitle((title + ";Normalised Pull;Count").c_str());
+
     util::saveToFile(MyGraph, (title + ".pdf").c_str());
+
+    std::cout << title + " mean:\t\t" + MyGraph->GetMean() << std::endl;
+    std::cout << title + " std dev:\t" + MyGraph->GetStdDev() << std::endl;
     delete MyGraph;
 }
 
@@ -38,14 +53,18 @@ void plot_parameter_distribution(std::string title, std::vector<double> paramete
 void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 {
     // Choose which parameters to use when simulating
+    // These numbers are vaguely realistic but also entirely made up
     DecayParams_t phaseSpaceParams = {
         .x     = 0.0037,
         .y     = 0.0066,
-        .r     = 1.1319,
+        .r     = 0.055,
         .z_im  = -0.2956,
         .z_re  = 0.7609,
         .width = 2439.0,
     };
+
+    size_t numCfEvents  = nEvents;
+    size_t numDcsEvents = nEvents * phaseSpaceParams.r * phaseSpaceParams.r;
 
     // Restrict our times and rates to consider for our Monte Carlo simulation
     double                    maxTime      = 0.002;
@@ -53,10 +72,10 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
 
     // Create sensible time bins
-    size_t              numTimeBins = 200;
+    size_t              numTimeBins = 20;
     std::vector<double> timeBinLimits{};
     for (size_t i = 0; i < numTimeBins; ++i) {
-        timeBinLimits.push_back(i * i * i * maxTime * 1.1 / (numTimeBins * numTimeBins * numTimeBins));
+        timeBinLimits.push_back(i * maxTime * 1.1 / numTimeBins);
     }
 
     // Calculate what we expect our fit parameters to be
@@ -74,29 +93,11 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 
     for (size_t i = 0; i < nExperiments; ++i) {
         // Simulate DCS and CF decays with our parameters
-        SimulatedDecays MyDecays = SimulatedDecays(allowedTimes, allowedRates, phaseSpaceParams, nEvents);
-        size_t          nWS      = 0;
-        size_t          nRS      = 0;
-        // Keep generating points, checking if they are in either distribution until both the RS and WS vectors are
-        // populated.
-        // This case uses the same random generation for both RS and WS data- we probably want to do different random
-        // numbers for each
-        while (nWS < nEvents && nRS < nEvents) {
-            double time  = MyDecays.getRandomX();
-            double ratio = MyDecays.getRandomY();
+        SimulatedDecays MyDecays = SimulatedDecays(allowedTimes, allowedRates, phaseSpaceParams);
 
-            if (nWS < nEvents && MyDecays.isAccepted(time, ratio, false)) {
-                MyDecays.WSDecayTimes[nWS] = time;
-                nWS++;
-            }
+        MyDecays.findDcsDecayTimes(numDcsEvents);
+        MyDecays.findCfDecayTimes(numCfEvents);
 
-            if (nRS < nEvents && MyDecays.isAccepted(time, ratio, true)) {
-                MyDecays.RSDecayTimes[nRS] = time;
-                nRS++;
-            }
-        }
-
-        // Calculate the ratio between our two decay time sets
         RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
         MyRatios.calculateRatios();
 
@@ -122,6 +123,6 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(5000, 10000);
+    pull_study(2000, 100000);
 }
 #endif // __CINT__

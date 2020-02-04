@@ -42,7 +42,7 @@ void simulateDecays()
 
     // Create our Decay simulator object
     size_t          numDecays = 10000;
-    SimulatedDecays MyDecays  = SimulatedDecays(allowedTimes, allowedRates, MyParams, numDecays);
+    SimulatedDecays MyDecays  = SimulatedDecays(allowedTimes, allowedRates, MyParams);
 
     MyDecays.plotRates();
 
@@ -54,22 +54,9 @@ void simulateDecays()
     // This case uses the same random generation for both RS and WS data- in reality we would probably want to do
     // different random numbers for each but this will make testing faster.
 
-    // Commented out because something is broken
     size_t i = 0;
-    while (nWS < numDecays && nRS < numDecays) {
-        double time  = MyDecays.getRandomX();
-        double ratio = MyDecays.getRandomY();
-
-        if (nWS < numDecays && MyDecays.isAccepted(time, ratio, false)) {
-            MyDecays.WSDecayTimes[nWS] = time;
-            nWS++;
-        }
-
-        if (nRS < numDecays && MyDecays.isAccepted(time, ratio, true)) {
-            MyDecays.RSDecayTimes[nRS] = time;
-            nRS++;
-        }
-    }
+    MyDecays.findCfDecayTimes(numDecays);
+    MyDecays.findDcsDecayTimes(numDecays);
 
     // Do some stuff with histograms
     size_t numBins = 20;
