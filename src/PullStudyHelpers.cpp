@@ -1,12 +1,14 @@
 #ifndef PULL_STUDY_HELPERS_CPP
 #define PULL_STUDY_HELPERS_CPP
 
+#include <iostream>
 #include <string>
 #include <vector>
 
 #include "TH1D.h"
 
 #include "../include/DecaySimulator.h"
+#include "../include/util.h"
 
 void plot_parameter_distribution(std::string         title,
                                  std::vector<double> parameter,
