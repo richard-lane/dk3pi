@@ -1,4 +1,5 @@
 # Ensure the repo is clean
+set -e
 echo "Cleaning repo"
 git clean -xfd
 
@@ -11,6 +12,12 @@ echo "Building executables"
 echo "Running UT"
 ./test/ut/build_tests.sh
 ./ut.exe
+
+# Build and run slower tests
+echo "Running integration tests"
+echo "Running integration tests"
+./test/it/build_integration_tests.sh
+./it.exe
 
 # Manual tests
 echo "Running manual tests"

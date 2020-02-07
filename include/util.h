@@ -22,6 +22,27 @@ boost::filesystem::path concatPaths(std::string plotDir, std::string plotName, s
  */
 void saveToFile(TObject *myObject, const std::string &path, const std::string &drawOptions = "");
 
+/*
+ * Utility function to find bin limits given a dataset and the minimum number of points in each bin
+ * Creates as many bins as possible containing exactly the minimum number of points; the last bin may contain more
+ * points than the minimum.
+ *
+ * Note this may result in some very wide bins at the start/end if lowBin/highBin are specified as much lower or higher
+ * than the extreme values in the dataset.
+ *
+ * TODO: this currently sucks for the above reason. so make it not suck
+ *
+ * Params:
+ *   dataset         - data to find bins for. Should be sorted.
+ *   minPointsPerBin - minimum number of points per bin.
+ *   lowBin          - lower edge of the first bin.
+ *   highBin         - upper edge of the last bin.
+ */
+std::vector<double> findBinLimits(const std::vector<double> &dataSet,
+                                  const size_t               minPointsPerBin,
+                                  const double               lowBin,
+                                  const double               highBin);
+
 } // namespace util
 
 #endif // UTIL_H

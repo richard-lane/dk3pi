@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../include/D2K3PiError.h"
+#include "../include/DecaySimulator.h"
 #include "../include/Fitter.h"
 #include "../include/util.h"
 
@@ -106,6 +107,38 @@ void Fitter::pol2fit(const std::string& options)
     // Populate the results struct
     fitParams.fitParams      = {graph_fit->GetParameter(0), graph_fit->GetParameter(1), graph_fit->GetParameter(2)};
     fitParams.fitParamErrors = {graph_fit->GetParError(0), graph_fit->GetParError(1), graph_fit->GetParError(2)};
+
+    // Assign some memory to our correlation matrix
+    fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());
+}
+
+void Fitter::expectedFunctionFit(const double minTime, const double maxTime, const std::string& options)
+{
+    // Set our TGraph pointer to the right thing
+    _plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
+                                           _fitData.binCentres.data(),
+                                           _fitData.data.data(),
+                                           _fitData.binErrors.data(),
+                                           _fitData.errors.data());
+
+    // Define our custom function to fit with and initalise parameters
+    // Init them all to 1 for now
+    std::unique_ptr<TF1> func = std::make_unique<TF1>("func", "[0]+[1]*x+[2]*x*x", minTime, maxTime);
+    func->SetParameter(0, 1.0);
+    func->SetParameter(1, 1.0);
+    func->SetParameter(2, 1.0);
+
+    // ROOT is terrible and will often fail to fit when the TGraph contains x-errors, unless the initial fit parameters
+    // are reasonably close to the true values. We can get around this by perfoming an initial fit ignoring error bars
+    // ("W"), then fitting again.
+    _plot->Fit(func.get(), "WQRN");
+
+    // "S" option tells ROOT to return the result of the fit as a TFitResultPtr
+    TFitResultPtr fitResult = _plot->Fit(func.get(), (options + "S").c_str());
+
+    // Set fitParams to the right things
+    fitParams.fitParams      = {func->GetParameter(0), func->GetParameter(1), func->GetParameter(2)};
+    fitParams.fitParamErrors = {func->GetParError(0), func->GetParError(1), func->GetParError(2)};
 
     // Assign some memory to our correlation matrix
     fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());

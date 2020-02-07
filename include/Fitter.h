@@ -7,6 +7,8 @@
 #include <memory>
 #include <vector>
 
+#include "DecaySimulator.h"
+
 #include "TGraphErrors.h"
 #include "TMatrixD.h"
 
@@ -86,9 +88,19 @@ class Fitter
      * Fit our data to a second order polynomial.
      * Sets fitParams attribute and allocates memory to _plot.
      *
+     * Sets .fitParams.fitParams to a vector of {a0, a1, a2} and similarly sets the errors.
+     *
      * Fit options can be passed via the options argument.
      */
     void pol2fit(const std::string& options = "");
+
+    /*
+     * Fit our data to the equation we expect to see
+     * At the moment this is just a second order polynomial.
+     *
+     * minTime and maxTime define the range over which the function is defined.
+     */
+    void expectedFunctionFit(const double minTime, const double maxTime, const std::string& options = "");
 
     /*
      * Save a plot of our data and fit to file
