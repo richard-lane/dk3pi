@@ -2,6 +2,7 @@
  * Perform a pull study for our fitter
  */
 
+#include <boost/progress.hpp>
 #include <random>
 #include <vector>
 
@@ -59,6 +60,9 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::poisson_distribution<size_t> cfDistribution(nEvents);
     std::poisson_distribution<size_t> dcsDistribution(meanNumDcsDecays);
 
+    // a quick and dirty progress bar
+    boost::progress_display show_progress(nExperiments);
+
     for (size_t i = 0; i < nExperiments; ++i) {
         // Find how many events of each type we need to generate
         // The number of events will have a well-defined mean, but will be drawn from a Poisson distribution.
@@ -84,6 +88,8 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         a_fit[i] = (MyFitter.fitParams.fitParams[0] - expected_a) / MyFitter.fitParams.fitParamErrors[0];
         b_fit[i] = (MyFitter.fitParams.fitParams[1] - expected_b) / MyFitter.fitParams.fitParamErrors[1];
         c_fit[i] = (MyFitter.fitParams.fitParams[2] - expected_c) / MyFitter.fitParams.fitParamErrors[2];
+
+        ++show_progress;
     }
 
     // For each of a, b and c; plot the distance from the expected value
@@ -96,6 +102,6 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(10, 100000);
+    pull_study(1000, 100000);
 }
 #endif // __CINT__
