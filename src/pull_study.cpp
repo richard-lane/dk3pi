@@ -2,6 +2,7 @@
  * Perform a pull study for our fitter
  */
 
+#include <random>
 #include <vector>
 
 #include "TH1D.h"
@@ -43,10 +44,6 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::pair<double, double> allowedTimes = std::make_pair(0, maxTime);
     std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
 
-    // Find how many events of each type we need to generate
-    size_t numCfEvents  = nEvents;
-    size_t numDcsEvents = numDCSDecays(nEvents, phaseSpaceParams, maxTime);
-
     // Create sensible time bins
     size_t              numTimeBins = 20;
     std::vector<double> timeBinLimits{};
@@ -65,7 +62,18 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::vector<double> b_fit(nExperiments, -1);
     std::vector<double> c_fit(nExperiments, -1);
 
+    // Random number generator for finding how many of each type of decay to simulate
+    size_t                            meanNumDcsDecays = numDCSDecays(nEvents, phaseSpaceParams, maxTime);
+    std::mt19937                      generator;
+    std::poisson_distribution<size_t> cfDistribution(nEvents);
+    std::poisson_distribution<size_t> dcsDistribution(meanNumDcsDecays);
+
     for (size_t i = 0; i < nExperiments; ++i) {
+        // Find how many events of each type we need to generate
+        // The number of events will have a well-defined mean, but will be drawn from a Poisson distribution.
+        size_t numCfEvents  = cfDistribution.operator()(generator);
+        size_t numDcsEvents = dcsDistribution.operator()(generator);
+
         // Simulate DCS and CF decays with our parameters
         SimulatedDecays MyDecays = SimulatedDecays(allowedTimes, allowedRates, phaseSpaceParams);
 
@@ -97,6 +105,6 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(10, 1000);
+    pull_study(1000, 100000);
 }
 #endif // __CINT__
