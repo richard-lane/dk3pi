@@ -9,7 +9,6 @@
 
 #include "../../include/D2K3PiError.h"
 #include "../../include/MCGenerator.h"
-#include "../../src/MCGenerator.cpp"
 
 // ---- Fixtures
 /*

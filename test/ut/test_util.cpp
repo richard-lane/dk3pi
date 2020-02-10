@@ -7,7 +7,6 @@
 
 #include "../../include/D2K3PiError.h"
 #include "../../include/util.h"
-#include "../../src/util.cpp"
 
 BOOST_AUTO_TEST_CASE(test_concat_paths_no_extension)
 {

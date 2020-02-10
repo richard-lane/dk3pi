@@ -11,7 +11,6 @@
 #include "../../include/D2K3PiError.h"
 #include "../../include/Fitter.h"
 #include "../../include/RatioCalculator.h"
-#include "../../src/Fitter.cpp"
 
 /*
  * At the moment can't use boose test to check vectors of floats are equal within tolerance;

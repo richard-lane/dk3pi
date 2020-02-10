@@ -11,7 +11,6 @@
 
 #include "../../include/D2K3PiError.h"
 #include "../../include/RatioCalculator.h"
-#include "../../src/RatioCalculator.cpp"
 
 #define TOLERANCE (0.00000000001)
 

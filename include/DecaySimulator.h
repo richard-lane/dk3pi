@@ -6,7 +6,7 @@
 
 #include <utility>
 
-#include "../include/MCGenerator.h"
+#include "MCGenerator.h"
 
 /*
  * Struct encapsulating the parameters needed to simulate decays.
