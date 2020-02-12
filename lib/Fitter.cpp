@@ -162,7 +162,7 @@ void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)
     }
 
     // Set the plot title; for some reason this is also how to set axis labels?
-    _plot->SetTitle((plotTitle + ";time/ns;CF/DCS ratio").c_str());
+    _plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
 
     // Save our fit to file
     util::saveToFile(_plot.get(), path, "AP");
