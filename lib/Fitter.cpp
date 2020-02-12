@@ -71,12 +71,15 @@ FitData::FitData(const std::vector<double>& myBinCentres,
     errors     = myErrors;
     numPoints  = binCentreSize;
 
+    /* Commented out as we don't want our data to have any x-uncertainty
     // Divide bin widths by 2 to get bin errors
     binErrors = myBinWidths;
     std::transform(binErrors.begin(),
                    binErrors.end(),
                    binErrors.begin(),
                    std::bind(std::multiplies<double>(), std::placeholders::_1, 0.5));
+    */
+   binErrors = std::vector<double>(dataLength, 0.0);
 }
 
 Fitter::Fitter(const FitData_t& fitData)
