@@ -4,7 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "DecaySimulator.h"
+#include "../lib/DecaySimulator.h"
+
+namespace PullStudyHelpers
+{
 
 /*
  * Plot the distribution of a vector as a histogram of 200 bins
@@ -33,5 +36,7 @@ std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
  *
  */
 size_t numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpaceParams, double maxTime);
+
+} // namespace PullStudyHelpers
 
 #endif // PULL_STUDY_HELPERS_H

@@ -5,8 +5,8 @@
 #include <cmath>
 #include <iostream>
 
-#include "../include/D2K3PiError.h"
-#include "../include/RatioCalculator.h"
+#include "D2K3PiError.h"
+#include "RatioCalculator.h"
 
 #include "TMath.h"
 

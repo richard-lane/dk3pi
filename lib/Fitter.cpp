@@ -7,10 +7,10 @@
 #include <iostream>
 #include <vector>
 
-#include "../include/D2K3PiError.h"
-#include "../include/DecaySimulator.h"
-#include "../include/Fitter.h"
-#include "../include/util.h"
+#include "D2K3PiError.h"
+#include "DecaySimulator.h"
+#include "Fitter.h"
+#include "util.h"
 
 #include "TF1.h"
 #include "TFitResult.h"

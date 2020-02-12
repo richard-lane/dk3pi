@@ -10,7 +10,7 @@
 #include "TH1D.h"
 #include "TLorentzVector.h"
 
-#include "../include/util.h"
+#include "util.h"
 
 /*
  * From a vector of TLorentzVectors and the desired index (0,1,2,3), find a C-style array of data

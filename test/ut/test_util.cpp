@@ -5,8 +5,8 @@
 #include <boost/filesystem/path.hpp>
 #include <cfloat>
 
-#include "../../include/D2K3PiError.h"
-#include "../../include/util.h"
+#include "D2K3PiError.h"
+#include "util.h"
 
 BOOST_AUTO_TEST_CASE(test_concat_paths_no_extension)
 {

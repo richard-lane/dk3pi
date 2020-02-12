@@ -5,8 +5,8 @@
 
 #include <TH1D.h>
 
-#include "../../include/DecaySimulator.h"
-#include "../../include/util.h"
+#include "DecaySimulator.h"
+#include "util.h"
 
 /*
  * Set the decay parameters to sensible values.
@@ -46,15 +46,8 @@ void simulateDecays()
 
     MyDecays.plotRates();
 
-    // Variables to track how many decays we have for each WS and RS
-    size_t nWS = 0;
-    size_t nRS = 0;
     // Keep generating points, checking if they are in either distribution until both the RS and WS vectors are
     // populated.
-    // This case uses the same random generation for both RS and WS data- in reality we would probably want to do
-    // different random numbers for each but this will make testing faster.
-
-    size_t i = 0;
     MyDecays.findCfDecayTimes(numDecays);
     MyDecays.findDcsDecayTimes(numDecays);
 

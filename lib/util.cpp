@@ -9,8 +9,8 @@
 
 #include "TCanvas.h"
 
-#include "../include/D2K3PiError.h"
-#include "../include/util.h"
+#include "D2K3PiError.h"
+#include "util.h"
 
 namespace util
 {

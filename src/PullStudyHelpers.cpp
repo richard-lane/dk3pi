@@ -7,9 +7,11 @@
 
 #include "TH1D.h"
 
-#include "../include/DecaySimulator.h"
-#include "../include/util.h"
+#include "../lib/DecaySimulator.h"
+#include "../lib/util.h"
 
+namespace PullStudyHelpers
+{
 void plot_parameter_distribution(std::string         title,
                                  std::vector<double> parameter,
                                  size_t              nExperiments,
@@ -66,5 +68,7 @@ size_t numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpacePar
 
     return prefactor * integral * numCFDecays;
 }
+
+} // namespace PullStudyHelpers
 
 #endif // PULL_STUDY_HELPERS_CPP

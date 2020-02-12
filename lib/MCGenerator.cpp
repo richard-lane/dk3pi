@@ -4,8 +4,8 @@
 #include <iostream>
 #include <random>
 
-#include "../include/D2K3PiError.h"
-#include "../include/MCGenerator.h"
+#include "D2K3PiError.h"
+#include "MCGenerator.h"
 
 MCGenerator::MCGenerator(const std::pair<double, double> &xRange, const std::pair<double, double> &yRange)
 {

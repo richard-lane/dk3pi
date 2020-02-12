@@ -7,9 +7,9 @@
 
 #include <TGraph.h>
 
-#include "../include/D2K3PiError.h"
-#include "../include/DecaySimulator.h"
-#include "../include/util.h"
+#include "D2K3PiError.h"
+#include "DecaySimulator.h"
+#include "util.h"
 
 SimulatedDecays::SimulatedDecays(const std::pair<double, double> &timeRange,
                                  const std::pair<double, double> &decayRateRange,

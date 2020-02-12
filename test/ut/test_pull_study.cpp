@@ -5,10 +5,9 @@
 #include <utility>
 #include <vector>
 
-#include "../../include/DecaySimulator.h"
-#include "../../include/PullStudyHelpers.h"
+#include "DecaySimulator.h"
 
-#include "../../src/PullStudyHelpers.cpp"
+#include "PullStudyHelpers.h"
 
 /*
  * Test we find the correct values of a, b and c
@@ -24,7 +23,7 @@ BOOST_AUTO_TEST_CASE(test_expected_params, *boost::unit_test::tolerance(0.000000
     double expectedB = 252;
     double expectedC = 45;
 
-    std::vector<double> params = expectedParams(DecayParams);
+    std::vector<double> params = PullStudyHelpers::expectedParams(DecayParams);
 
     BOOST_CHECK(expectedA == params[0]);
     BOOST_CHECK(expectedB == params[1]);

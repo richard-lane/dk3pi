@@ -7,9 +7,9 @@
 
 #include "TLorentzVector.h"
 
-#include "../include/D2K3PiError.h"
-#include "../include/PhaseSpaceBinning.h"
-#include "../include/k3pi_binning.h"
+#include "D2K3PiError.h"
+#include "PhaseSpaceBinning.h"
+#include "k3pi_binning.h"
 
 PhaseSpaceBinning::PhaseSpaceBinning(const std::vector<double> &        decayTimes,
                                      const std::vector<TLorentzVector> &kVectors,

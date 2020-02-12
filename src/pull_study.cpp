@@ -8,12 +8,12 @@
 
 #include "TH1D.h"
 
-#include "../include/DecaySimulator.h"
-#include "../include/Fitter.h"
-#include "../include/MCGenerator.h"
-#include "../include/PhaseSpaceBinning.h"
-#include "../include/PullStudyHelpers.h"
-#include "../include/RatioCalculator.h"
+#include "../lib/DecaySimulator.h"
+#include "../lib/Fitter.h"
+#include "../lib/MCGenerator.h"
+#include "../lib/PhaseSpaceBinning.h"
+#include "../lib/RatioCalculator.h"
+#include "PullStudyHelpers.h"
 
 /*
  * Perform a pull study with a specified number of experiments and events
@@ -44,7 +44,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     }
 
     // Calculate what we expect our fit parameters to be
-    std::vector<double> expected_fit_params = expectedParams(phaseSpaceParams);
+    std::vector<double> expected_fit_params = PullStudyHelpers::expectedParams(phaseSpaceParams);
     double              expected_a          = expected_fit_params[0];
     double              expected_b          = expected_fit_params[1];
     double              expected_c          = expected_fit_params[2];
@@ -55,8 +55,8 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::vector<double> c_fit(nExperiments, -1);
 
     // Random number generator for finding how many of each type of decay to simulate
-    size_t                            meanNumDcsDecays = numDCSDecays(nEvents, phaseSpaceParams, maxTime);
-    std::mt19937                      generator;
+    size_t       meanNumDcsDecays = PullStudyHelpers::numDCSDecays(nEvents, phaseSpaceParams, maxTime);
+    std::mt19937 generator;
     std::poisson_distribution<size_t> cfDistribution(nEvents);
     std::poisson_distribution<size_t> dcsDistribution(meanNumDcsDecays);
 
@@ -93,9 +93,9 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     }
 
     // For each of a, b and c; plot the distance from the expected value
-    plot_parameter_distribution("a", a_fit, nExperiments);
-    plot_parameter_distribution("b", b_fit, nExperiments);
-    plot_parameter_distribution("c", c_fit, nExperiments);
+    PullStudyHelpers::plot_parameter_distribution("a", a_fit, nExperiments);
+    PullStudyHelpers::plot_parameter_distribution("b", b_fit, nExperiments);
+    PullStudyHelpers::plot_parameter_distribution("c", c_fit, nExperiments);
 }
 
 // Hide this program's main() function from ROOT's Cling interpreter and from BOOST unit tests
@@ -103,5 +103,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 int main()
 {
     pull_study(1000, 100000);
+
+    return 0;
 }
 #endif // __CINT__

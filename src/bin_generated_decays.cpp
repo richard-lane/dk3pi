@@ -14,10 +14,10 @@
 #include "TH1D.h"
 #include "TRandom.h"
 
-#include "../include/Fitter.h"
-#include "../include/PhaseSpaceBinning.h"
-#include "../include/RatioCalculator.h"
-#include "../include/ReadAmpGen.h"
+#include "../lib/Fitter.h"
+#include "../lib/PhaseSpaceBinning.h"
+#include "../lib/RatioCalculator.h"
+#include "../lib/ReadAmpGen.h"
 
 /*
  * Bin the CF and Mixed decays modelled in an AmpGen generated inputFile into phase bins as defined by $BIN_LIMITS
@@ -82,5 +82,7 @@ int main(int argc, char *argv[])
     TFile *mixedDecays    = new TFile(argv[1]);
     TFile *favouredDecays = new TFile(argv[2]);
     bin_generated_decays(mixedDecays, favouredDecays);
+
+    return 0;
 }
 #endif // __CINT__

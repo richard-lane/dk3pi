@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "../include/ReadAmpGen.h"
+#include "ReadAmpGen.h"
 
 #include "TFile.h"
 
