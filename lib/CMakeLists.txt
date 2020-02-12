@@ -1,4 +1,4 @@
-add_library(D2K3Pi STATIC
+add_library(D2K3Pi SHARED
   DecaySimulator.cpp
   Fitter.cpp
   MCGenerator.cpp
