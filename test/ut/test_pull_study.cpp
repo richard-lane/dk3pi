@@ -35,6 +35,26 @@ BOOST_AUTO_TEST_CASE(test_expected_params, *boost::unit_test::tolerance(0.000000
  */
 BOOST_AUTO_TEST_CASE(test_numbers_of_decays)
 {
-    // TODO set some reasonable DecayParams_t that gives us a positive number of DCS/CF decays
+    // Set some reasonable DecayParams that gives us a positive number of DCS/CF decays
+    // Gives a, b, c = 0.0025, 0.55, 101.5625
+    DecayParams_t DecayParams = {
+        .x     = 0.004,
+        .y     = 0.007,
+        .r     = 0.05,
+        .z_im  = -0.3,
+        .z_re  = 0.8,
+        .width = 2500.0,
+    };
+
     // Test that our code is right
+    // This test kind of sucks and im not sure why the two values aren't exactly identical but w/e
+    double maxTime     = 0.005;
+    size_t numCFDecays = 100000000;
+    size_t expectedNumDCSDecays =
+        110 * DecayParams.width /
+        (1 - std::exp(-1 * maxTime *
+                      DecayParams.width)); // 110 is the integral alculated from the above numbers using WolframAlpha
+
+    BOOST_CHECK(std::abs((int)expectedNumDCSDecays -
+                         (int)PullStudyHelpers::numDCSDecays(numCFDecays, DecayParams, maxTime)) < 500);
 }

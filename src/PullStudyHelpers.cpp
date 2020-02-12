@@ -58,8 +58,7 @@ size_t numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpacePar
     double prefactor = phaseSpaceParams.width / (1 - exp * maxTime);
 
     // crikey
-    // Put the integral (a + bt + ct^3)e^-width*t into WolframAlpha, and hopefully this is what you get
-    // TODO UT PLEASE
+    // Put the integral (a + bt + ct^2)e^-width*t into WolframAlpha, and hopefully this is what you get
     double integral =
         exp * ((-1 * phaseSpaceParams.width * (a * phaseSpaceParams.width + b * phaseSpaceParams.width * maxTime + b) -
                 c * (std::pow(phaseSpaceParams.width * maxTime, 2) + 2 * phaseSpaceParams.width * maxTime + 2)) /
