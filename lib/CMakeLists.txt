@@ -3,7 +3,6 @@ add_library(D2K3Pi STATIC
   Fitter.cpp
   MCGenerator.cpp
   PhaseSpaceBinning.cpp
-  plottingHelpers.cpp
   RatioCalculator.cpp
   ReadAmpGen.cpp
   util.cpp
