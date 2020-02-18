@@ -62,6 +62,7 @@ class SimulatedDecays : public MCGenerator
 
     /*
      * Plot graphs of the WS and RS decay rates
+     * Plots an equal number of WS and RS events
      */
     void plotRates(void);
 
