@@ -10,19 +10,18 @@
 
 /*
  * Set the decay parameters to sensible values.
- * These are taken from the values found in Bin 3 of 5 when running example_k3pi_binning.cpp in ROOT
  */
 void setParams(DecayParams_t &DecayParams)
 {
     // Global Params
-    DecayParams.x     = 0.0037;
-    DecayParams.y     = 0.0066;
-    DecayParams.width = 2439.0; // Width is in nanoseconds
+    DecayParams.x     = 0.004;
+    DecayParams.y     = 0.007;
+    DecayParams.width = 2500.0; // Width is in nanoseconds
 
     // Per-bin params
-    DecayParams.r    = 1.1319;
-    DecayParams.z_re = 0.7609;
-    DecayParams.z_im = -0.2956;
+    DecayParams.r    = 1.14;
+    DecayParams.z_re = 0.7;
+    DecayParams.z_im = -0.3;
 }
 
 /*
@@ -70,4 +69,6 @@ void simulateDecays()
 int main()
 {
     simulateDecays();
+
+    return 0;
 }

@@ -82,6 +82,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
         Fitter    MyFitter  = Fitter(MyFitData);
         MyFitter.expectedFunctionFit(0, maxTime * 1.2, "Q");
+        MyFitter.saveFitPlot("foo", "tmp.pdf");
 
         // Store the parameters a, b and c
         // We care about their distance from the expected value, adjusted by their error
@@ -102,7 +103,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(10, 100000);
+    pull_study(1, 100000);
 
     return 0;
 }

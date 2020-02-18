@@ -75,19 +75,21 @@ class SimulatedDecays : public MCGenerator
      */
     std::vector<double> WSDecayTimes{};
 
-  private:
     /*
      * Find the RS decay rate at a given time.
      * We only care about the ratio of RS to WS decays, so an overall factor (of B^2 as defined in papers) is omitted.
+     * Public for UT
      */
     double _rightSignDecayRate(const double time);
 
     /*
      * Find the WS decay rate at a given time.
      * We only care about the ratio of RS to WS decays, so an overall factor (of B^2 as defined in papers) is omitted.
+     * Public for UT
      */
     double _wrongSignDecayRate(const double time);
 
+  private:
     /*
      * Mixing parameters
      */

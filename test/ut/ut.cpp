@@ -6,3 +6,4 @@
 #include "test_ratio_calculator.cpp"
 #include "test_fitter.cpp"
 #include "test_pull_study.cpp"
+#include "test_simulator.cpp"
