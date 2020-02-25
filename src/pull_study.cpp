@@ -14,6 +14,7 @@
 #include "../lib/PhaseSpaceBinning.h"
 #include "../lib/RatioCalculator.h"
 #include "PullStudyHelpers.h"
+#include "util.h"
 
 /*
  * Perform a pull study with a specified number of experiments and events
@@ -37,7 +38,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
 
     // Create sensible time bins
-    size_t              numTimeBins = 20;
+    size_t              numTimeBins = 35;
     std::vector<double> timeBinLimits{};
     for (size_t i = 0; i < numTimeBins; ++i) {
         timeBinLimits.push_back(i * maxTime * 1.1 / numTimeBins);
@@ -74,15 +75,22 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 
         MyDecays.findDcsDecayTimes(numDcsEvents);
         MyDecays.findCfDecayTimes(numCfEvents);
+        // MyDecays.plotRates(timeBinLimits);
+
+        // Find time bin limits
+        // std::vector<double> sortedDecayTimes = std::vector<double>(MyDecays.WSDecayTimes);
+        // std::sort(sortedDecayTimes.begin(), sortedDecayTimes.end());
+        // std::vector<double> timeBinLimits = util::findBinLimits(sortedDecayTimes, 15, 0, maxTime * 1.05);
 
         RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
         MyRatios.calculateRatios();
+        MyRatios.findNumPointsPerBin("numpoints.txt");
 
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
         Fitter    MyFitter  = Fitter(MyFitData);
         MyFitter.expectedFunctionFit(0, maxTime * 1.2, "Q");
-        MyFitter.saveFitPlot("foo", "tmp.pdf");
+        // MyFitter.saveFitPlot("foo", "tmp.pdf");
 
         // Store the parameters a, b and c
         // We care about their distance from the expected value, adjusted by their error
@@ -103,7 +111,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(1, 100000);
+    pull_study(100, 500000);
 
     return 0;
 }

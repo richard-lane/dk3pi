@@ -8,6 +8,8 @@ add_library(D2K3Pi SHARED
   util.cpp
   )
 
+set(CMAKE_BUILD_TYPE Debug)
+
 target_include_directories(D2K3Pi
   PUBLIC ${CMAKE_CURRENT_LIST_DIR} "../include/"
   )

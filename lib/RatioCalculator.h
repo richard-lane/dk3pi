@@ -43,6 +43,11 @@ class RatioCalculator
     void calculateRatios(void);
 
     /*
+     * Save the numbers of DCS and CF points in each bin to file
+     */
+    void findNumPointsPerBin(const std::string &path);
+
+    /*
      * Ratio of the number of DCS to CF decays in each bin
      */
     std::vector<double> ratio{};
@@ -60,12 +65,14 @@ class RatioCalculator
 
   private:
     /*
-     * Remove NaN, inf and zero from our data
+     * Remove NaN, inf and zero from our ratios and errors.
      * Also removes the corresponding error and bin from binCentres and binWidths.
      *
      * Zeros are removed as it is assumed that they are not "truly" zero, but are zero from a lack of data.
      * If left in, zero ratios also have zero error so have the capacity to heavily skew any fit that might be made
      * later. Zeros are relatively likely to occur at large times.
+     *
+     * This does not affect the _numBins attribute, which is the number of bins passed into this function.
      */
     void _pruneBadRatios(void);
 

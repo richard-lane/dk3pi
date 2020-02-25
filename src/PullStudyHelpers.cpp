@@ -55,17 +55,18 @@ size_t numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpacePar
     double              b          = fit_params[1];
     double              c          = fit_params[2];
 
-    double prefactor = phaseSpaceParams.width / (1 - exp * maxTime);
+    double prefactor = phaseSpaceParams.width / (1 - exp);
 
-    // crikey
-    // Put the integral (a + bt + ct^2)e^-width*t into WolframAlpha, and hopefully this is what you get
-    double integral =
-        exp * ((-1 * phaseSpaceParams.width * (a * phaseSpaceParams.width + b * phaseSpaceParams.width * maxTime + b) -
-                c * (std::pow(phaseSpaceParams.width * maxTime, 2) + 2 * phaseSpaceParams.width * maxTime + 2)) /
-               std::pow(phaseSpaceParams.width, 3)) +
-        (phaseSpaceParams.width * (a * phaseSpaceParams.width + b) + 2 * c) / std::pow(phaseSpaceParams.width, 3);
+    // integral (a + bt + ct^2)e^-width*t
+    // Write our integral as x + y + z where these are each of the parts of the above integral
+    double g = phaseSpaceParams.width;
+    double x = a / g * (1 - exp);
+    double y = b / (g * g) * (1 - (g * maxTime + 1) * exp);
+    double z = c / (g * g * g) * (2 + g * maxTime * (g * maxTime + 2)) * exp;
 
-    return prefactor * integral * numCFDecays;
+    double integral = x + y + z;
+
+    return (size_t)(prefactor * integral * numCFDecays);
 }
 
 } // namespace PullStudyHelpers

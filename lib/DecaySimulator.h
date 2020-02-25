@@ -61,10 +61,9 @@ class SimulatedDecays : public MCGenerator
     void findCfDecayTimes(size_t numEvents);
 
     /*
-     * Plot graphs of the WS and RS decay rates
-     * Plots an equal number of WS and RS events
+     * Plot histograms of the number of decay rates in each time bin
      */
-    void plotRates(void);
+    void plotRates(const std::vector<double>&binLimits);
 
     /*
      * RS decay times

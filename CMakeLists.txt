@@ -23,6 +23,9 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/lib")
 # Some standard flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat-security -Werror -O0 -g")
 
+# Debug
+set(CMAKE_BUILD_TYPE Debug)
+
 # Pull study
 add_executable(pull.exe src/pull_study.cpp src/PullStudyHelpers.cpp)
 target_link_libraries(pull.exe PRIVATE D2K3Pi PRIVATE ${ROOT_LIBRARIES} PRIVATE ${Boost_LIBRARIES})

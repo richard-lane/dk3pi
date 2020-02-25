@@ -47,14 +47,24 @@ BOOST_AUTO_TEST_CASE(test_numbers_of_decays)
     };
 
     // Test that our code is right
-    // This test kind of sucks and im not sure why the two values aren't exactly identical but w/e
-    double maxTime     = 0.005;
-    size_t numCFDecays = 100000000;
-    size_t expectedNumDCSDecays =
-        110 * DecayParams.width /
-        (1 - std::exp(-1 * maxTime *
-                      DecayParams.width)); // 110 is the integral alculated from the above numbers using WolframAlpha
+    size_t              numCFDecays = 100000000;
+    double              maxTime     = 0.005;
+    std::vector<double> params      = PullStudyHelpers::expectedParams(DecayParams);
+    double              a           = params[0];
+    double              b           = params[1];
+    double              c           = params[2];
 
-    BOOST_CHECK(std::abs((int)expectedNumDCSDecays -
-                         (int)PullStudyHelpers::numDCSDecays(numCFDecays, DecayParams, maxTime)) < 500);
+    // alpha, beta, gamma are the three parts of the integral of (a + bt + ct2)exp(...)
+    double alpha = (a / DecayParams.width) * (1 - std::exp(-1 * DecayParams.width * maxTime));
+    double beta  = (b / (DecayParams.width * DecayParams.width)) *
+                  (1 - (DecayParams.width * maxTime + 1) * std::exp(-1 * DecayParams.width * maxTime));
+    double gamma = (c / std::pow(DecayParams.width, 3)) *
+                   (2 - (2 + DecayParams.width * maxTime * (DecayParams.width * maxTime + 2))) *
+                   std::exp(-1 * DecayParams.width * maxTime);
+
+    double expectedNumDCS =
+        numCFDecays * (alpha + beta + gamma) * DecayParams.width / (1 - std::exp(-1 * DecayParams.width * maxTime));
+
+    // There might be rounding errors so check they're within 2 of each other... that should be good enough...
+    BOOST_CHECK(std::abs(expectedNumDCS - PullStudyHelpers::numDCSDecays(numCFDecays, DecayParams, maxTime)) < 2.5);
 }

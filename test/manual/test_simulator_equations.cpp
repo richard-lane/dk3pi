@@ -6,6 +6,7 @@
 #include <TH1D.h>
 
 #include "DecaySimulator.h"
+#include "PullStudyHelpers.h"
 #include "util.h"
 
 /*
@@ -40,30 +41,22 @@ void simulateDecays()
     std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
 
     // Create our Decay simulator object
-    size_t          numDecays = 10000;
-    SimulatedDecays MyDecays  = SimulatedDecays(allowedTimes, allowedRates, MyParams);
-
-    MyDecays.plotRates();
+    size_t          numCfDecays  = 10000;
+    size_t          numDcsDecays = PullStudyHelpers::numDCSDecays(numCfDecays, MyParams, maxTime);
+    SimulatedDecays MyDecays     = SimulatedDecays(allowedTimes, allowedRates, MyParams);
 
     // Keep generating points, checking if they are in either distribution until both the RS and WS vectors are
     // populated.
-    MyDecays.findCfDecayTimes(numDecays);
-    MyDecays.findDcsDecayTimes(numDecays);
+    MyDecays.findCfDecayTimes(numCfDecays);
+    MyDecays.findDcsDecayTimes(numDcsDecays);
 
-    // Do some stuff with histograms
-    size_t numBins = 20;
-    TH1D * RSHist  = new TH1D("Test accept-reject, RS", "", numBins, 0, maxTime);
-    TH1D * WSHist  = new TH1D("Test accept-reject, WS", "", numBins, 0, maxTime);
-
-    for (size_t i = 0; i < numDecays; ++i) {
-        RSHist->Fill(MyDecays.RSDecayTimes[i]);
-        WSHist->Fill(MyDecays.WSDecayTimes[i]);
+    // Define some bin limits and plot the number of DCS and CF events in each bin
+    size_t              numTimeBins = 50;
+    std::vector<double> timeBinLimits{};
+    for (size_t i = 0; i < numTimeBins; ++i) {
+        timeBinLimits.push_back(i * maxTime * 1.1 / numTimeBins);
     }
-
-    util::saveToFile(RSHist, "RSHist.pdf");
-    util::saveToFile(WSHist, "WSHist.pdf");
-    delete RSHist;
-    delete WSHist;
+    MyDecays.plotRates(timeBinLimits);
 }
 
 int main()

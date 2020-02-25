@@ -5,7 +5,7 @@
 #include <iostream>
 #include <utility>
 
-#include <TGraph.h>
+#include <TH1D.h>
 
 #include "D2K3PiError.h"
 #include "DecaySimulator.h"
@@ -105,28 +105,45 @@ double SimulatedDecays::_wrongSignDecayRate(const double time)
     return (a + b * time + c * pow(time, 2)) * exp(-1.0 * _DecayParams.width * time);
 }
 
-void SimulatedDecays::plotRates(void)
+void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
 {
-    size_t N = 1000;
-    // Create vectors of times and both rates
-    std::vector<double> times  = std::vector<double>(N, 0);
-    std::vector<double> rsRate = std::vector<double>(N, 0);
-    std::vector<double> wsRate = std::vector<double>(N, 0);
-
-    for (size_t i = 0; i < N; ++i) {
-        double time = 0.000002 * i;
-        times[i]    = time;
-        rsRate[i]   = _rightSignDecayRate(time);
-        wsRate[i]   = _wrongSignDecayRate(time);
+    // Check tht WSDecayTimes and RSDecayTimes are set
+    if (WSDecayTimes.empty()) {
+        std::cerr << "WS Decay times not set" << std::endl;
+        throw D2K3PiException();
+    }
+    if (RSDecayTimes.empty()) {
+        std::cerr << "RS Decay times not set" << std::endl;
+        throw D2K3PiException();
     }
 
-    TGraph *rsGraph = new TGraph(N, times.data(), rsRate.data());
-    TGraph *wsGraph = new TGraph(N, times.data(), wsRate.data());
-    util::saveToFile(rsGraph, "rs.pdf", "AP");
-    util::saveToFile(wsGraph, "ws.pdf", "AP");
+    // Check our time bin limits are sorted and cover the entire range of time values
+    size_t numBins = timeBinLimits.size() - 1;
+    if (!std::is_sorted(timeBinLimits.begin(), timeBinLimits.end())) {
+        std::cerr << "Time bin limits should be sorted" << std::endl;
+        throw D2K3PiException();
+    }
+    if (timeBinLimits[0] > _minX || timeBinLimits[numBins] < _maxX) {
+        std::cerr << "Time bin limits do not cover entire range of possible time values: " << _minX << ", " << _maxX
+                  << std::endl;
+        throw D2K3PiException();
+    }
 
-    delete rsGraph;
-    delete wsGraph;
+    TH1D *RSHist = new TH1D("Test accept-reject, RS", "", numBins, timeBinLimits.data());
+    TH1D *WSHist = new TH1D("Test accept-reject, WS", "", numBins, timeBinLimits.data());
+
+    for (auto it = RSDecayTimes.begin(); it != RSDecayTimes.end(); ++it) {
+        RSHist->Fill(*it);
+    }
+
+    for (auto it = WSDecayTimes.begin(); it != WSDecayTimes.end(); ++it) {
+        WSHist->Fill(*it);
+    }
+
+    util::saveToFile(RSHist, "RSHist.pdf");
+    util::saveToFile(WSHist, "WSHist.pdf");
+    delete RSHist;
+    delete WSHist;
 }
 
 #endif // DECAYSIMULATOR_CPP

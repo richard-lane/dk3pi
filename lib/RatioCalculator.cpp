@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 
 #include "D2K3PiError.h"
@@ -119,6 +120,16 @@ void RatioCalculator::_pruneBadRatios(void)
         } else {
             ++it;
         }
+    }
+}
+
+void RatioCalculator::findNumPointsPerBin(const std::string &path)
+{
+    std::ofstream f(path.c_str());
+    f << "CF\tDCS" << std::endl;
+
+    for (size_t i = 0; i < _numBins; ++i) {
+        f << std::to_string(_numCfPerBin[i]) << "\t" << std::to_string(_numDcsPerBin[i]) << std::endl;
     }
 }
 
