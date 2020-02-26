@@ -17,6 +17,7 @@
  * Use this as a workaround
  */
 // Have to make it a macro so that it reports exact line numbers when checks fail.
+#ifndef CHECK_CLOSE_COLLECTIONS
 #define CHECK_CLOSE_COLLECTIONS(aa, bb, tolerance)            \
     {                                                         \
         using std::distance;                                  \
@@ -29,6 +30,7 @@
             BOOST_CHECK_CLOSE(*a, *b, tolerance);             \
         }                                                     \
     }
+#endif // CHECK_CLOSE_COLLECTIONS
 
 /*
  * Test that passing in data and bins of differing lengths causes an error

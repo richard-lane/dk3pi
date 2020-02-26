@@ -15,6 +15,26 @@
 #define TOLERANCE (0.00000000001)
 
 /*
+ * At the moment can't use boose test to check vectors of floats are equal within tolerance;
+ * Use this as a workaround
+ */
+// Have to make it a macro so that it reports exact line numbers when checks fail.
+#ifndef CHECK_CLOSE_COLLECTIONS
+#define CHECK_CLOSE_COLLECTIONS(aa, bb, tolerance)            \
+    {                                                         \
+        using std::distance;                                  \
+        using std::begin;                                     \
+        using std::end;                                       \
+        auto a = begin(aa), ae = end(aa);                     \
+        auto b = begin(bb);                                   \
+        BOOST_CHECK(distance(a, ae) == distance(b, end(bb))); \
+        for (; a != ae; ++a, ++b) {                           \
+            BOOST_CHECK_CLOSE(*a, *b, tolerance);             \
+        }                                                     \
+    }
+#endif // CHECK_CLOSE_COLLECTIONS
+
+/*
  * Fixture for creating a RatioCalculator
  */
 struct TestRatioCalculator {
@@ -146,4 +166,63 @@ BOOST_AUTO_TEST_CASE(test_prune_data, *boost::unit_test::tolerance(TOLERANCE))
     BOOST_CHECK(MyRatioCalculator.Calculator->binWidths == expectedBinWidths);
     BOOST_CHECK(MyRatioCalculator.Calculator->ratio == expectedRatios);
     BOOST_CHECK(MyRatioCalculator.Calculator->error == expectedErrors);
+}
+
+/*
+ * Integration-style test that the ratio calculator actually works
+ */
+BOOST_AUTO_TEST_CASE(it_ratio_calculator, *boost::unit_test::tolerance(TOLERANCE))
+{
+    // Create a dataset that looks like:
+    //     100 50 30 20 15
+    //      50 30 20 15  3
+    //   points in each bin, then calculate the ratio
+    std::vector<double> numerator{};
+    std::vector<double> denominator{};
+    std::vector<double> binLimits{0, 1, 2, 3, 4, 5};
+
+    // yep
+    for (size_t i = 0; i < 100; ++i) {
+        numerator.push_back(0.5);
+    }
+
+    for (size_t i = 0; i < 50; ++i) {
+        numerator.push_back(1.5);
+        denominator.push_back(0.6);
+    }
+
+    for (size_t i = 0; i < 30; ++i) {
+        numerator.push_back(2.4);
+        denominator.push_back(1.5);
+    }
+
+    for (size_t i = 0; i < 20; ++i) {
+        numerator.push_back(3.7);
+        denominator.push_back(2.3);
+    }
+
+    for (size_t i = 0; i < 15; ++i) {
+        numerator.push_back(4.5);
+        denominator.push_back(3.6);
+    }
+
+    for (size_t i = 0; i < 3; ++i) {
+        denominator.push_back(4.7);
+    }
+
+    // Find our expected ratios and their errors
+    std::vector<double> expectedRatios{2.0, 5.0 / 3.0, 3.0 / 2.0, 4.0 / 3.0, 5.0};
+    std::vector<double> expectedErrors{expectedRatios[0] * std::sqrt(0.03),
+                                       expectedRatios[1] * std::sqrt(4.0 / 75.0),
+                                       expectedRatios[2] * std::sqrt(1.0 / 12.0),
+                                       expectedRatios[3] * std::sqrt(7.0 / 60.0),
+                                       expectedRatios[4] * std::sqrt(2.0 / 5.0)};
+
+    // Use the ratio calculator to bin times and calculate ratios
+    RatioCalculator MyRatioCalculator = RatioCalculator(denominator, numerator, binLimits);
+    MyRatioCalculator.calculateRatios();
+    std::cout << "\t" << expectedErrors[1] << " " << MyRatioCalculator.error[1] << std::endl;
+
+    CHECK_CLOSE_COLLECTIONS(expectedRatios, MyRatioCalculator.ratio, TOLERANCE);
+    CHECK_CLOSE_COLLECTIONS(expectedErrors, MyRatioCalculator.error, TOLERANCE);
 }
