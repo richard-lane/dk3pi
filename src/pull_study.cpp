@@ -107,11 +107,11 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     PullStudyHelpers::plot_parameter_distribution("c", c_fit, nExperiments);
 }
 
-// Hide this program's main() function from ROOT's Cling interpreter and from BOOST unit tests
+// Hide this program's main() function from ROOT's Cling interpreter
 #ifndef __CINT__
 int main()
 {
-    pull_study(100, 500000);
+    pull_study(1, 100000);
 
     return 0;
 }
