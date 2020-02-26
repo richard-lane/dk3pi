@@ -55,42 +55,45 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::vector<double> b_fit(nExperiments, -1);
     std::vector<double> c_fit(nExperiments, -1);
 
-    // Random number generator for finding how many of each type of decay to simulate
+    // Random number generators for finding how many of each type of decay to simulate
     size_t       meanNumDcsDecays = PullStudyHelpers::numDCSDecays(nEvents, phaseSpaceParams, maxTime);
     std::mt19937 generator;
     std::poisson_distribution<size_t> cfDistribution(nEvents);
     std::poisson_distribution<size_t> dcsDistribution(meanNumDcsDecays);
 
     // a quick and dirty progress bar
+    // Note: this comes from a deprecated header, but no alterative exists yet
     boost::progress_display show_progress(nExperiments);
 
     for (size_t i = 0; i < nExperiments; ++i) {
         // Find how many events of each type we need to generate
-        // The number of events will have a well-defined mean, but will be drawn from a Poisson distribution.
+        // The number of events will have a well-defined mean, but will be drawn from Poisson distributions.
         size_t numCfEvents  = cfDistribution.operator()(generator);
         size_t numDcsEvents = dcsDistribution.operator()(generator);
 
         // Simulate DCS and CF decays with our parameters
         SimulatedDecays MyDecays = SimulatedDecays(allowedTimes, allowedRates, phaseSpaceParams);
-
         MyDecays.findDcsDecayTimes(numDcsEvents);
         MyDecays.findCfDecayTimes(numCfEvents);
-        // MyDecays.plotRates(timeBinLimits);
 
-        // Find time bin limits
-        // std::vector<double> sortedDecayTimes = std::vector<double>(MyDecays.WSDecayTimes);
-        // std::sort(sortedDecayTimes.begin(), sortedDecayTimes.end());
-        // std::vector<double> timeBinLimits = util::findBinLimits(sortedDecayTimes, 15, 0, maxTime * 1.05);
+        // Plot histograms of event counts for both event types in each time bin
+        // These will get saved as WSHist.pdf and RSHist.pdf
+        // MyDecays.plotRates(timeBinLimits);
 
         RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
         MyRatios.calculateRatios();
-        MyRatios.findNumPointsPerBin("numpoints.txt");
+
+        // Save the number of points stored in each bin to a text file
+        // MyRatios.findNumPointsPerBin("numpoints.txt");
 
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
         Fitter    MyFitter  = Fitter(MyFitData);
         MyFitter.expectedFunctionFit(0, maxTime * 1.2, "Q");
-        // MyFitter.saveFitPlot("foo", "tmp.pdf");
+
+        // Fit our fit plot to file
+        std::string path = "fitplot_" + std::to_string(i) + ".pdf";
+        MyFitter.saveFitPlot("foo", path);
 
         // Store the parameters a, b and c
         // We care about their distance from the expected value, adjusted by their error
