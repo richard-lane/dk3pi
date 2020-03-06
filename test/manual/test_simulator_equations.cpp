@@ -55,8 +55,7 @@ inline double expectedWSRate(const DecayParams_t &MyDecayParams, const double ti
  * Takes in an approximate number of points, some bin limits and a function pointer (DecayParams_t, double -> double);
  * uses them to generate a distribution of points that describes the function
  *
- * Pretty much just takes the value at the centre of the bin, applies the function, multiplies by the bin width then
- * scales the value up so that we have the right number of total points
+ * Uses 1st order trapezium rule (i.e. approximates the area of each bin with a trapezium)
  *
  */
 std::vector<size_t> expectedFunction(const size_t               approxNumPoints,
@@ -71,8 +70,10 @@ std::vector<size_t> expectedFunction(const size_t               approxNumPoints,
     std::vector<size_t> values(numBins, (size_t)NAN);
 
     for (size_t i = 0; i < numBins; ++i) {
-        double binWidth = binLimits[i + 1] - binLimits[i];
-        values[i]       = binWidth * bigNumber * func(MyParams, 0.5 * (binLimits[i] + binLimits[i + 1]));
+        double binWidth  = binLimits[i + 1] - binLimits[i];
+        double lowerFunc = func(MyParams, binLimits[i]);
+        double upperFunc = func(MyParams, binLimits[i + 1]);
+        values[i]        = bigNumber * 0.5 * binWidth * (lowerFunc + upperFunc);
     }
 
     // Want to rescale our expected values such that we have numDecays decays total
