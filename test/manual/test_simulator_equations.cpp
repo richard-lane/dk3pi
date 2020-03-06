@@ -1,9 +1,14 @@
 /*
  * Run a simulation using a SimulatedDecays object and draw a graph of the two curves.
  */
+#include <iostream>
+#include <numeric>
+#include <random>
 #include <utility>
 
+#include <TCanvas.h>
 #include <TH1D.h>
+#include <TLatex.h>
 
 #include "DecaySimulator.h"
 #include "PullStudyHelpers.h"
@@ -26,37 +31,155 @@ void setParams(DecayParams_t &DecayParams)
 }
 
 /*
- * Create an object representing the RS and WS decays and plot their time dependence using sensible values for the
- * particle and phase-space parameters.
+ * Favoured decay rate at a given time
+ */
+inline double expectedRSRate(const DecayParams_t &MyDecayParams, const double time)
+{
+    return std::exp(-1 * MyDecayParams.width * time);
+}
+
+/*
+ * Suppressed decay rate at a given time
+ */
+inline double expectedWSRate(const DecayParams_t &MyDecayParams, const double time)
+{
+    return std::exp(-1 * MyDecayParams.width * time) *
+           (MyDecayParams.r * MyDecayParams.r +
+            MyDecayParams.width * MyDecayParams.r *
+                (MyDecayParams.y * MyDecayParams.z_re + MyDecayParams.x * MyDecayParams.z_im) * time +
+            0.25 * (MyDecayParams.x * MyDecayParams.x + MyDecayParams.y * MyDecayParams.y) * MyDecayParams.width *
+                MyDecayParams.width * time * time);
+}
+
+/*
+ * Takes in an approximate number of points, some bin limits and a function pointer (DecayParams_t, double -> double);
+ * uses them to generate a distribution of points that describes the function
+ *
+ * Pretty much just takes the value at the centre of the bin, applies the function, multiplies by the bin width then
+ * scales the value up so that we have the right number of total points
+ *
+ */
+std::vector<size_t> expectedFunction(const size_t               approxNumPoints,
+                                     const DecayParams_t &      MyParams,
+                                     const std::vector<double> &binLimits,
+                                     double (*func)(const DecayParams_t &, const double))
+{
+    // Evaluate func(time) * bigNumber to get a large number in each bin
+    // Otherwise wen we cast our double func() value to a size_t it will just end up being 0
+    size_t              bigNumber = 1000000000;
+    size_t              numBins   = binLimits.size() - 1;
+    std::vector<size_t> values(numBins, (size_t)NAN);
+
+    for (size_t i = 0; i < numBins; ++i) {
+        double binWidth = binLimits[i + 1] - binLimits[i];
+        values[i]       = binWidth * bigNumber * func(MyParams, 0.5 * (binLimits[i] + binLimits[i + 1]));
+    }
+
+    // Want to rescale our expected values such that we have numDecays decays total
+    size_t numEvents = std::accumulate(values.begin(), values.end(), (size_t)0);
+    std::transform(
+        values.begin(),
+        values.end(),
+        values.begin(),
+        std::bind(std::multiplies<double>(), std::placeholders::_1, (double)approxNumPoints / (double)numEvents));
+
+    return values;
+}
+
+/*
+ * Using the forms of the functions given in S Harnew's paper, generate a histogram of expected of DCS and CF events
+ * The, use the decay simulator to generate the right numbers of DCS and CF events (we want to have the same numbers of
+ * analytical + accept-reject events for both decay types)
+ *
+ * Plot two histograms with acc-rej and analytical histograms overlaid, WS.pdf and RS.pdf
+ *
+ * This function Sucks but its a script that I only really intend to run once, so thats probably ok
  */
 void simulateDecays()
 {
-    // Create a struct of sensible parameter values to use.
+    // Parameter values
     DecayParams_t MyParams;
     setParams(MyParams);
+    double maxTime = 0.002;
 
-    // Allow times up to maxTime nanoseconds and rates up to 1.5 (arbitary units; we only care about ratios)
-    double                    maxTime      = 0.002;
-    std::pair<double, double> allowedTimes = std::make_pair(0, maxTime);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
-
-    // Create our Decay simulator object
-    size_t          numCfDecays  = 10000;
-    size_t          numDcsDecays = PullStudyHelpers::numDCSDecays(numCfDecays, MyParams, maxTime);
-    SimulatedDecays MyDecays     = SimulatedDecays(allowedTimes, allowedRates, MyParams);
-
-    // Keep generating points, checking if they are in either distribution until both the RS and WS vectors are
-    // populated.
-    MyDecays.findCfDecayTimes(numCfDecays);
-    MyDecays.findDcsDecayTimes(numDcsDecays);
-
-    // Define some bin limits and plot the number of DCS and CF events in each bin
+    // Define time bin limits
     size_t              numTimeBins = 50;
     std::vector<double> timeBinLimits{};
-    for (size_t i = 0; i < numTimeBins; ++i) {
+    for (size_t i = 0; i < numTimeBins + 1; ++i) {
         timeBinLimits.push_back(i * maxTime * 1.1 / numTimeBins);
     }
-    MyDecays.plotRates(timeBinLimits);
+
+    // Choose about how many decays we want
+    // This won't be exact- we convert a vector of doubles to a vector of size_t, so we end don't get the exact number
+    // we want
+    size_t approxNumDecays = 100000;
+
+    // Take the centre of each time bin, calculate the rate in each and multiply it by a large number to get many events
+    // in each bin
+    std::vector<size_t> expectedCfBinPopulation =
+        expectedFunction(approxNumDecays, MyParams, timeBinLimits, expectedRSRate);
+    std::vector<size_t> expectedDcsBinPopulation =
+        expectedFunction(approxNumDecays, MyParams, timeBinLimits, expectedWSRate);
+
+    // After rescaling, count how many of each event type we have (should be about approxNumDecays)
+    size_t numCf  = std::accumulate(expectedCfBinPopulation.begin(), expectedCfBinPopulation.end(), (size_t)0);
+    size_t numDcs = std::accumulate(expectedDcsBinPopulation.begin(), expectedDcsBinPopulation.end(), (size_t)0);
+
+    // Create our Decay simulator object and generate CF and DCS times using accept-reject
+    // Assume our maximum rate is at t=0 ... this will break if we introduce an efficiency function!
+    double                    maxRate      = std::max(expectedRSRate(MyParams, 0), expectedWSRate(MyParams, 0));
+    std::pair<double, double> allowedTimes = std::make_pair(0, maxTime);
+    std::pair<double, double> allowedRates = std::make_pair(0, maxRate);
+    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, MyParams);
+    MyDecays.findCfDecayTimes(numCf);
+    MyDecays.findDcsDecayTimes(numDcs);
+
+    // Plot both the expected and Monte-Carlo generated decay rates on the same axes
+    TH1D *generatedRSHist = new TH1D("Test accept-reject, RS",
+                                     "RS expected and Monte-Carlo event numbers;time/ns",
+                                     numTimeBins - 1,
+                                     timeBinLimits.data());
+    TH1D *generatedWSHist = new TH1D("Test accept-reject, WS",
+                                     "WS expected and Monte-Carlo event numbers;time/ns",
+                                     numTimeBins - 1,
+                                     timeBinLimits.data());
+    TH1D *expectedRSHist  = new TH1D("expected, RS", "", numTimeBins - 1, timeBinLimits.data());
+    TH1D *expectedWSHist  = new TH1D("expected, WS", "", numTimeBins - 1, timeBinLimits.data());
+
+    // Histogram of our acc-rej data
+    generatedRSHist->FillN(numCf, MyDecays.RSDecayTimes.data(), nullptr);
+    generatedWSHist->FillN(numDcs, MyDecays.WSDecayTimes.data(), nullptr);
+
+    // Histogram of our expected data
+    // Bin numbering starts at 1 for some reason
+    for (size_t i = 1; i <= numTimeBins; ++i) {
+        expectedRSHist->SetBinContent(i, expectedCfBinPopulation[i - 1]);
+        expectedWSHist->SetBinContent(i, expectedDcsBinPopulation[i - 1]);
+    }
+
+    TCanvas *rsCanvas = new TCanvas();
+    rsCanvas->cd();
+    generatedRSHist->Draw("");
+    generatedRSHist->SetMinimum(0);
+    generatedRSHist->SetMaximum(numCf / (8 * numTimeBins / 50));
+    expectedRSHist->Draw("CSAME");
+    rsCanvas->SaveAs("RS.pdf");
+    delete rsCanvas;
+
+    TCanvas *wsCanvas = new TCanvas();
+    wsCanvas->cd();
+    generatedWSHist->Draw("");
+    generatedWSHist->SetMinimum(0);
+    generatedWSHist->SetMaximum(
+        numCf / (8 * numTimeBins / 50)); // Use numCf to set axis limits so they are the same for both histograms
+    expectedWSHist->Draw("CSAME");
+    wsCanvas->SaveAs("WS.pdf");
+    delete wsCanvas;
+
+    delete generatedRSHist;
+    delete generatedWSHist;
+    delete expectedRSHist;
+    delete expectedWSHist;
 }
 
 int main()

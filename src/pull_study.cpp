@@ -38,11 +38,11 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
 
     // Create sensible time bins
-    size_t              numTimeBins = 35;
-    std::vector<double> timeBinLimits{};
-    for (size_t i = 0; i < numTimeBins; ++i) {
-        timeBinLimits.push_back(i * maxTime * 1.1 / numTimeBins);
-    }
+    // size_t              numTimeBins = 500;
+    // std::vector<double> timeBinLimits{};
+    // for (size_t i = 0; i < numTimeBins; ++i) {
+    //    timeBinLimits.push_back(i * maxTime * 1.1 / numTimeBins);
+    //}
 
     // Calculate what we expect our fit parameters to be
     std::vector<double> expected_fit_params = PullStudyHelpers::expectedParams(phaseSpaceParams);
@@ -80,11 +80,16 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         // These will get saved as WSHist.pdf and RSHist.pdf
         // MyDecays.plotRates(timeBinLimits);
 
+        // Find bin limits such that we have at least 10 DCS points per bin
+        std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
+        std::sort(dcsTimes.begin(), dcsTimes.end());
+        std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 100, 0, 1.05 * maxTime);
+
         RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
         MyRatios.calculateRatios();
 
         // Save the number of points stored in each bin to a text file
-        // MyRatios.findNumPointsPerBin("numpoints.txt");
+        MyRatios.findNumPointsPerBin("numpoints.txt");
 
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
@@ -92,8 +97,8 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         MyFitter.expectedFunctionFit(0, maxTime * 1.2, "Q");
 
         // Fit our fit plot to file
-        std::string path = "fitplot_" + std::to_string(i) + ".pdf";
-        MyFitter.saveFitPlot("foo", path);
+        // std::string path = "fitplot_" + std::to_string(i) + ".pdf";
+        // MyFitter.saveFitPlot("foo", path);
 
         // Store the parameters a, b and c
         // We care about their distance from the expected value, adjusted by their error
@@ -114,7 +119,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(1, 100000);
+    pull_study(500, 100000);
 
     return 0;
 }

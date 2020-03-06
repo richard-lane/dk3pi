@@ -73,7 +73,7 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
     binLimits[numBins] = highBin;
     for (size_t i = 1; i < numBins; ++i) {
         // Place our interim bin limits halfway between a point and its neighbour
-        binLimits[i] = 0.5 * (dataSet[numBins * i - 1] + (dataSet[numBins * i]));
+        binLimits[i] = 0.5 * (dataSet[minPointsPerBin * i - 1] + dataSet[minPointsPerBin * i]);
     }
 
     return binLimits;

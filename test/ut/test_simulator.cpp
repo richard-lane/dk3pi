@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(test_ws_rate, *boost::unit_test::tolerance(SIMULATOR_CPP_TO
         .width = 2500.0,
     };
 
-    // Define what we expect our RS decay rate to be
+    // Define what we expect our WS decay rate to be
     auto expectedWSRate = [](const DecayParams_t &MyDecayParams, const double time) {
         return std::exp(-1 * MyDecayParams.width * time) *
                (MyDecayParams.r * MyDecayParams.r +
