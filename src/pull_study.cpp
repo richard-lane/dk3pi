@@ -2,6 +2,7 @@
  * Perform a pull study for our fitter
  */
 
+#include <algorithm>
 #include <boost/progress.hpp>
 #include <random>
 #include <vector>
@@ -76,14 +77,14 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         MyDecays.findDcsDecayTimes(numDcsEvents);
         MyDecays.findCfDecayTimes(numCfEvents);
 
-        // Plot histograms of event counts for both event types in each time bin
-        // These will get saved as WSHist.pdf and RSHist.pdf
-        // MyDecays.plotRates(timeBinLimits);
-
         // Find bin limits such that we have at least 10 DCS points per bin
         std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
         std::sort(dcsTimes.begin(), dcsTimes.end());
         std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 100, 0, 1.05 * maxTime);
+
+        // Plot histograms of event counts for both event types in each time bin
+        // These will get saved as WSHist.pdf and RSHist.pdf
+        // MyDecays.plotRates(timeBinLimits);
 
         RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
         MyRatios.calculateRatios();
@@ -119,7 +120,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(500, 100000);
+    pull_study(100, 100000);
 
     return 0;
 }
