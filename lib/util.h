@@ -23,6 +23,12 @@ boost::filesystem::path concatPaths(std::string plotDir, std::string plotName, s
 void saveToFile(TObject *myObject, const std::string &path, const std::string &drawOptions = "");
 
 /*
+ * Find how many points of myVector belong in each bin defined by binLimits
+ *
+ */
+std::vector<size_t> binVector(const std::vector<double> &myVector, const std::vector<double> &binLimits);
+
+/*
  * Utility function to find bin limits given a dataset and the minimum number of points in each bin
  * Creates as many bins as possible containing exactly the minimum number of points; the last bin may contain more
  * points than the minimum.

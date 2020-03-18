@@ -32,6 +32,36 @@ void saveToFile(TObject *myObject, const std::string &path, const std::string &d
     delete c;
 }
 
+std::vector<size_t> binVector(const std::vector<double> &myVector, const std::vector<double> &binLimits)
+{
+    size_t              numBins = binLimits.size() - 1;
+    std::vector<size_t> numPerBin(numBins);
+
+    // First sort our vector which should make things easier
+    std::vector<double> sortedVector = myVector;
+    std::sort(sortedVector.begin(), sortedVector.end());
+
+    // Iterate over the vector
+    size_t currentBin = 1;
+    for (auto it = sortedVector.begin(); it != sortedVector.end(); ++it) {
+        // If this value is more than the current bin limit, we want to put subsequent points in a higher bin.
+        while (*it > binLimits[currentBin]) {
+            ++currentBin;
+
+            // Ensure that we never try to put a point into a bin that doesn't exist
+            if (currentBin > numBins) {
+                std::cerr << "Attempted to insert points into a bin that doesn't exist." << std::endl;
+                throw D2K3PiException();
+            }
+        }
+
+        // currentBin starts at 1 but vector indexing starts at 0.
+        ++numPerBin[currentBin - 1];
+    }
+
+    return numPerBin;
+}
+
 std::vector<double> findBinLimits(const std::vector<double> &dataSet,
                                   const size_t               minPointsPerBin,
                                   const double               lowBin,

@@ -18,13 +18,6 @@ class RatioCalculator
                     const std::vector<double> &binLimits);
 
     /*
-     * Find how many points of myVector belong in each bin defined by binLimits
-     *
-     * Public to allow for unit testing
-     */
-    std::vector<size_t> binVector(const std::vector<double> &myVector, const std::vector<double> &binLimits);
-
-    /*
      * Find the ratio of each element of two vectors, and its associated error assuming both vectors obey Poisson
      * statistics.
      * Returns a vector of std::pairs (ratio, error).

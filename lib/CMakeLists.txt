@@ -2,6 +2,7 @@ add_library(D2K3Pi SHARED
   DecaySimulator.cpp
   Fitter.cpp
   MCGenerator.cpp
+  MinuitFitter.cpp
   PhaseSpaceBinning.cpp
   RatioCalculator.cpp
   ReadAmpGen.cpp

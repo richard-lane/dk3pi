@@ -79,7 +79,7 @@ FitData::FitData(const std::vector<double>& myBinCentres,
                    binErrors.begin(),
                    std::bind(std::multiplies<double>(), std::placeholders::_1, 0.5));
     */
-   binErrors = std::vector<double>(dataLength, 0.0);
+    binErrors = std::vector<double>(dataLength, 0.0);
 }
 
 Fitter::Fitter(const FitData_t& fitData)

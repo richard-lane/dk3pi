@@ -59,3 +59,17 @@ BOOST_AUTO_TEST_CASE(test_find_bin_limits, *boost::unit_test::tolerance(10 * DBL
     std::vector<double> actualBinLimits   = util::findBinLimits(data, 3, 0.5, 10.5);
     BOOST_CHECK(expectedBinLimits == actualBinLimits);
 }
+
+/*
+ * Check that a vector is binned as expected.
+ */
+BOOST_AUTO_TEST_CASE(test_vector_binning)
+{
+    const std::vector<double> decayTimes = {1, 6, 3, 4, 5, 2, 7, 8, 9};
+    const std::vector<double> binLimits  = {0.5, 1.5, 3.5, 7.5, 9.5};
+
+    // With this data expect bins of size (1, 2, 4, 2)
+    std::vector<size_t> expectedNumPerBin = {1, 2, 4, 2};
+
+    BOOST_CHECK(util::binVector(decayTimes, binLimits) == expectedNumPerBin);
+}

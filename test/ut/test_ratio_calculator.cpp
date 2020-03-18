@@ -63,22 +63,6 @@ BOOST_AUTO_TEST_CASE(test_unsorted_bin_limits_exception)
 }
 
 /*
- * Check that a vector is binned as expected.
- */
-BOOST_AUTO_TEST_CASE(test_vector_binning)
-{
-    const std::vector<double> decayTimes = {1, 6, 3, 4, 5, 2, 7, 8, 9};
-    const std::vector<double> binLimits  = {0.5, 1.5, 3.5, 7.5, 9.5};
-
-    TestRatioCalculator MyRatioCalculator(decayTimes, decayTimes, binLimits);
-
-    // With this data expect bins of size (1, 2, 4, 2)
-    std::vector<size_t> expectedNumPerBin = {1, 2, 4, 2};
-
-    BOOST_CHECK(MyRatioCalculator.Calculator->binVector(decayTimes, binLimits) == expectedNumPerBin);
-}
-
-/*
  * Check that the ratio of two vectors and its error is calculated correctly
  * Will be comparing floating points for equality, so set a reasonably small value for floating point tolerance.
  */
