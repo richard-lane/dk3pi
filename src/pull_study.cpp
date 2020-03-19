@@ -125,7 +125,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(1000, 100000);
+    pull_study(1, 100000);
 
     return 0;
 }

@@ -208,6 +208,15 @@ void Fitter::fitUsingMinuit2ChiSq(const std::vector<double>& initialParams, cons
     ROOT::Minuit2::VariableMetricMinimizer Minimizer;
     ROOT::Minuit2::FunctionMinimum         min = Minimizer.Minimize(FitFcn, initialParams, initialErrors);
 
+    // Check that our solution is "valid"
+    // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible to
+    // be sure with Minuit2
+    if (!min.IsValid()) {
+        std::cerr << "Minuit fit invalid" << std::endl;
+        // It would be nice to print out the Minimiser status here but std::cout << doesn't work (the docs are lying)
+        throw D2K3PiException();
+    }
+
     // Set our fitParams to the values obtained in the fit
     // I couldn't find an obvious way to do this so... here we are
     fitParams.fitParams = std::vector<double>{min.UserParameters().Parameter(0).Value(),
