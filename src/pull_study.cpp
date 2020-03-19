@@ -95,9 +95,14 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
         Fitter    MyFitter  = Fitter(MyFitData);
-        MyFitter.expectedFunctionFit(0, maxTime * 1.2, "Q");
+        // MyFitter.fitUsingRootCustomFcn(0, maxTime * 1.2, "Q");
 
-        // Fit our fit plot to file
+        // Initially guess the parameters are their known values...
+        std::vector<double> parameterGuess{expected_a, expected_b, expected_c};
+        std::vector<double> errorGuess{1, 1, 1};
+        MyFitter.fitUsingMinuit2ChiSq(parameterGuess, errorGuess);
+
+        // Save our fit plot to file
         // std::string path = "fitplot_" + std::to_string(i) + ".pdf";
         // MyFitter.saveFitPlot("foo", path);
 
@@ -120,7 +125,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(100, 100000);
+    pull_study(1000, 100000);
 
     return 0;
 }

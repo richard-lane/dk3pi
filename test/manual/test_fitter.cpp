@@ -51,8 +51,8 @@ Fitter performFit(size_t numTimeBins, double maxTime, double a, double b, double
     // Fit our idealised plot
     FitData_t MyFitData = FitData(times, std::vector<double>(numTimeBins, timeBinWidth), ratios, ratioErrors);
     Fitter    MyFitter(MyFitData);
-    MyFitter.expectedFunctionFit(0, maxTime, "Q");
-    //MyFitter.saveFitPlot("Generated DCS/CF ratios", "baz.pdf");
+    MyFitter.fitUsingRootCustomFcn(0, maxTime, "Q");
+    // MyFitter.saveFitPlot("Generated DCS/CF ratios", "baz.pdf");
 
     return MyFitter;
 }

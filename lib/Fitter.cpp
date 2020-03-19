@@ -10,8 +10,11 @@
 #include "D2K3PiError.h"
 #include "DecaySimulator.h"
 #include "Fitter.h"
+#include "MinuitFitter.h"
 #include "util.h"
 
+#include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/VariableMetricMinimizer.h"
 #include "TF1.h"
 #include "TFitResult.h"
 #include "TGraphErrors.h"
@@ -89,7 +92,7 @@ Fitter::Fitter(const FitData_t& fitData)
     _fitData = fitData;
 }
 
-void Fitter::pol2fit(const std::string& options)
+void Fitter::fitUsingRootBuiltinPol2(const std::string& options)
 {
     // Set our TGraph thing to the right thing
     _plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
@@ -115,7 +118,7 @@ void Fitter::pol2fit(const std::string& options)
     fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());
 }
 
-void Fitter::expectedFunctionFit(const double minTime, const double maxTime, const std::string& options)
+void Fitter::fitUsingRootCustomFcn(const double minTime, const double maxTime, const std::string& options)
 {
     // Set our TGraph pointer to the right thing
     _plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
@@ -145,6 +148,79 @@ void Fitter::expectedFunctionFit(const double minTime, const double maxTime, con
 
     // Assign some memory to our correlation matrix
     fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());
+}
+
+TMatrixD Fitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector)
+{
+    // Check that we have the right number of elements in our covariance vector
+    size_t numElements       = covarianceVector.size();
+    size_t numFitParamErrors = fitParams.fitParamErrors.size();
+
+    if (numFitParamErrors == 0) {
+        std::cerr << "Fit has not yet been performed; fit param error vector is empty." << std::endl;
+        throw D2K3PiException();
+    }
+
+    size_t expectedVectorLength = numFitParamErrors * (numFitParamErrors + 1) / 2;
+    if (expectedVectorLength != numElements) {
+        std::cerr << "Have " << numFitParamErrors << " fit params but " << numElements
+                  << " elements in covariance vector (expected " << expectedVectorLength << ")" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Create an empty TMatrixD that we will fill with the right values
+    TMatrixD CorrMatrix = TMatrixD(numFitParamErrors, numFitParamErrors);
+
+    // We need to divide each element in our vector of covariances with the standard deviation of two parameters
+    // We will need to find the position in the matrix of each element in our covariance vector, so we know which
+    // errors to divide by
+    size_t column = -1; // We just want a number such that when we add 1 we get 0; unsigned int overflow is safe!
+    size_t row    = 0;
+    for (auto it = covarianceVector.begin(); it != covarianceVector.end(); ++it) {
+        column++;
+        if (column > row) {
+            row++;
+            column = 0;
+        }
+        // Now that we know which variances to divide by, let's do it
+        double correlation      = *it / (fitParams.fitParamErrors[column] * fitParams.fitParamErrors[row]);
+        CorrMatrix[column][row] = correlation;
+
+        if (column != row) {
+            CorrMatrix[row][column] = correlation;
+        }
+    }
+    return CorrMatrix;
+}
+
+void Fitter::fitUsingMinuit2ChiSq(const std::vector<double>& initialParams, const std::vector<double>& initialErrors)
+{
+    // Check that we have been passed 3 initial parameters and errors
+    if (initialParams.size() != 3 || initialErrors.size() != 3) {
+        std::cout << "fitUsingMinuit2ChiSq requires a guess of all 3 parameters and their errors" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Create an object representing our Minuit2-compatible 2nd order polynomial
+    PolynomialFitFcn FitFcn(_fitData.data, _fitData.binCentres, _fitData.errors);
+
+    // Create a minimiser and minimise our chi squared
+    ROOT::Minuit2::VariableMetricMinimizer Minimizer;
+    ROOT::Minuit2::FunctionMinimum         min = Minimizer.Minimize(FitFcn, initialParams, initialErrors);
+
+    // Set our fitParams to the values obtained in the fit
+    // I couldn't find an obvious way to do this so... here we are
+    fitParams.fitParams = std::vector<double>{min.UserParameters().Parameter(0).Value(),
+                                              min.UserParameters().Parameter(1).Value(),
+                                              min.UserParameters().Parameter(2).Value()};
+
+    fitParams.fitParamErrors = std::vector<double>{min.UserParameters().Parameter(0).Error(),
+                                                   min.UserParameters().Parameter(1).Error(),
+                                                   min.UserParameters().Parameter(2).Error()};
+
+    // Acquire a vector representing the covariance matrix and convert it to a correlation matrix
+    fitParams.correlationMatrix =
+        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
 }
 
 void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)

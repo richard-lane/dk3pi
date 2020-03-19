@@ -85,22 +85,39 @@ class Fitter
     Fitter(const FitData_t& fitData);
 
     /*
-     * Fit our data to a second order polynomial.
+     * Fit our data to a second order polynomial, using ROOT's builtin "pol2" function
      * Sets fitParams attribute and allocates memory to _plot.
      *
-     * Sets .fitParams.fitParams to a vector of {a0, a1, a2} and similarly sets the errors.
-     *
      * Fit options can be passed via the options argument.
+     *
+     * Populates fitParams
      */
-    void pol2fit(const std::string& options = "");
+    void fitUsingRootBuiltinPol2(const std::string& options = "");
 
     /*
-     * Fit our data to the equation we expect to see
+     * Fit our data to the equation we expect to see, using ROOT's builtin TGraph fitter.
      * At the moment this is just a second order polynomial.
      *
      * minTime and maxTime define the range over which the function is defined.
+     *
+     * Populates fitParams
      */
-    void expectedFunctionFit(const double minTime, const double maxTime, const std::string& options = "");
+    void fitUsingRootCustomFcn(const double minTime, const double maxTime, const std::string& options = "");
+
+    /*
+     * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
+     *
+     * The user should provide an initial guess at the parameters and their errors
+     *
+     * Populates fitParams
+     */
+    void fitUsingMinuit2ChiSq(const std::vector<double>& initialParams, const std::vector<double>& initialErrors);
+
+    /*
+     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
+     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
+     */
+    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
 
     /*
      * Save a plot of our data and fit to file

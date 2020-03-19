@@ -65,7 +65,7 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
         FitData_t thisBinFitData =
             FitData(ratios[bin].binCentres, ratios[bin].binWidths, ratios[bin].ratio, ratios[bin].error);
         fitters.push_back(Fitter(thisBinFitData));
-        fitters[bin].pol2fit();
+        fitters[bin].fitUsingRootBuiltinPol2();
         std::string title = "PhaseSpaceBin" + std::to_string(bin) + ".pdf";
         fitters[bin].saveFitPlot(title, title);
     }
