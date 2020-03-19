@@ -9,6 +9,7 @@
 
 #include "DecaySimulator.h"
 
+#include "Minuit2/FunctionMinimum.h"
 #include "TGraphErrors.h"
 #include "TMatrixD.h"
 
@@ -98,6 +99,8 @@ class Fitter
      * Fit our data to the equation we expect to see, using ROOT's builtin TGraph fitter.
      * At the moment this is just a second order polynomial.
      *
+     * Allocates memory to _plot
+     *
      * minTime and maxTime define the range over which the function is defined.
      *
      * Populates fitParams
@@ -108,6 +111,8 @@ class Fitter
      * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
      *
      * The user should provide an initial guess at the parameters and their errors
+     *
+     * Allocates memory to _plot and simultaneously plots our data and the best fit line.
      *
      * Populates fitParams
      */
@@ -131,14 +136,25 @@ class Fitter
 
   private:
     /*
+     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
+     */
+    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
+
+    /*
      * The data used to make the fit
      */
     FitData_t _fitData;
 
     /*
-     * ROOT TGraph object used for performing the fit
+     * ROOT TGraph object used for holding input data. Can also be used to perform one of ROOT's builtin fits.
      */
     std::unique_ptr<TGraphErrors> _plot = nullptr;
+
+    /*
+     * ROOT TGraph object that used for representing the best-fit of our data, in the case that ROOT is not used to
+     * perform a builtin fit (e.g. when Minuit2 is used directly.)
+     */
+    std::unique_ptr<TGraph> _bestFitPlot = nullptr;
 };
 
 #endif // FITTER_H

@@ -28,10 +28,10 @@ double SimplePolynomialFunction::operator()(double x) const
     return _a + _b * x + _c * x * x;
 }
 
-PolynomialFitFcn::PolynomialFitFcn(const std::vector<double>& meas,
-                                   const std::vector<double>& pos,
-                                   const std::vector<double>& mvar)
-    : _theMeasurements(meas), _thePositions(pos), _theMVariances(mvar), _theErrorDef(1.)
+PolynomialFitFcn::PolynomialFitFcn(const std::vector<double>& data,
+                                   const std::vector<double>& times,
+                                   const std::vector<double>& errors)
+    : _theMeasurements(data), _thePositions(times), _theMVariances(errors), _theErrorDef(1.)
 {
     ;
 }

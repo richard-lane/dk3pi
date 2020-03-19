@@ -80,7 +80,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         // Find bin limits such that we have at least 10 DCS points per bin
         std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
         std::sort(dcsTimes.begin(), dcsTimes.end());
-        std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 100, 0, 1.05 * maxTime);
+        std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 10, 0, 1.05 * maxTime);
 
         // Plot histograms of event counts for both event types in each time bin
         // These will get saved as WSHist.pdf and RSHist.pdf
@@ -125,7 +125,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(1, 100000);
+    pull_study(250, 100000);
 
     return 0;
 }

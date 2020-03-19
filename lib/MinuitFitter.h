@@ -54,7 +54,9 @@ class PolynomialFitFcn : public ROOT::Minuit2::FCNBase
     /*
      * Sets the various private members
      */
-    PolynomialFitFcn(const std::vector<double>& meas, const std::vector<double>& pos, const std::vector<double>& mvar);
+    PolynomialFitFcn(const std::vector<double>& data,
+                     const std::vector<double>& times,
+                     const std::vector<double>& errors);
 
     /*
      * Maybe we need a destructor

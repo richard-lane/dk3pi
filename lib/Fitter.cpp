@@ -15,6 +15,7 @@
 
 #include "Minuit2/FunctionMinimum.h"
 #include "Minuit2/VariableMetricMinimizer.h"
+#include "TCanvas.h"
 #include "TF1.h"
 #include "TFitResult.h"
 #include "TGraphErrors.h"
@@ -217,6 +218,30 @@ void Fitter::fitUsingMinuit2ChiSq(const std::vector<double>& initialParams, cons
         throw D2K3PiException();
     }
 
+    // Store our fit parameters and correlation matrix as class attributes
+    _storeMinuitFitParams(min);
+
+    // Set our TGraph pointer to the right thing
+    _plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
+                                           _fitData.binCentres.data(),
+                                           _fitData.data.data(),
+                                           _fitData.binErrors.data(),
+                                           _fitData.errors.data());
+
+    // Create also a best-fit dataset from our parameters and data, plotting this on the same
+    std::vector<double> bestFitData{_fitData.binCentres};
+    std::transform(bestFitData.begin(), bestFitData.end(), bestFitData.begin(), [&](double time) {
+        return fitParams.fitParams[0] + fitParams.fitParams[1] * time + fitParams.fitParams[2] * time * time;
+    });
+    std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
+
+    _bestFitPlot = std::make_unique<TGraphErrors>(
+        _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
+}
+
+void Fitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
+{
+
     // Set our fitParams to the values obtained in the fit
     // I couldn't find an obvious way to do this so... here we are
     fitParams.fitParams = std::vector<double>{min.UserParameters().Parameter(0).Value(),
@@ -227,7 +252,7 @@ void Fitter::fitUsingMinuit2ChiSq(const std::vector<double>& initialParams, cons
                                                    min.UserParameters().Parameter(1).Error(),
                                                    min.UserParameters().Parameter(2).Error()};
 
-    // Acquire a vector representing the covariance matrix and convert it to a correlation matrix
+    // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
     fitParams.correlationMatrix =
         std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
 }
@@ -250,7 +275,18 @@ void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)
     _plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
 
     // Save our fit to file
-    util::saveToFile(_plot.get(), path, "AP");
+    // Not using utill::saveToFile as that only does one object at a time
+    TCanvas* c = new TCanvas();
+    c->cd();
+    _plot->Draw("AP");
+
+    if (_bestFitPlot != nullptr) {
+        _bestFitPlot->SetLineColor(kRed);
+        _bestFitPlot->Draw("CSAME");
+    }
+    c->SaveAs(path.c_str());
+
+    delete c;
 }
 
 #endif // FITTER_CPP
