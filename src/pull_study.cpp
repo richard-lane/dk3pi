@@ -103,8 +103,8 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         MyFitter.fitUsingMinuit2ChiSq(parameterGuess, errorGuess);
 
         // Save our fit plot to file
-        std::string path = "fitplot_" + std::to_string(i) + ".pdf";
-        MyFitter.saveFitPlot("foo", path);
+        // std::string path = "fitplot_" + std::to_string(i) + ".pdf";
+        // MyFitter.saveFitPlot("foo", path);
 
         // Store the parameters a, b and c
         // We care about their distance from the expected value, adjusted by their error

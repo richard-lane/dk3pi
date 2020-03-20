@@ -116,6 +116,7 @@ class BasePolynomialFcn : public ROOT::Minuit2::FCNBase
  */
 class PolynomialChiSqFcn : public BasePolynomialFcn
 {
+  public:
     /*
      * Calls parent constructor
      */
