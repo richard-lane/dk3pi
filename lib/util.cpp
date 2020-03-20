@@ -8,6 +8,8 @@
 #include <iostream>
 
 #include "TCanvas.h"
+#include "TGraph.h"
+#include "TGraphErrors.h"
 
 #include "D2K3PiError.h"
 #include "util.h"
@@ -22,7 +24,7 @@ boost::filesystem::path concatPaths(std::string plotDir, std::string plotName, s
     return dir / file;
 }
 
-void saveToFile(TObject *myObject, const std::string &path, const std::string &drawOptions)
+void saveObjectToFile(TObject *myObject, const std::string &path, const std::string &drawOptions)
 {
     TCanvas *c = new TCanvas();
     c->cd();
@@ -30,6 +32,35 @@ void saveToFile(TObject *myObject, const std::string &path, const std::string &d
     c->SaveAs(path.c_str());
 
     delete c;
+}
+
+template <typename T>
+void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
+                       const std::vector<std::string> &drawOptions,
+                       const std::string &             path)
+{
+    // Check that we have the same number of objects as options
+    size_t numObjects     = myObjects.size();
+    size_t numDrawOptions = drawOptions.size();
+    if (numObjects != numDrawOptions) {
+        std::cerr << "Must pass same number of objects and options, have " << numObjects << " and " << numDrawOptions
+                  << "." << std::endl;
+        throw D2K3PiException();
+    }
+    if (numObjects == 0) {
+        std::cerr << "Cannot plot 0 objects" << std::endl;
+        throw D2K3PiException();
+    }
+
+    TCanvas *canvas = new TCanvas();
+    canvas->cd();
+
+    for (size_t i = 0; i < numObjects; ++i) {
+        ((T *)myObjects[i])->Draw(drawOptions[i].c_str());
+    }
+
+    canvas->SaveAs(path.c_str());
+    delete canvas;
 }
 
 std::vector<size_t> binVector(const std::vector<double> &myVector, const std::vector<double> &binLimits)
@@ -109,6 +140,14 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
     return binLimits;
 }
 
+// Explicitly instantiate the types we want to use
+// This is Ugly and Bad but also idgaf
+template void saveObjectsToFile<TGraph>(const std::vector<TObject *> &  myObjects,
+                                        const std::vector<std::string> &drawOptions,
+                                        const std::string &             path);
+template void saveObjectsToFile<TGraphErrors>(const std::vector<TObject *> &  myObjects,
+                                              const std::vector<std::string> &drawOptions,
+                                              const std::string &             path);
 } // namespace util
 
 #endif // UTIL_CPP

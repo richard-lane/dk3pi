@@ -140,8 +140,8 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
         WSHist->Fill(*it);
     }
 
-    util::saveToFile(RSHist, "RSHist.pdf");
-    util::saveToFile(WSHist, "WSHist.pdf");
+    util::saveObjectToFile(RSHist, "RSHist.pdf");
+    util::saveObjectToFile(WSHist, "WSHist.pdf");
     delete RSHist;
     delete WSHist;
 }

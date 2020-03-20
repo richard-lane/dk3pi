@@ -27,7 +27,7 @@ void plot_parameter_distribution(std::string         title,
     MyGraph->FillN(nExperiments, parameter.data(), 0);
     MyGraph->SetTitle((title + ";Normalised Pull;Count").c_str());
 
-    util::saveToFile(MyGraph, (title + ".pdf").c_str());
+    util::saveObjectToFile(MyGraph, (title + ".pdf").c_str());
 
     std::cout << title + " mean:\t\t" + MyGraph->GetMean() << std::endl;
     std::cout << title + " std dev:\t" + MyGraph->GetStdDev() << std::endl;

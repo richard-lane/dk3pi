@@ -275,18 +275,15 @@ void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)
     _plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
 
     // Save our fit to file
-    // Not using utill::saveToFile as that only does one object at a time
-    TCanvas* c = new TCanvas();
-    c->cd();
-    _plot->Draw("AP");
-
+    // If root's builtin was used, _bestFitPlot will not have been assigned
     if (_bestFitPlot != nullptr) {
         _bestFitPlot->SetLineColor(kRed);
-        _bestFitPlot->Draw("CSAME");
-    }
-    c->SaveAs(path.c_str());
+        util::saveObjectsToFile<TGraphErrors>(
+            std::vector<TObject*>{_plot.get(), _bestFitPlot.get()}, std::vector<std::string>{"AP", "CSAME"}, path);
 
-    delete c;
+    } else {
+        util::saveObjectToFile(_plot.get(), path, "AP");
+    }
 }
 
 #endif // FITTER_CPP
