@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(test_chi_squared, *boost::unit_test::tolerance(0.0000000000
 
     // Create a PolynomialFitFcn object and find chi squared
     SimplePolynomialFunction MyPolynomial(1.0, 1.0, 1.0);
-    PolynomialFitFcn         MyFitFcn(data, times, errors);
+    BasePolynomialFcn        MyFitFcn(data, times, errors);
 
     BOOST_CHECK(MyFitFcn.operator()(std::vector<double>{1.0, 1.0, 1.0}) == expectedChiSq);
 }

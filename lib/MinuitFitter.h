@@ -48,20 +48,20 @@ class SimplePolynomialFunction
 /*
  * Class for calculating chi squared from a SimplePolynomialFunction
  */
-class PolynomialFitFcn : public ROOT::Minuit2::FCNBase
+class BasePolynomialFcn : public ROOT::Minuit2::FCNBase
 {
   public:
     /*
      * Sets the various private members
      */
-    PolynomialFitFcn(const std::vector<double>& data,
-                     const std::vector<double>& times,
-                     const std::vector<double>& errors);
+    BasePolynomialFcn(const std::vector<double>& data,
+                      const std::vector<double>& times,
+                      const std::vector<double>& errors);
 
     /*
      * Maybe we need a destructor
      */
-    ~PolynomialFitFcn();
+    ~BasePolynomialFcn();
 
     /*
      * Returns _theErrorDef (i still don't really know what this is )

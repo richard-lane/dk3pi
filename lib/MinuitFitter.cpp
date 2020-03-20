@@ -28,7 +28,7 @@ double SimplePolynomialFunction::operator()(double x) const
     return _a + _b * x + _c * x * x;
 }
 
-PolynomialFitFcn::PolynomialFitFcn(const std::vector<double>& data,
+BasePolynomialFcn::BasePolynomialFcn(const std::vector<double>& data,
                                    const std::vector<double>& times,
                                    const std::vector<double>& errors)
     : _theMeasurements(data), _thePositions(times), _theMVariances(errors), _theErrorDef(1.)
@@ -36,17 +36,17 @@ PolynomialFitFcn::PolynomialFitFcn(const std::vector<double>& data,
     ;
 }
 
-PolynomialFitFcn::~PolynomialFitFcn()
+BasePolynomialFcn::~BasePolynomialFcn()
 {
     ;
 }
 
-double PolynomialFitFcn::Up() const
+double BasePolynomialFcn::Up() const
 {
     return _theErrorDef;
 }
 
-double PolynomialFitFcn::operator()(const std::vector<double>& parameters) const
+double BasePolynomialFcn::operator()(const std::vector<double>& parameters) const
 {
     size_t numParams = parameters.size();
     if (numParams != 3) {
@@ -63,22 +63,22 @@ double PolynomialFitFcn::operator()(const std::vector<double>& parameters) const
     return chi2;
 }
 
-std::vector<double> PolynomialFitFcn::measurements() const
+std::vector<double> BasePolynomialFcn::measurements() const
 {
     return _theMeasurements;
 }
 
-std::vector<double> PolynomialFitFcn::positions() const
+std::vector<double> BasePolynomialFcn::positions() const
 {
     return _thePositions;
 }
 
-std::vector<double> PolynomialFitFcn::variances() const
+std::vector<double> BasePolynomialFcn::variances() const
 {
     return _theMVariances;
 }
 
-void PolynomialFitFcn::setErrorDef(double def)
+void BasePolynomialFcn::setErrorDef(double def)
 {
     _theErrorDef = def;
 }
