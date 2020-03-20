@@ -194,7 +194,9 @@ TMatrixD Fitter::covarianceVector2CorrelationMatrix(const std::vector<double>& c
     return CorrMatrix;
 }
 
-void Fitter::fitUsingMinuit2ChiSq(const std::vector<double>& initialParams, const std::vector<double>& initialErrors)
+void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
+                            const std::vector<double>& initialErrors,
+                            const FitAlgorithm_t&      FitMethod)
 {
     // Check that we have been passed 3 initial parameters and errors
     if (initialParams.size() != 3 || initialErrors.size() != 3) {
@@ -204,6 +206,9 @@ void Fitter::fitUsingMinuit2ChiSq(const std::vector<double>& initialParams, cons
 
     // Create an object representing our Minuit2-compatible 2nd order polynomial
     PolynomialChiSqFcn FitFcn(_fitData.data, _fitData.binCentres, _fitData.errors);
+    if (FitMethod == MaxLikelihood) {
+        PolynomialLikelihoodFcn FitFcn(_fitData.data, _fitData.binCentres, _fitData.errors);
+    }
 
     // Create a minimiser and minimise our chi squared
     ROOT::Minuit2::VariableMetricMinimizer Minimizer;

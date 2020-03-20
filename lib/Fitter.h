@@ -75,6 +75,11 @@ typedef struct PolynomialFitResults {
 } FitResults_t;
 
 /*
+ * Enum telling the fitter what algorithm to use, if using Minuit2
+ */
+typedef enum FitAlgorithm { ChiSquared, MaxLikelihood } FitAlgorithm_t;
+
+/*
  * Class for fitting data to a second-order polynomial
  */
 class Fitter
@@ -112,11 +117,15 @@ class Fitter
      *
      * The user should provide an initial guess at the parameters and their errors
      *
-     * Allocates memory to _plot and simultaneously plots our data and the best fit line.
+     * FitMethod tells the fitter whether to use chi squared or maximum likelihood
+     *
+     * Allocates memory to _plot and _bestFitPlot
      *
      * Populates fitParams
      */
-    void fitUsingMinuit2ChiSq(const std::vector<double>& initialParams, const std::vector<double>& initialErrors);
+    void fitUsingMinuit(const std::vector<double>& initialParams,
+                        const std::vector<double>& initialErrors,
+                        const FitAlgorithm_t&      FitMethod);
 
     /*
      * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the

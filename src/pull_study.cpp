@@ -98,9 +98,11 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         // MyFitter.fitUsingRootCustomFcn(0, maxTime * 1.2, "Q");
 
         // Initially guess the parameters are their known values...
+        // FitMethod is either ChiSquared or MaxLikelihood
         std::vector<double> parameterGuess{expected_a, expected_b, expected_c};
         std::vector<double> errorGuess{1, 1, 1};
-        MyFitter.fitUsingMinuit2ChiSq(parameterGuess, errorGuess);
+        MyFitter.fitUsingMinuit(parameterGuess, errorGuess, MaxLikelihood);
+        // MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
 
         // Save our fit plot to file
         // std::string path = "fitplot_" + std::to_string(i) + ".pdf";
@@ -125,7 +127,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(1, 100000);
+    pull_study(250, 100000);
 
     return 0;
 }
