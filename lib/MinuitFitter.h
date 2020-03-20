@@ -46,7 +46,9 @@ class SimplePolynomialFunction
 };
 
 /*
- * Class for calculating chi squared from a SimplePolynomialFunction
+ * Base class for fitting a polynomial using Minuit2
+ *
+ * Does not contain the necessary operator() method needed for Minuit- child classes should define this.
  */
 class BasePolynomialFcn : public ROOT::Minuit2::FCNBase
 {
@@ -69,14 +71,6 @@ class BasePolynomialFcn : public ROOT::Minuit2::FCNBase
     virtual double Up() const;
 
     /*
-     * Creates a model given a vector of three parameters.
-     *
-     * Returns the chi squared value between the model given our parameters and the measured data.
-     *
-     */
-    virtual double operator()(const std::vector<double>& parameters) const;
-
-    /*
      * Return the values of the function
      */
     std::vector<double> measurements() const;
@@ -96,26 +90,48 @@ class BasePolynomialFcn : public ROOT::Minuit2::FCNBase
      */
     void setErrorDef(double def);
 
-  private:
     /*
      * Measurements; our datapoints
      */
-    std::vector<double> _theMeasurements;
+    std::vector<double> theMeasurements;
 
     /*
      * Where our datapoints are evaluated ...?
      */
-    std::vector<double> _thePositions;
+    std::vector<double> thePositions;
 
     /*
      * Errors
      */
-    std::vector<double> _theMVariances;
+    std::vector<double> theMVariances;
 
     /*
      * I don't know
      */
-    double _theErrorDef;
+    double theErrorDef;
+};
+
+/*
+ * Class fitting to a polynomial using chi squared
+ */
+class PolynomialChiSqFcn : public BasePolynomialFcn
+{
+    /*
+     * Calls parent constructor
+     */
+    PolynomialChiSqFcn(const std::vector<double>& data,
+                       const std::vector<double>& times,
+                       const std::vector<double>& errors);
+
+    ~PolynomialChiSqFcn();
+
+    /*
+     * Creates a model given a vector of three parameters.
+     *
+     * Returns the chi squared value between the model given our parameters and the measured data.
+     *
+     */
+    virtual double operator()(const std::vector<double>& parameters) const;
 };
 
 #endif // MINUIT_FITTER_H

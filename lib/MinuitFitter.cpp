@@ -29,9 +29,9 @@ double SimplePolynomialFunction::operator()(double x) const
 }
 
 BasePolynomialFcn::BasePolynomialFcn(const std::vector<double>& data,
-                                   const std::vector<double>& times,
-                                   const std::vector<double>& errors)
-    : _theMeasurements(data), _thePositions(times), _theMVariances(errors), _theErrorDef(1.)
+                                     const std::vector<double>& times,
+                                     const std::vector<double>& errors)
+    : theMeasurements(data), thePositions(times), theMVariances(errors), theErrorDef(1.)
 {
     ;
 }
@@ -43,10 +43,43 @@ BasePolynomialFcn::~BasePolynomialFcn()
 
 double BasePolynomialFcn::Up() const
 {
-    return _theErrorDef;
+    return theErrorDef;
 }
 
-double BasePolynomialFcn::operator()(const std::vector<double>& parameters) const
+std::vector<double> BasePolynomialFcn::measurements() const
+{
+    return theMeasurements;
+}
+
+std::vector<double> BasePolynomialFcn::positions() const
+{
+    return thePositions;
+}
+
+std::vector<double> BasePolynomialFcn::variances() const
+{
+    return theMVariances;
+}
+
+void BasePolynomialFcn::setErrorDef(double def)
+{
+    theErrorDef = def;
+}
+
+PolynomialChiSqFcn::PolynomialChiSqFcn(const std::vector<double>& data,
+                                       const std::vector<double>& times,
+                                       const std::vector<double>& errors)
+    : BasePolynomialFcn(data, times, errors)
+{
+    ;
+}
+
+PolynomialChiSqFcn::~PolynomialChiSqFcn()
+{
+    ;
+}
+
+double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) const
 {
     size_t numParams = parameters.size();
     if (numParams != 3) {
@@ -57,28 +90,8 @@ double BasePolynomialFcn::operator()(const std::vector<double>& parameters) cons
     SimplePolynomialFunction MyPolynomial(parameters[0], parameters[1], parameters[2]);
     double                   chi2 = 0.0;
 
-    for (size_t i = 0; i < _theMeasurements.size(); ++i) {
-        chi2 += (std::pow(MyPolynomial(_thePositions[i]) - _theMeasurements[i], 2)) / _theMVariances[i];
+    for (size_t i = 0; i < theMeasurements.size(); ++i) {
+        chi2 += (std::pow(MyPolynomial(thePositions[i]) - theMeasurements[i], 2)) / theMVariances[i];
     }
     return chi2;
-}
-
-std::vector<double> BasePolynomialFcn::measurements() const
-{
-    return _theMeasurements;
-}
-
-std::vector<double> BasePolynomialFcn::positions() const
-{
-    return _thePositions;
-}
-
-std::vector<double> BasePolynomialFcn::variances() const
-{
-    return _theMVariances;
-}
-
-void BasePolynomialFcn::setErrorDef(double def)
-{
-    _theErrorDef = def;
 }
