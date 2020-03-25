@@ -101,8 +101,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         // FitMethod is either ChiSquared or MaxLikelihood
         std::vector<double> parameterGuess{expected_a, expected_b, expected_c};
         std::vector<double> errorGuess{1, 1, 1};
-        MyFitter.fitUsingMinuit(parameterGuess, errorGuess, MaxLikelihood);
-        // MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
+        MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
 
         // Save our fit plot to file
         // std::string path = "fitplot_" + std::to_string(i) + ".pdf";

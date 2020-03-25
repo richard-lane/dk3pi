@@ -77,7 +77,7 @@ typedef struct PolynomialFitResults {
 /*
  * Enum telling the fitter what algorithm to use, if using Minuit2
  */
-typedef enum FitAlgorithm { ChiSquared, MaxLikelihood } FitAlgorithm_t;
+typedef enum FitAlgorithm { ChiSquared } FitAlgorithm_t;
 
 /*
  * Class for fitting data to a second-order polynomial

@@ -95,33 +95,3 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
     }
     return chi2;
 }
-PolynomialLikelihoodFcn::PolynomialLikelihoodFcn(const std::vector<double>& data,
-                                                 const std::vector<double>& times,
-                                                 const std::vector<double>& errors)
-    : BasePolynomialFcn(data, times, errors)
-{
-    ;
-}
-
-PolynomialLikelihoodFcn::~PolynomialLikelihoodFcn()
-{
-    ;
-}
-
-double PolynomialLikelihoodFcn::operator()(const std::vector<double>& parameters) const
-{
-    size_t numParams = parameters.size();
-    if (numParams != 3) {
-        std::cerr << "Require three parameters; got " << numParams << std::endl;
-        throw D2K3PiException();
-    }
-
-    SimplePolynomialFunction MyPolynomial(parameters[0], parameters[1], parameters[2]);
-    double                   likelihood = 0.0;
-
-    for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        likelihood += -2.0 * std::log(MyPolynomial(thePositions[i]));
-    }
-
-    return likelihood;
-}

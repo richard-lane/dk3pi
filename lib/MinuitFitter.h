@@ -135,30 +135,4 @@ class PolynomialChiSqFcn : public BasePolynomialFcn
     virtual double operator()(const std::vector<double>& parameters) const;
 };
 
-/*
- * Class fitting to a polynomial using maximum likelihood estimation
- */
-class PolynomialLikelihoodFcn : public BasePolynomialFcn
-{
-  public:
-    /*
-     * Calls parent constructor
-     */
-    PolynomialLikelihoodFcn(const std::vector<double>& data,
-                            const std::vector<double>& times,
-                            const std::vector<double>& errors);
-
-    ~PolynomialLikelihoodFcn();
-
-    /*
-     * Creates a model given a vector of three parameters.
-     *
-     * Returns a modified likelihood value between the model given our parameters and the measured data.
-     *
-     * Because Minuit only minimises, this returns -2 * ln( Likelihood )
-     *
-     */
-    virtual double operator()(const std::vector<double>& parameters) const;
-};
-
 #endif // MINUIT_FITTER_H

@@ -206,9 +206,6 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
 
     // Create an object representing our Minuit2-compatible 2nd order polynomial
     PolynomialChiSqFcn FitFcn(_fitData.data, _fitData.binCentres, _fitData.errors);
-    if (FitMethod == MaxLikelihood) {
-        PolynomialLikelihoodFcn FitFcn(_fitData.data, _fitData.binCentres, _fitData.errors);
-    }
 
     // Create a minimiser and minimise our chi squared
     ROOT::Minuit2::VariableMetricMinimizer Minimizer;
