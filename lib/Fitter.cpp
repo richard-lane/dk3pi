@@ -149,6 +149,9 @@ void Fitter::fitUsingRootCustomFcn(const double minTime, const double maxTime, c
 
     // Assign some memory to our correlation matrix
     fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());
+
+    // Set chi squared to the value stored in func
+    statistic = std::make_unique<double>(plot->Chisquare(func.get()));
 }
 
 TMatrixD Fitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector)
@@ -222,6 +225,9 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
 
     // Store our fit parameters and correlation matrix as class attributes
     _storeMinuitFitParams(min);
+
+    // Store chi squared
+    statistic = std::make_unique<double>(min.Fval());
 
     // Set our TGraph pointer to the right thing
     plot = std::make_unique<TGraphErrors>(_fitData.numPoints,

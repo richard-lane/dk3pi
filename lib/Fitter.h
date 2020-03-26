@@ -159,6 +159,11 @@ class Fitter
      */
     std::unique_ptr<TGraph> bestFitPlot = nullptr;
 
+    /*
+     * The test statistic that is optimised when running our test, e.g. chi squared or a likelihood
+     */
+    std::unique_ptr<double> statistic = nullptr;
+
   private:
     /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams

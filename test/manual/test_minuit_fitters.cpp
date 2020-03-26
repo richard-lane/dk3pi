@@ -61,11 +61,12 @@ void compareRootMinuit(void)
         std::cout << "ROOT fit params: " << RootFitter.fitParams.fitParams[i] << "+-"
                   << RootFitter.fitParams.fitParamErrors[i] << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << "\tChiSq = " << *(RootFitter.statistic) << std::endl;
     for (size_t i = 0; i < 3; ++i) {
         std::cout << "Chisq fit params: " << MinuitChiSqFitter.fitParams.fitParams[i] << "+-"
                   << MinuitChiSqFitter.fitParams.fitParamErrors[i] << std::endl;
     }
+    std::cout << "\tChiSq = " << *(MinuitChiSqFitter.statistic) << std::endl;
 
     // Plot fits to file
     const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = "Compare fitters"};
