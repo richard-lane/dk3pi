@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <boost/progress.hpp>
+#include <cassert>
 #include <random>
 #include <vector>
 
@@ -16,6 +17,30 @@
 #include "../lib/RatioCalculator.h"
 #include "PullStudyHelpers.h"
 #include "util.h"
+
+/*
+ * Plot a histogram from a vector
+ */
+void plotHist(const std::vector<double>& vector, const size_t numBins, const std::string& name)
+{
+    assert((numBins != 0));
+    double min = *(std::min_element(vector.begin(), vector.end()));
+    double max = *(std::max_element(vector.begin(), vector.end()));
+
+    double              binWidth = (max - min) / numBins;
+    std::vector<double> binLimits(numBins + 1, -1);
+
+    binLimits[0]       = min * 0.99;
+    binLimits[numBins] = max * 1.01;
+    for (size_t i = 1; i < numBins + 1; i++) {
+        binLimits[i] = binWidth * i + min;
+    }
+
+    TH1D* hist = new TH1D(name.c_str(), name.c_str(), numBins, binLimits.data());
+    hist->FillN(vector.size(), vector.data(), 0);
+
+    util::saveObjectToFile(hist, name + ".pdf");
+}
 
 /*
  * Perform a pull study with a specified number of experiments and events
@@ -55,6 +80,9 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     std::vector<double> a_fit(nExperiments, -1);
     std::vector<double> b_fit(nExperiments, -1);
     std::vector<double> c_fit(nExperiments, -1);
+
+    // Create vector to store our chi squared values
+    std::vector<double> chiSqVector(nExperiments, -1);
 
     // Random number generators for finding how many of each type of decay to simulate
     size_t       meanNumDcsDecays = PullStudyHelpers::numDCSDecays(nEvents, phaseSpaceParams, maxTime);
@@ -113,6 +141,9 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         b_fit[i] = (MyFitter.fitParams.fitParams[1] - expected_b) / MyFitter.fitParams.fitParamErrors[1];
         c_fit[i] = (MyFitter.fitParams.fitParams[2] - expected_c) / MyFitter.fitParams.fitParamErrors[2];
 
+        // Store the chi squared value in our vector
+        chiSqVector[i] = *(MyFitter.statistic);
+
         ++show_progress;
     }
 
@@ -120,6 +151,9 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     PullStudyHelpers::plot_parameter_distribution("a", a_fit, nExperiments);
     PullStudyHelpers::plot_parameter_distribution("b", b_fit, nExperiments);
     PullStudyHelpers::plot_parameter_distribution("c", c_fit, nExperiments);
+
+    // Plot the distribution of chi squared values
+    plotHist(chiSqVector, 50, "MinuitChiSq");
 }
 
 // Hide this program's main() function from ROOT's Cling interpreter
