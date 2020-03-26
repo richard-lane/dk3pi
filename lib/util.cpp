@@ -10,6 +10,7 @@
 #include "TCanvas.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
+#include "TLegend.h"
 
 #include "D2K3PiError.h"
 #include "util.h"
@@ -37,14 +38,17 @@ void saveObjectToFile(TObject *myObject, const std::string &path, const std::str
 template <typename T>
 void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
                        const std::vector<std::string> &drawOptions,
-                       const std::string &             path)
+                       const std::vector<std::string> &legendLabel,
+                       const std::string &             path,
+                       const LegendParams_t &          legendParams)
 {
     // Check that we have the same number of objects as options
-    size_t numObjects     = myObjects.size();
-    size_t numDrawOptions = drawOptions.size();
-    if (numObjects != numDrawOptions) {
-        std::cerr << "Must pass same number of objects and options, have " << numObjects << " and " << numDrawOptions
-                  << "." << std::endl;
+    size_t numObjects      = myObjects.size();
+    size_t numDrawOptions  = drawOptions.size();
+    size_t numLegendLabels = legendLabel.size();
+    if (numObjects != numDrawOptions || numLegendLabels != numDrawOptions) {
+        std::cerr << "Must pass same number of objects, options and legend labels; have " << numObjects << ", "
+                  << numDrawOptions << " and " << numLegendLabels << "." << std::endl;
         throw D2K3PiException();
     }
     if (numObjects == 0) {
@@ -55,11 +59,25 @@ void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
     TCanvas *canvas = new TCanvas();
     canvas->cd();
 
+    // Create a legend object; if we're drawing multiple plots on one canvas then we better have a legend to tell them
+    // apart
+    TLegend *legend = new TLegend(legendParams.x1,
+                                  legendParams.y1,
+                                  legendParams.x2,
+                                  legendParams.y2,
+                                  legendParams.header.c_str(),
+                                  legendParams.options.c_str());
+
     for (size_t i = 0; i < numObjects; ++i) {
-        ((T *)myObjects[i])->Draw(drawOptions[i].c_str());
+        T *myObject = (T *)myObjects[i];
+
+        legend->AddEntry(myObject, legendLabel[i].c_str(), "le");
+        myObject->Draw(drawOptions[i].c_str());
     }
 
+    legend->Draw();
     canvas->SaveAs(path.c_str());
+    delete legend;
     delete canvas;
 }
 
@@ -144,10 +162,15 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
 // This is Ugly and Bad but also idgaf
 template void saveObjectsToFile<TGraph>(const std::vector<TObject *> &  myObjects,
                                         const std::vector<std::string> &drawOptions,
-                                        const std::string &             path);
+                                        const std::vector<std::string> &legendLabel,
+                                        const std::string &             path,
+                                        const LegendParams_t &          legendParams);
+
 template void saveObjectsToFile<TGraphErrors>(const std::vector<TObject *> &  myObjects,
                                               const std::vector<std::string> &drawOptions,
-                                              const std::string &             path);
+                                              const std::vector<std::string> &legendLabel,
+                                              const std::string &             path,
+                                              const LegendParams_t &          legendParams);
 } // namespace util
 
 #endif // UTIL_CPP

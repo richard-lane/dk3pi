@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "DecaySimulator.h"
+#include "util.h"
 
 #include "Minuit2/FunctionMinimum.h"
 #include "TGraphErrors.h"
@@ -135,13 +136,28 @@ class Fitter
 
     /*
      * Save a plot of our data and fit to file
+     *
+     * If plotting from a minuit fit, must specify parameters for drawing a legend.
      */
-    void saveFitPlot(const std::string& plotTitle, const std::string& path);
+    void saveFitPlot(const std::string&          plotTitle,
+                     const std::string&          path,
+                     const util::LegendParams_t* legendParams = nullptr);
 
     /*
      * Parameters describing the fit
      */
     FitResults_t fitParams;
+
+    /*
+     * ROOT TGraph object used for holding input data. Can also be used to perform one of ROOT's builtin fits.
+     */
+    std::unique_ptr<TGraphErrors> plot = nullptr;
+
+    /*
+     * ROOT TGraph object that used for representing the best-fit of our data, in the case that ROOT is not used to
+     * perform a builtin fit (e.g. when Minuit2 is used directly.)
+     */
+    std::unique_ptr<TGraph> bestFitPlot = nullptr;
 
   private:
     /*
@@ -153,17 +169,6 @@ class Fitter
      * The data used to make the fit
      */
     FitData_t _fitData;
-
-    /*
-     * ROOT TGraph object used for holding input data. Can also be used to perform one of ROOT's builtin fits.
-     */
-    std::unique_ptr<TGraphErrors> _plot = nullptr;
-
-    /*
-     * ROOT TGraph object that used for representing the best-fit of our data, in the case that ROOT is not used to
-     * perform a builtin fit (e.g. when Minuit2 is used directly.)
-     */
-    std::unique_ptr<TGraph> _bestFitPlot = nullptr;
 };
 
 #endif // FITTER_H

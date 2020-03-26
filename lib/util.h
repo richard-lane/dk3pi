@@ -23,19 +23,44 @@ boost::filesystem::path concatPaths(std::string plotDir, std::string plotName, s
 void saveObjectToFile(TObject *myObject, const std::string &path, const std::string &drawOptions = "");
 
 /*
+ * Parameters that should be passed to TLegend() constructor
+ *
+ * Co-ordinates are the location of the legend
+ * Header is text that is at the top of the legend box (supports ROOTs weird latex thing)
+ * Options are the same as for TPave; basically just tells where to draw the box's shadow + whether to draw borders.
+ */
+typedef struct LegendParams {
+    // Positions
+    double x1{0};
+    double x2{0};
+    double y1{0};
+    double y2{0};
+
+    // Title
+    std::string header = "";
+
+    // Options
+    std::string options = "brNDC";
+} LegendParams_t;
+
+/*
  * Save multiple TObjects to file, useful for e.g. plotting multiple TGraphs on one canvas
  *
- * The objects must be cast to a TObject* before passing to this function; they will be cast back to the type provided
+ * The objects must be castable to a TObject*; they will be cast back to the type provided
  * in the template parameter before plotting. This is necessary because this function only accepts a vector of TObjects;
  * this is a different type from a vector of e.g. TGraphs!
  *
  * The extension in the specified path determines the format of the file.
  *
+ * A legend is mandatory; its parameters are encoded in legendParams
+ *
  */
 template <typename T>
 void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
                        const std::vector<std::string> &drawOptions,
-                       const std::string &             path);
+                       const std::vector<std::string> &legendLabel,
+                       const std::string &             path,
+                       const LegendParams_t &          legendParams);
 
 /*
  * Find how many points of myVector belong in each bin defined by binLimits

@@ -96,20 +96,20 @@ Fitter::Fitter(const FitData_t& fitData)
 void Fitter::fitUsingRootBuiltinPol2(const std::string& options)
 {
     // Set our TGraph thing to the right thing
-    _plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
-                                           _fitData.binCentres.data(),
-                                           _fitData.data.data(),
-                                           _fitData.binErrors.data(),
-                                           _fitData.errors.data());
+    plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
+                                          _fitData.binCentres.data(),
+                                          _fitData.data.data(),
+                                          _fitData.binErrors.data(),
+                                          _fitData.errors.data());
 
     // ROOT is terrible and will often fail to fit when the TGraph contains x-errors, unless the initial fit parameters
     // are reasonably close to the true values. We can get around this by perfoming an initial fit ignoring error bars
     // ("W"), then fitting again.
     TF1* graph_fit = ((TF1*)(gROOT->GetFunction("pol2")));
-    _plot->Fit(graph_fit, "WQRN");
+    plot->Fit(graph_fit, "WQRN");
 
     // "S" option tells ROOT to return the result of the fit as a TFitResultPtr
-    TFitResultPtr fitResult = _plot->Fit(graph_fit, (options + "S").c_str());
+    TFitResultPtr fitResult = plot->Fit(graph_fit, (options + "S").c_str());
 
     // Populate the results struct
     fitParams.fitParams      = {graph_fit->GetParameter(0), graph_fit->GetParameter(1), graph_fit->GetParameter(2)};
@@ -122,11 +122,11 @@ void Fitter::fitUsingRootBuiltinPol2(const std::string& options)
 void Fitter::fitUsingRootCustomFcn(const double minTime, const double maxTime, const std::string& options)
 {
     // Set our TGraph pointer to the right thing
-    _plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
-                                           _fitData.binCentres.data(),
-                                           _fitData.data.data(),
-                                           _fitData.binErrors.data(),
-                                           _fitData.errors.data());
+    plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
+                                          _fitData.binCentres.data(),
+                                          _fitData.data.data(),
+                                          _fitData.binErrors.data(),
+                                          _fitData.errors.data());
 
     // Define our custom function to fit with and initalise parameters
     // Init them all to 1 for now
@@ -138,10 +138,10 @@ void Fitter::fitUsingRootCustomFcn(const double minTime, const double maxTime, c
     // ROOT is terrible and will often fail to fit when the TGraph contains x-errors, unless the initial fit parameters
     // are reasonably close to the true values. We can get around this by perfoming an initial fit ignoring error bars
     // ("W"), then fitting again.
-    _plot->Fit(func.get(), "WQRN");
+    plot->Fit(func.get(), "WQRN");
 
     // "S" option tells ROOT to return the result of the fit as a TFitResultPtr
-    TFitResultPtr fitResult = _plot->Fit(func.get(), (options + "S").c_str());
+    TFitResultPtr fitResult = plot->Fit(func.get(), (options + "S").c_str());
 
     // Set fitParams to the right things
     fitParams.fitParams      = {func->GetParameter(0), func->GetParameter(1), func->GetParameter(2)};
@@ -224,11 +224,11 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
     _storeMinuitFitParams(min);
 
     // Set our TGraph pointer to the right thing
-    _plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
-                                           _fitData.binCentres.data(),
-                                           _fitData.data.data(),
-                                           _fitData.binErrors.data(),
-                                           _fitData.errors.data());
+    plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
+                                          _fitData.binCentres.data(),
+                                          _fitData.data.data(),
+                                          _fitData.binErrors.data(),
+                                          _fitData.errors.data());
 
     // Create also a best-fit dataset from our parameters and data, plotting this on the same
     std::vector<double> bestFitData{_fitData.binCentres};
@@ -237,7 +237,7 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
     });
     std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
 
-    _bestFitPlot = std::make_unique<TGraphErrors>(
+    bestFitPlot = std::make_unique<TGraphErrors>(
         _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
 }
 
@@ -259,10 +259,12 @@ void Fitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
         std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
 }
 
-void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)
+void Fitter::saveFitPlot(const std::string&          plotTitle,
+                         const std::string&          path,
+                         const util::LegendParams_t* legendParams)
 {
     // Check that a fit has been made
-    if (fitParams.fitParams.empty() || _plot == nullptr) {
+    if (fitParams.fitParams.empty() || plot == nullptr) {
         std::cerr << "Run the fitter before plotting" << std::endl;
         throw D2K3PiException();
     }
@@ -274,17 +276,24 @@ void Fitter::saveFitPlot(const std::string& plotTitle, const std::string& path)
     }
 
     // Set the plot title; for some reason this is also how to set axis labels?
-    _plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
+    plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
 
     // Save our fit to file
     // If root's builtin was used, _bestFitPlot will not have been assigned
-    if (_bestFitPlot != nullptr) {
-        _bestFitPlot->SetLineColor(kRed);
-        util::saveObjectsToFile<TGraphErrors>(
-            std::vector<TObject*>{_plot.get(), _bestFitPlot.get()}, std::vector<std::string>{"AP", "CSAME"}, path);
+    if (bestFitPlot != nullptr) {
+        if (!legendParams) {
+            std::cerr << "Must specify legend parameters if plotting a minuit-fitted graph" << std::endl;
+            throw D2K3PiException();
+        }
+        bestFitPlot->SetLineColor(kRed);
+        util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitPlot.get()},
+                                              std::vector<std::string>{"AP", "CSAME"},
+                                              std::vector<std::string>{"Data", "Best fit"},
+                                              path,
+                                              *legendParams);
 
     } else {
-        util::saveObjectToFile(_plot.get(), path, "AP");
+        util::saveObjectToFile(plot.get(), path, "AP");
     }
 }
 

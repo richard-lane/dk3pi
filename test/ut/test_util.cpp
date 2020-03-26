@@ -91,10 +91,17 @@ BOOST_AUTO_TEST_CASE(test_draw_multiple_objects_)
     const std::vector<std::string> oneString{"a"};
     const std::vector<std::string> zeroStrings{};
 
-    BOOST_CHECK_THROW(util::saveObjectsToFile<TGraph>(twoTGraphs, oneString, "path"), D2K3PiException);
-    BOOST_CHECK_THROW(util::saveObjectsToFile<TGraph>(zeroTGraphs, oneString, "path"), D2K3PiException);
-    BOOST_CHECK_THROW(util::saveObjectsToFile<TGraph>(twoTGraphs, zeroStrings, "path"), D2K3PiException);
-    BOOST_CHECK_THROW(util::saveObjectsToFile<TGraph>(zeroTGraphs, zeroStrings, "path"), D2K3PiException);
+    const util::LegendParams_t legendParams;
+    std::vector<std::string>   legendLabels{"a", "b"};
+
+    BOOST_CHECK_THROW(util::saveObjectsToFile<TGraph>(twoTGraphs, oneString, legendLabels, "path", legendParams),
+                      D2K3PiException);
+    BOOST_CHECK_THROW(util::saveObjectsToFile<TGraph>(zeroTGraphs, oneString, legendLabels, "path", legendParams),
+                      D2K3PiException);
+    BOOST_CHECK_THROW(util::saveObjectsToFile<TGraph>(twoTGraphs, zeroStrings, legendLabels, "path", legendParams),
+                      D2K3PiException);
+    BOOST_CHECK_THROW(util::saveObjectsToFile<TGraph>(zeroTGraphs, zeroStrings, legendLabels, "path", legendParams),
+                      D2K3PiException);
 
     delete MyTGraph1;
     delete MyTGraph2;
