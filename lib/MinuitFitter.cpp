@@ -91,7 +91,7 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
     double                   chi2 = 0.0;
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        chi2 += (std::pow(MyPolynomial(thePositions[i]) - theMeasurements[i], 2)) / theMVariances[i];
+        chi2 += std::pow((MyPolynomial(thePositions[i]) - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
 }

@@ -38,7 +38,7 @@ void compareRootMinuit(void)
     // Define some time bins
     std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
     std::sort(dcsTimes.begin(), dcsTimes.end());
-    std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 50, 0, 1.05 * maxTime);
+    std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 100, 0, 1.05 * maxTime);
 
     // Divide using RatioCalculator
     RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);

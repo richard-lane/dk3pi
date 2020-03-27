@@ -16,11 +16,11 @@ BOOST_AUTO_TEST_CASE(test_chi_squared, *boost::unit_test::tolerance(0.0000000000
     std::vector<double> data{2, 10, 15, 20, 31, 40, 55, 70, 90, 113};
     std::vector<double> errors{2, 4, 6, 8, 10, 12, 14, 16, 18, 20};
 
-    double expectedChiSq = 5.395436507936507;
+    double expectedChiSq = 1.070386944129503;
 
     // Create a PolynomialFitFcn object and find chi squared
     SimplePolynomialFunction MyPolynomial(1.0, 1.0, 1.0);
     PolynomialChiSqFcn       MyFitFcn(data, times, errors);
 
-    BOOST_CHECK(MyFitFcn.operator()(std::vector<double>{1.0, 1.0, 1.0}) == expectedChiSq);
+    BOOST_CHECK(std::fabs(MyFitFcn(std::vector<double>{1.0, 1.0, 1.0}) - expectedChiSq) < 1e-7);
 }
