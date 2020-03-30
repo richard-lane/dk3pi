@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "DecaySimulator.h"
+#include "MinuitFitter.h"
 #include "util.h"
 
 #include "Minuit2/FunctionMinimum.h"
@@ -135,6 +136,16 @@ class Fitter
     TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
 
     /*
+     * Scan the ith parameter as defined in fitParams.fitParams
+     *
+     * Cannot have more than 100 points due to some of Minuit's internal limitations.
+     * By default runs a scan from +-2sigma, but can optionally be specified by setting low and high.
+     *
+     * Populates parameterScan
+     */
+    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low = 0., const double high = 0.);
+
+    /*
      * Save a plot of our data and fit to file
      *
      * If plotting from a minuit fit, must specify parameters for drawing a legend.
@@ -147,6 +158,11 @@ class Fitter
      * Parameters describing the fit
      */
     FitResults_t fitParams;
+
+    /*
+     * Vector of pairs describing a parameter scan
+     */
+    std::vector<std::pair<double, double>> parameterScan;
 
     /*
      * ROOT TGraph object used for holding input data. Can also be used to perform one of ROOT's builtin fits.
@@ -174,6 +190,11 @@ class Fitter
      * The data used to make the fit
      */
     FitData_t _fitData;
+
+    /*
+     * Pointer to the Minuit FCN used to perform the fit
+     */
+    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
 };
 
 #endif // FITTER_H

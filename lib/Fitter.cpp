@@ -14,6 +14,7 @@
 #include "util.h"
 
 #include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MnScan.h"
 #include "Minuit2/VariableMetricMinimizer.h"
 #include "TCanvas.h"
 #include "TF1.h"
@@ -208,11 +209,11 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
     }
 
     // Create an object representing our Minuit2-compatible 2nd order polynomial
-    PolynomialChiSqFcn FitFcn(_fitData.data, _fitData.binCentres, _fitData.errors);
+    _fitFcn = std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 
     // Create a minimiser and minimise our chi squared
     ROOT::Minuit2::VariableMetricMinimizer Minimizer;
-    ROOT::Minuit2::FunctionMinimum         min = Minimizer.Minimize(FitFcn, initialParams, initialErrors);
+    ROOT::Minuit2::FunctionMinimum         min = Minimizer.Minimize(*_fitFcn, initialParams, initialErrors);
 
     // Check that our solution is "valid"
     // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible to
@@ -263,6 +264,37 @@ void Fitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
     fitParams.correlationMatrix =
         std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
+}
+
+void Fitter::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
+{
+    // Check that a fit has been performed
+    if (!_fitFcn) {
+        std::cerr << "Must run Minuit fitter before performing parameter scan." << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that we have sensible low and high
+    if (low > high) {
+        std::cerr << "Low value must be below high value for parameter scan." << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that we don't have too many points
+    if (numPoints > 100) {
+        std::cerr << "Cannot scan a parameter at more than 100 points (sorry)." << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that our parameter index is in range
+    if (i >= fitParams.fitParams.size()) {
+        std::cerr << "Cannot scan parameter " << i << "; out of range" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Create MnScan object that will be used to perform our scan and run the scan
+    ROOT::Minuit2::MnScan Scanner = ROOT::Minuit2::MnScan(*_fitFcn, fitParams.fitParams, fitParams.fitParamErrors);
+    parameterScan                 = Scanner.Scan(i, numPoints + 1, low, high);
 }
 
 void Fitter::saveFitPlot(const std::string&          plotTitle,

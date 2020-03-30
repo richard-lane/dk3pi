@@ -1,6 +1,5 @@
 /*
- * Likelihood Fit binned data
- * Intended to be an upgrade of Fitter.h
+ * Fit binned data with Minuit
  */
 #ifndef MINUIT_FITTER_H
 #define MINUIT_FITTER_H
@@ -9,7 +8,6 @@
 #include <vector>
 
 #include "DecaySimulator.h"
-#include "Fitter.h"
 
 #include "Minuit2/FCNBase.h"
 #include "TGraphErrors.h"
