@@ -252,14 +252,8 @@ void Fitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
 {
 
     // Set our fitParams to the values obtained in the fit
-    // I couldn't find an obvious way to do this so... here we are
-    fitParams.fitParams = std::vector<double>{min.UserParameters().Parameter(0).Value(),
-                                              min.UserParameters().Parameter(1).Value(),
-                                              min.UserParameters().Parameter(2).Value()};
-
-    fitParams.fitParamErrors = std::vector<double>{min.UserParameters().Parameter(0).Error(),
-                                                   min.UserParameters().Parameter(1).Error(),
-                                                   min.UserParameters().Parameter(2).Error()};
+    fitParams.fitParams      = min.UserParameters().Params();
+    fitParams.fitParamErrors = min.UserParameters().Errors();
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
     fitParams.correlationMatrix =
