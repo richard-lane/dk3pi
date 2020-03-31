@@ -7,11 +7,14 @@
 #include <utility>
 
 #include <TCanvas.h>
+#include <TF1.h>
+#include <TGraphErrors.h>
 #include <TH1D.h>
 #include <TLatex.h>
 
 #include "DecaySimulator.h"
 #include "PullStudyHelpers.h"
+#include "RatioCalculator.h"
 #include "util.h"
 
 /*
@@ -177,10 +180,36 @@ void simulateDecays()
     wsCanvas->SaveAs("WS.pdf");
     delete wsCanvas;
 
+    // Take the ratio of our datasets, plot against the expected ratio
+    std::vector<double> expectedParams    = PullStudyHelpers::expectedParams(MyParams);
+    TF1 *               expectedRatioFunc = new TF1("expectedPoly", "[0] + [1]*x + [2]*x*x", 0, maxTime);
+    expectedRatioFunc->SetParameter(0, expectedParams[0]);
+    expectedRatioFunc->SetParameter(1, expectedParams[1]);
+    expectedRatioFunc->SetParameter(2, expectedParams[2]);
+
+    numDcs = PullStudyHelpers::numDCSDecays(numCf, MyParams, maxTime);
+    MyDecays.findDcsDecayTimes(numDcs);
+
+    RatioCalculator Calculator = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
+    Calculator.calculateRatios();
+
+    TGraphErrors *ratioGraph = new TGraphErrors(
+        numTimeBins, Calculator.binCentres.data(), Calculator.ratio.data(), nullptr, Calculator.error.data());
+    ratioGraph->SetTitle("Expected vs Actual DCS/CF ratio;time/ns;DCS/CF counts per bin");
+
+    TCanvas *ratioCanvas = new TCanvas();
+    ratioCanvas->cd();
+    ratioGraph->Draw("AP");
+    expectedRatioFunc->Draw("CSAME");
+    wsCanvas->SaveAs("ratio.pdf");
+    delete ratioCanvas;
+
     delete generatedRSHist;
     delete generatedWSHist;
     delete expectedRSHist;
     delete expectedWSHist;
+    delete ratioGraph;
+    delete expectedRatioFunc;
 }
 
 int main()
