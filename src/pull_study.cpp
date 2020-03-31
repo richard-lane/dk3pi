@@ -103,10 +103,10 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         MyDecays.findDcsDecayTimes(numDcsEvents);
         MyDecays.findCfDecayTimes(numCfEvents);
 
-        // Find bin limits such that we have at least 15 DCS points per bin
+        // Find bin limits such that we have at least 50 DCS points per bin
         std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
         std::sort(dcsTimes.begin(), dcsTimes.end());
-        std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 15, 0, 1.05 * maxTime);
+        std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 50, 0, 1.05 * maxTime);
 
         // Plot histograms of event counts for both event types in each time bin
         // These will get saved as WSHist.pdf and RSHist.pdf
@@ -130,8 +130,11 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
 
         // Save our fit plot to file
-        // std::string path = "fitplot_" + std::to_string(i) + ".pdf";
-        // MyFitter.saveFitPlot("foo", path);
+        if (!i) {
+            const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+            std::string                path   = "fitplot_" + std::to_string(i) + ".pdf";
+            MyFitter.saveFitPlot("Example fit plot", path, &legend);
+        }
 
         // Store the parameters a, b and c
         // We care about their distance from the expected value, adjusted by their error
@@ -158,7 +161,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(100, 200000);
+    pull_study(200, 500000);
 
     return 0;
 }
