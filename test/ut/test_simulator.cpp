@@ -39,10 +39,7 @@ BOOST_AUTO_TEST_CASE(test_rs_rate, *boost::unit_test::tolerance(SIMULATOR_CPP_TO
     };
 
     // Create a decay simulator, check our RS rate is right
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.5);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1);
-
-    SimulatedDecays MyDecays = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.5, DecayParams);
 
     BOOST_CHECK(expectedRSRate(DecayParams, 0.1) == MyDecays._rightSignDecayRate(0.1));
 }
@@ -72,16 +69,14 @@ BOOST_AUTO_TEST_CASE(test_ws_rate, *boost::unit_test::tolerance(SIMULATOR_CPP_TO
     };
 
     // Create a decay simulator, check our RS rate is right
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.5);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1);
-
-    SimulatedDecays MyDecays = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.5, DecayParams);
 
     BOOST_CHECK(expectedWSRate(DecayParams, 0.01) == MyDecays._wrongSignDecayRate(0.01));
 }
 
 /*
- * Check that accept-reject works for two points on the RS curve
+ * Check that accept-reject works for a point on the RS curve
+ * It's impossible to have a point rejected from this distribution
  */
 BOOST_AUTO_TEST_CASE(test_acc_rej_rs)
 {
@@ -94,12 +89,9 @@ BOOST_AUTO_TEST_CASE(test_acc_rej_rs)
         .width = 2500.0,
     };
 
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.002);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
-    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
 
     BOOST_CHECK(MyDecays.isAccepted(0.0005, 0.25, true));
-    BOOST_CHECK(!MyDecays.isAccepted(0.0005, 0.35, true));
 }
 
 /*
@@ -117,12 +109,10 @@ BOOST_AUTO_TEST_CASE(test_acc_rej_ws)
         .width = 2500.0,
     };
 
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.002);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
-    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
 
-    BOOST_CHECK(MyDecays.isAccepted(0.0005, 0.0006, false));
-    BOOST_CHECK(!MyDecays.isAccepted(0.0005, 0.0010, false));
+    BOOST_CHECK(MyDecays.isAccepted(0.0005, 0.699, false));
+    BOOST_CHECK(!MyDecays.isAccepted(0.0005, 0.700, false));
 }
 
 /*
@@ -139,9 +129,7 @@ BOOST_AUTO_TEST_CASE(test_hist_error_ws_rs_not_set)
         .width = 2500.0,
     };
 
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.002);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
-    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
 
     BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0, 1}), D2K3PiException);
 }
@@ -160,9 +148,7 @@ BOOST_AUTO_TEST_CASE(test_hist_error_rs_not_set)
         .width = 2500.0,
     };
 
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.002);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
-    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
     MyDecays.findCfDecayTimes(1);
 
     BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0, 1}), D2K3PiException);
@@ -182,36 +168,10 @@ BOOST_AUTO_TEST_CASE(test_hist_error_ws_not_set)
         .width = 2500.0,
     };
 
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.002);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
-    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
     MyDecays.findDcsDecayTimes(1);
 
     BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0, 1}), D2K3PiException);
-}
-
-/*
- * Test that using bin limits that dont cover the full range of times cause an error
- */
-BOOST_AUTO_TEST_CASE(test_hist_bad_bin_limits)
-{
-    DecayParams_t DecayParams = {
-        .x     = 0.004,
-        .y     = 0.007,
-        .r     = 0.05,
-        .z_im  = -0.3,
-        .z_re  = 0.8,
-        .width = 2500.0,
-    };
-
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.002);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
-    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
-    MyDecays.findCfDecayTimes(1);
-    MyDecays.findDcsDecayTimes(1);
-
-    BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0, 0.0015}), D2K3PiException);
-    BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0.0005, 0.002}), D2K3PiException);
 }
 
 /*
@@ -228,9 +188,7 @@ BOOST_AUTO_TEST_CASE(test_hist_unsorted_bin_limits)
         .width = 2500.0,
     };
 
-    std::pair<double, double> allowedTimes = std::make_pair(0, 0.002);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
-    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
     MyDecays.findCfDecayTimes(1);
     MyDecays.findDcsDecayTimes(1);
 

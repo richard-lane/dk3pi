@@ -24,14 +24,12 @@ void compareRootMinuit(void)
         .z_re  = 0.7609,
         .width = 2439.0,
     };
-    double                    maxTime      = 0.002;
-    std::pair<double, double> allowedTimes = std::make_pair(0, maxTime);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
+    double maxTime = 0.002;
 
     size_t numCfEvents  = 1000000;
     size_t numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
 
-    SimulatedDecays MyDecays = SimulatedDecays(allowedTimes, allowedRates, phaseSpaceParams);
+    SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
     MyDecays.findDcsDecayTimes(numDcsEvents);
     MyDecays.findCfDecayTimes(numCfEvents);
 

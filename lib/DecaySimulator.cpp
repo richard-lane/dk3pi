@@ -9,50 +9,41 @@
 
 #include "D2K3PiError.h"
 #include "DecaySimulator.h"
+#include "PullStudyHelpers.h"
 #include "util.h"
 
-SimulatedDecays::SimulatedDecays(const std::pair<double, double> &timeRange,
-                                 const std::pair<double, double> &decayRateRange,
-                                 const DecayParams_t &            DecayParams)
+SimulatedDecays::SimulatedDecays(const double maxTime, const DecayParams_t &DecayParams) : _maxTime(maxTime)
 {
-    // The parent class implementations will suffice to set the allowed ranges of values.
-    setXRange(timeRange);
-    setYRange(decayRateRange);
-
     _DecayParams = DecayParams;
+    _setMaxDCSRatio();
+
+    // Set our generator to a new random device
+    std::random_device rd;
+    _gen = std::mt19937(rd());
 }
 
-bool SimulatedDecays::isAccepted(const double xVal, const double yVal, bool rightSign)
+bool SimulatedDecays::isAccepted(const double time, const double uniformVal, bool rightSign)
 {
-    // Note: a better implementation of this might use the parent class implementation of isAccepted,
+    // Note: a better implementation of this might pass in a function pointer or something
     // but I didn't want to do that because of issues with pointers to member functions being different
     // from normal function pointers :(
     double funcVal{0};
     if (rightSign) {
-        funcVal = _rightSignDecayRate(xVal);
+        funcVal = _rightSignDecayRate(time);
     } else {
-        funcVal = _wrongSignDecayRate(xVal);
+        funcVal = _wrongSignDecayRate(time);
     }
+    double c = rightSign ? 1.0 : _maxDCSRatio;
 
-    // Our Maximum Y value is not large enough to accomodate the function
-    if (funcVal > _maxY) {
-        std::cerr << "Function value " + std::to_string(funcVal) + " is larger than maximum allowed value " +
-                         std::to_string(_maxY)
-                  << std::endl;
-
-        throw D2K3PiException();
-    }
-
-    // Our Maximum X or Y values are smaller than the provided x and y val
-    if (xVal > _maxX || xVal < _minX || yVal > _maxY || yVal < _minY) {
-        std::cerr << "Generated value (" + std::to_string(xVal) + ", " + std::to_string(yVal) +
-                         ") is outside of allowed region X(" + std::to_string(_minX) + ", " + std::to_string(_maxX) +
-                         "); Y(" + std::to_string(_minY) + ", " + std::to_string(_maxY) + ")"
+    // Check that the RHS of our acc-rej inequality is indeed between 0 and 1
+    double rhs = funcVal / (c * std::exp(-1.0 * _DecayParams.width * time));
+    if (rhs < 0 || rhs > 1.0) {
+        std::cerr << "Accept-reject error: f(t)/c*exp(width*t) returned a value " << rhs << " out of range [0, 1]."
                   << std::endl;
         throw D2K3PiException();
     }
 
-    return yVal < funcVal;
+    return uniformVal < rhs;
 }
 
 void SimulatedDecays::findDcsDecayTimes(size_t numEvents)
@@ -62,10 +53,10 @@ void SimulatedDecays::findDcsDecayTimes(size_t numEvents)
     size_t numGenerated = 0;
 
     while (numGenerated < numEvents) {
-        double time  = getRandomX();
-        double ratio = getRandomY();
+        double time = _getRandomTime();
+        double y    = _getRandomUniform();
 
-        if (isAccepted(time, ratio, false)) {
+        if (isAccepted(time, y, false)) {
             WSDecayTimes[numGenerated] = time;
             numGenerated++;
         }
@@ -79,14 +70,24 @@ void SimulatedDecays::findCfDecayTimes(size_t numEvents)
     size_t numGenerated = 0;
 
     while (numGenerated < numEvents) {
-        double time  = getRandomX();
-        double ratio = getRandomY();
+        double time = _getRandomTime();
+        double y    = _getRandomUniform();
 
-        if (isAccepted(time, ratio, true)) {
+        if (isAccepted(time, y, true)) {
             RSDecayTimes[numGenerated] = time;
             numGenerated++;
         }
     }
+}
+
+void SimulatedDecays::_setMaxDCSRatio(void)
+{
+    std::vector<double> params = PullStudyHelpers::expectedParams(_DecayParams);
+    double              a      = params[0];
+    double              b      = params[1];
+    double              c      = params[2];
+
+    _maxDCSRatio = a > a + b * _maxTime + c * _maxTime * _maxTime ? a : a + b * _maxTime + c * _maxTime * _maxTime;
 }
 
 double SimulatedDecays::_rightSignDecayRate(const double time)
@@ -117,15 +118,10 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
         throw D2K3PiException();
     }
 
-    // Check our time bin limits are sorted and cover the entire range of time values
+    // Check our time bin limits are sorted
     size_t numBins = timeBinLimits.size() - 1;
     if (!std::is_sorted(timeBinLimits.begin(), timeBinLimits.end())) {
         std::cerr << "Time bin limits should be sorted" << std::endl;
-        throw D2K3PiException();
-    }
-    if (timeBinLimits[0] > _minX || timeBinLimits[numBins] < _maxX) {
-        std::cerr << "Time bin limits do not cover entire range of possible time values: " << _minX << ", " << _maxX
-                  << std::endl;
         throw D2K3PiException();
     }
 
@@ -144,6 +140,19 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
     util::saveObjectToFile(WSHist, "WSHist.pdf");
     delete RSHist;
     delete WSHist;
+}
+
+double SimulatedDecays::_getRandomUniform(void)
+{
+    return _uniform(_gen);
+}
+
+double SimulatedDecays::_getRandomTime(void)
+{
+    double x = _getRandomUniform();
+
+    double z = 1 - std::exp(-1 * _DecayParams.width * _maxTime);
+    return (-1 / _DecayParams.width) * std::log(1 - z * x);
 }
 
 #endif // DECAYSIMULATOR_CPP

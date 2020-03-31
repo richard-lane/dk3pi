@@ -1,5 +1,7 @@
 /*
  * Run a simulation using a SimulatedDecays object and draw a graph of the two curves.
+ *
+ * i wrote this during lhcb week so it is hangover-quality code
  */
 #include <iostream>
 #include <numeric>
@@ -16,6 +18,22 @@
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "util.h"
+
+/*
+ * Find chi squared between a dataset with errors and a TF1
+ */
+double chiSq(const std::vector<double> &times,
+             const std::vector<double> &data,
+             const std::vector<double> &errors,
+             const TF1 *                fcn)
+{
+
+    double chi2 = 0.0;
+    for (size_t i = 0; i < times.size(); ++i) {
+        chi2 += std::pow((fcn->Eval(times[i]) - data[i]) / errors[i], 2);
+    }
+    return chi2;
+}
 
 /*
  * Set the decay parameters to sensible values.
@@ -116,7 +134,7 @@ void simulateDecays()
     // Choose about how many decays we want
     // This won't be exact- we convert a vector of doubles to a vector of size_t, so we end don't get the exact number
     // we want
-    size_t approxNumDecays = 100000;
+    size_t approxNumDecays = 10000000;
 
     // Take the centre of each time bin, calculate the rate in each and multiply it by a large number to get many events
     // in each bin
@@ -130,11 +148,7 @@ void simulateDecays()
     size_t numDcs = std::accumulate(expectedDcsBinPopulation.begin(), expectedDcsBinPopulation.end(), (size_t)0);
 
     // Create our Decay simulator object and generate CF and DCS times using accept-reject
-    // Assume our maximum rate is at t=0 ... this will break if we introduce an efficiency function!
-    double                    maxRate      = std::max(expectedRSRate(MyParams, 0), expectedWSRate(MyParams, 0));
-    std::pair<double, double> allowedTimes = std::make_pair(0, maxTime);
-    std::pair<double, double> allowedRates = std::make_pair(0, maxRate);
-    SimulatedDecays           MyDecays     = SimulatedDecays(allowedTimes, allowedRates, MyParams);
+    SimulatedDecays MyDecays = SimulatedDecays(maxTime, MyParams);
     MyDecays.findCfDecayTimes(numCf);
     MyDecays.findDcsDecayTimes(numDcs);
 
@@ -196,6 +210,11 @@ void simulateDecays()
     TGraphErrors *ratioGraph = new TGraphErrors(
         numTimeBins, Calculator.binCentres.data(), Calculator.ratio.data(), nullptr, Calculator.error.data());
     ratioGraph->SetTitle("Expected vs Actual DCS/CF ratio;time/ns;DCS/CF counts per bin");
+
+    // Find chi sq
+    double chiSquare = chiSq(Calculator.binCentres, Calculator.ratio, Calculator.error, expectedRatioFunc);
+    std::cout << "numbins :" << numTimeBins << std::endl;
+    std::cout << "chiSquare: " << chiSquare << std::endl;
 
     TCanvas *ratioCanvas = new TCanvas();
     ratioCanvas->cd();

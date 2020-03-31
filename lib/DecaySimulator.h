@@ -4,9 +4,8 @@
 #ifndef DECAYSIMULATOR_HPP
 #define DECAYSIMULATOR_HPP
 
+#include <random>
 #include <utility>
-
-#include "MCGenerator.h"
 
 /*
  * Struct encapsulating the parameters needed to simulate decays.
@@ -30,15 +29,13 @@ typedef struct DecayParameters {
     double width{0.0};
 } DecayParams_t;
 
-class SimulatedDecays : public MCGenerator
+class SimulatedDecays
 {
   public:
     /*
      * Set the allowed time and decay rate values for our simulated decay.
      */
-    SimulatedDecays(const std::pair<double, double> &timeRange,
-                    const std::pair<double, double> &decayRateRange,
-                    const DecayParams_t &            DecayParams);
+    SimulatedDecays(const double maxTime, const DecayParams_t &DecayParams);
 
     /*
      * Check whether a point is accepted as being from one of the distributions.
@@ -63,7 +60,7 @@ class SimulatedDecays : public MCGenerator
     /*
      * Plot histograms of the number of decay rates in each time bin
      */
-    void plotRates(const std::vector<double>&binLimits);
+    void plotRates(const std::vector<double> &binLimits);
 
     /*
      * RS decay times
@@ -90,6 +87,42 @@ class SimulatedDecays : public MCGenerator
     double _wrongSignDecayRate(const double time);
 
   private:
+    /*
+     * Generate a random number from 0 to 1
+     */
+    double _getRandomUniform(void);
+
+    /*
+     * Generate a random time, exponentially distributed with characteristic time 1/_DecayParams.width, between 0 and
+     * _maxTime
+     */
+    double _getRandomTime(void);
+
+    /*
+     * Find the maximum ratio of our DCS ratio to our exponential distribution
+     */
+    void _setMaxDCSRatio(void);
+
+    /*
+     * Times to generate up to
+     */
+    double _maxTime{0.0};
+
+    /*
+     * Maximum ratio of our DCS rate / exponential function
+     */
+    double _maxDCSRatio{0.0};
+
+    /*
+     * Mersenne Twister engine
+     */
+    std::mt19937 _gen;
+
+    /*
+     * Uniform distribution to draw numbers from when _getRandomUniform() is called
+     */
+    std::uniform_real_distribution<double> _uniform;
+
     /*
      * Mixing parameters
      */

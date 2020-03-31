@@ -12,7 +12,6 @@
 
 #include "../lib/DecaySimulator.h"
 #include "../lib/Fitter.h"
-#include "../lib/MCGenerator.h"
 #include "../lib/PhaseSpaceBinning.h"
 #include "../lib/RatioCalculator.h"
 #include "PullStudyHelpers.h"
@@ -59,9 +58,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     };
 
     // Restrict our times and rates to consider for our Monte Carlo simulation
-    double                    maxTime      = 0.002;
-    std::pair<double, double> allowedTimes = std::make_pair(0, maxTime);
-    std::pair<double, double> allowedRates = std::make_pair(0, 1.3);
+    double maxTime = 0.002;
 
     // Create sensible time bins
     // size_t              numTimeBins = 500;
@@ -101,7 +98,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         size_t numDcsEvents = dcsDistribution.operator()(generator);
 
         // Simulate DCS and CF decays with our parameters
-        SimulatedDecays MyDecays = SimulatedDecays(allowedTimes, allowedRates, phaseSpaceParams);
+        SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
         MyDecays.findDcsDecayTimes(numDcsEvents);
         MyDecays.findCfDecayTimes(numCfEvents);
 
@@ -160,7 +157,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(250, 100000);
+    pull_study(500, 500000);
 
     return 0;
 }
