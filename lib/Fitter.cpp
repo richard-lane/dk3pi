@@ -14,7 +14,9 @@
 #include "util.h"
 
 #include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MnMigrad.h"
 #include "Minuit2/MnScan.h"
+#include "Minuit2/MnUserParameters.h"
 #include "Minuit2/VariableMetricMinimizer.h"
 #include "TCanvas.h"
 #include "TF1.h"
@@ -211,9 +213,15 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
     // Create an object representing our Minuit2-compatible 2nd order polynomial
     _fitFcn = std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 
+    // Store our parameters
+    ROOT::Minuit2::MnUserParameters parameters;
+    parameters.Add("a", initialParams[0], initialErrors[0]);
+    parameters.Add("b", initialParams[1], initialErrors[1]);
+    parameters.Add("c", initialParams[2], initialErrors[2]);
+
     // Create a minimiser and minimise our chi squared
-    ROOT::Minuit2::VariableMetricMinimizer Minimizer;
-    ROOT::Minuit2::FunctionMinimum         min = Minimizer.Minimize(*_fitFcn, initialParams, initialErrors);
+    ROOT::Minuit2::MnMigrad        migrad(*_fitFcn, parameters);
+    ROOT::Minuit2::FunctionMinimum min = migrad();
 
     // Check that our solution is "valid"
     // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible to
