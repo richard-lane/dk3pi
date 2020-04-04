@@ -25,13 +25,11 @@ SimulatedDecays::SimulatedDecays(const double maxTime, const DecayParams_t &Deca
 bool SimulatedDecays::isAccepted(const double time, const double uniformVal, bool rightSign)
 {
     // Note: a better implementation of this might pass in a function pointer or something
-    // but I didn't want to do that because of issues with pointers to member functions being different
-    // from normal function pointers :(
     double funcVal{0};
     if (rightSign) {
-        funcVal = _rightSignDecayRate(time);
+        funcVal = rightSignDecayRate(time);
     } else {
-        funcVal = _wrongSignDecayRate(time);
+        funcVal = wrongSignDecayRate(time);
     }
     double c = rightSign ? 1.0 : _maxDCSRatio;
 
@@ -90,12 +88,12 @@ void SimulatedDecays::_setMaxDCSRatio(void)
     _maxDCSRatio = a > a + b * _maxTime + c * _maxTime * _maxTime ? a : a + b * _maxTime + c * _maxTime * _maxTime;
 }
 
-double SimulatedDecays::_rightSignDecayRate(const double time)
+double SimulatedDecays::rightSignDecayRate(const double time)
 {
     return exp(-1.0 * _DecayParams.width * time);
 }
 
-double SimulatedDecays::_wrongSignDecayRate(const double time)
+double SimulatedDecays::wrongSignDecayRate(const double time)
 {
     // Write the decay rate as (a + bt + ct^2)e^(-gamma*t) (ignoring overall factor of B^2 that has been taken out)
     double a = pow(_DecayParams.r, 2);
@@ -119,22 +117,17 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
     }
 
     // Check our time bin limits are sorted
-    size_t numBins = timeBinLimits.size() - 1;
     if (!std::is_sorted(timeBinLimits.begin(), timeBinLimits.end())) {
         std::cerr << "Time bin limits should be sorted" << std::endl;
         throw D2K3PiException();
     }
 
-    TH1D *RSHist = new TH1D("Test accept-reject, RS", "", numBins, timeBinLimits.data());
-    TH1D *WSHist = new TH1D("Test accept-reject, WS", "", numBins, timeBinLimits.data());
+    size_t numBins = timeBinLimits.size() - 1;
+    TH1D * RSHist  = new TH1D("Test accept-reject, RS", "", numBins, timeBinLimits.data());
+    TH1D * WSHist  = new TH1D("Test accept-reject, WS", "", numBins, timeBinLimits.data());
 
-    for (auto it = RSDecayTimes.begin(); it != RSDecayTimes.end(); ++it) {
-        RSHist->Fill(*it);
-    }
-
-    for (auto it = WSDecayTimes.begin(); it != WSDecayTimes.end(); ++it) {
-        WSHist->Fill(*it);
-    }
+    RSHist->FillN(RSDecayTimes.size(), RSDecayTimes.data(), nullptr);
+    WSHist->FillN(WSDecayTimes.size(), WSDecayTimes.data(), nullptr);
 
     util::saveObjectToFile(RSHist, "RSHist.pdf");
     util::saveObjectToFile(WSHist, "WSHist.pdf");
@@ -149,8 +142,9 @@ double SimulatedDecays::_getRandomUniform(void)
 
 double SimulatedDecays::_getRandomTime(void)
 {
+    // Get a random number from our uniform distribution and use an analytical formula to convert it to one from an
+    // exponential distribution up to a maximum time.
     double x = _getRandomUniform();
-
     double z = 1 - std::exp(-1 * _DecayParams.width * _maxTime);
     return (-1 / _DecayParams.width) * std::log(1 - z * x);
 }

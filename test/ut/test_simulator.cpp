@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(test_rs_rate, *boost::unit_test::tolerance(SIMULATOR_CPP_TO
     // Create a decay simulator, check our RS rate is right
     SimulatedDecays MyDecays = SimulatedDecays(0.5, DecayParams);
 
-    BOOST_CHECK(expectedRSRate(DecayParams, 0.1) == MyDecays._rightSignDecayRate(0.1));
+    BOOST_CHECK(expectedRSRate(DecayParams, 0.1) == MyDecays.rightSignDecayRate(0.1));
 }
 
 /*
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(test_ws_rate, *boost::unit_test::tolerance(SIMULATOR_CPP_TO
     // Create a decay simulator, check our RS rate is right
     SimulatedDecays MyDecays = SimulatedDecays(0.5, DecayParams);
 
-    BOOST_CHECK(expectedWSRate(DecayParams, 0.01) == MyDecays._wrongSignDecayRate(0.01));
+    BOOST_CHECK(expectedWSRate(DecayParams, 0.01) == MyDecays.wrongSignDecayRate(0.01));
 }
 
 /*
