@@ -15,6 +15,7 @@
 
 #include "Minuit2/FunctionMinimum.h"
 #include "Minuit2/MnMigrad.h"
+#include "Minuit2/MnPrint.h"
 #include "Minuit2/MnScan.h"
 #include "Minuit2/MnUserParameters.h"
 #include "Minuit2/VariableMetricMinimizer.h"
@@ -228,7 +229,7 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
     // be sure with Minuit2
     if (!min.IsValid()) {
         std::cerr << "Minuit fit invalid" << std::endl;
-        // It would be nice to print out the Minimiser status here but std::cout << doesn't work (the docs are lying)
+        std::cerr << min << std::endl;
         throw D2K3PiException();
     }
 
@@ -297,6 +298,82 @@ void Fitter::chiSqParameterScan(const size_t i, const size_t numPoints, const do
     // Create MnScan object that will be used to perform our scan and run the scan
     ROOT::Minuit2::MnScan Scanner = ROOT::Minuit2::MnScan(*_fitFcn, fitParams.fitParams, fitParams.fitParamErrors);
     parameterScan                 = Scanner.Scan(i, numPoints + 1, low, high);
+}
+
+void Fitter::twoDParamScan(const size_t i,
+                           const size_t j,
+                           const size_t iPoints,
+                           const size_t jPoints,
+                           const double iLow,
+                           const double iHigh,
+                           const double jLow,
+                           const double jHigh)
+{
+    if (i >= fitParams.fitParams.size() || j >= fitParams.fitParams.size()) {
+        std::cerr << "Cannot scan params " << i << ", " << j << "; only have " << fitParams.fitParams.size()
+                  << " params." << std::endl;
+        throw D2K3PiException();
+    }
+
+    if (i == j) {
+        std::cerr << "Cannot perfom 2d scan on a parameter against itself" << std::endl;
+        throw D2K3PiException();
+    }
+
+    if (!_fitFcn) {
+        std::cerr << "Run fit before running 2d parameter scan" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Create vectors to store the i, j values we're interested in, and a vector to store our result in
+    std::vector<double> iVals(iPoints);
+    std::vector<double> jVals(jPoints);
+    twoDParameterScan = std::vector<std::vector<double>>(iPoints * jPoints);
+
+    // Fill vectors of i and j values
+    // Technically we could do all this in the big loop where we do the minimisation but i think this is clearer to
+    // think about
+    double iStep = (iHigh - iLow) / (iPoints - 1);
+    double jStep = (jHigh - jLow) / (jPoints - 1);
+    for (size_t k = 0; k < iPoints; ++k) {
+        iVals[k] = iLow + k * iStep;
+    }
+    for (size_t k = 0; k < jPoints; ++k) {
+        jVals[k] = jLow + k * jStep;
+    }
+
+    // Loop over our desired i and j values, perform a fit with i and j fixed + fill twoDParameterScan
+    for (size_t iPoint = 0; iPoint < iPoints; ++iPoint) {
+        for (size_t jPoint = 0; jPoint < jPoints; ++jPoint) {
+            double iVal = iVals[iPoint];
+            double jVal = jVals[jPoint];
+
+            // Minimise wrt the params
+            ROOT::Minuit2::MnUserParameters parameters;
+            parameters.Add("a", fitParams.fitParams[0], fitParams.fitParamErrors[0]);
+            parameters.Add("b", fitParams.fitParams[1], fitParams.fitParamErrors[1]);
+            parameters.Add("c", fitParams.fitParams[2], fitParams.fitParamErrors[2]);
+
+            parameters.SetValue(i, iVal);
+            parameters.SetValue(j, jVal);
+
+            // Create a minimiser
+            ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
+
+            // Fix i and j; now they are not allowed to vary from the value they get set to
+            migrad.Fix(i);
+            migrad.Fix(j);
+
+            ROOT::Minuit2::FunctionMinimum min = migrad();
+            if (!min.IsValid()) {
+                std::cerr << "Minuit fit invalid" << std::endl;
+                std::cout << min << std::endl;
+                throw D2K3PiException();
+            }
+
+            twoDParameterScan[jPoint + jPoints * iPoint] = std::vector<double>{iVal, jVal, min.Fval()};
+        }
+    }
 }
 
 void Fitter::saveFitPlot(const std::string&          plotTitle,

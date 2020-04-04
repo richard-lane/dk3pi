@@ -134,7 +134,7 @@ void simulateDecays()
     // Choose about how many decays we want
     // This won't be exact- we convert a vector of doubles to a vector of size_t, so we end don't get the exact number
     // we want
-    size_t approxNumDecays = 10000000;
+    size_t approxNumDecays = 100000;
 
     // Take the centre of each time bin, calculate the rate in each and multiply it by a large number to get many events
     // in each bin
