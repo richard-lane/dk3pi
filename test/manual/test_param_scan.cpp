@@ -1,3 +1,4 @@
+/* Lots of reused code here */
 #include <iostream>
 #include <vector>
 
@@ -163,11 +164,84 @@ void test_2d_scan()
     Graph->SetTitle("2d a b scan;a;b;chiSq");
     util::saveObjectToFile(Graph, "a_.pdf", "surf1");
     delete Graph;
+    std::cout << std::endl;
+}
+
+/*
+ * Perform a fit, ignore the result + perform a 2d scan of im(Z) and re(Z)
+ */
+void test_z_scan()
+{
+    // Create an accept-reject dataset
+    DecayParams_t phaseSpaceParams = {
+        .x     = 0.0037,
+        .y     = 0.0066,
+        .r     = 0.055,
+        .z_im  = -0.2956,
+        .z_re  = 0.7609,
+        .width = 2439.0,
+    };
+    double maxTime = 0.002;
+
+    size_t numCfEvents  = 1000000;
+    size_t numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
+
+    SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
+    MyDecays.findDcsDecayTimes(numDcsEvents);
+    MyDecays.findCfDecayTimes(numCfEvents);
+
+    // Define some time bins
+    std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
+    std::sort(dcsTimes.begin(), dcsTimes.end());
+    std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 100, 0, 1.05 * maxTime);
+
+    // Divide using RatioCalculator
+    RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
+    MyRatios.calculateRatios();
+
+    // Create a fitter
+    FitData_t MyFitData         = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    Fitter    MinuitChiSqFitter = Fitter(MyFitData);
+
+    // Perform fit, output minimum statistic
+    std::vector<double> initialParameterGuess{phaseSpaceParams.x,
+                                              phaseSpaceParams.y,
+                                              phaseSpaceParams.r,
+                                              phaseSpaceParams.z_im,
+                                              phaseSpaceParams.z_re,
+                                              phaseSpaceParams.width};
+    std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
+    MinuitChiSqFitter.detailedFitUsingMinuit(initialParameterGuess, initialErrorsGuess, ChiSquared);
+    std::cout << "Min chisq: " << *(MinuitChiSqFitter.statistic) << std::endl;
+
+    // Perform a 2d chi squared scan on the components of Z
+    size_t numPoints      = 100;
+    size_t numTotalPoints = numPoints * numPoints;
+    double min            = -1;
+    double max            = 1;
+
+    MinuitChiSqFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
+
+    std::vector<double> imVals(numTotalPoints);
+    std::vector<double> reVals(numTotalPoints);
+    std::vector<double> chiSquaredVals(numTotalPoints);
+
+    for (size_t i = 0; i < numTotalPoints; ++i) {
+        imVals[i]         = MinuitChiSqFitter.twoDParameterScan[i][0];
+        reVals[i]         = MinuitChiSqFitter.twoDParameterScan[i][1];
+        chiSquaredVals[i] = MinuitChiSqFitter.twoDParameterScan[i][2];
+    }
+
+    TGraph2D* Graph = new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredVals.data());
+    Graph->SetTitle("2d Z scan;Im(Z);Re(Z);chiSq");
+    util::saveObjectToFile(Graph, "z_.pdf", "surf1");
+    delete Graph;
 }
 
 int main()
 {
     test_param_scan();
     test_2d_scan();
+    test_z_scan();
     return 0;
 }

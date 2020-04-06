@@ -428,15 +428,21 @@ void Fitter::twoDParamScan(const size_t i,
 
             // Minimise wrt the params
             ROOT::Minuit2::MnUserParameters parameters;
-            parameters.Add("a", fitParams.fitParams[0], fitParams.fitParamErrors[0]);
-            parameters.Add("b", fitParams.fitParams[1], fitParams.fitParamErrors[1]);
-            parameters.Add("c", fitParams.fitParams[2], fitParams.fitParamErrors[2]);
+            for (size_t param = 0; param < fitParams.fitParams.size(); ++param) {
+                parameters.Add(std::to_string(param), fitParams.fitParams[param], fitParams.fitParamErrors[param]);
+            }
 
             parameters.SetValue(i, iVal);
             parameters.SetValue(j, jVal);
 
             // Create a minimiser
             ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
+
+            // Hack: if we have 6 params, assume one is width + should be fixed
+            // TODO get rid of
+            if (fitParams.fitParams.size() == 6) {
+                migrad.Fix(5);
+            }
 
             // Fix i and j; now they are not allowed to vary from the value they get set to
             migrad.Fix(i);
