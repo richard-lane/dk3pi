@@ -257,6 +257,84 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
         _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
 }
 
+void Fitter::detailedFitUsingMinuit(const std::vector<double>& initialParams,
+                                    const std::vector<double>& initialErrors,
+                                    const FitAlgorithm_t&      FitMethod)
+{
+    // Check that we have been passed 6 initial parameters and errors
+    if (initialParams.size() != 6 || initialErrors.size() != 6) {
+        std::cout << "detailedFitUsingMinuit2ChiSq requires a guess of 6 parameters and their errors" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Create an object representing our Minuit2-compatible 2nd order polynomial
+    _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
+
+    // Store our parameters
+    ROOT::Minuit2::MnUserParameters parameters;
+    parameters.Add("x", initialParams[0], initialErrors[0]);
+    parameters.Add("y", initialParams[1], initialErrors[1]);
+    parameters.Add("r", initialParams[2], initialErrors[2]);
+    parameters.Add("z_im", initialParams[3], initialErrors[3]);
+    parameters.Add("z_re", initialParams[4], initialErrors[4]);
+    parameters.Add("width", initialParams[5], initialErrors[5]);
+
+    // Create a minimiser and minimise our chi squared
+    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
+    migrad.Fix(5); // Fix width
+    ROOT::Minuit2::FunctionMinimum min = migrad();
+
+    // Check that our solution is "valid"
+    // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible to
+    // be sure with Minuit2
+    if (!min.IsValid()) {
+        std::cerr << "Minuit fit invalid" << std::endl;
+        std::cerr << min << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Store our fit parameters and correlation matrix as class attributes
+    // Set our fitParams to the values obtained in the fit
+    fitParams.fitParams      = min.UserParameters().Params();
+    fitParams.fitParamErrors = min.UserParameters().Errors();
+
+    // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
+    // Hack: remove width from fit params, store matrix and add it again
+    double widthErr = fitParams.fitParamErrors[5];
+    fitParams.fitParamErrors.pop_back();
+    fitParams.correlationMatrix =
+        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
+    fitParams.fitParamErrors.push_back(widthErr);
+
+    // Store chi squared
+    statistic = std::make_unique<double>(min.Fval());
+
+    // Set our TGraph pointer to the right thing
+    plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
+                                          _fitData.binCentres.data(),
+                                          _fitData.data.data(),
+                                          _fitData.binErrors.data(),
+                                          _fitData.errors.data());
+
+    // Create also a best-fit dataset from our parameters and data, plotting this on the same
+    DecayParams_t bestFitParams = DecayParameters{.x     = fitParams.fitParams[0],
+                                                  .y     = fitParams.fitParams[1],
+                                                  .r     = fitParams.fitParams[2],
+                                                  .z_im  = fitParams.fitParams[3],
+                                                  .z_re  = fitParams.fitParams[4],
+                                                  .width = fitParams.fitParams[5]};
+
+    // Should use std::transform
+    std::vector<double> bestFitData(_fitData.binCentres.size());
+    std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
+    for (size_t i = 0; i < bestFitData.size(); ++i) {
+        bestFitData[i] = fitPolynomial(bestFitParams, _fitData.binCentres[i]);
+    }
+
+    bestFitPlot = std::make_unique<TGraphErrors>(
+        _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
+}
+
 void Fitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
 {
 

@@ -14,6 +14,11 @@
 #include "TMatrixD.h"
 
 /*
+ * Function that caluclates (a + bt + ct^2)
+ */
+double fitPolynomial(const DecayParams_t& params, const double time);
+
+/*
  * Class representing a simple a + bt + ct^2 polynomial
  */
 class SimplePolynomialFunction
@@ -129,6 +134,29 @@ class PolynomialChiSqFcn : public BasePolynomialFcn
      *
      * Returns the chi squared value between the model given our parameters and the measured data.
      *
+     */
+    virtual double operator()(const std::vector<double>& parameters) const;
+};
+
+/*
+ * Class fitting to a detailed polynomial (r^2 + r(yRZ + xImZ)*Gamma*t + (x2 +y2)/4 (Gamma*t)2)
+ */
+class DetailedPolynomialChiSqFcn : public BasePolynomialFcn
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    DetailedPolynomialChiSqFcn(const std::vector<double>& data,
+                               const std::vector<double>& times,
+                               const std::vector<double>& errors);
+
+    ~DetailedPolynomialChiSqFcn();
+
+    /*
+     * Creates a model given a vector of {x, y, r, z_im, z_re, width};
+     *
+     * Returns chi squared value between the model given our params and the measured data
      */
     virtual double operator()(const std::vector<double>& parameters) const;
 };

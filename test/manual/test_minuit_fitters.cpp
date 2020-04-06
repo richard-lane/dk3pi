@@ -43,16 +43,25 @@ void compareRootMinuit(void)
     MyRatios.calculateRatios();
 
     // Create three fitters
-    FitData_t MyFitData              = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    Fitter    RootFitter             = Fitter(MyFitData);
-    Fitter    MinuitChiSqFitter      = Fitter(MyFitData);
-    Fitter    MinuitLikelihoodFitter = Fitter(MyFitData);
+    FitData_t MyFitData         = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    Fitter    RootFitter        = Fitter(MyFitData);
+    Fitter    MinuitPolyFit     = Fitter(MyFitData);
+    Fitter    MinuitDetailedFit = Fitter(MyFitData);
 
-    // Perform two fits
+    // Perform fits
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
     RootFitter.fitUsingRootCustomFcn(0, maxTime, "Q");
-    MinuitChiSqFitter.fitUsingMinuit(initialParameterGuess, initialErrorsGuess, ChiSquared);
+    MinuitPolyFit.fitUsingMinuit(initialParameterGuess, initialErrorsGuess, ChiSquared);
+
+    std::vector<double> initialParamGuess{phaseSpaceParams.x,
+                                          phaseSpaceParams.y,
+                                          phaseSpaceParams.r,
+                                          phaseSpaceParams.z_im,
+                                          phaseSpaceParams.z_re,
+                                          phaseSpaceParams.width};
+    std::vector<double> initialErrGuess{1, 1, 1, 1, 1, 1};
+    MinuitDetailedFit.detailedFitUsingMinuit(initialParamGuess, initialErrGuess, ChiSquared);
 
     // Print fit parameters to console
     for (size_t i = 0; i < 3; ++i) {
@@ -61,19 +70,23 @@ void compareRootMinuit(void)
     }
     std::cout << "\tChiSq = " << *(RootFitter.statistic) << std::endl;
     for (size_t i = 0; i < 3; ++i) {
-        std::cout << "Chisq fit params: " << MinuitChiSqFitter.fitParams.fitParams[i] << "+-"
-                  << MinuitChiSqFitter.fitParams.fitParamErrors[i] << std::endl;
+        std::cout << "Chisq fit params: " << MinuitPolyFit.fitParams.fitParams[i] << "+-"
+                  << MinuitPolyFit.fitParams.fitParamErrors[i] << std::endl;
     }
-    std::cout << "\tChiSq = " << *(MinuitChiSqFitter.statistic) << std::endl;
+    std::cout << "\tChiSq = " << *(MinuitPolyFit.statistic) << std::endl;
 
     // Plot fits to file
     const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = "Compare fitters"};
-    const std::vector<std::string> legendLabels{"Root best fit", "Minuit best fit"};
+    const std::vector<std::string> legendLabels{"Root best fit", "Minuit polynomial best fit", "Minuit best fit"};
     RootFitter.plot->SetTitle("Compare Minuit and ROOT fitters;time/ns;DCS/CF ratio");
     RootFitter.plot->SetLineColor(kBlack);
-    MinuitChiSqFitter.bestFitPlot->SetLineColor(kBlue);
-    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{RootFitter.plot.get(), MinuitChiSqFitter.bestFitPlot.get()},
-                                    std::vector<std::string>{"AP", "CSAME"},
+    MinuitPolyFit.bestFitPlot->SetLineColor(kBlue);
+    MinuitDetailedFit.bestFitPlot->SetLineColor(kGreen);
+    MinuitDetailedFit.bestFitPlot->SetLineStyle(kDashed);
+    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{RootFitter.plot.get(),
+                                                          MinuitPolyFit.bestFitPlot.get(),
+                                                          MinuitDetailedFit.bestFitPlot.get()},
+                                    std::vector<std::string>{"AP", "CSAME", "CSAME"},
                                     legendLabels,
                                     "compareMinuitRootPlots.pdf",
                                     legendParams);

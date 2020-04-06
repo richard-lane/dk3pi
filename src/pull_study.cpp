@@ -5,11 +5,13 @@
 #include <algorithm>
 #include <boost/progress.hpp>
 #include <cassert>
+#include <cmath>
 #include <random>
 #include <vector>
 
 #include "TH1D.h"
 
+#include "../lib/D2K3PiError.h"
 #include "../lib/DecaySimulator.h"
 #include "../lib/Fitter.h"
 #include "../lib/PhaseSpaceBinning.h"
@@ -61,23 +63,28 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     // Restrict our times and rates to consider for our Monte Carlo simulation
     double maxTime = 0.002;
 
-    // Create sensible time bins
-    // size_t              numTimeBins = 500;
-    // std::vector<double> timeBinLimits{};
-    // for (size_t i = 0; i < numTimeBins; ++i) {
-    //    timeBinLimits.push_back(i * maxTime * 1.1 / numTimeBins);
-    //}
-
     // Calculate what we expect our fit parameters to be
-    std::vector<double> expected_fit_params = PullStudyHelpers::expectedParams(phaseSpaceParams);
-    double              expected_a          = expected_fit_params[0];
-    double              expected_b          = expected_fit_params[1];
-    double              expected_c          = expected_fit_params[2];
+    // std::vector<double> expected_fit_params = PullStudyHelpers::expectedParams(phaseSpaceParams);
+    // double              expected_a          = expected_fit_params[0];
+    // double              expected_b          = expected_fit_params[1];
+    // double              expected_c          = expected_fit_params[2];
 
     // Create vectors of a, b and c
-    std::vector<double> a_fit(nExperiments, -1);
-    std::vector<double> b_fit(nExperiments, -1);
-    std::vector<double> c_fit(nExperiments, -1);
+    // std::vector<double> a_fit(nExperiments, -1);
+    // std::vector<double> b_fit(nExperiments, -1);
+    // std::vector<double> c_fit(nExperiments, -1);
+
+    // Create vectors of params
+    std::vector<double> x_fit(nExperiments, -1);
+    std::vector<double> y_fit(nExperiments, -1);
+    std::vector<double> r_fit(nExperiments, -1);
+    std::vector<double> zim_fit(nExperiments, -1);
+    std::vector<double> zre_fit(nExperiments, -1);
+    std::vector<double> width_fit(nExperiments, -1);
+
+    // If a fit fails, will want to remove some elements of the above
+    // Track which fits failed here
+    std::vector<size_t> fitFailed{};
 
     // Create vector to store our chi squared values
     std::vector<double> chiSqVector(nExperiments, -1);
@@ -116,7 +123,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         MyRatios.calculateRatios();
 
         // Save the number of points stored in each bin to a text file
-        MyRatios.findNumPointsPerBin("numpoints.txt");
+        // MyRatios.findNumPointsPerBin("numpoints.txt");
 
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
@@ -124,10 +131,30 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         // MyFitter.fitUsingRootCustomFcn(0, maxTime * 1.2, "Q");
 
         // Initially guess the parameters are their known values...
-        // FitMethod is either ChiSquared or MaxLikelihood
-        std::vector<double> parameterGuess{expected_a, expected_b, expected_c};
-        std::vector<double> errorGuess{1, 1, 1};
-        MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
+        // std::vector<double> parameterGuess{expected_a, expected_b, expected_c};
+        // std::vector<double> errorGuess{1, 1, 1};
+        // MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
+
+        std::vector<double> parameterGuess{phaseSpaceParams.x,
+                                           phaseSpaceParams.y,
+                                           phaseSpaceParams.r,
+                                           phaseSpaceParams.z_im,
+                                           phaseSpaceParams.z_re,
+                                           phaseSpaceParams.width};
+        std::vector<double> errorGuess{1, 1, 1, 1, 1, 1};
+        try {
+            MyFitter.detailedFitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
+        } catch (D2K3PiException) {
+            std::cout << "Fit " << i << " failed." << std::endl;
+            fitFailed.push_back(i);
+            x_fit[i]     = 0;
+            y_fit[i]     = 0;
+            r_fit[i]     = 0;
+            zim_fit[i]   = 0;
+            zre_fit[i]   = 0;
+            width_fit[i] = phaseSpaceParams.width;
+            continue;
+        }
 
         // Save our fit plot to file
         if (!i) {
@@ -138,9 +165,16 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 
         // Store the parameters a, b and c
         // We care about their distance from the expected value, adjusted by their error
-        a_fit[i] = (MyFitter.fitParams.fitParams[0] - expected_a) / MyFitter.fitParams.fitParamErrors[0];
-        b_fit[i] = (MyFitter.fitParams.fitParams[1] - expected_b) / MyFitter.fitParams.fitParamErrors[1];
-        c_fit[i] = (MyFitter.fitParams.fitParams[2] - expected_c) / MyFitter.fitParams.fitParamErrors[2];
+        // a_fit[i] = (MyFitter.fitParams.fitParams[0] - expected_a) / MyFitter.fitParams.fitParamErrors[0];
+        // b_fit[i] = (MyFitter.fitParams.fitParams[1] - expected_b) / MyFitter.fitParams.fitParamErrors[1];
+        // c_fit[i] = (MyFitter.fitParams.fitParams[2] - expected_c) / MyFitter.fitParams.fitParamErrors[2];
+
+        x_fit[i]     = (MyFitter.fitParams.fitParams[0] - phaseSpaceParams.x) / MyFitter.fitParams.fitParamErrors[0];
+        y_fit[i]     = (MyFitter.fitParams.fitParams[1] - phaseSpaceParams.y) / MyFitter.fitParams.fitParamErrors[1];
+        r_fit[i]     = (MyFitter.fitParams.fitParams[2] - phaseSpaceParams.r) / MyFitter.fitParams.fitParamErrors[2];
+        zim_fit[i]   = (MyFitter.fitParams.fitParams[3] - phaseSpaceParams.r) / MyFitter.fitParams.fitParamErrors[3];
+        zre_fit[i]   = (MyFitter.fitParams.fitParams[4] - phaseSpaceParams.r) / MyFitter.fitParams.fitParamErrors[4];
+        width_fit[i] = (MyFitter.fitParams.fitParams[5] - phaseSpaceParams.r) / MyFitter.fitParams.fitParamErrors[5];
 
         // Store the chi squared value in our vector
         chiSqVector[i] = *(MyFitter.statistic);
@@ -149,9 +183,18 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     }
 
     // For each of a, b and c; plot the distance from the expected value
-    PullStudyHelpers::plot_parameter_distribution("a", a_fit, nExperiments);
-    PullStudyHelpers::plot_parameter_distribution("b", b_fit, nExperiments);
-    PullStudyHelpers::plot_parameter_distribution("c", c_fit, nExperiments);
+    // PullStudyHelpers::plot_parameter_distribution("a", a_fit, nExperiments);
+    // PullStudyHelpers::plot_parameter_distribution("b", b_fit, nExperiments);
+    // PullStudyHelpers::plot_parameter_distribution("c", c_fit, nExperiments);
+
+    std::cout << fitFailed.size() << " fits of " << nExperiments << " failed." << std::endl;
+    // Plot Z, r, etc. pulls
+    PullStudyHelpers::plot_parameter_distribution("x", x_fit, nExperiments);
+    PullStudyHelpers::plot_parameter_distribution("y", y_fit, nExperiments);
+    PullStudyHelpers::plot_parameter_distribution("r", r_fit, nExperiments);
+    PullStudyHelpers::plot_parameter_distribution("z_re", zre_fit, nExperiments);
+    PullStudyHelpers::plot_parameter_distribution("z_im", zim_fit, nExperiments);
+    PullStudyHelpers::plot_parameter_distribution("width", width_fit, nExperiments);
 
     // Plot the distribution of chi squared values
     plotHist(chiSqVector, 50, "MinuitChiSq");
@@ -161,7 +204,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(200, 500000);
+    pull_study(500, 800000);
 
     return 0;
 }

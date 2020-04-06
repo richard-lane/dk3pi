@@ -118,8 +118,10 @@ class Fitter
      * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
      *
      * The user should provide an initial guess at the parameters and their errors
+     * Parameters are {x, y, r, z_im, z_re, width}
      *
-     * FitMethod tells the fitter whether to use chi squared or maximum likelihood
+     * FitMethod tells the fitter whether to use chi squared or maximum likelihood (max likelihood isn't actually
+     * implemented)
      *
      * Allocates memory to _plot and _bestFitPlot
      *
@@ -128,6 +130,20 @@ class Fitter
     void fitUsingMinuit(const std::vector<double>& initialParams,
                         const std::vector<double>& initialErrors,
                         const FitAlgorithm_t&      FitMethod);
+
+    /*
+     * Fit our data to a second-order polynomial r2 + r(yRZ + xImZ)Gt + (x2+y2)(Gt)2/4 using Minuit2 and the chi-squared
+     * method.
+     *
+     * The user should provide an initial guess at the parameters and their errors
+     *
+     * Allocates memory to _plot and _bestFitPlot
+     *
+     * Populates fitParams
+     */
+    void detailedFitUsingMinuit(const std::vector<double>& initialParams,
+                                const std::vector<double>& initialErrors,
+                                const FitAlgorithm_t&      FitMethod);
 
     /*
      * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the

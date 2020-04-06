@@ -13,6 +13,13 @@
 #include "MinuitFitter.h"
 #include "util.h"
 
+double fitPolynomial(const DecayParams_t& params, const double time)
+{
+    return (params.r * params.r) +
+           (params.r * (params.y * params.z_re + params.x * params.z_im) * params.width * time) +
+           (0.25 * (params.x * params.x + params.y * params.y) * params.width * params.width * time * time);
+}
+
 SimplePolynomialFunction::SimplePolynomialFunction(double a, double b, double c) : _a(a), _b(b), _c(c)
 {
     ;
@@ -83,7 +90,7 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
 {
     size_t numParams = parameters.size();
     if (numParams != 3) {
-        std::cerr << "Require three parameters; got " << numParams << std::endl;
+        std::cerr << "Require three parameters (a, b, c); got " << numParams << std::endl;
         throw D2K3PiException();
     }
 
@@ -92,6 +99,41 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
         chi2 += std::pow((MyPolynomial(thePositions[i]) - theMeasurements[i]) / theMVariances[i], 2);
+    }
+    return chi2;
+}
+
+DetailedPolynomialChiSqFcn::DetailedPolynomialChiSqFcn(const std::vector<double>& data,
+                                                       const std::vector<double>& times,
+                                                       const std::vector<double>& errors)
+    : BasePolynomialFcn(data, times, errors)
+{
+    ;
+}
+
+DetailedPolynomialChiSqFcn::~DetailedPolynomialChiSqFcn()
+{
+    ;
+}
+
+double DetailedPolynomialChiSqFcn::operator()(const std::vector<double>& parameters) const
+{
+    size_t numParams = parameters.size();
+    if (numParams != 6) {
+        std::cerr << "Require six parameters(x, y, r, z_im, z_re, width); got " << numParams << std::endl;
+        throw D2K3PiException();
+    }
+
+    DecayParams_t params = DecayParameters{.x     = parameters[0],
+                                           .y     = parameters[1],
+                                           .r     = parameters[2],
+                                           .z_im  = parameters[3],
+                                           .z_re  = parameters[4],
+                                           .width = parameters[5]};
+
+    double chi2 = 0.0;
+    for (size_t i = 0; i < theMeasurements.size(); ++i) {
+        chi2 += std::pow((fitPolynomial(params, thePositions[i]) - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
 }
