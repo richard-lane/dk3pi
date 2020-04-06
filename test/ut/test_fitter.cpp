@@ -65,10 +65,12 @@ BOOST_AUTO_TEST_CASE(test_nearly_overlapping_bins)
     // Create some realistic bin limits and decay times
     std::vector<double> timeBinLimits{};
     std::vector<double> times{};
-    for (size_t i = 0; i < 200; ++i) {
-        timeBinLimits.push_back(i * i * i * 0.006 / (200 * 200 * 200));
-        times.push_back(0.0059 * i / 200);
+    const size_t        numBins = 5;
+    for (size_t i = 0; i < numBins; ++i) {
+        timeBinLimits.push_back(i);
+        times.push_back(i + 0.5);
     }
+    times.pop_back();
 
     // Create a RatioCalculator to turn our bin limits into widths and centres
     RatioCalculator Calculator(times, times, timeBinLimits);

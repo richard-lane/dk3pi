@@ -122,34 +122,23 @@ BOOST_AUTO_TEST_CASE(test_bin_centres_widths, *boost::unit_test::tolerance(TOLER
 }
 
 /*
- * Check that bad ratios are pruned from the data, i.e. that ratios of 0/0, 1/0 or 0/1 are removed but 1/1 remain.
- * Also check that the bins corresponding to these are removed from binCentres and binWidths.
- *
- * Not really a unit test, because this uses the whole workflow and doesn't isolate the bit of code that we're
- * interested in, but we can just pretend that this was meant to be IT and it's somehow better to have more IT and less
- * UT
+ * Check that an error gets thrown if a bin contains zeros
  */
-BOOST_AUTO_TEST_CASE(test_prune_data, *boost::unit_test::tolerance(TOLERANCE))
+BOOST_AUTO_TEST_CASE(test_throw_zero_points)
 {
-    // This data should give us 4 bins with (0, 1, 0, 1) CF points and (1, 0, 0, 1) DCS points.
-    // We can thus check that only the final bin remains after pruning.
-    const std::vector<double> cfTimes{1.5, 3.5};
-    const std::vector<double> dcsTimes{0.5, 3.6};
     const std::vector<double> binLimits{0, 1, 2, 3, 4};
+    const std::vector<double> containsZero{0.5, 2.5, 3.5};
+    const std::vector<double> noZero{0.5, 1.5, 2.5, 3.5};
 
-    TestRatioCalculator       MyRatioCalculator(cfTimes, dcsTimes, binLimits);
-    const std::vector<double> expectedRatios{1};
-    const std::vector<double> expectedErrors{std::sqrt(2)};
-    const std::vector<double> expectedBinCentres{3.5};
-    const std::vector<double> expectedBinWidths{1};
+    TestRatioCalculator MyRatioCalculator1(containsZero, noZero, binLimits);
+    TestRatioCalculator MyRatioCalculator2(noZero, containsZero, binLimits);
+    TestRatioCalculator MyRatioCalculator3(containsZero, containsZero, binLimits);
+    TestRatioCalculator MyRatioCalculator4(noZero, noZero, binLimits);
 
-    // When calculating ratios, we expect that the bad ratios are pruned.
-    // This isn't really testing in isolation => isn't really a unit test, but it's good enough...
-    MyRatioCalculator.Calculator->calculateRatios();
-    BOOST_CHECK(MyRatioCalculator.Calculator->binCentres == expectedBinCentres);
-    BOOST_CHECK(MyRatioCalculator.Calculator->binWidths == expectedBinWidths);
-    BOOST_CHECK(MyRatioCalculator.Calculator->ratio == expectedRatios);
-    BOOST_CHECK(MyRatioCalculator.Calculator->error == expectedErrors);
+    BOOST_CHECK_THROW(MyRatioCalculator1.Calculator->calculateRatios(), D2K3PiException);
+    BOOST_CHECK_THROW(MyRatioCalculator2.Calculator->calculateRatios(), D2K3PiException);
+    BOOST_CHECK_THROW(MyRatioCalculator3.Calculator->calculateRatios(), D2K3PiException);
+    BOOST_CHECK_NO_THROW(MyRatioCalculator4.Calculator->calculateRatios());
 }
 
 /*

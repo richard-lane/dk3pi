@@ -71,29 +71,6 @@ std::vector<std::pair<double, double>> RatioCalculator::findRatioAndError(const 
     return ratiosAndErrors;
 }
 
-void RatioCalculator::_pruneBadRatios(void)
-{
-    size_t numPoints = _numBins;
-    auto   it        = ratio.begin();
-    while (it != ratio.end()) {
-        // Use TMath::Finite instead of std::is_finite() because for some reason including the ROOT headers makes
-        // std::is_finite(-inf) sometimes return true...
-        if (!TMath::Finite(*it) || *it == 0.0) {
-            size_t index = it - ratio.begin();
-
-            ratio.erase(ratio.begin() + index);
-            error.erase(error.begin() + index);
-            binCentres.erase(binCentres.begin() + index);
-            binWidths.erase(binWidths.begin() + index);
-
-            numPoints--;
-
-        } else {
-            ++it;
-        }
-    }
-}
-
 void RatioCalculator::findNumPointsPerBin(const std::string &path)
 {
     std::ofstream f(path.c_str());
@@ -110,6 +87,12 @@ void RatioCalculator::calculateRatios(void)
     _numCfPerBin  = util::binVector(_cfDecayTimes, _binLimits);
     _numDcsPerBin = util::binVector(_dcsDecayTimes, _binLimits);
 
+    if (std::count(_numDcsPerBin.begin(), _numDcsPerBin.end(), 0) ||
+        std::count(_numCfPerBin.begin(), _numCfPerBin.end(), 0)) {
+        std::cerr << "Cannot have 0 points in any bin" << std::endl;
+        throw D2K3PiException();
+    }
+
     // Find the ratio of CF to DCS vectors and populate the relevant attributes.
     std::vector<std::pair<double, double>> ratiosAndErrors = findRatioAndError(_numDcsPerBin, _numCfPerBin);
 
@@ -122,9 +105,6 @@ void RatioCalculator::calculateRatios(void)
         ratio[i] = ratiosAndErrors[i].first;
         error[i] = ratiosAndErrors[i].second;
     }
-
-    // Remove infinities, zeros, and garbage from our data
-    _pruneBadRatios();
 }
 
 #endif // RATIOCALCULATOR_CPP
