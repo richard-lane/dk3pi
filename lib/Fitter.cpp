@@ -195,23 +195,23 @@ void Fitter::fitUsingMinuit(const std::vector<double>& initialParams,
     parameters.Add("c", initialParams[2], initialErrors[2]);
 
     // Create a minimiser and minimise our chi squared
-    ROOT::Minuit2::MnMigrad        migrad(*_fitFcn, parameters);
-    ROOT::Minuit2::FunctionMinimum min = migrad();
+    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
+    min = std::make_unique<ROOT::Minuit2::FunctionMinimum>(migrad());
 
     // Check that our solution is "valid"
     // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible to
     // be sure with Minuit2
-    if (!min.IsValid()) {
+    if (!min->IsValid()) {
         std::cerr << "Minuit fit invalid" << std::endl;
-        std::cerr << min << std::endl;
+        std::cerr << *min << std::endl;
         throw D2K3PiException();
     }
 
     // Store our fit parameters and correlation matrix as class attributes
-    _storeMinuitFitParams(min);
+    _storeMinuitFitParams(*min);
 
     // Store chi squared
-    statistic = std::make_unique<double>(min.Fval());
+    statistic = std::make_unique<double>(min->Fval());
 
     // Set our TGraph pointer to the right thing
     plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
