@@ -9,6 +9,7 @@
 #include <random>
 #include <vector>
 
+#include "Minuit2/MnPrint.h"
 #include "TH1D.h"
 
 #include "../lib/D2K3PiError.h"
@@ -142,6 +143,9 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000, size_t numPo
         a_fit[i] = (MyFitter.fitParams.fitParams[0] - expected_a) / MyFitter.fitParams.fitParamErrors[0];
         b_fit[i] = (MyFitter.fitParams.fitParams[1] - expected_b) / MyFitter.fitParams.fitParamErrors[1];
         c_fit[i] = (MyFitter.fitParams.fitParams[2] - expected_c) / MyFitter.fitParams.fitParamErrors[2];
+        if (std::abs(a_fit[i]) > 4 || std::abs(b_fit[i]) > 4 || std::abs(c_fit[i]) > 4) {
+            std::cout << *(MyFitter.min) << std::endl;
+        }
 
         // Store the chi squared value in our vector
         chiSqVector[i] = *(MyFitter.statistic);
