@@ -87,6 +87,10 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     // Note: this comes from a deprecated header, but no alterative exists yet
     boost::progress_display show_progress(nExperiments);
 
+    // Store bin limits
+    // This will be calculated on the first iteration
+    std::vector<double> binLimits{};
+
     for (size_t i = 0; i < nExperiments; ++i) {
         // Find how many events of each type we need to generate
         // The number of events will have a well-defined mean, but will be drawn from Poisson distributions.
@@ -101,13 +105,15 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         // Find bin limits such that we have at least 50 DCS points per bin
         std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
         std::sort(dcsTimes.begin(), dcsTimes.end());
-        std::vector<double> timeBinLimits = util::findBinLimits(dcsTimes, 50, 0, 1.05 * maxTime);
+        if (binLimits.empty()) {
+            binLimits = util::findBinLimits(dcsTimes, 700, 0, 1.05 * maxTime);
+        }
 
         // Plot histograms of event counts for both event types in each time bin
         // These will get saved as WSHist.pdf and RSHist.pdf
         // MyDecays.plotRates(timeBinLimits);
 
-        RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
+        RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, binLimits);
         MyRatios.calculateRatios();
 
         // Save the number of points stored in each bin to a text file
@@ -155,7 +161,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
 #ifndef __CINT__
 int main()
 {
-    pull_study(500, 800000);
+    pull_study(100, 800000);
 
     return 0;
 }
