@@ -207,6 +207,11 @@ class Fitter
      */
     std::unique_ptr<double> statistic = nullptr;
 
+    /*
+     * fit status etc
+     */
+    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min= nullptr;
+
   private:
     /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
