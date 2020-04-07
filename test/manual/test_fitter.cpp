@@ -70,7 +70,7 @@ int main()
         .width = 2500.0,
     };
 
-    std::vector<double> params = PullStudyHelpers::expectedParams(DecayParams);
+    std::vector<double> params = util::expectedParams(DecayParams);
     double              a      = params[0];
     double              b      = params[1];
     double              c      = params[2];

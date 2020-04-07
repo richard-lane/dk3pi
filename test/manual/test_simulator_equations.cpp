@@ -195,7 +195,7 @@ void simulateDecays()
     delete wsCanvas;
 
     // Take the ratio of our datasets, plot against the expected ratio
-    std::vector<double> expectedParams    = PullStudyHelpers::expectedParams(MyParams);
+    std::vector<double> expectedParams    = util::expectedParams(MyParams);
     TF1 *               expectedRatioFunc = new TF1("expectedPoly", "[0] + [1]*x + [2]*x*x", 0, maxTime);
     expectedRatioFunc->SetParameter(0, expectedParams[0]);
     expectedRatioFunc->SetParameter(1, expectedParams[1]);

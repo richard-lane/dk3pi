@@ -34,23 +34,11 @@ void plot_parameter_distribution(std::string         title,
     delete MyGraph;
 }
 
-std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams)
-{
-    double expected_a = phaseSpaceParams.r * phaseSpaceParams.r;
-    double expected_b = phaseSpaceParams.r *
-                        (phaseSpaceParams.y * phaseSpaceParams.z_re + phaseSpaceParams.x * phaseSpaceParams.z_im) *
-                        phaseSpaceParams.width;
-    double expected_c = 0.25 * (std::pow(phaseSpaceParams.x, 2) + std::pow(phaseSpaceParams.y, 2)) *
-                        std::pow(phaseSpaceParams.width, 2);
-
-    return std::vector<double>{expected_a, expected_b, expected_c};
-}
-
 size_t numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpaceParams, double maxTime)
 {
     // Our formula is prefactor * integral * numCFDecays
     double              exp        = std::exp(-1 * phaseSpaceParams.width * maxTime);
-    std::vector<double> fit_params = expectedParams(phaseSpaceParams);
+    std::vector<double> fit_params = util::expectedParams(phaseSpaceParams);
     double              a          = fit_params[0];
     double              b          = fit_params[1];
     double              c          = fit_params[2];

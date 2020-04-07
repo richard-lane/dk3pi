@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(test_expected_params, *boost::unit_test::tolerance(0.000000
     double expectedB = 252;
     double expectedC = 45;
 
-    std::vector<double> params = PullStudyHelpers::expectedParams(DecayParams);
+    std::vector<double> params = util::expectedParams(DecayParams);
 
     BOOST_CHECK(expectedA == params[0]);
     BOOST_CHECK(expectedB == params[1]);
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(test_numbers_of_decays)
     // Test that our code is right
     size_t              numCFDecays = 100000000;
     double              maxTime     = 0.005;
-    std::vector<double> params      = PullStudyHelpers::expectedParams(DecayParams);
+    std::vector<double> params      = util::expectedParams(DecayParams);
     double              a           = params[0];
     double              b           = params[1];
     double              c           = params[2];

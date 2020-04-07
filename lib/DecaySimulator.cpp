@@ -80,7 +80,7 @@ void SimulatedDecays::findCfDecayTimes(size_t numEvents)
 
 void SimulatedDecays::_setMaxDCSRatio(void)
 {
-    std::vector<double> params = PullStudyHelpers::expectedParams(_DecayParams);
+    std::vector<double> params = util::expectedParams(_DecayParams);
     double              a      = params[0];
     double              b      = params[1];
     double              c      = params[2];

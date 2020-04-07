@@ -64,7 +64,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000, size_t numPo
     double maxTime = 0.002;
 
     // Calculate what we expect our fit parameters to be
-    std::vector<double> expected_fit_params = PullStudyHelpers::expectedParams(phaseSpaceParams);
+    std::vector<double> expected_fit_params = util::expectedParams(phaseSpaceParams);
     double              expected_a          = expected_fit_params[0];
     double              expected_b          = expected_fit_params[1];
     double              expected_c          = expected_fit_params[2];
