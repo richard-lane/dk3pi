@@ -97,32 +97,6 @@ Fitter::Fitter(const FitData_t& fitData)
     _fitData = fitData;
 }
 
-void Fitter::fitUsingRootBuiltinPol2(const std::string& options)
-{
-    // Set our TGraph thing to the right thing
-    plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
-                                          _fitData.binCentres.data(),
-                                          _fitData.data.data(),
-                                          _fitData.binErrors.data(),
-                                          _fitData.errors.data());
-
-    // ROOT is terrible and will often fail to fit when the TGraph contains x-errors, unless the initial fit parameters
-    // are reasonably close to the true values. We can get around this by perfoming an initial fit ignoring error bars
-    // ("W"), then fitting again.
-    TF1* graph_fit = ((TF1*)(gROOT->GetFunction("pol2")));
-    plot->Fit(graph_fit, "WQRN");
-
-    // "S" option tells ROOT to return the result of the fit as a TFitResultPtr
-    TFitResultPtr fitResult = plot->Fit(graph_fit, (options + "S").c_str());
-
-    // Populate the results struct
-    fitParams.fitParams      = {graph_fit->GetParameter(0), graph_fit->GetParameter(1), graph_fit->GetParameter(2)};
-    fitParams.fitParamErrors = {graph_fit->GetParError(0), graph_fit->GetParError(1), graph_fit->GetParError(2)};
-
-    // Assign some memory to our correlation matrix
-    fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());
-}
-
 void Fitter::fitUsingRootCustomFcn(const double minTime, const double maxTime, const std::string& options)
 {
     // Set our TGraph pointer to the right thing
