@@ -47,7 +47,7 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
 /*
  * Perform a pull study with a specified number of experiments and events
  */
-void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
+void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000, size_t numPointsPerBin=50)
 {
     // Choose which parameters to use when simulating
     // These numbers are vaguely realistic but also entirely made up
@@ -91,6 +91,13 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
     // This will be calculated on the first iteration
     std::vector<double> binLimits{};
 
+    // Create decay simulator object
+    SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
+
+    // Initial guesses at fit parameters
+    std::vector<double> parameterGuess{expected_a, expected_b, expected_c};
+    std::vector<double> errorGuess{1, 1, 1};
+
     for (size_t i = 0; i < nExperiments; ++i) {
         // Find how many events of each type we need to generate
         // The number of events will have a well-defined mean, but will be drawn from Poisson distributions.
@@ -98,15 +105,13 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         size_t numDcsEvents = dcsDistribution.operator()(generator);
 
         // Simulate DCS and CF decays with our parameters
-        SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
         MyDecays.findDcsDecayTimes(numDcsEvents);
         MyDecays.findCfDecayTimes(numCfEvents);
 
-        // Find bin limits such that we have at least 50 DCS points per bin
-        std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
-        std::sort(dcsTimes.begin(), dcsTimes.end());
         if (binLimits.empty()) {
-            binLimits = util::findBinLimits(dcsTimes, 700, 0, 1.05 * maxTime);
+            std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
+            std::sort(dcsTimes.begin(), dcsTimes.end());
+            binLimits = util::findBinLimits(dcsTimes, numPointsPerBin, 0, 1.05 * maxTime);
         }
 
         // Plot histograms of event counts for both event types in each time bin
@@ -123,10 +128,6 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000)
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
         Fitter    MyFitter  = Fitter(MyFitData);
         // MyFitter.fitUsingRootCustomFcn(0, maxTime * 1.2, "Q");
-
-        // Initially guess the parameters are their known values...
-        std::vector<double> parameterGuess{expected_a, expected_b, expected_c};
-        std::vector<double> errorGuess{1, 1, 1};
         MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
 
         // Save our fit plot to file
