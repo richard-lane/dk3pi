@@ -51,7 +51,7 @@ Fitter performFit(size_t numTimeBins, double maxTime, double a, double b, double
     // Fit our idealised plot
     FitData_t MyFitData = FitData(times, std::vector<double>(numTimeBins, timeBinWidth), ratios, ratioErrors);
     Fitter    MyFitter(MyFitData);
-    MyFitter.fitUsingRootCustomFcn(0, maxTime, "Q");
+    MyFitter.fitUsingMinuit(std::vector<double>{a, b, c}, std::vector<double>{1, 1, 1}, ChiSquared);
     // MyFitter.saveFitPlot("Generated DCS/CF ratios", "baz.pdf");
 
     return MyFitter;
@@ -75,14 +75,14 @@ int main()
     double              b      = params[1];
     double              c      = params[2];
 
-    double maxTime     = 0.002;
+    double maxTime     = 0.005;
     size_t numTimeBins = 20;
 
     // We want to add random gaussian noise to our ratios
     // The error is calculated from error * random number
     double error = 1;
 
-    size_t              numExperiments = 1;
+    size_t              numExperiments = 100000;
     std::vector<double> aPull          = std::vector<double>(numExperiments, std::nan("-1"));
     std::vector<double> bPull          = std::vector<double>(numExperiments, std::nan("-1"));
     std::vector<double> cPull          = std::vector<double>(numExperiments, std::nan("-1"));
