@@ -47,7 +47,7 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
 /*
  * Perform a pull study with a specified number of experiments and events
  */
-void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000, size_t numPointsPerBin = 50)
+void pull_study(size_t nExperiments = 100, size_t nEvents = 800000, size_t numPointsPerBin = 100)
 {
     // Choose which parameters to use when simulating
     // These numbers are vaguely realistic but also entirely made up
