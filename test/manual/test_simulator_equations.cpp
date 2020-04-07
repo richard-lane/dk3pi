@@ -201,7 +201,7 @@ void simulateDecays()
     expectedRatioFunc->SetParameter(1, expectedParams[1]);
     expectedRatioFunc->SetParameter(2, expectedParams[2]);
 
-    numDcs = PullStudyHelpers::numDCSDecays(numCf, MyParams, maxTime);
+    numDcs = (size_t)PullStudyHelpers::numDCSDecays(numCf, MyParams, maxTime);
     MyDecays.findDcsDecayTimes(numDcs);
 
     RatioCalculator Calculator = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
