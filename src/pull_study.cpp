@@ -89,8 +89,14 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000, size_t numPo
     boost::progress_display show_progress(nExperiments);
 
     // Store bin limits
-    // This will be calculated on the first iteration
+    // Find uniform limits between 0 and 1 then transform to an exponential distribution
     std::vector<double> binLimits{};
+    size_t              numBins = 50;
+    for (size_t i = 0; i <= numBins; ++i) {
+        double x = (double)i / numBins;
+        double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
+        binLimits.push_back((-1 / phaseSpaceParams.width) * std::log(1 - z * x));
+    }
 
     // Create decay simulator object
     SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
@@ -117,7 +123,7 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000, size_t numPo
 
         // Plot histograms of event counts for both event types in each time bin
         // These will get saved as WSHist.pdf and RSHist.pdf
-        // MyDecays.plotRates(timeBinLimits);
+        MyDecays.plotRates(binLimits);
 
         RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, binLimits);
         MyRatios.calculateRatios();
