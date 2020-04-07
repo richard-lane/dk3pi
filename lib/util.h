@@ -5,6 +5,30 @@
 
 #include "TObject.h"
 
+/*
+ * Struct encapsulating the parameters needed to simulate decays.
+ * Mixing params x, y
+ * Phase space params r, Im(Z) and Re(Z)
+ * Particle data \Gamma for the D meson
+ *
+ * Parameters are all initalised to zero by default and should be set by the user.
+ *
+ * Should really be in the util namespace
+ */
+typedef struct DecayParameters {
+    // Mixing params
+    double x{0.0};
+    double y{0.0};
+
+    // Phase space params
+    double r{0.0};
+    double z_im{0.0};
+    double z_re{0.0};
+
+    // Particle data
+    double width{0.0};
+} DecayParams_t;
+
 namespace util
 {
 
@@ -88,6 +112,13 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
                                   const size_t               minPointsPerBin,
                                   const double               lowBin,
                                   const double               highBin);
+
+/*
+ * Find our expected a, b and c in (a + bt + ct^2) from a set of phase space parameters.
+ *
+ * Returns a vector of {a, b, c}
+ */
+std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
 
 } // namespace util
 

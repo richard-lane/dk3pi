@@ -93,16 +93,6 @@ class Fitter
     Fitter(const FitData_t& fitData);
 
     /*
-     * Fit our data to a second order polynomial, using ROOT's builtin "pol2" function
-     * Sets fitParams attribute and allocates memory to _plot.
-     *
-     * Fit options can be passed via the options argument.
-     *
-     * Populates fitParams
-     */
-    void fitUsingRootBuiltinPol2(const std::string& options = "");
-
-    /*
      * Fit our data to the equation we expect to see, using ROOT's builtin TGraph fitter.
      * At the moment this is just a second order polynomial.
      *

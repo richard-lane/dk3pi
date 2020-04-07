@@ -22,20 +22,15 @@ void plot_parameter_distribution(std::string         title,
                                  double              expectedSigma = 1);
 
 /*
- * Find our expected a, b and c
- *
- * Returns a vector of {a, b, c}
- */
-std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
-
-/*
  * Find the number of DCS decays we need to simulate, given the number of CF decays and our phase space parameters.
  *
  * The ratio of DCS to CF decays is calculated from the ratio of the integrals of their decay rates.
  * CF rate is exponential; DCS is exp * (a + bt + ct^2)
  *
+ * Returns a double so e.g. can be used as the mean of a distribution. Cast to an integer type before using as a count!
+ *
  */
-size_t numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpaceParams, double maxTime);
+double numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpaceParams, double maxTime);
 
 } // namespace PullStudyHelpers
 

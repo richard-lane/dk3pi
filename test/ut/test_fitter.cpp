@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit, *boost::unit_test::tolerance(0.01))
     Fitter    MyFitter(fitData);
 
     // Perform a fit and check that our coefficients are all 1
-    MyFitter.fitUsingRootBuiltinPol2("Q");
+    MyFitter.fitUsingRootCustomFcn(0, 1, "Q");
     CHECK_CLOSE_COLLECTIONS(MyFitter.fitParams.fitParams, expectedFitCoefficients, 0.001);
 }
 
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(test_plot_created)
     Fitter              MyFitter(fitData);
 
     // Run the fit, which allows us to attempt to save the plot
-    MyFitter.fitUsingRootBuiltinPol2("Q");
+    MyFitter.fitUsingRootCustomFcn(0, 1, "Q");
 
     // Create a temporary file and attempt to save a plot there
     boost::filesystem::path temp   = boost::filesystem::unique_path();
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(test_matrix_assigned)
     Fitter              MyFitter(fitData);
 
     // Run the fit, which allows us to attempt to save the plot
-    MyFitter.fitUsingRootBuiltinPol2("Q");
+    MyFitter.fitUsingRootCustomFcn(0, 1, "Q");
 
     // Check that the correlation matrix has been assigned some memory
     BOOST_CHECK(MyFitter.fitParams.correlationMatrix != nullptr);

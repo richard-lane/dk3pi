@@ -47,7 +47,7 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
 /*
  * Perform a pull study with a specified number of experiments and events
  */
-void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000, size_t numPointsPerBin=50)
+void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000, size_t numPointsPerBin = 50)
 {
     // Choose which parameters to use when simulating
     // These numbers are vaguely realistic but also entirely made up
@@ -64,7 +64,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000, size_t numPo
     double maxTime = 0.002;
 
     // Calculate what we expect our fit parameters to be
-    std::vector<double> expected_fit_params = PullStudyHelpers::expectedParams(phaseSpaceParams);
+    std::vector<double> expected_fit_params = util::expectedParams(phaseSpaceParams);
     double              expected_a          = expected_fit_params[0];
     double              expected_b          = expected_fit_params[1];
     double              expected_c          = expected_fit_params[2];
@@ -78,7 +78,7 @@ void pull_study(size_t nExperiments = 1000, size_t nEvents = 10000, size_t numPo
     std::vector<double> chiSqVector(nExperiments, -1);
 
     // Random number generators for finding how many of each type of decay to simulate
-    size_t       meanNumDcsDecays = PullStudyHelpers::numDCSDecays(nEvents, phaseSpaceParams, maxTime);
+    double       meanNumDcsDecays = PullStudyHelpers::numDCSDecays(nEvents, phaseSpaceParams, maxTime);
     std::mt19937 generator;
     std::poisson_distribution<size_t> cfDistribution(nEvents);
     std::poisson_distribution<size_t> dcsDistribution(meanNumDcsDecays);

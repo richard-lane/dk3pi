@@ -158,6 +158,18 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
     return binLimits;
 }
 
+std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams)
+{
+    double expected_a = phaseSpaceParams.r * phaseSpaceParams.r;
+    double expected_b = phaseSpaceParams.r *
+                        (phaseSpaceParams.y * phaseSpaceParams.z_re + phaseSpaceParams.x * phaseSpaceParams.z_im) *
+                        phaseSpaceParams.width;
+    double expected_c = 0.25 * (std::pow(phaseSpaceParams.x, 2) + std::pow(phaseSpaceParams.y, 2)) *
+                        std::pow(phaseSpaceParams.width, 2);
+
+    return std::vector<double>{expected_a, expected_b, expected_c};
+}
+
 // Explicitly instantiate the types we want to use
 // This is Ugly and Bad but also idgaf
 template void saveObjectsToFile<TGraph>(const std::vector<TObject *> &  myObjects,

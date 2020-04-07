@@ -60,10 +60,10 @@ void test_param_scan(void)
     };
     double maxTime      = 0.002;
     size_t numCfEvents  = 1000000;
-    size_t numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
+    double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
 
     SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
-    MyDecays.findDcsDecayTimes(numDcsEvents);
+    MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
     MyDecays.findCfDecayTimes(numCfEvents);
 
     // Define some time bins
@@ -109,10 +109,10 @@ void test_2d_scan()
     double maxTime = 0.002;
 
     size_t numCfEvents  = 1000000;
-    size_t numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
+    double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
 
     SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
-    MyDecays.findDcsDecayTimes(numDcsEvents);
+    MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
     MyDecays.findCfDecayTimes(numCfEvents);
 
     // Define some time bins
@@ -184,10 +184,10 @@ void test_z_scan()
     double maxTime = 0.002;
 
     size_t numCfEvents  = 1000000;
-    size_t numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
+    double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
 
     SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
-    MyDecays.findDcsDecayTimes(numDcsEvents);
+    MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
     MyDecays.findCfDecayTimes(numCfEvents);
 
     // Define some time bins

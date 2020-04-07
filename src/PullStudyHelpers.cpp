@@ -1,6 +1,7 @@
 #ifndef PULL_STUDY_HELPERS_CPP
 #define PULL_STUDY_HELPERS_CPP
 
+#include <boost/math/quadrature/trapezoidal.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -34,39 +35,20 @@ void plot_parameter_distribution(std::string         title,
     delete MyGraph;
 }
 
-std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams)
-{
-    double expected_a = phaseSpaceParams.r * phaseSpaceParams.r;
-    double expected_b = phaseSpaceParams.r *
-                        (phaseSpaceParams.y * phaseSpaceParams.z_re + phaseSpaceParams.x * phaseSpaceParams.z_im) *
-                        phaseSpaceParams.width;
-    double expected_c = 0.25 * (std::pow(phaseSpaceParams.x, 2) + std::pow(phaseSpaceParams.y, 2)) *
-                        std::pow(phaseSpaceParams.width, 2);
-
-    return std::vector<double>{expected_a, expected_b, expected_c};
-}
-
-size_t numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpaceParams, double maxTime)
+double numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpaceParams, double maxTime)
 {
     // Our formula is prefactor * integral * numCFDecays
     double              exp        = std::exp(-1 * phaseSpaceParams.width * maxTime);
-    std::vector<double> fit_params = expectedParams(phaseSpaceParams);
+    std::vector<double> fit_params = util::expectedParams(phaseSpaceParams);
     double              a          = fit_params[0];
     double              b          = fit_params[1];
     double              c          = fit_params[2];
 
     double prefactor = phaseSpaceParams.width / (1 - exp);
 
-    // integral (a + bt + ct^2)e^-width*t
-    // Write our integral as x + y + z where these are each of the parts of the above integral
-    double g = phaseSpaceParams.width;
-    double x = a / g * (1 - exp);
-    double y = b / (g * g) * (1 - (g * maxTime + 1) * exp);
-    double z = c / (g * g * g) * (2 + g * maxTime * (g * maxTime + 2)) * exp;
-
-    double integral = x + y + z;
-
-    return (size_t)(prefactor * integral * numCFDecays);
+    auto   f        = [&](double x) { return (a + b * x + c * x * x) * std::exp(-phaseSpaceParams.width * x); };
+    double integral = boost::math::quadrature::trapezoidal(f, 0.0, maxTime, 1e-10, 20);
+    return prefactor * integral * numCFDecays;
 }
 
 } // namespace PullStudyHelpers
