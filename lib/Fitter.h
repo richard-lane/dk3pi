@@ -194,6 +194,17 @@ class MinuitPolynomialFitter : public BaseFitter
      * fit status etc
      */
     std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
+
+  private:
+    /*
+     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
+     */
+    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
+
+    /*
+     * Pointer to the Minuit FCN used to perform the fit
+     */
+    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
 };
 
 /*
