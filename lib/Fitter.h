@@ -88,11 +88,6 @@ class BaseFitter
 {
   public:
     /*
-     * The data to be fit.
-     */
-    BaseFitter(const FitData_t& fitData);
-
-    /*
      * Parameters describing the fit
      */
     FitResults_t fitParams;
@@ -108,6 +103,11 @@ class BaseFitter
     std::unique_ptr<double> statistic = nullptr;
 
   protected:
+    /*
+     * The data to be fit.
+     */
+    BaseFitter(const FitData_t& fitData);
+
     /*
      * The data used to make the fit
      */
