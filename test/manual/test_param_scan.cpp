@@ -200,8 +200,8 @@ void test_z_scan()
     MyRatios.calculateRatios();
 
     // Create a fitter
-    FitData_t      MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
+    FitData_t    MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    ParamScanner PhysFitter = ParamScanner(MyFitData);
 
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{phaseSpaceParams.x,
