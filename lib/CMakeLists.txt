@@ -6,7 +6,6 @@ add_library(D2K3Pi SHARED
   RatioCalculator.cpp
   ReadAmpGen.cpp
   util.cpp
-  ../src/PullStudyHelpers.cpp
   )
 
 set(CMAKE_BUILD_TYPE Debug)
