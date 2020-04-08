@@ -44,9 +44,9 @@ void compareRootMinuit(void)
 
     // Create three fitters
     FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    RootFitter             CernFitter        = RootFitter(MyFitData);
-    MinuitPolynomialFitter MinuitPolyFit     = MinuitPolynomialFitter(MyFitData);
-    Fitter                 MinuitDetailedFit = Fitter(MyFitData);
+    RootFitter             CernFitter    = RootFitter(MyFitData);
+    MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData);
+    PhysicalFitter         PhysFitter    = PhysicalFitter(MyFitData);
 
     // Perform fits
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
@@ -61,7 +61,7 @@ void compareRootMinuit(void)
                                           phaseSpaceParams.z_re,
                                           phaseSpaceParams.width};
     std::vector<double> initialErrGuess{1, 1, 1, 1, 1, 1};
-    MinuitDetailedFit.detailedFitUsingMinuit(initialParamGuess, initialErrGuess, ChiSquared);
+    PhysFitter.fit(initialParamGuess, initialErrGuess, ChiSquared, std::vector<size_t>{});
 
     // Print fit parameters to console
     for (size_t i = 0; i < 3; ++i) {
@@ -81,15 +81,14 @@ void compareRootMinuit(void)
     CernFitter.plot->SetTitle("Compare Minuit and ROOT fitters;time/ns;DCS/CF ratio");
     CernFitter.plot->SetLineColor(kBlack);
     MinuitPolyFit.bestFitPlot->SetLineColor(kBlue);
-    MinuitDetailedFit.bestFitPlot->SetLineColor(kGreen);
-    MinuitDetailedFit.bestFitPlot->SetLineStyle(kDashed);
-    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{CernFitter.plot.get(),
-                                                          MinuitPolyFit.bestFitPlot.get(),
-                                                          MinuitDetailedFit.bestFitPlot.get()},
-                                    std::vector<std::string>{"AP", "CSAME", "CSAME"},
-                                    legendLabels,
-                                    "compareMinuitRootPlots.pdf",
-                                    legendParams);
+    PhysFitter.bestFitPlot->SetLineColor(kGreen);
+    PhysFitter.bestFitPlot->SetLineStyle(kDashed);
+    util::saveObjectsToFile<TGraph>(
+        std::vector<TObject*>{CernFitter.plot.get(), MinuitPolyFit.bestFitPlot.get(), PhysFitter.bestFitPlot.get()},
+        std::vector<std::string>{"AP", "CSAME", "CSAME"},
+        legendLabels,
+        "compareMinuitRootPlots.pdf",
+        legendParams);
 }
 
 int main()
