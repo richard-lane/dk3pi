@@ -212,6 +212,12 @@ class MinuitPolynomialFitter : public BaseFitter
  */
 class MinuitPolyScan : public MinuitPolynomialFitter
 {
+  public:
+    /*
+     * Calls parent constructor
+     */
+    MinuitPolyScan(const FitData_t& fitData);
+
     /*
      * Scan the ith parameter as defined in fitParams.fitParams
      *

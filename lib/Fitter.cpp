@@ -310,6 +310,11 @@ void MinuitPolynomialFitter::_storeMinuitFitParams(const ROOT::Minuit2::Function
         std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
 }
 
+MinuitPolyScan::MinuitPolyScan(const FitData_t& fitData) : MinuitPolynomialFitter(fitData)
+{
+    ;
+}
+
 void MinuitPolyScan::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
 {
     // Check that a fit has been performed
