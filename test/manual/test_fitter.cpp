@@ -28,7 +28,7 @@ inline double ratio(const double a, const double b, const double c, const double
  *
  * returns the fitter cus why not
  */
-Fitter performFit(size_t numTimeBins, double maxTime, double a, double b, double c, double error)
+MinuitPolynomialFitter performFit(size_t numTimeBins, double maxTime, double a, double b, double c, double error)
 {
     std::random_device               randomEngine;
     std::mt19937                     mt(randomEngine());
@@ -50,8 +50,8 @@ Fitter performFit(size_t numTimeBins, double maxTime, double a, double b, double
 
     // Fit our idealised plot
     FitData_t MyFitData = FitData(times, std::vector<double>(numTimeBins, timeBinWidth), ratios, ratioErrors);
-    Fitter    MyFitter(MyFitData);
-    MyFitter.fitUsingMinuit(std::vector<double>{a, b, c}, std::vector<double>{1, 1, 1}, ChiSquared);
+    MinuitPolynomialFitter MyFitter(MyFitData);
+    MyFitter.fit(std::vector<double>{a, b, c}, std::vector<double>{1, 1, 1}, ChiSquared);
     // MyFitter.saveFitPlot("Generated DCS/CF ratios", "baz.pdf");
 
     return MyFitter;
@@ -88,12 +88,12 @@ int main()
     std::vector<double> cPull          = std::vector<double>(numExperiments, std::nan("-1"));
 
     for (size_t i = 0; i < numExperiments; ++i) {
-        Fitter              MyFitter  = performFit(numTimeBins, maxTime, a, b, c, error);
-        std::vector<double> outParams = MyFitter.fitParams.fitParams;
-        std::vector<double> outErrors = MyFitter.fitParams.fitParamErrors;
-        aPull[i]                      = (outParams[0] - a) / outErrors[0];
-        bPull[i]                      = (outParams[1] - b) / outErrors[1];
-        cPull[i]                      = (outParams[2] - c) / outErrors[2];
+        MinuitPolynomialFitter MyFitter  = performFit(numTimeBins, maxTime, a, b, c, error);
+        std::vector<double>    outParams = MyFitter.fitParams.fitParams;
+        std::vector<double>    outErrors = MyFitter.fitParams.fitParamErrors;
+        aPull[i]                         = (outParams[0] - a) / outErrors[0];
+        bPull[i]                         = (outParams[1] - b) / outErrors[1];
+        cPull[i]                         = (outParams[2] - c) / outErrors[2];
     }
 
     PullStudyHelpers::plot_parameter_distribution("a", aPull, numExperiments);

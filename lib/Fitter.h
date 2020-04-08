@@ -142,15 +142,15 @@ class RootFitter : public BaseFitter
 };
 
 /*
- * Class for fitting data to a second-order polynomial
+ * Fit to a polynomial (a + bt + ct^2) using the Minuit2 APIs
  */
-class Fitter : public BaseFitter
+class MinuitPolynomialFitter : public BaseFitter
 {
   public:
     /*
-     * Tell the Fitter the data to be fit.
+     * Calls parent constructor
      */
-    Fitter(const FitData_t& fitData);
+    MinuitPolynomialFitter(const FitData_t& fitData);
 
     /*
      * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
@@ -165,9 +165,106 @@ class Fitter : public BaseFitter
      *
      * Populates fitParams
      */
-    void fitUsingMinuit(const std::vector<double>& initialParams,
-                        const std::vector<double>& initialErrors,
-                        const FitAlgorithm_t&      FitMethod);
+    void fit(const std::vector<double>& initialParams,
+             const std::vector<double>& initialErrors,
+             const FitAlgorithm_t&      FitMethod);
+
+    /*
+     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
+     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
+     */
+    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
+
+    /*
+     * Save a plot of our data and fit to file
+     *
+     * Must specify parameters for drawing a legend.
+     */
+    void saveFitPlot(const std::string&          plotTitle,
+                     const std::string&          path,
+                     const util::LegendParams_t* legendParams = nullptr);
+
+    /*
+     * ROOT TGraph object that used for representing the best-fit of our data
+     * Maybe this should really be a TF1 TODO
+     */
+    std::unique_ptr<TGraph> bestFitPlot = nullptr;
+
+    /*
+     * fit status etc
+     */
+    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
+
+  protected:
+    /*
+     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
+     */
+    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
+
+    /*
+     * Pointer to the Minuit FCN used to perform the fit
+     */
+    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
+};
+
+/*
+ * Class for perfoming scans of the polynomial fit parameters a, b, c
+ */
+class MinuitPolyScan : public MinuitPolynomialFitter
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    MinuitPolyScan(const FitData_t& fitData);
+
+    /*
+     * Scan the ith parameter as defined in fitParams.fitParams
+     *
+     * Cannot have more than 100 points due to some of Minuit's internal limitations.
+     * By default runs a scan from +-2sigma, but can optionally be specified by setting low and high.
+     *
+     * Populates parameterScan
+     */
+    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low = 0., const double high = 0.);
+
+    /*
+     * Scan the i and jth parameters between the specified limits
+     *
+     * Populates twoDParameterScan
+     */
+    void twoDParamScan(const size_t i,
+                       const size_t j,
+                       const size_t iPoints,
+                       const size_t jPoints,
+                       const double iLow,
+                       const double iHigh,
+                       const double jLow,
+                       const double jHigh);
+
+    /*
+     * Vector of pairs describing a parameter scan
+     */
+    std::vector<std::pair<double, double>> parameterScan;
+
+    /*
+     * Vector of tuples describing a 2d parameter scan
+     *
+     * Scans parameters i and j to find chi squared values; result is a vector of (i_value, j_value, chi_squared)
+     */
+    std::vector<std::vector<double>> twoDParameterScan;
+};
+
+/*
+ * Class for fitting data to a second-order polynomial
+ */
+class Fitter : public BaseFitter
+{
+  public:
+    /*
+     * Tell the Fitter the data to be fit.
+     */
+    Fitter(const FitData_t& fitData);
 
     /*
      * Fit our data to a second-order polynomial r2 + r(yRZ + xImZ)Gt + (x2+y2)(Gt)2/4 using Minuit2 and the chi-squared

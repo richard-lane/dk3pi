@@ -127,9 +127,9 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
 
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-        Fitter    MyFitter  = Fitter(MyFitData);
+        MinuitPolynomialFitter MyFitter = MinuitPolynomialFitter(MyFitData);
         // MyFitter.fitUsingRootCustomFcn(0, maxTime * 1.2, "Q");
-        MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
+        MyFitter.fit(parameterGuess, errorGuess, ChiSquared);
 
         // Save our fit plot to file
         if (!i) {

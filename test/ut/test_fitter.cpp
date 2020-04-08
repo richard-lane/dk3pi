@@ -179,13 +179,13 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::toler
     std::vector<double> expectedFitCoefficients{1, 1, 1};
 
     // Create a fitter with our parameters
-    FitData_t fitData(binCentres, binWidths, data, errors);
-    Fitter    MyFitter(fitData);
+    FitData_t              fitData(binCentres, binWidths, data, errors);
+    MinuitPolynomialFitter MyFitter(fitData);
 
     // Perform a fit and check that our coefficients are all 1
     std::vector<double> parameterGuess{0.9, 1.1, 1.2};
     std::vector<double> errorGuess{1, 1, 1};
-    MyFitter.fitUsingMinuit(parameterGuess, errorGuess, ChiSquared);
+    MyFitter.fit(parameterGuess, errorGuess, ChiSquared);
     CHECK_CLOSE_COLLECTIONS(MyFitter.fitParams.fitParams, expectedFitCoefficients, 0.001);
 }
 
