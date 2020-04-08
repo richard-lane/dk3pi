@@ -235,6 +235,18 @@ class MinuitPolyScan : public MinuitPolynomialFitter
                        const double iHigh,
                        const double jLow,
                        const double jHigh);
+
+    /*
+     * Vector of pairs describing a parameter scan
+     */
+    std::vector<std::pair<double, double>> parameterScan;
+
+    /*
+     * Vector of tuples describing a 2d parameter scan
+     *
+     * Scans parameters i and j to find chi squared values; result is a vector of (i_value, j_value, chi_squared)
+     */
+    std::vector<std::vector<double>> twoDParameterScan;
 };
 
 /*
