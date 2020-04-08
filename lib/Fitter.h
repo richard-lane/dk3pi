@@ -107,7 +107,7 @@ class BaseFitter
      */
     std::unique_ptr<double> statistic = nullptr;
 
-  private:
+  protected:
     /*
      * The data used to make the fit
      */
@@ -117,7 +117,7 @@ class BaseFitter
 /*
  * Class for fitting data to a second-order polynomial
  */
-class Fitter
+class Fitter : public BaseFitter
 {
   public:
     /*
@@ -208,11 +208,6 @@ class Fitter
                      const util::LegendParams_t* legendParams = nullptr);
 
     /*
-     * Parameters describing the fit
-     */
-    FitResults_t fitParams;
-
-    /*
      * Vector of pairs describing a parameter scan
      */
     std::vector<std::pair<double, double>> parameterScan;
@@ -225,20 +220,10 @@ class Fitter
     std::vector<std::vector<double>> twoDParameterScan;
 
     /*
-     * ROOT TGraph object used for holding input data. Can also be used to perform one of ROOT's builtin fits.
-     */
-    std::unique_ptr<TGraphErrors> plot = nullptr;
-
-    /*
      * ROOT TGraph object that used for representing the best-fit of our data, in the case that ROOT is not used to
      * perform a builtin fit (e.g. when Minuit2 is used directly.)
      */
     std::unique_ptr<TGraph> bestFitPlot = nullptr;
-
-    /*
-     * The test statistic that is optimised when running our test, e.g. chi squared or a likelihood
-     */
-    std::unique_ptr<double> statistic = nullptr;
 
     /*
      * fit status etc
@@ -250,11 +235,6 @@ class Fitter
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
      */
     void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
-
-    /*
-     * The data used to make the fit
-     */
-    FitData_t _fitData;
 
     /*
      * Pointer to the Minuit FCN used to perform the fit
