@@ -148,10 +148,13 @@ class MinuitFitter : public BaseFitter
 {
   public:
     /*
-     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
+     * Given a vector representing the covariance between a set of parameters, find the covariance matrix using the
      * errors in fitParams.fitParamErrors and convert it to a TMatrixD
+     *
+     * Must tell this function which parameters were fixed; {0, 2, 3} means params 0, 2 and 3 were fixed.
      */
-    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
+    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
+                                                const std::vector<size_t>& fixedParams);
 
     /*
      * Save a plot of our data and fit to file

@@ -162,26 +162,39 @@ MinuitFitter::MinuitFitter(const FitData_t& fitData) : BaseFitter(fitData)
     ;
 }
 
-TMatrixD MinuitFitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector)
+TMatrixD MinuitFitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
+                                                          const std::vector<size_t>& fixedParams)
 {
     // Check that we have the right number of elements in our covariance vector
-    size_t numElements       = covarianceVector.size();
-    size_t numFitParamErrors = fitParams.fitParamErrors.size();
+    size_t numElements = covarianceVector.size();
+    size_t numParams   = fitParams.fitParamErrors.size() - fixedParams.size();
 
-    if (numFitParamErrors == 0) {
-        std::cerr << "Fit has not yet been performed; fit param error vector is empty." << std::endl;
+    if (numParams == 0) {
+        std::cerr << "Fit has not yet been performed; fit param error vector is empty (or the fit has been run with 0 "
+                     "free parameters)."
+                  << std::endl;
         throw D2K3PiException();
     }
 
-    size_t expectedVectorLength = numFitParamErrors * (numFitParamErrors + 1) / 2;
+    size_t expectedVectorLength = numParams * (numParams + 1) / 2;
     if (expectedVectorLength != numElements) {
-        std::cerr << "Have " << numFitParamErrors << " fit params but " << numElements
+        std::cerr << "Have " << numParams << " fit params but " << numElements
                   << " elements in covariance vector (expected " << expectedVectorLength << ")" << std::endl;
         throw D2K3PiException();
     }
 
     // Create an empty TMatrixD that we will fill with the right values
-    TMatrixD CorrMatrix = TMatrixD(numFitParamErrors, numFitParamErrors);
+    TMatrixD CorrMatrix = TMatrixD(numParams, numParams);
+
+    // Find which error values are relevant; i.e. those which correspond to free parameters
+    // Do this by copying the vector + removing the values in order, highest-first
+    // Highest-first to avoid issues with looping over a vector + deleting elements from it concurrently.
+    std::vector<double> errors         = fitParams.fitParamErrors;
+    std::vector<size_t> paramsToRemove = fixedParams;
+    std::sort(paramsToRemove.rbegin(), paramsToRemove.rend());
+    for (auto it = paramsToRemove.begin(); it != paramsToRemove.end(); ++it) {
+        errors.erase(errors.begin() + *it);
+    }
 
     // We need to divide each element in our vector of covariances with the standard deviation of two parameters
     // We will need to find the position in the matrix of each element in our covariance vector, so we know which
@@ -195,7 +208,7 @@ TMatrixD MinuitFitter::covarianceVector2CorrelationMatrix(const std::vector<doub
             column = 0;
         }
         // Now that we know which variances to divide by, let's do it
-        double correlation      = *it / (fitParams.fitParamErrors[column] * fitParams.fitParamErrors[row]);
+        double correlation      = *it / (errors[column] * errors[row]);
         CorrMatrix[column][row] = correlation;
 
         if (column != row) {
@@ -250,8 +263,8 @@ void MinuitFitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& m
     fitParams.fitParamErrors = min.UserParameters().Errors();
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
-    fitParams.correlationMatrix =
-        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
+    fitParams.correlationMatrix = std::make_unique<TMatrixD>(
+        covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), std::vector<size_t>{}));
 }
 
 MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitFitter(fitData)
@@ -514,7 +527,7 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
     fitParams.correlationMatrix =
-        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
+        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), fixParamIndices));
 
     // Store chi squared
     statistic = std::make_unique<double>(min.Fval());

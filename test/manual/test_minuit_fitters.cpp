@@ -1,4 +1,5 @@
 #include <iostream>
+#include <utility>
 #include <vector>
 
 #include "DecaySimulator.h"
@@ -61,7 +62,10 @@ void compareRootMinuit(void)
                                           phaseSpaceParams.z_re,
                                           phaseSpaceParams.width};
     std::vector<double> initialErrGuess{1, 1, 1, 1, 1, 1};
-    PhysFitter.fit(initialParamGuess, initialErrGuess, ChiSquared, std::vector<std::pair<size_t, double>>{});
+
+    // Perform a fit, fixing x to its "correct" value
+    std::vector<std::pair<size_t, double>> fixParams{std::make_pair(0, phaseSpaceParams.x)};
+    PhysFitter.fit(initialParamGuess, initialErrGuess, ChiSquared, fixParams);
 
     // Print fit parameters to console
     for (size_t i = 0; i < 3; ++i) {

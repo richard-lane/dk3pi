@@ -298,7 +298,8 @@ BOOST_AUTO_TEST_CASE(test_corr_cov_conversion, *boost::unit_test::tolerance(0.00
     // attribute. It is REALLY BAD that it's possible to do this, but I trust myself enough not to abuse or get confused
     // by it. Plus no one else is ever probably going to look at this code so its ok
     MyFitter.fitParams.fitParamErrors = errors;
-    BOOST_CHECK(MyFitter.covarianceVector2CorrelationMatrix(covarianceVector) == expectedCorrMatrix);
+    BOOST_CHECK(MyFitter.covarianceVector2CorrelationMatrix(covarianceVector, std::vector<size_t>{}) ==
+                expectedCorrMatrix);
 }
 
 #endif // TEST_FITTER_CPP
