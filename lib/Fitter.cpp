@@ -467,10 +467,10 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
         fixParamIndices[i] = fixParams[i].first;
         fixParamValues[i]  = fixParams[i].second;
     }
-    if (std::find(fixParamValues.begin(), fixParamValues.end(), 0) == fixParamValues.end() && // x
-        std::find(fixParamValues.begin(), fixParamValues.end(), 1) == fixParamValues.end() && // y
-        std::find(fixParamValues.begin(), fixParamValues.end(), 3) == fixParamValues.end() && // z_im
-        std::find(fixParamValues.begin(), fixParamValues.end(), 4) == fixParamValues.end()    // z_re
+    if (std::find(fixParamIndices.begin(), fixParamIndices.end(), 0) == fixParamIndices.end() && // x
+        std::find(fixParamIndices.begin(), fixParamIndices.end(), 1) == fixParamIndices.end() && // y
+        std::find(fixParamIndices.begin(), fixParamIndices.end(), 3) == fixParamIndices.end() && // z_im
+        std::find(fixParamIndices.begin(), fixParamIndices.end(), 4) == fixParamIndices.end()    // z_re
     ) {
         std::cerr << "Must fix one of x, y, or a component of Z for fit to be well defined" << std::endl;
         throw D2K3PiException();
