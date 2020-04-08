@@ -43,16 +43,16 @@ void compareRootMinuit(void)
     MyRatios.calculateRatios();
 
     // Create three fitters
-    FitData_t  MyFitData         = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    RootFitter CernFitter        = RootFitter(MyFitData);
-    Fitter     MinuitPolyFit     = Fitter(MyFitData);
-    Fitter     MinuitDetailedFit = Fitter(MyFitData);
+    FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    RootFitter             CernFitter        = RootFitter(MyFitData);
+    MinuitPolynomialFitter MinuitPolyFit     = MinuitPolynomialFitter(MyFitData);
+    Fitter                 MinuitDetailedFit = Fitter(MyFitData);
 
     // Perform fits
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
     CernFitter.fit(0, maxTime, "Q");
-    MinuitPolyFit.fitUsingMinuit(initialParameterGuess, initialErrorsGuess, ChiSquared);
+    MinuitPolyFit.fit(initialParameterGuess, initialErrorsGuess, ChiSquared);
 
     std::vector<double> initialParamGuess{phaseSpaceParams.x,
                                           phaseSpaceParams.y,

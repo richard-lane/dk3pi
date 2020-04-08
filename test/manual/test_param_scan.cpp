@@ -76,13 +76,13 @@ void test_param_scan(void)
     MyRatios.calculateRatios();
 
     // Create a fitter
-    FitData_t MyFitData         = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    Fitter    MinuitChiSqFitter = Fitter(MyFitData);
+    FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    MinuitPolynomialFitter MinuitChiSqFitter(MyFitData);
 
     // Perform fit, outputu minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    MinuitChiSqFitter.fitUsingMinuit(initialParameterGuess, initialErrorsGuess, ChiSquared);
+    MinuitChiSqFitter.fit(initialParameterGuess, initialErrorsGuess, ChiSquared);
     std::cout << "Min chisq: " << *(MinuitChiSqFitter.statistic) << std::endl;
     std::cout << "Params: " << MinuitChiSqFitter.fitParams.fitParams[0] << " "
               << MinuitChiSqFitter.fitParams.fitParams[1] << " " << MinuitChiSqFitter.fitParams.fitParams[2]
