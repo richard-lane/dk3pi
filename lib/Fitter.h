@@ -56,12 +56,12 @@ typedef struct FitData {
 } FitData_t;
 
 /*
- * The parameters describing how a polynomial fits data
+ * The parameters describing how a function fits data
  */
 typedef struct PolynomialFitResults {
 
     /*
-     * Vector of the fit parameters (a0, a1, a2, ...) for a polynomial a0 + a1 * x + a2 * x^2 + ...
+     * Vector of the fit parameters
      */
     std::vector<double> fitParams{};
 
@@ -210,7 +210,7 @@ class Fitter
     /*
      * fit status etc
      */
-    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min= nullptr;
+    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
 
   private:
     /*
