@@ -90,11 +90,16 @@ FitData::FitData(const std::vector<double>& myBinCentres,
     binErrors = std::vector<double>(dataLength, 0.0);
 }
 
-Fitter::Fitter(const FitData_t& fitData)
+BaseFitter::BaseFitter(const FitData_t& fitData)
 {
     // Set our attributes to the right things
     // No need to perform consistency checks as they are performed by the FitData constructor
     _fitData = fitData;
+}
+
+Fitter::Fitter(const FitData_t& fitData) : BaseFitter(fitData)
+{
+    ;
 }
 
 void Fitter::fitUsingRootCustomFcn(const double minTime, const double maxTime, const std::string& options)

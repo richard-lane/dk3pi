@@ -48,7 +48,7 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
 /*
  * Perform a pull study with a specified number of experiments and events
  */
-void pull_study(size_t nExperiments = 100, size_t nEvents = 800000, size_t numPointsPerBin = 100)
+void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
 {
     // Choose which parameters to use when simulating
     // These numbers are vaguely realistic but also entirely made up
@@ -115,15 +115,9 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000, size_t numPo
         MyDecays.findDcsDecayTimes(numDcsEvents);
         MyDecays.findCfDecayTimes(numCfEvents);
 
-        if (binLimits.empty()) {
-            std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
-            std::sort(dcsTimes.begin(), dcsTimes.end());
-            binLimits = util::findBinLimits(dcsTimes, numPointsPerBin, 0, 1.05 * maxTime);
-        }
-
         // Plot histograms of event counts for both event types in each time bin
         // These will get saved as WSHist.pdf and RSHist.pdf
-        MyDecays.plotRates(binLimits);
+        // MyDecays.plotRates(binLimits);
 
         RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, binLimits);
         MyRatios.calculateRatios();
@@ -172,7 +166,7 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000, size_t numPo
 #ifndef __CINT__
 int main()
 {
-    pull_study(100, 800000, 50);
+    pull_study(100, 200000);
 
     return 0;
 }

@@ -56,12 +56,12 @@ typedef struct FitData {
 } FitData_t;
 
 /*
- * The parameters describing how a polynomial fits data
+ * The parameters describing how a function fits data
  */
 typedef struct PolynomialFitResults {
 
     /*
-     * Vector of the fit parameters (a0, a1, a2, ...) for a polynomial a0 + a1 * x + a2 * x^2 + ...
+     * Vector of the fit parameters
      */
     std::vector<double> fitParams{};
 
@@ -82,9 +82,42 @@ typedef struct PolynomialFitResults {
 typedef enum FitAlgorithm { ChiSquared } FitAlgorithm_t;
 
 /*
+ * Base fitter class
+ */
+class BaseFitter
+{
+  public:
+    /*
+     * The data to be fit.
+     */
+    BaseFitter(const FitData_t& fitData);
+
+    /*
+     * Parameters describing the fit
+     */
+    FitResults_t fitParams;
+
+    /*
+     * ROOT TGraph object used for holding input data.
+     */
+    std::unique_ptr<TGraphErrors> plot = nullptr;
+
+    /*
+     * The test statistic that is optimised when running our test, e.g. chi squared or a likelihood
+     */
+    std::unique_ptr<double> statistic = nullptr;
+
+  protected:
+    /*
+     * The data used to make the fit
+     */
+    FitData_t _fitData;
+};
+
+/*
  * Class for fitting data to a second-order polynomial
  */
-class Fitter
+class Fitter : public BaseFitter
 {
   public:
     /*
@@ -175,11 +208,6 @@ class Fitter
                      const util::LegendParams_t* legendParams = nullptr);
 
     /*
-     * Parameters describing the fit
-     */
-    FitResults_t fitParams;
-
-    /*
      * Vector of pairs describing a parameter scan
      */
     std::vector<std::pair<double, double>> parameterScan;
@@ -192,36 +220,21 @@ class Fitter
     std::vector<std::vector<double>> twoDParameterScan;
 
     /*
-     * ROOT TGraph object used for holding input data. Can also be used to perform one of ROOT's builtin fits.
-     */
-    std::unique_ptr<TGraphErrors> plot = nullptr;
-
-    /*
      * ROOT TGraph object that used for representing the best-fit of our data, in the case that ROOT is not used to
      * perform a builtin fit (e.g. when Minuit2 is used directly.)
      */
     std::unique_ptr<TGraph> bestFitPlot = nullptr;
 
     /*
-     * The test statistic that is optimised when running our test, e.g. chi squared or a likelihood
-     */
-    std::unique_ptr<double> statistic = nullptr;
-
-    /*
      * fit status etc
      */
-    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min= nullptr;
+    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
 
   private:
     /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
      */
     void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
-
-    /*
-     * The data used to make the fit
-     */
-    FitData_t _fitData;
 
     /*
      * Pointer to the Minuit FCN used to perform the fit
