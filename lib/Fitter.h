@@ -195,7 +195,7 @@ class MinuitPolynomialFitter : public BaseFitter
      */
     std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
 
-  private:
+  protected:
     /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
      */
@@ -205,6 +205,36 @@ class MinuitPolynomialFitter : public BaseFitter
      * Pointer to the Minuit FCN used to perform the fit
      */
     std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
+};
+
+/*
+ * Class for perfoming scans of the polynomial fit parameters a, b, c
+ */
+class MinuitPolyScan : public MinuitPolynomialFitter
+{
+    /*
+     * Scan the ith parameter as defined in fitParams.fitParams
+     *
+     * Cannot have more than 100 points due to some of Minuit's internal limitations.
+     * By default runs a scan from +-2sigma, but can optionally be specified by setting low and high.
+     *
+     * Populates parameterScan
+     */
+    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low = 0., const double high = 0.);
+
+    /*
+     * Scan the i and jth parameters between the specified limits
+     *
+     * Populates twoDParameterScan
+     */
+    void twoDParamScan(const size_t i,
+                       const size_t j,
+                       const size_t iPoints,
+                       const size_t jPoints,
+                       const double iLow,
+                       const double iHigh,
+                       const double jLow,
+                       const double jHigh);
 };
 
 /*
