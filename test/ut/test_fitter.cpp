@@ -151,11 +151,11 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit, *boost::unit_test::tolerance(0.01))
     std::vector<double> expectedFitCoefficients{1, 1, 1};
 
     // Create a fitter with our parameters
-    FitData_t fitData(binCentres, binWidths, data, errors);
-    Fitter    MyFitter(fitData);
+    FitData_t  fitData(binCentres, binWidths, data, errors);
+    RootFitter MyFitter(fitData);
 
     // Perform a fit and check that our coefficients are all 1
-    MyFitter.fitUsingRootCustomFcn(0, 1, "Q");
+    MyFitter.fit(0, 1, "Q");
     CHECK_CLOSE_COLLECTIONS(MyFitter.fitParams.fitParams, expectedFitCoefficients, 0.001);
 }
 
@@ -236,10 +236,10 @@ BOOST_AUTO_TEST_CASE(test_plot_created)
     std::vector<double> oneTwo{1, 2};
     std::vector<double> zeros{0, 0};
     FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
-    Fitter              MyFitter(fitData);
+    RootFitter          MyFitter(fitData);
 
     // Run the fit, which allows us to attempt to save the plot
-    MyFitter.fitUsingRootCustomFcn(0, 1, "Q");
+    MyFitter.fit(0, 1, "Q");
 
     // Create a temporary file and attempt to save a plot there
     boost::filesystem::path temp   = boost::filesystem::unique_path();
@@ -259,10 +259,10 @@ BOOST_AUTO_TEST_CASE(test_matrix_assigned)
     std::vector<double> oneTwo{1, 2};
     std::vector<double> zeros{0, 0};
     FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
-    Fitter              MyFitter(fitData);
+    RootFitter          MyFitter(fitData);
 
     // Run the fit, which allows us to attempt to save the plot
-    MyFitter.fitUsingRootCustomFcn(0, 1, "Q");
+    MyFitter.fit(0, 1, "Q");
 
     // Check that the correlation matrix has been assigned some memory
     BOOST_CHECK(MyFitter.fitParams.correlationMatrix != nullptr);

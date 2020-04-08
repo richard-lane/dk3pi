@@ -153,18 +153,6 @@ class Fitter : public BaseFitter
     Fitter(const FitData_t& fitData);
 
     /*
-     * Fit our data to the equation we expect to see, using ROOT's builtin TGraph fitter.
-     * At the moment this is just a second order polynomial.
-     *
-     * Allocates memory to _plot
-     *
-     * minTime and maxTime define the range over which the function is defined.
-     *
-     * Populates fitParams
-     */
-    void fitUsingRootCustomFcn(const double minTime, const double maxTime, const std::string& options = "");
-
-    /*
      * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
      *
      * The user should provide an initial guess at the parameters and their errors

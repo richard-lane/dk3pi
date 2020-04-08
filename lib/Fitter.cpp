@@ -162,8 +162,10 @@ Fitter::Fitter(const FitData_t& fitData) : BaseFitter(fitData)
     ;
 }
 
-void Fitter::fitUsingRootCustomFcn(const double minTime, const double maxTime, const std::string& options)
+void fitUsingRootCustomFcn(const double minTime, const double maxTime, const std::string& options)
 {
+    throw D2K3PiException();
+    /*
     // Set our TGraph pointer to the right thing
     plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
                                           _fitData.binCentres.data(),
@@ -195,6 +197,7 @@ void Fitter::fitUsingRootCustomFcn(const double minTime, const double maxTime, c
 
     // Set chi squared to the value stored in func
     statistic = std::make_unique<double>(plot->Chisquare(func.get()));
+    */
 }
 
 TMatrixD Fitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector)
