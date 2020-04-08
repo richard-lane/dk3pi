@@ -142,6 +142,61 @@ class RootFitter : public BaseFitter
 };
 
 /*
+ * Fit to a polynomial (a + bt + ct^2) using the Minuit2 APIs
+ */
+class MinuitPolynomialFitter : public BaseFitter
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    MinuitPolynomialFitter(const FitData_t& fitData);
+
+    /*
+     * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
+     *
+     * The user should provide an initial guess at the parameters and their errors
+     * Parameters are {x, y, r, z_im, z_re, width}
+     *
+     * FitMethod tells the fitter whether to use chi squared or maximum likelihood (max likelihood isn't actually
+     * implemented)
+     *
+     * Allocates memory to _plot and _bestFitPlot
+     *
+     * Populates fitParams
+     */
+    void fit(const std::vector<double>& initialParams,
+             const std::vector<double>& initialErrors,
+             const FitAlgorithm_t&      FitMethod);
+
+    /*
+     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
+     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
+     */
+    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
+
+    /*
+     * Save a plot of our data and fit to file
+     *
+     * Must specify parameters for drawing a legend.
+     */
+    void saveFitPlot(const std::string&          plotTitle,
+                     const std::string&          path,
+                     const util::LegendParams_t* legendParams = nullptr);
+
+    /*
+     * ROOT TGraph object that used for representing the best-fit of our data
+     * Maybe this should really be a TF1 TODO
+     */
+    std::unique_ptr<TGraph> bestFitPlot = nullptr;
+
+    /*
+     * fit status etc
+     */
+    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
+};
+
+/*
  * Class for fitting data to a second-order polynomial
  */
 class Fitter : public BaseFitter
