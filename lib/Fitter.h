@@ -146,12 +146,7 @@ class RootFitter : public BaseFitter
  */
 class MinuitFitter : public BaseFitter
 {
-  protected:
-    /*
-     * Calls parent constructor
-     */
-    MinuitFitter(const FitData_t& fitData);
-
+  public:
     /*
      * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
      * errors in fitParams.fitParamErrors and convert it to a TMatrixD
@@ -180,6 +175,11 @@ class MinuitFitter : public BaseFitter
 
   protected:
     /*
+     * Calls parent constructor
+     */
+    MinuitFitter(const FitData_t& fitData);
+
+    /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
      */
     void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
@@ -193,7 +193,7 @@ class MinuitFitter : public BaseFitter
 /*
  * Fit to a polynomial (a + bt + ct^2) using the Minuit2 APIs
  */
-class MinuitPolynomialFitter : public BaseFitter
+class MinuitPolynomialFitter : public MinuitFitter
 {
   public:
     /*
@@ -217,43 +217,6 @@ class MinuitPolynomialFitter : public BaseFitter
     void fit(const std::vector<double>& initialParams,
              const std::vector<double>& initialErrors,
              const FitAlgorithm_t&      FitMethod);
-
-    /*
-     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
-     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
-     */
-    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
-
-    /*
-     * Save a plot of our data and fit to file
-     *
-     * Must specify parameters for drawing a legend.
-     */
-    void saveFitPlot(const std::string&          plotTitle,
-                     const std::string&          path,
-                     const util::LegendParams_t* legendParams = nullptr);
-
-    /*
-     * ROOT TGraph object that used for representing the best-fit of our data
-     * Maybe this should really be a TF1 TODO
-     */
-    std::unique_ptr<TGraph> bestFitPlot = nullptr;
-
-    /*
-     * fit status etc
-     */
-    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
-
-  protected:
-    /*
-     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
-     */
-    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
-
-    /*
-     * Pointer to the Minuit FCN used to perform the fit
-     */
-    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
 };
 
 /*
@@ -312,7 +275,7 @@ class MinuitPolyScan : public MinuitPolynomialFitter
  *
  * Cannot fit without fixing at least one of x, y or a component of Z
  */
-class PhysicalFitter : public BaseFitter
+class PhysicalFitter : public MinuitFitter
 {
   public:
     /*
@@ -336,34 +299,6 @@ class PhysicalFitter : public BaseFitter
              const FitAlgorithm_t&      FitMethod,
              const std::vector<size_t>  fixParams);
 
-    /*
-     * Save a plot of our data and fit to file
-     *
-     * If plotting from a minuit fit, must specify parameters for drawing a legend.
-     */
-    void saveFitPlot(const std::string& plotTitle, const std::string& path, const util::LegendParams_t* legendParams);
-
-    /*
-     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
-     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
-     */
-    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
-
-    /*
-     * fit status etc
-     */
-    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
-
-    /*
-     * Pointer to the Minuit FCN used to perform the fit
-     */
-    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
-
-    /*
-     * ROOT TGraph object that used for representing the best-fit of our data (maybe should be a TF1? TODO)
-     */
-    std::unique_ptr<TGraph> bestFitPlot = nullptr;
-
   protected:
     /*
      * Vector of parameters used in the fit
@@ -371,11 +306,6 @@ class PhysicalFitter : public BaseFitter
      * Useful for indexing + consistency; we can use this to e.g. fix a parameter by name
      */
     const std::vector<std::string> _paramNames{"x", "y", "r", "z_im", "z_re", "width"};
-
-    /*
-     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
-     */
-    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
 };
 
 /*
