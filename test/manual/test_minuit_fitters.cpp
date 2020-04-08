@@ -43,15 +43,15 @@ void compareRootMinuit(void)
     MyRatios.calculateRatios();
 
     // Create three fitters
-    FitData_t MyFitData         = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    Fitter    RootFitter        = Fitter(MyFitData);
-    Fitter    MinuitPolyFit     = Fitter(MyFitData);
-    Fitter    MinuitDetailedFit = Fitter(MyFitData);
+    FitData_t  MyFitData         = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    RootFitter CernFitter        = RootFitter(MyFitData);
+    Fitter     MinuitPolyFit     = Fitter(MyFitData);
+    Fitter     MinuitDetailedFit = Fitter(MyFitData);
 
     // Perform fits
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    RootFitter.fitUsingRootCustomFcn(0, maxTime, "Q");
+    CernFitter.fit(0, maxTime, "Q");
     MinuitPolyFit.fitUsingMinuit(initialParameterGuess, initialErrorsGuess, ChiSquared);
 
     std::vector<double> initialParamGuess{phaseSpaceParams.x,
@@ -65,10 +65,10 @@ void compareRootMinuit(void)
 
     // Print fit parameters to console
     for (size_t i = 0; i < 3; ++i) {
-        std::cout << "ROOT fit params: " << RootFitter.fitParams.fitParams[i] << "+-"
-                  << RootFitter.fitParams.fitParamErrors[i] << std::endl;
+        std::cout << "ROOT fit params: " << CernFitter.fitParams.fitParams[i] << "+-"
+                  << CernFitter.fitParams.fitParamErrors[i] << std::endl;
     }
-    std::cout << "\tChiSq = " << *(RootFitter.statistic) << std::endl;
+    std::cout << "\tChiSq = " << *(CernFitter.statistic) << std::endl;
     for (size_t i = 0; i < 3; ++i) {
         std::cout << "Chisq fit params: " << MinuitPolyFit.fitParams.fitParams[i] << "+-"
                   << MinuitPolyFit.fitParams.fitParamErrors[i] << std::endl;
@@ -78,12 +78,12 @@ void compareRootMinuit(void)
     // Plot fits to file
     const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = "Compare fitters"};
     const std::vector<std::string> legendLabels{"Root best fit", "Minuit polynomial best fit", "Minuit best fit"};
-    RootFitter.plot->SetTitle("Compare Minuit and ROOT fitters;time/ns;DCS/CF ratio");
-    RootFitter.plot->SetLineColor(kBlack);
+    CernFitter.plot->SetTitle("Compare Minuit and ROOT fitters;time/ns;DCS/CF ratio");
+    CernFitter.plot->SetLineColor(kBlack);
     MinuitPolyFit.bestFitPlot->SetLineColor(kBlue);
     MinuitDetailedFit.bestFitPlot->SetLineColor(kGreen);
     MinuitDetailedFit.bestFitPlot->SetLineStyle(kDashed);
-    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{RootFitter.plot.get(),
+    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{CernFitter.plot.get(),
                                                           MinuitPolyFit.bestFitPlot.get(),
                                                           MinuitDetailedFit.bestFitPlot.get()},
                                     std::vector<std::string>{"AP", "CSAME", "CSAME"},
