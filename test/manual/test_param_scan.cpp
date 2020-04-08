@@ -211,7 +211,7 @@ void test_z_scan()
                                               phaseSpaceParams.z_re,
                                               phaseSpaceParams.width};
     std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
-    PhysFitter.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<size_t>{});
+    PhysFitter.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<std::pair<size_t, double>>{});
     std::cout << "Min chisq: " << *(PhysFitter.statistic) << std::endl;
 
     // Perform a 2d chi squared scan on the components of Z

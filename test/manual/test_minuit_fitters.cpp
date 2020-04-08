@@ -61,7 +61,7 @@ void compareRootMinuit(void)
                                           phaseSpaceParams.z_re,
                                           phaseSpaceParams.width};
     std::vector<double> initialErrGuess{1, 1, 1, 1, 1, 1};
-    PhysFitter.fit(initialParamGuess, initialErrGuess, ChiSquared, std::vector<size_t>{});
+    PhysFitter.fit(initialParamGuess, initialErrGuess, ChiSquared, std::vector<std::pair<size_t, double>>{});
 
     // Print fit parameters to console
     for (size_t i = 0; i < 3; ++i) {

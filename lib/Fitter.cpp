@@ -438,17 +438,41 @@ PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitFitter(fitData)
     ;
 }
 
-void PhysicalFitter::fit(const std::vector<double>& initialParams,
-                         const std::vector<double>& initialErrors,
-                         const FitAlgorithm_t&      FitMethod,
-                         const std::vector<size_t>  fixParams)
+void PhysicalFitter::fit(const std::vector<double>&                    initialParams,
+                         const std::vector<double>&                    initialErrors,
+                         const FitAlgorithm_t&                         FitMethod,
+                         const std::vector<std::pair<size_t, double>>& fixParams)
 {
-    std::cout << "This isnt implemented properly yet" << std::endl;
-    throw D2K3PiException();
-
     // Check that we have been passed 6 initial parameters and errors
     if (initialParams.size() != 6 || initialErrors.size() != 6) {
         std::cout << "fit requires a guess of 6 parameters and their errors" << std::endl;
+        throw D2K3PiException();
+    }
+
+    if (fixParams.empty()) {
+        std::cerr << "Must fix one of x, y, Re(Z) or Im(Z) when fitting with rD, x, y etc." << std::endl;
+        throw D2K3PiException();
+    }
+
+    size_t numFixParams = fixParams.size();
+    if (numFixParams > 5) {
+        std::cerr << "cannot fix more than 5 parameters" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that we have fixed at least one of x, y, Re(Z) or Im(Z)- otherwise our fit is poorly defined
+    std::vector<size_t> fixParamIndices(fixParams.size());
+    std::vector<double> fixParamValues(fixParams.size());
+    for (size_t i = 0; i < fixParams.size(); ++i) {
+        fixParamIndices[i] = fixParams[i].first;
+        fixParamValues[i]  = fixParams[i].second;
+    }
+    if (std::find(fixParamValues.begin(), fixParamValues.end(), 0) == fixParamValues.end() && // x
+        std::find(fixParamValues.begin(), fixParamValues.end(), 1) == fixParamValues.end() && // y
+        std::find(fixParamValues.begin(), fixParamValues.end(), 3) == fixParamValues.end() && // z_im
+        std::find(fixParamValues.begin(), fixParamValues.end(), 4) == fixParamValues.end()    // z_re
+    ) {
+        std::cerr << "Must fix one of x, y, or a component of Z for fit to be well defined" << std::endl;
         throw D2K3PiException();
     }
 
@@ -464,9 +488,14 @@ void PhysicalFitter::fit(const std::vector<double>& initialParams,
     parameters.Add("z_re", initialParams[4], initialErrors[4]);
     parameters.Add("width", initialParams[5], initialErrors[5]);
 
-    // Create a minimiser and minimise our chi squared
+    // Create a minimiser and fix any parameters to the right values
     ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
-    migrad.Fix(5); // Fix width
+    for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
+        parameters.SetValue(it->first, it->second);
+        migrad.Fix(it->first);
+    }
+
+    // Minimuse chi squared as defined by our _fitFcn
     ROOT::Minuit2::FunctionMinimum min = migrad();
 
     // Check that our solution is "valid"
@@ -484,12 +513,8 @@ void PhysicalFitter::fit(const std::vector<double>& initialParams,
     fitParams.fitParamErrors = min.UserParameters().Errors();
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
-    // Hack: remove width from fit params, store matrix and add it again
-    double widthErr = fitParams.fitParamErrors[5];
-    fitParams.fitParamErrors.pop_back();
     fitParams.correlationMatrix =
         std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
-    fitParams.fitParamErrors.push_back(widthErr);
 
     // Store chi squared
     statistic = std::make_unique<double>(min.Fval());

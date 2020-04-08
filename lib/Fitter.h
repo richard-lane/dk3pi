@@ -288,16 +288,17 @@ class PhysicalFitter : public MinuitFitter
      * method.
      *
      * The user should provide an initial guess at the parameters and their errors
-     * Also provide a vector of parameters to fix; parameter numbering is defined by _paramNames (should not be empty)
+     * Also provide a vector of parameters to fix; parameter numbering is defined by _paramNames (should not be empty).
+     * e.g. fix parameters 2 and 3 to 0.2, 0.3 respectively by passing {(2, 0.2), (3, 0,3)}
      *
      * Allocates memory to _plot and _bestFitPlot
      *
      * Populates fitParams
      */
-    void fit(const std::vector<double>& initialParams,
-             const std::vector<double>& initialErrors,
-             const FitAlgorithm_t&      FitMethod,
-             const std::vector<size_t>  fixParams);
+    void fit(const std::vector<double>&                    initialParams,
+             const std::vector<double>&                    initialErrors,
+             const FitAlgorithm_t&                         FitMethod,
+             const std::vector<std::pair<size_t, double>>& fixParams);
 
   protected:
     /*
