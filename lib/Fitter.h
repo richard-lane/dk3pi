@@ -332,7 +332,7 @@ class PhysicalFitter : public BaseFitter
 /*
  * Class for perfoming scans of the physical fit parameters x, y etc.
  */
-class ParamScanner: public PhysicalFitter 
+class ParamScanner : public PhysicalFitter
 {
   public:
     /*
@@ -375,91 +375,6 @@ class ParamScanner: public PhysicalFitter
      * Scans parameters i and j to find chi squared values; result is a vector of (i_value, j_value, chi_squared)
      */
     std::vector<std::vector<double>> twoDParameterScan;
-};
-
-/*
- * Class for fitting data to a second-order polynomial
- */
-class Fitter : public BaseFitter
-{
-  public:
-    /*
-     * Tell the Fitter the data to be fit.
-     */
-    Fitter(const FitData_t& fitData);
-
-    /*
-     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
-     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
-     */
-    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
-
-    /*
-     * Scan the ith parameter as defined in fitParams.fitParams
-     *
-     * Cannot have more than 100 points due to some of Minuit's internal limitations.
-     * By default runs a scan from +-2sigma, but can optionally be specified by setting low and high.
-     *
-     * Populates parameterScan
-     */
-    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low = 0., const double high = 0.);
-
-    /*
-     * Scan the i and jth parameters between the specified limits
-     *
-     * Populates twoDParameterScan
-     */
-    void twoDParamScan(const size_t i,
-                       const size_t j,
-                       const size_t iPoints,
-                       const size_t jPoints,
-                       const double iLow,
-                       const double iHigh,
-                       const double jLow,
-                       const double jHigh);
-
-    /*
-     * Save a plot of our data and fit to file
-     *
-     * If plotting from a minuit fit, must specify parameters for drawing a legend.
-     */
-    void saveFitPlot(const std::string&          plotTitle,
-                     const std::string&          path,
-                     const util::LegendParams_t* legendParams = nullptr);
-
-    /*
-     * Vector of pairs describing a parameter scan
-     */
-    std::vector<std::pair<double, double>> parameterScan;
-
-    /*
-     * Vector of tuples describing a 2d parameter scan
-     *
-     * Scans parameters i and j to find chi squared values; result is a vector of (i_value, j_value, chi_squared)
-     */
-    std::vector<std::vector<double>> twoDParameterScan;
-
-    /*
-     * ROOT TGraph object that used for representing the best-fit of our data, in the case that ROOT is not used to
-     * perform a builtin fit (e.g. when Minuit2 is used directly.)
-     */
-    std::unique_ptr<TGraph> bestFitPlot = nullptr;
-
-    /*
-     * fit status etc
-     */
-    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
-
-  private:
-    /*
-     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
-     */
-    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
-
-    /*
-     * Pointer to the Minuit FCN used to perform the fit
-     */
-    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
 };
 
 #endif // FITTER_H
