@@ -256,6 +256,80 @@ class MinuitPolyScan : public MinuitPolynomialFitter
 };
 
 /*
+ * Class for fitting the ratio of DCS to CF decay times by optimising parameters x, y, rD, Im(Z), Re(Z) and the decay
+ * width
+ *
+ * Expect ratio = rD2 + rD(yRe(Z) + xIm(Z))width*t + (x2 + y2)/4 * (width *t)2
+ *
+ * Cannot fit without fixing at least one of x, y or a component of Z
+ */
+class PhysicalFitter : public BaseFitter
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    PhysicalFitter(const FitData_t& fitData);
+
+    /*
+     * Fit our data to a second-order polynomial r2 + r(yRZ + xImZ)Gt + (x2+y2)(Gt)2/4 using Minuit2 and the chi-squared
+     * method.
+     *
+     * The user should provide an initial guess at the parameters and their errors
+     * Also provide a vector of parameters to fix; parameter numbering is defined by _paramNames (should not be empty)
+     *
+     * Allocates memory to _plot and _bestFitPlot
+     *
+     * Populates fitParams
+     */
+    void fit(const std::vector<double>& initialParams,
+             const std::vector<double>& initialErrors,
+             const FitAlgorithm_t&      FitMethod,
+             const std::vector<size_t>  fixParams);
+
+    /*
+     * Save a plot of our data and fit to file
+     *
+     * If plotting from a minuit fit, must specify parameters for drawing a legend.
+     */
+    void saveFitPlot(const std::string& plotTitle, const std::string& path, const util::LegendParams_t* legendParams);
+
+    /*
+     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
+     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
+     */
+    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
+
+    /*
+     * fit status etc
+     */
+    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
+
+    /*
+     * Pointer to the Minuit FCN used to perform the fit
+     */
+    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
+
+    /*
+     * ROOT TGraph object that used for representing the best-fit of our data (maybe should be a TF1? TODO)
+     */
+    std::unique_ptr<TGraph> bestFitPlot = nullptr;
+
+  protected:
+    /*
+     * Vector of parameters used in the fit
+     *
+     * Useful for indexing + consistency; we can use this to e.g. fix a parameter by name
+     */
+    const std::vector<std::string> _paramNames{"x", "y", "r", "z_im", "z_re", "width"};
+
+    /*
+     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
+     */
+    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
+};
+
+/*
  * Class for fitting data to a second-order polynomial
  */
 class Fitter : public BaseFitter
