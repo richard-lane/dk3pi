@@ -82,6 +82,39 @@ typedef struct PolynomialFitResults {
 typedef enum FitAlgorithm { ChiSquared } FitAlgorithm_t;
 
 /*
+ * Base fitter class
+ */
+class BaseFitter
+{
+  public:
+    /*
+     * The data to be fit.
+     */
+    BaseFitter(const FitData_t& fitData);
+
+    /*
+     * Parameters describing the fit
+     */
+    FitResults_t fitParams;
+
+    /*
+     * ROOT TGraph object used for holding input data.
+     */
+    std::unique_ptr<TGraphErrors> plot = nullptr;
+
+    /*
+     * The test statistic that is optimised when running our test, e.g. chi squared or a likelihood
+     */
+    std::unique_ptr<double> statistic = nullptr;
+
+  private:
+    /*
+     * The data used to make the fit
+     */
+    FitData_t _fitData;
+};
+
+/*
  * Class for fitting data to a second-order polynomial
  */
 class Fitter
