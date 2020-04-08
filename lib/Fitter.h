@@ -142,6 +142,55 @@ class RootFitter : public BaseFitter
 };
 
 /*
+ * Base class for fitters that use Minuit
+ */
+class MinuitFitter : public BaseFitter
+{
+  protected:
+    /*
+     * Calls parent constructor
+     */
+    MinuitFitter(const FitData_t& fitData);
+
+    /*
+     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
+     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
+     */
+    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
+
+    /*
+     * Save a plot of our data and fit to file
+     *
+     * Must specify parameters for drawing a legend.
+     */
+    void saveFitPlot(const std::string&          plotTitle,
+                     const std::string&          path,
+                     const util::LegendParams_t* legendParams = nullptr);
+
+    /*
+     * ROOT TGraph object that used for representing the best-fit of our data
+     * Maybe this should really be a TF1 TODO
+     */
+    std::unique_ptr<TGraph> bestFitPlot = nullptr;
+
+    /*
+     * fit status etc
+     */
+    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
+
+  protected:
+    /*
+     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
+     */
+    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
+
+    /*
+     * Pointer to the Minuit FCN used to perform the fit
+     */
+    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
+};
+
+/*
  * Fit to a polynomial (a + bt + ct^2) using the Minuit2 APIs
  */
 class MinuitPolynomialFitter : public BaseFitter
