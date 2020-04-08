@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(test_plot_before_fit)
     std::vector<double> oneTwo{1, 2};
     std::vector<double> zeros{0, 0};
     FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
-    Fitter              MyFitter(fitData);
+    RootFitter          MyFitter(fitData);
 
     BOOST_CHECK_THROW(MyFitter.saveFitPlot("foo", "bar"), D2K3PiException);
 }
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(test_plot_already_exists)
     std::vector<double> oneTwo{1, 2};
     std::vector<double> zeros{0, 0};
     FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
-    Fitter              MyFitter(fitData);
+    RootFitter          MyFitter(fitData);
 
     // Change the fit parameter to a non empty vector so that we will not hit the plot before fit error
     MyFitter.fitParams.fitParams = {1};
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(test_corr_cov_conversion, *boost::unit_test::tolerance(0.00
     std::vector<double> binCentres{0, 5, 10};
     std::vector<double> binWidths{1, 1, 1};
     FitData_t           fitData(binCentres, binWidths, errors, errors);
-    Fitter              MyFitter(fitData);
+    PhysicalFitter      MyFitter(fitData);
 
     // Trick the Fitter into thinking a fit has been performed by manually setting the fitParams.fitParamErrors
     // attribute. It is REALLY BAD that it's possible to do this, but I trust myself enough not to abuse or get confused
