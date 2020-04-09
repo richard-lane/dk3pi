@@ -11,10 +11,10 @@ MinuitFitterBase::MinuitFitterBase(const FitData_t& fitData) : BaseFitter(fitDat
     ;
 }
 
-void MinuitFitterBase::fit(const std::vector<double>&                    initialParams,
-                           const std::vector<double>&                    initialErrors,
-                           const FitAlgorithm_t&                         FitMethod,
-                           const std::vector<std::pair<size_t, double>>& fixParams)
+void MinuitFitterBase::fit(const std::vector<double>& initialParams,
+                           const std::vector<double>& initialErrors,
+                           const FitAlgorithm_t&      FitMethod,
+                           const std::vector<size_t>& fixParams)
 {
     if (!_fitFcn) {
         std::cerr << "Fit fcn not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
@@ -42,11 +42,7 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
     ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
 
     // If we find index i in our list of parameters to fix, fix it.
-    std::vector<size_t> fixParamIndices(fixParams.size());
-    for (size_t i = 0; i < fixParams.size(); ++i) {
-        fixParamIndices[i] = fixParams[i].first;
-    }
-    for (auto it = fixParamIndices.begin(); it != fixParamIndices.end(); ++it) {
+    for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
         migrad.Fix(*it);
     }
 
@@ -62,7 +58,7 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
         throw D2K3PiException();
     }
 
-    _storeMinuitFitParams(fixParamIndices);
+    _storeMinuitFitParams(fixParams);
 
     // Store chi squared
     statistic = std::make_unique<double>(min->Fval());

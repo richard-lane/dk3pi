@@ -15,7 +15,7 @@ class MinuitFitterBase : public BaseFitter
 {
   public:
     /*
-     * Perform a fit using Minuit, possibly holding some parameters fixed to values as specified in fixParams.
+     * Perform a fit using Minuit, possibly holding some parameters fixed as specified in fixParams.
      *
      * Uses _parameters to minimise _fitFcn; populates this->min, this->fitParams and this->statistic
      *
@@ -23,10 +23,10 @@ class MinuitFitterBase : public BaseFitter
      * parameters); this should be set by child class implementations of this->fit().
      *
      */
-    virtual void fit(const std::vector<double>&                    initialParams,
-                     const std::vector<double>&                    initialErrors,
-                     const FitAlgorithm_t&                         FitMethod,
-                     const std::vector<std::pair<size_t, double>>& fixParams);
+    virtual void fit(const std::vector<double>& initialParams,
+                     const std::vector<double>& initialErrors,
+                     const FitAlgorithm_t&      FitMethod,
+                     const std::vector<size_t>& fixParams);
 
     /*
      * Given a vector representing the covariance between a set of parameters, find the covariance matrix using the

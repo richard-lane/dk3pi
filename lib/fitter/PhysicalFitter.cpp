@@ -12,10 +12,10 @@ PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitFitterBase(fitD
     ;
 }
 
-void PhysicalFitter::fit(const std::vector<double>&                    initialParams,
-                         const std::vector<double>&                    initialErrors,
-                         const FitAlgorithm_t&                         FitMethod,
-                         const std::vector<std::pair<size_t, double>>& fixParams)
+void PhysicalFitter::fit(const std::vector<double>& initialParams,
+                         const std::vector<double>& initialErrors,
+                         const FitAlgorithm_t&      FitMethod,
+                         const std::vector<size_t>& fixParams)
 {
     // Check that we have been passed 6 initial parameters and errors
     if (initialParams.size() != 6 || initialErrors.size() != 6) {
@@ -24,17 +24,10 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
     }
 
     // Check that we have fixed at least one of x, y, Re(Z) or Im(Z)- otherwise our fit is poorly defined
-    std::vector<size_t> fixParamIndices(fixParams.size());
-    std::vector<double> fixParamValues(fixParams.size());
-    for (size_t i = 0; i < fixParams.size(); ++i) {
-        fixParamIndices[i] = fixParams[i].first;
-        fixParamValues[i]  = fixParams[i].second;
-    }
-    if (fixParams.empty() ||
-        (std::find(fixParamIndices.begin(), fixParamIndices.end(), 0) == fixParamIndices.end() && // x
-         std::find(fixParamIndices.begin(), fixParamIndices.end(), 1) == fixParamIndices.end() && // y
-         std::find(fixParamIndices.begin(), fixParamIndices.end(), 3) == fixParamIndices.end() && // z_im
-         std::find(fixParamIndices.begin(), fixParamIndices.end(), 4) == fixParamIndices.end())   // z_re
+    if (fixParams.empty() || (std::find(fixParams.begin(), fixParams.end(), 0) == fixParams.end() && // x
+                              std::find(fixParams.begin(), fixParams.end(), 1) == fixParams.end() && // y
+                              std::find(fixParams.begin(), fixParams.end(), 3) == fixParams.end() && // z_im
+                              std::find(fixParams.begin(), fixParams.end(), 4) == fixParams.end())   // z_re
     ) {
         std::cerr << "Must fix one of x, y, or a component of Z for fit to be well defined" << std::endl;
         throw D2K3PiException();
