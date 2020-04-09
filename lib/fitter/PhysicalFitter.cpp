@@ -6,7 +6,7 @@
 #include "Minuit2/MnMigrad.h"
 #include "Minuit2/MnPrint.h"
 
-PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitFitter(fitData)
+PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitFitterBase(fitData)
 {
     ;
 }

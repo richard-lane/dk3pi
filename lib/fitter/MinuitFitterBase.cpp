@@ -3,13 +3,13 @@
 #include "D2K3PiError.h"
 #include "MinuitFitterBase.h"
 
-MinuitFitter::MinuitFitter(const FitData_t& fitData) : BaseFitter(fitData)
+MinuitFitterBase::MinuitFitterBase(const FitData_t& fitData) : BaseFitter(fitData)
 {
     ;
 }
 
-TMatrixD MinuitFitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
-                                                          const std::vector<size_t>& fixedParams)
+TMatrixD MinuitFitterBase::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
+                                                              const std::vector<size_t>& fixedParams)
 {
     // Check that we have the right number of elements in our covariance vector
     size_t numElements = covarianceVector.size();
@@ -64,9 +64,9 @@ TMatrixD MinuitFitter::covarianceVector2CorrelationMatrix(const std::vector<doub
     return CorrMatrix;
 }
 
-void MinuitFitter::saveFitPlot(const std::string&          plotTitle,
-                               const std::string&          path,
-                               const util::LegendParams_t* legendParams)
+void MinuitFitterBase::saveFitPlot(const std::string&          plotTitle,
+                                   const std::string&          path,
+                                   const util::LegendParams_t* legendParams)
 {
     // Check that a fit has been made
     if (fitParams.fitParams.empty() || plot == nullptr) {
@@ -102,7 +102,7 @@ void MinuitFitter::saveFitPlot(const std::string&          plotTitle,
     }
 }
 
-void MinuitFitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
+void MinuitFitterBase::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
 {
     // Set our fitParams to the values obtained in the fit
     fitParams.fitParams      = min.UserParameters().Params();
