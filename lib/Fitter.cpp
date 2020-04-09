@@ -157,7 +157,117 @@ void RootFitter::saveFitPlot(const std::string& plotTitle, const std::string& pa
     util::saveObjectToFile(plot.get(), path, "AP");
 }
 
-MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : BaseFitter(fitData)
+MinuitFitter::MinuitFitter(const FitData_t& fitData) : BaseFitter(fitData)
+{
+    ;
+}
+
+TMatrixD MinuitFitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
+                                                          const std::vector<size_t>& fixedParams)
+{
+    // Check that we have the right number of elements in our covariance vector
+    size_t numElements = covarianceVector.size();
+    size_t numParams   = fitParams.fitParamErrors.size() - fixedParams.size();
+
+    if (numParams == 0) {
+        std::cerr << "Fit has not yet been performed; fit param error vector is empty (or the fit has been run with 0 "
+                     "free parameters)."
+                  << std::endl;
+        throw D2K3PiException();
+    }
+
+    size_t expectedVectorLength = numParams * (numParams + 1) / 2;
+    if (expectedVectorLength != numElements) {
+        std::cerr << "Have " << numParams << " fit params but " << numElements
+                  << " elements in covariance vector (expected " << expectedVectorLength << ")" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Create an empty TMatrixD that we will fill with the right values
+    TMatrixD CorrMatrix = TMatrixD(numParams, numParams);
+
+    // Find which error values are relevant; i.e. those which correspond to free parameters
+    // Do this by copying the vector + removing the values in order, highest-first
+    // Highest-first to avoid issues with looping over a vector + deleting elements from it concurrently.
+    std::vector<double> errors         = fitParams.fitParamErrors;
+    std::vector<size_t> paramsToRemove = fixedParams;
+    std::sort(paramsToRemove.rbegin(), paramsToRemove.rend());
+    for (auto it = paramsToRemove.begin(); it != paramsToRemove.end(); ++it) {
+        errors.erase(errors.begin() + *it);
+    }
+
+    // We need to divide each element in our vector of covariances with the standard deviation of two parameters
+    // We will need to find the position in the matrix of each element in our covariance vector, so we know which
+    // errors to divide by
+    size_t column = -1; // We just want a number such that when we add 1 we get 0; unsigned int overflow is safe!
+    size_t row    = 0;
+    for (auto it = covarianceVector.begin(); it != covarianceVector.end(); ++it) {
+        column++;
+        if (column > row) {
+            row++;
+            column = 0;
+        }
+        // Now that we know which variances to divide by, let's do it
+        double correlation      = *it / (errors[column] * errors[row]);
+        CorrMatrix[column][row] = correlation;
+
+        if (column != row) {
+            CorrMatrix[row][column] = correlation;
+        }
+    }
+    return CorrMatrix;
+}
+
+void MinuitFitter::saveFitPlot(const std::string&          plotTitle,
+                               const std::string&          path,
+                               const util::LegendParams_t* legendParams)
+{
+    // Check that a fit has been made
+    if (fitParams.fitParams.empty() || plot == nullptr) {
+        std::cerr << "Run the fitter before plotting" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that path doesn't already exist
+    if (boost::filesystem::exists(path)) {
+        std::cerr << path << " already exists" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Set the plot title; for some reason this is also how to set axis labels?
+    plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
+
+    // Save our fit to file
+    // If root's builtin was used, _bestFitPlot will not have been assigned
+    if (bestFitPlot != nullptr) {
+        if (!legendParams) {
+            std::cerr << "Must specify legend parameters if plotting a minuit-fitted graph" << std::endl;
+            throw D2K3PiException();
+        }
+        bestFitPlot->SetLineColor(kRed);
+        util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitPlot.get()},
+                                              std::vector<std::string>{"AP", "CSAME"},
+                                              std::vector<std::string>{"Data", "Best fit"},
+                                              path,
+                                              *legendParams);
+
+    } else {
+        util::saveObjectToFile(plot.get(), path, "AP");
+    }
+}
+
+void MinuitFitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
+{
+    // Set our fitParams to the values obtained in the fit
+    fitParams.fitParams      = min.UserParameters().Params();
+    fitParams.fitParamErrors = min.UserParameters().Errors();
+
+    // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
+    fitParams.correlationMatrix = std::make_unique<TMatrixD>(
+        covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), std::vector<size_t>{}));
+}
+
+MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitFitter(fitData)
 {
     ;
 }
@@ -216,98 +326,6 @@ void MinuitPolynomialFitter::fit(const std::vector<double>& initialParams,
 
     bestFitPlot = std::make_unique<TGraphErrors>(
         _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
-}
-
-TMatrixD MinuitPolynomialFitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector)
-{
-    // Check that we have the right number of elements in our covariance vector
-    size_t numElements       = covarianceVector.size();
-    size_t numFitParamErrors = fitParams.fitParamErrors.size();
-
-    if (numFitParamErrors == 0) {
-        std::cerr << "Fit has not yet been performed; fit param error vector is empty." << std::endl;
-        throw D2K3PiException();
-    }
-
-    size_t expectedVectorLength = numFitParamErrors * (numFitParamErrors + 1) / 2;
-    if (expectedVectorLength != numElements) {
-        std::cerr << "Have " << numFitParamErrors << " fit params but " << numElements
-                  << " elements in covariance vector (expected " << expectedVectorLength << ")" << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Create an empty TMatrixD that we will fill with the right values
-    TMatrixD CorrMatrix = TMatrixD(numFitParamErrors, numFitParamErrors);
-
-    // We need to divide each element in our vector of covariances with the standard deviation of two parameters
-    // We will need to find the position in the matrix of each element in our covariance vector, so we know which
-    // errors to divide by
-    size_t column = -1; // We just want a number such that when we add 1 we get 0; unsigned int overflow is safe!
-    size_t row    = 0;
-    for (auto it = covarianceVector.begin(); it != covarianceVector.end(); ++it) {
-        column++;
-        if (column > row) {
-            row++;
-            column = 0;
-        }
-        // Now that we know which variances to divide by, let's do it
-        double correlation      = *it / (fitParams.fitParamErrors[column] * fitParams.fitParamErrors[row]);
-        CorrMatrix[column][row] = correlation;
-
-        if (column != row) {
-            CorrMatrix[row][column] = correlation;
-        }
-    }
-    return CorrMatrix;
-}
-
-void MinuitPolynomialFitter::saveFitPlot(const std::string&          plotTitle,
-                                         const std::string&          path,
-                                         const util::LegendParams_t* legendParams)
-{
-    // Check that a fit has been made
-    if (fitParams.fitParams.empty() || plot == nullptr) {
-        std::cerr << "Run the fitter before plotting" << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Check that path doesn't already exist
-    if (boost::filesystem::exists(path)) {
-        std::cerr << path << " already exists" << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Set the plot title; for some reason this is also how to set axis labels?
-    plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
-
-    // Save our fit to file
-    // If root's builtin was used, _bestFitPlot will not have been assigned
-    if (bestFitPlot != nullptr) {
-        if (!legendParams) {
-            std::cerr << "Must specify legend parameters if plotting a minuit-fitted graph" << std::endl;
-            throw D2K3PiException();
-        }
-        bestFitPlot->SetLineColor(kRed);
-        util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitPlot.get()},
-                                              std::vector<std::string>{"AP", "CSAME"},
-                                              std::vector<std::string>{"Data", "Best fit"},
-                                              path,
-                                              *legendParams);
-
-    } else {
-        util::saveObjectToFile(plot.get(), path, "AP");
-    }
-}
-
-void MinuitPolynomialFitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
-{
-    // Set our fitParams to the values obtained in the fit
-    fitParams.fitParams      = min.UserParameters().Params();
-    fitParams.fitParamErrors = min.UserParameters().Errors();
-
-    // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
-    fitParams.correlationMatrix =
-        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
 }
 
 MinuitPolyScan::MinuitPolyScan(const FitData_t& fitData) : MinuitPolynomialFitter(fitData)
@@ -428,61 +446,46 @@ void MinuitPolyScan::twoDParamScan(const size_t i,
     }
 }
 
-Fitter::Fitter(const FitData_t& fitData) : BaseFitter(fitData)
+PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitFitter(fitData)
 {
     ;
 }
 
-TMatrixD Fitter::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector)
-{
-    // Check that we have the right number of elements in our covariance vector
-    size_t numElements       = covarianceVector.size();
-    size_t numFitParamErrors = fitParams.fitParamErrors.size();
-
-    if (numFitParamErrors == 0) {
-        std::cerr << "Fit has not yet been performed; fit param error vector is empty." << std::endl;
-        throw D2K3PiException();
-    }
-
-    size_t expectedVectorLength = numFitParamErrors * (numFitParamErrors + 1) / 2;
-    if (expectedVectorLength != numElements) {
-        std::cerr << "Have " << numFitParamErrors << " fit params but " << numElements
-                  << " elements in covariance vector (expected " << expectedVectorLength << ")" << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Create an empty TMatrixD that we will fill with the right values
-    TMatrixD CorrMatrix = TMatrixD(numFitParamErrors, numFitParamErrors);
-
-    // We need to divide each element in our vector of covariances with the standard deviation of two parameters
-    // We will need to find the position in the matrix of each element in our covariance vector, so we know which
-    // errors to divide by
-    size_t column = -1; // We just want a number such that when we add 1 we get 0; unsigned int overflow is safe!
-    size_t row    = 0;
-    for (auto it = covarianceVector.begin(); it != covarianceVector.end(); ++it) {
-        column++;
-        if (column > row) {
-            row++;
-            column = 0;
-        }
-        // Now that we know which variances to divide by, let's do it
-        double correlation      = *it / (fitParams.fitParamErrors[column] * fitParams.fitParamErrors[row]);
-        CorrMatrix[column][row] = correlation;
-
-        if (column != row) {
-            CorrMatrix[row][column] = correlation;
-        }
-    }
-    return CorrMatrix;
-}
-
-void Fitter::detailedFitUsingMinuit(const std::vector<double>& initialParams,
-                                    const std::vector<double>& initialErrors,
-                                    const FitAlgorithm_t&      FitMethod)
+void PhysicalFitter::fit(const std::vector<double>&                    initialParams,
+                         const std::vector<double>&                    initialErrors,
+                         const FitAlgorithm_t&                         FitMethod,
+                         const std::vector<std::pair<size_t, double>>& fixParams)
 {
     // Check that we have been passed 6 initial parameters and errors
     if (initialParams.size() != 6 || initialErrors.size() != 6) {
-        std::cout << "detailedFitUsingMinuit2ChiSq requires a guess of 6 parameters and their errors" << std::endl;
+        std::cout << "fit requires a guess of 6 parameters and their errors" << std::endl;
+        throw D2K3PiException();
+    }
+
+    if (fixParams.empty()) {
+        std::cerr << "Must fix one of x, y, Re(Z) or Im(Z) when fitting with rD, x, y etc." << std::endl;
+        throw D2K3PiException();
+    }
+
+    size_t numFixParams = fixParams.size();
+    if (numFixParams > 5) {
+        std::cerr << "cannot fix more than 5 parameters" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that we have fixed at least one of x, y, Re(Z) or Im(Z)- otherwise our fit is poorly defined
+    std::vector<size_t> fixParamIndices(fixParams.size());
+    std::vector<double> fixParamValues(fixParams.size());
+    for (size_t i = 0; i < fixParams.size(); ++i) {
+        fixParamIndices[i] = fixParams[i].first;
+        fixParamValues[i]  = fixParams[i].second;
+    }
+    if (std::find(fixParamIndices.begin(), fixParamIndices.end(), 0) == fixParamIndices.end() && // x
+        std::find(fixParamIndices.begin(), fixParamIndices.end(), 1) == fixParamIndices.end() && // y
+        std::find(fixParamIndices.begin(), fixParamIndices.end(), 3) == fixParamIndices.end() && // z_im
+        std::find(fixParamIndices.begin(), fixParamIndices.end(), 4) == fixParamIndices.end()    // z_re
+    ) {
+        std::cerr << "Must fix one of x, y, or a component of Z for fit to be well defined" << std::endl;
         throw D2K3PiException();
     }
 
@@ -498,14 +501,19 @@ void Fitter::detailedFitUsingMinuit(const std::vector<double>& initialParams,
     parameters.Add("z_re", initialParams[4], initialErrors[4]);
     parameters.Add("width", initialParams[5], initialErrors[5]);
 
-    // Create a minimiser and minimise our chi squared
+    // Create a minimiser and fix any parameters to the right values
     ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
-    migrad.Fix(5); // Fix width
+    for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
+        parameters.SetValue(it->first, it->second);
+        migrad.Fix(it->first);
+    }
+
+    // Minimuse chi squared as defined by our _fitFcn
     ROOT::Minuit2::FunctionMinimum min = migrad();
 
     // Check that our solution is "valid"
-    // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible to
-    // be sure with Minuit2
+    // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible
+    // to be sure with Minuit2
     if (!min.IsValid()) {
         std::cerr << "Minuit fit invalid" << std::endl;
         std::cerr << min << std::endl;
@@ -518,12 +526,8 @@ void Fitter::detailedFitUsingMinuit(const std::vector<double>& initialParams,
     fitParams.fitParamErrors = min.UserParameters().Errors();
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
-    // Hack: remove width from fit params, store matrix and add it again
-    double widthErr = fitParams.fitParamErrors[5];
-    fitParams.fitParamErrors.pop_back();
     fitParams.correlationMatrix =
-        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
-    fitParams.fitParamErrors.push_back(widthErr);
+        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), fixParamIndices));
 
     // Store chi squared
     statistic = std::make_unique<double>(min.Fval());
@@ -554,19 +558,12 @@ void Fitter::detailedFitUsingMinuit(const std::vector<double>& initialParams,
         _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
 }
 
-void Fitter::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
+ParamScanner::ParamScanner(const FitData_t& fitData) : PhysicalFitter(fitData)
 {
-
-    // Set our fitParams to the values obtained in the fit
-    fitParams.fitParams      = min.UserParameters().Params();
-    fitParams.fitParamErrors = min.UserParameters().Errors();
-
-    // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
-    fitParams.correlationMatrix =
-        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data()));
+    ;
 }
 
-void Fitter::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
+void ParamScanner::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
 {
     // Check that a fit has been performed
     if (!_fitFcn) {
@@ -597,14 +594,14 @@ void Fitter::chiSqParameterScan(const size_t i, const size_t numPoints, const do
     parameterScan                 = Scanner.Scan(i, numPoints + 1, low, high);
 }
 
-void Fitter::twoDParamScan(const size_t i,
-                           const size_t j,
-                           const size_t iPoints,
-                           const size_t jPoints,
-                           const double iLow,
-                           const double iHigh,
-                           const double jLow,
-                           const double jHigh)
+void ParamScanner::twoDParamScan(const size_t i,
+                                 const size_t j,
+                                 const size_t iPoints,
+                                 const size_t jPoints,
+                                 const double iLow,
+                                 const double iHigh,
+                                 const double jLow,
+                                 const double jHigh)
 {
     if (i >= fitParams.fitParams.size() || j >= fitParams.fitParams.size()) {
         std::cerr << "Cannot scan params " << i << ", " << j << "; only have " << fitParams.fitParams.size()
@@ -676,44 +673,6 @@ void Fitter::twoDParamScan(const size_t i,
 
             twoDParameterScan[jPoint + jPoints * iPoint] = std::vector<double>{iVal, jVal, min.Fval()};
         }
-    }
-}
-
-void Fitter::saveFitPlot(const std::string&          plotTitle,
-                         const std::string&          path,
-                         const util::LegendParams_t* legendParams)
-{
-    // Check that a fit has been made
-    if (fitParams.fitParams.empty() || plot == nullptr) {
-        std::cerr << "Run the fitter before plotting" << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Check that path doesn't already exist
-    if (boost::filesystem::exists(path)) {
-        std::cerr << path << " already exists" << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Set the plot title; for some reason this is also how to set axis labels?
-    plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
-
-    // Save our fit to file
-    // If root's builtin was used, _bestFitPlot will not have been assigned
-    if (bestFitPlot != nullptr) {
-        if (!legendParams) {
-            std::cerr << "Must specify legend parameters if plotting a minuit-fitted graph" << std::endl;
-            throw D2K3PiException();
-        }
-        bestFitPlot->SetLineColor(kRed);
-        util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitPlot.get()},
-                                              std::vector<std::string>{"AP", "CSAME"},
-                                              std::vector<std::string>{"Data", "Best fit"},
-                                              path,
-                                              *legendParams);
-
-    } else {
-        util::saveObjectToFile(plot.get(), path, "AP");
     }
 }
 

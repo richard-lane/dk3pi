@@ -88,11 +88,6 @@ class BaseFitter
 {
   public:
     /*
-     * The data to be fit.
-     */
-    BaseFitter(const FitData_t& fitData);
-
-    /*
      * Parameters describing the fit
      */
     FitResults_t fitParams;
@@ -108,6 +103,11 @@ class BaseFitter
     std::unique_ptr<double> statistic = nullptr;
 
   protected:
+    /*
+     * The data to be fit.
+     */
+    BaseFitter(const FitData_t& fitData);
+
     /*
      * The data used to make the fit
      */
@@ -142,38 +142,19 @@ class RootFitter : public BaseFitter
 };
 
 /*
- * Fit to a polynomial (a + bt + ct^2) using the Minuit2 APIs
+ * Base class for fitters that use Minuit
  */
-class MinuitPolynomialFitter : public BaseFitter
+class MinuitFitter : public BaseFitter
 {
   public:
     /*
-     * Calls parent constructor
-     */
-    MinuitPolynomialFitter(const FitData_t& fitData);
-
-    /*
-     * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
-     *
-     * The user should provide an initial guess at the parameters and their errors
-     * Parameters are {x, y, r, z_im, z_re, width}
-     *
-     * FitMethod tells the fitter whether to use chi squared or maximum likelihood (max likelihood isn't actually
-     * implemented)
-     *
-     * Allocates memory to _plot and _bestFitPlot
-     *
-     * Populates fitParams
-     */
-    void fit(const std::vector<double>& initialParams,
-             const std::vector<double>& initialErrors,
-             const FitAlgorithm_t&      FitMethod);
-
-    /*
-     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
+     * Given a vector representing the covariance between a set of parameters, find the covariance matrix using the
      * errors in fitParams.fitParamErrors and convert it to a TMatrixD
+     *
+     * Must tell this function which parameters were fixed; {0, 2, 3} means params 0, 2 and 3 were fixed.
      */
-    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
+    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
+                                                const std::vector<size_t>& fixedParams);
 
     /*
      * Save a plot of our data and fit to file
@@ -197,6 +178,11 @@ class MinuitPolynomialFitter : public BaseFitter
 
   protected:
     /*
+     * Calls parent constructor
+     */
+    MinuitFitter(const FitData_t& fitData);
+
+    /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
      */
     void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
@@ -205,6 +191,35 @@ class MinuitPolynomialFitter : public BaseFitter
      * Pointer to the Minuit FCN used to perform the fit
      */
     std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
+};
+
+/*
+ * Fit to a polynomial (a + bt + ct^2) using the Minuit2 APIs
+ */
+class MinuitPolynomialFitter : public MinuitFitter
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    MinuitPolynomialFitter(const FitData_t& fitData);
+
+    /*
+     * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
+     *
+     * The user should provide an initial guess at the parameters and their errors
+     * Parameters are {x, y, r, z_im, z_re, width}
+     *
+     * FitMethod tells the fitter whether to use chi squared or maximum likelihood (max likelihood isn't actually
+     * implemented)
+     *
+     * Allocates memory to _plot and _bestFitPlot
+     *
+     * Populates fitParams
+     */
+    void fit(const std::vector<double>& initialParams,
+             const std::vector<double>& initialErrors,
+             const FitAlgorithm_t&      FitMethod);
 };
 
 /*
@@ -256,35 +271,57 @@ class MinuitPolyScan : public MinuitPolynomialFitter
 };
 
 /*
- * Class for fitting data to a second-order polynomial
+ * Class for fitting the ratio of DCS to CF decay times by optimising parameters x, y, rD, Im(Z), Re(Z) and the decay
+ * width
+ *
+ * Expect ratio = rD2 + rD(yRe(Z) + xIm(Z))width*t + (x2 + y2)/4 * (width *t)2
+ *
+ * Cannot fit without fixing at least one of x, y or a component of Z
  */
-class Fitter : public BaseFitter
+class PhysicalFitter : public MinuitFitter
 {
   public:
     /*
-     * Tell the Fitter the data to be fit.
+     * Calls parent constructor
      */
-    Fitter(const FitData_t& fitData);
+    PhysicalFitter(const FitData_t& fitData);
 
     /*
      * Fit our data to a second-order polynomial r2 + r(yRZ + xImZ)Gt + (x2+y2)(Gt)2/4 using Minuit2 and the chi-squared
      * method.
      *
      * The user should provide an initial guess at the parameters and their errors
+     * Also provide a vector of parameters to fix; parameter numbering is defined by _paramNames (should not be empty).
+     * e.g. fix parameters 2 and 3 to 0.2, 0.3 respectively by passing {(2, 0.2), (3, 0,3)}
      *
      * Allocates memory to _plot and _bestFitPlot
      *
      * Populates fitParams
      */
-    void detailedFitUsingMinuit(const std::vector<double>& initialParams,
-                                const std::vector<double>& initialErrors,
-                                const FitAlgorithm_t&      FitMethod);
+    void fit(const std::vector<double>&                    initialParams,
+             const std::vector<double>&                    initialErrors,
+             const FitAlgorithm_t&                         FitMethod,
+             const std::vector<std::pair<size_t, double>>& fixParams);
 
+  protected:
     /*
-     * Given a vector representing the covariance between a set of parameters,  find the covariance matrix using the
-     * errors in fitParams.fitParamErrors and convert it to a TMatrixD
+     * Vector of parameters used in the fit
+     *
+     * Useful for indexing + consistency; we can use this to e.g. fix a parameter by name
      */
-    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
+    const std::vector<std::string> _paramNames{"x", "y", "r", "z_im", "z_re", "width"};
+};
+
+/*
+ * Class for perfoming scans of the physical fit parameters x, y etc.
+ */
+class ParamScanner : public PhysicalFitter
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    ParamScanner(const FitData_t& fitData);
 
     /*
      * Scan the ith parameter as defined in fitParams.fitParams
@@ -311,15 +348,6 @@ class Fitter : public BaseFitter
                        const double jHigh);
 
     /*
-     * Save a plot of our data and fit to file
-     *
-     * If plotting from a minuit fit, must specify parameters for drawing a legend.
-     */
-    void saveFitPlot(const std::string&          plotTitle,
-                     const std::string&          path,
-                     const util::LegendParams_t* legendParams = nullptr);
-
-    /*
      * Vector of pairs describing a parameter scan
      */
     std::vector<std::pair<double, double>> parameterScan;
@@ -330,28 +358,6 @@ class Fitter : public BaseFitter
      * Scans parameters i and j to find chi squared values; result is a vector of (i_value, j_value, chi_squared)
      */
     std::vector<std::vector<double>> twoDParameterScan;
-
-    /*
-     * ROOT TGraph object that used for representing the best-fit of our data, in the case that ROOT is not used to
-     * perform a builtin fit (e.g. when Minuit2 is used directly.)
-     */
-    std::unique_ptr<TGraph> bestFitPlot = nullptr;
-
-    /*
-     * fit status etc
-     */
-    std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
-
-  private:
-    /*
-     * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
-     */
-    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
-
-    /*
-     * Pointer to the Minuit FCN used to perform the fit
-     */
-    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
 };
 
 #endif // FITTER_H

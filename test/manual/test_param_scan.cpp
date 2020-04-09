@@ -200,8 +200,8 @@ void test_z_scan()
     MyRatios.calculateRatios();
 
     // Create a fitter
-    FitData_t MyFitData         = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    Fitter    MinuitChiSqFitter = Fitter(MyFitData);
+    FitData_t    MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    ParamScanner PhysFitter = ParamScanner(MyFitData);
 
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{phaseSpaceParams.x,
@@ -211,8 +211,11 @@ void test_z_scan()
                                               phaseSpaceParams.z_re,
                                               phaseSpaceParams.width};
     std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
-    MinuitChiSqFitter.detailedFitUsingMinuit(initialParameterGuess, initialErrorsGuess, ChiSquared);
-    std::cout << "Min chisq: " << *(MinuitChiSqFitter.statistic) << std::endl;
+    PhysFitter.fit(initialParameterGuess,
+                   initialErrorsGuess,
+                   ChiSquared,
+                   std::vector<std::pair<size_t, double>>{std::make_pair(0, phaseSpaceParams.x)});
+    std::cout << "Min chisq: " << *(PhysFitter.statistic) << std::endl;
 
     // Perform a 2d chi squared scan on the components of Z
     size_t numPoints      = 100;
@@ -220,16 +223,16 @@ void test_z_scan()
     double min            = -1;
     double max            = 1;
 
-    MinuitChiSqFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
+    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
 
     std::vector<double> imVals(numTotalPoints);
     std::vector<double> reVals(numTotalPoints);
     std::vector<double> chiSquaredVals(numTotalPoints);
 
     for (size_t i = 0; i < numTotalPoints; ++i) {
-        imVals[i]         = MinuitChiSqFitter.twoDParameterScan[i][0];
-        reVals[i]         = MinuitChiSqFitter.twoDParameterScan[i][1];
-        chiSquaredVals[i] = MinuitChiSqFitter.twoDParameterScan[i][2];
+        imVals[i]         = PhysFitter.twoDParameterScan[i][0];
+        reVals[i]         = PhysFitter.twoDParameterScan[i][1];
+        chiSquaredVals[i] = PhysFitter.twoDParameterScan[i][2];
     }
 
     TGraph2D* Graph = new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredVals.data());
