@@ -16,14 +16,6 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
                            const FitAlgorithm_t&                         FitMethod,
                            const std::vector<std::pair<size_t, double>>& fixParams)
 {
-    // Check our parameters and fitFcn have been set
-    if (!_parameters) {
-        std::cerr << "Parameters not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
-                     "the _parameters attribute."
-                  << std::endl;
-        throw D2K3PiException();
-    }
-
     if (!_fitFcn) {
         std::cerr << "Fit fcn not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
                      "the _fitFcn attribute."
@@ -43,18 +35,20 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
         throw D2K3PiException();
     }
 
+    // Create a minimiser
+    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, _parameters);
+
+    // Set our parameters and errors to their initial values, fixing any needed
+    _parameters = ROOT::Minuit2::MnUserParameters(initialParams, initialErrors);
+
     std::vector<size_t> fixParamIndices(fixParams.size());
     for (size_t i = 0; i < fixParams.size(); ++i) {
         fixParamIndices[i] = fixParams[i].first;
     }
 
-    // Create a minimiser
-    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
-
-    // Set our parameters and errors to their initial values, fixing any needed
     for (size_t i = 0; i < initialParams.size(); ++i) {
-        _parameters->SetValue(i, initialParams[i]);
-        _parameters->SetError(i, initialErrors[i]);
+        _parameters.SetValue(i, initialParams[i]);
+        _parameters.SetError(i, initialErrors[i]);
 
         // If we find index i in our list of parameters to fix, fix it.
         if (std::count(fixParamIndices.begin(), fixParamIndices.end(), i)) {

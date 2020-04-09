@@ -27,9 +27,10 @@ class MinuitPolynomialFitter : public MinuitFitterBase
      *
      * Populates fitParams
      */
-    void fit(const std::vector<double>& initialParams,
-             const std::vector<double>& initialErrors,
-             const FitAlgorithm_t&      FitMethod);
+    void fit(const std::vector<double>&                    initialParams,
+             const std::vector<double>&                    initialErrors,
+             const FitAlgorithm_t&                         FitMethod,
+             const std::vector<std::pair<size_t, double>>& fixParams);
 };
 
 #endif // MINUIT_POLY_FITTER_H

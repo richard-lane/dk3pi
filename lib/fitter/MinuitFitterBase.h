@@ -80,7 +80,7 @@ class MinuitFitterBase : public BaseFitter
      *
      * Should be populated by the parent class.
      */
-    std::unique_ptr<ROOT::Minuit2::MnUserParameters> _parameters = nullptr;
+    ROOT::Minuit2::MnUserParameters _parameters;
 };
 
 #endif // MINUIT_FITTER_BASE_H
