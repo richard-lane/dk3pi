@@ -83,7 +83,8 @@ void test_param_scan(void)
     // Perform fit, outputu minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    MinuitChiSqScanner.fit(initialParameterGuess, initialErrorsGuess, ChiSquared);
+    MinuitChiSqScanner.fit(
+        initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<std::pair<size_t, double>>{});
     std::cout << "Min chisq: " << *(MinuitChiSqScanner.statistic) << std::endl;
     std::cout << "Params: " << MinuitChiSqScanner.fitParams.fitParams[0] << " "
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
@@ -132,7 +133,8 @@ void test_2d_scan()
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    MinuitChiSqScanner.fit(initialParameterGuess, initialErrorsGuess, ChiSquared);
+    MinuitChiSqScanner.fit(
+        initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<std::pair<size_t, double>>{});
     std::cout << "Min chisq: " << *(MinuitChiSqScanner.statistic) << std::endl;
     std::cout << "Params: " << MinuitChiSqScanner.fitParams.fitParams[0] << " "
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
