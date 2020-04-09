@@ -6,7 +6,7 @@
 /*
  * Fit to a polynomial (a + bt + ct^2) using the Minuit2 APIs
  */
-class MinuitPolynomialFitter : public MinuitFitterBase
+class MinuitPolynomialFitter : public MinuitFitter
 {
   public:
     /*

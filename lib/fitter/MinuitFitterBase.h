@@ -10,7 +10,7 @@
 /*
  * Base class for fitters that use Minuit
  */
-class MinuitFitterBase : public BaseFitter
+class MinuitFitter : public BaseFitter
 {
   public:
     /*
@@ -46,7 +46,7 @@ class MinuitFitterBase : public BaseFitter
     /*
      * Calls parent constructor
      */
-    MinuitFitterBase(const FitData_t& fitData);
+    MinuitFitter(const FitData_t& fitData);
 
     /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams

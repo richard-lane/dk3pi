@@ -6,7 +6,7 @@
 #include "Minuit2/MnMigrad.h"
 #include "Minuit2/MnPrint.h"
 
-MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitFitterBase(fitData)
+MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitFitter(fitData)
 {
     ;
 }

@@ -11,7 +11,7 @@
  *
  * Cannot fit without fixing at least one of x, y or a component of Z
  */
-class PhysicalFitter : public MinuitFitterBase
+class PhysicalFitter : public MinuitFitter
 {
   public:
     /*
