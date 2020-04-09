@@ -35,11 +35,11 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
         throw D2K3PiException();
     }
 
-    // Create a minimiser
-    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, _parameters);
-
     // Set our parameters and errors to their initial values, fixing any needed
-    _parameters = ROOT::Minuit2::MnUserParameters(initialParams, initialErrors);
+    _parameters = std::make_unique<ROOT::Minuit2::MnUserParameters>();
+
+    // Create a minimiser
+    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
 
     std::vector<size_t> fixParamIndices(fixParams.size());
     for (size_t i = 0; i < fixParams.size(); ++i) {
@@ -47,8 +47,8 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
     }
 
     for (size_t i = 0; i < initialParams.size(); ++i) {
-        _parameters.SetValue(i, initialParams[i]);
-        _parameters.SetError(i, initialErrors[i]);
+        _parameters->Add(std::to_string(i), initialParams[i]);
+        _parameters->SetError(i, initialErrors[i]);
 
         // If we find index i in our list of parameters to fix, fix it.
         if (std::count(fixParamIndices.begin(), fixParamIndices.end(), i)) {

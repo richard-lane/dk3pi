@@ -5,6 +5,7 @@
 
 #include "Minuit2/MnMigrad.h"
 #include "Minuit2/MnPrint.h"
+#include "TF1.h"
 
 MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitFitterBase(fitData)
 {
@@ -34,6 +35,8 @@ void MinuitPolynomialFitter::fit(const std::vector<double>&                    i
                                           _fitData.binErrors.data(),
                                           _fitData.errors.data());
 
+    bestFitFunction = std::make_unique<TF1>("Best fit function", "[0] +[1]*x+[2]*x*x");
+    bestFitFunction->SetParameters(fitParams.fitParams.data());
     // Create also a best-fit dataset from our parameters and data, plotting this on the same
     // std::vector<double> bestFitData{_fitData.binCentres};
     // std::transform(bestFitData.begin(), bestFitData.end(), bestFitData.begin(), [&](double time) {

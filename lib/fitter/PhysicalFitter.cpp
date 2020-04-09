@@ -5,6 +5,7 @@
 
 #include "Minuit2/MnMigrad.h"
 #include "Minuit2/MnPrint.h"
+#include "TF1.h"
 
 PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitFitterBase(fitData)
 {
@@ -46,21 +47,8 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
     // Use base class implementation to actually perform the fit
     MinuitFitterBase::fit(initialParams, initialErrors, FitMethod, fixParams);
 
-    // Create also a best-fit dataset from our parameters and data, plotting this on the same
-    // DecayParams_t bestFitParams = DecayParameters{.x     = fitParams.fitParams[0],
-    //                                              .y     = fitParams.fitParams[1],
-    //                                              .r     = fitParams.fitParams[2],
-    //                                              .z_im  = fitParams.fitParams[3],
-    //                                              .z_re  = fitParams.fitParams[4],
-    //                                              .width = fitParams.fitParams[5]};
-
-    //// Should use std::transform
-    // std::vector<double> bestFitData(_fitData.binCentres.size());
-    // std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
-    // for (size_t i = 0; i < bestFitData.size(); ++i) {
-    //    bestFitData[i] = fitPolynomial(bestFitParams, _fitData.binCentres[i]);
-    //}
-
-    // bestFitPlot = std::make_unique<TGraphErrors>(
-    //    _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
+    // Create a best-fit function
+    bestFitFunction = std::make_unique<TF1>(
+        "Best fit function", "[2]*[2] + [2]*([1]*[4] + [0]*[3])*[5]*x + 0.25 * ([0]*[0] + [1]*[1])*[5]*[5]*x*x");
+    bestFitFunction->SetParameters(fitParams.fitParams.data());
 }

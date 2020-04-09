@@ -68,7 +68,7 @@ class MinuitFitterBase : public BaseFitter
     /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
      */
-    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min, const std::vector<size_t>& fixParamIndices);
+    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min, const std::vector<size_t>& fixIndices);
 
     /*
      * Pointer to the Minuit FCN used to perform the fit
@@ -80,7 +80,7 @@ class MinuitFitterBase : public BaseFitter
      *
      * Should be populated by the parent class.
      */
-    ROOT::Minuit2::MnUserParameters _parameters;
+    std::unique_ptr<ROOT::Minuit2::MnUserParameters> _parameters = nullptr;
 };
 
 #endif // MINUIT_FITTER_BASE_H

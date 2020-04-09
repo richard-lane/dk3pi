@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::toler
     // Perform a fit and check that our coefficients are all 1
     std::vector<double> parameterGuess{0.9, 1.1, 1.2};
     std::vector<double> errorGuess{1, 1, 1};
-    MyFitter.fit(parameterGuess, errorGuess, ChiSquared);
+    MyFitter.fit(parameterGuess, errorGuess, ChiSquared, std::vector<std ::pair<size_t, double>>{});
     CHECK_CLOSE_COLLECTIONS(MyFitter.fitParams.fitParams, expectedFitCoefficients, 0.001);
 }
 
