@@ -1,6 +1,17 @@
+set(fitter
+  fitter/FitterUtils.cpp
+  fitter/BaseFitter.cpp
+  fitter/RootFitter.cpp
+  fitter/MinuitFitterBase.cpp
+  fitter/MinuitPolynomialFitter.cpp
+  fitter/MinuitPolynomialScan.cpp
+  fitter/PhysicalFitter.cpp
+  fitter/ParamScanner.cpp
+  )
+
 add_library(D2K3Pi SHARED
   DecaySimulator.cpp
-  Fitter.cpp
+  ${fitter}
   MinuitFitter.cpp
   PhaseSpaceBinning.cpp
   RatioCalculator.cpp
@@ -11,7 +22,7 @@ add_library(D2K3Pi SHARED
 set(CMAKE_BUILD_TYPE Debug)
 
 target_include_directories(D2K3Pi
-  PUBLIC ${CMAKE_CURRENT_LIST_DIR} "../include/" "../src/"
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR} "../include/" "../src/" "fitter/"
   )
 
 target_compile_features(D2K3Pi

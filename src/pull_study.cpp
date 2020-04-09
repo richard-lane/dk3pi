@@ -12,12 +12,13 @@
 #include "Minuit2/MnPrint.h"
 #include "TH1D.h"
 
-#include "../lib/D2K3PiError.h"
-#include "../lib/DecaySimulator.h"
-#include "../lib/Fitter.h"
-#include "../lib/PhaseSpaceBinning.h"
-#include "../lib/RatioCalculator.h"
+#include "D2K3PiError.h"
+#include "DecaySimulator.h"
+#include "PhaseSpaceBinning.h"
 #include "PullStudyHelpers.h"
+#include "RatioCalculator.h"
+#include "fitter/FitterUtils.h"
+#include "fitter/MinuitPolynomialFitter.h"
 #include "util.h"
 
 /*

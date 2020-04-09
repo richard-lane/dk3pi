@@ -3,9 +3,11 @@
 #include <vector>
 
 #include "DecaySimulator.h"
-#include "Fitter.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
+#include "fitter/MinuitPolynomialFitter.h"
+#include "fitter/PhysicalFitter.h"
+#include "fitter/RootFitter.h"
 #include "util.h"
 
 /*
