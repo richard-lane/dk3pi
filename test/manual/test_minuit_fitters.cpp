@@ -55,7 +55,7 @@ void compareRootMinuit(void)
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
     CernFitter.fit(0, maxTime, "Q");
-    MinuitPolyFit.fit(initialParameterGuess, initialErrorsGuess, ChiSquared);
+    MinuitPolyFit.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<std::pair<size_t, double>>{});
 
     std::vector<double> initialParamGuess{phaseSpaceParams.x,
                                           phaseSpaceParams.y,
@@ -86,15 +86,16 @@ void compareRootMinuit(void)
     const std::vector<std::string> legendLabels{"Root best fit", "Minuit polynomial best fit", "Minuit best fit"};
     CernFitter.plot->SetTitle("Compare Minuit and ROOT fitters;time/ns;DCS/CF ratio");
     CernFitter.plot->SetLineColor(kBlack);
-    MinuitPolyFit.bestFitPlot->SetLineColor(kBlue);
-    PhysFitter.bestFitPlot->SetLineColor(kGreen);
-    PhysFitter.bestFitPlot->SetLineStyle(kDashed);
-    util::saveObjectsToFile<TGraph>(
-        std::vector<TObject*>{CernFitter.plot.get(), MinuitPolyFit.bestFitPlot.get(), PhysFitter.bestFitPlot.get()},
-        std::vector<std::string>{"AP", "CSAME", "CSAME"},
-        legendLabels,
-        "compareMinuitRootPlots.pdf",
-        legendParams);
+    MinuitPolyFit.bestFitFunction->SetLineColor(kBlue);
+    PhysFitter.bestFitFunction->SetLineColor(kGreen);
+    PhysFitter.bestFitFunction->SetLineStyle(kDashed);
+    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{CernFitter.plot.get(),
+                                                          MinuitPolyFit.bestFitFunction.get(),
+                                                          PhysFitter.bestFitFunction.get()},
+                                    std::vector<std::string>{"AP", "CSAME", "CSAME"},
+                                    legendLabels,
+                                    "compareMinuitRootPlots.pdf",
+                                    legendParams);
 }
 
 int main()
