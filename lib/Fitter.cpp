@@ -512,8 +512,8 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
     ROOT::Minuit2::FunctionMinimum min = migrad();
 
     // Check that our solution is "valid"
-    // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible to
-    // be sure with Minuit2
+    // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible
+    // to be sure with Minuit2
     if (!min.IsValid()) {
         std::cerr << "Minuit fit invalid" << std::endl;
         std::cerr << min << std::endl;
