@@ -16,29 +16,43 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
                            const FitAlgorithm_t&                         FitMethod,
                            const std::vector<std::pair<size_t, double>>& fixParams)
 {
-    size_t numFixParams = fixParams.size();
-    if (numFixParams > 5) {
-        std::cerr << "cannot fix more than 5 parameters" << std::endl;
+    // Check our parameters have been set
+    if (!_parameters) {
+        std::cerr << "Parameters not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
+                     "the _parameters attribute."
+                  << std::endl;
         throw D2K3PiException();
     }
 
-    // Create an object representing our Minuit2-compatible 2nd order polynomial
-    _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
+    size_t numFixParams   = fixParams.size();
+    size_t numFitParams   = initialParams.size();
+    size_t numFitParamErs = initialErrors.size();
+    if (numFixParams != numFitParams) {
+        std::cerr << "Cannot fix " << numFixParams << "; only have " << numFitParams << "." << std::endl;
+        throw D2K3PiException();
+    }
+    if (numFitParamErs != numFitParams) {
+        std::cerr << "Passed " << numFitParams << "but " << numFitParamErs << " errors." << std::endl;
+        throw D2K3PiException();
+    }
 
-    // Store our parameters
-    ROOT::Minuit2::MnUserParameters parameters;
-    parameters.Add("x", initialParams[0], initialErrors[0]);
-    parameters.Add("y", initialParams[1], initialErrors[1]);
-    parameters.Add("r", initialParams[2], initialErrors[2]);
-    parameters.Add("z_im", initialParams[3], initialErrors[3]);
-    parameters.Add("z_re", initialParams[4], initialErrors[4]);
-    parameters.Add("width", initialParams[5], initialErrors[5]);
+    std::vector<size_t> fixParamIndices(fixParams.size());
+    for (size_t i = 0; i < fixParams.size(); ++i) {
+        fixParamIndices[i] = fixParams[i].first;
+    }
 
-    // Create a minimiser and fix any parameters to the right values
-    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
-    for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
-        parameters.SetValue(it->first, it->second);
-        migrad.Fix(it->first);
+    // Create a minimiser
+    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
+
+    // Set our parameters and errors to their initial values, fixing any needed
+    for (size_t i = 0; i < initialParams.size(); ++i) {
+        _parameters->SetValue(i, initialParams[i]);
+        _parameters->SetError(i, initialErrors[i]);
+
+        // If we find index i in our list of parameters to fix, fix it.
+        if (std::count(fixParamIndices.begin(), fixParamIndices.end(), i)) {
+            migrad.Fix(i);
+        }
     }
 
     // Minimuse chi squared as defined by our _fitFcn
@@ -59,10 +73,6 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
     fitParams.fitParamErrors = min.UserParameters().Errors();
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
-    std::vector<size_t> fixParamIndices(fixParams.size());
-    for (size_t i = 0; i < fixParams.size(); ++i) {
-        fixParamIndices[i] = fixParams[i].first;
-    }
     fitParams.correlationMatrix =
         std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), fixParamIndices));
 
@@ -75,24 +85,6 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
                                           _fitData.data.data(),
                                           _fitData.binErrors.data(),
                                           _fitData.errors.data());
-
-    // Create also a best-fit dataset from our parameters and data, plotting this on the same
-    DecayParams_t bestFitParams = DecayParameters{.x     = fitParams.fitParams[0],
-                                                  .y     = fitParams.fitParams[1],
-                                                  .r     = fitParams.fitParams[2],
-                                                  .z_im  = fitParams.fitParams[3],
-                                                  .z_re  = fitParams.fitParams[4],
-                                                  .width = fitParams.fitParams[5]};
-
-    // Should use std::transform
-    std::vector<double> bestFitData(_fitData.binCentres.size());
-    std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
-    for (size_t i = 0; i < bestFitData.size(); ++i) {
-        bestFitData[i] = fitPolynomial(bestFitParams, _fitData.binCentres[i]);
-    }
-
-    bestFitPlot = std::make_unique<TGraphErrors>(
-        _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
 }
 
 TMatrixD MinuitFitterBase::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
@@ -172,21 +164,16 @@ void MinuitFitterBase::saveFitPlot(const std::string&          plotTitle,
 
     // Save our fit to file
     // If root's builtin was used, _bestFitPlot will not have been assigned
-    if (bestFitPlot != nullptr) {
-        if (!legendParams) {
-            std::cerr << "Must specify legend parameters if plotting a minuit-fitted graph" << std::endl;
-            throw D2K3PiException();
-        }
-        bestFitPlot->SetLineColor(kRed);
-        util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitPlot.get()},
-                                              std::vector<std::string>{"AP", "CSAME"},
-                                              std::vector<std::string>{"Data", "Best fit"},
-                                              path,
-                                              *legendParams);
-
-    } else {
-        util::saveObjectToFile(plot.get(), path, "AP");
+    if (!legendParams) {
+        std::cerr << "Must specify legend parameters if plotting a minuit-fitted graph" << std::endl;
+        throw D2K3PiException();
     }
+    // bestFitPlot->SetLineColor(kRed);
+    // util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitPlot.get()},
+    //                                      std::vector<std::string>{"AP", "CSAME"},
+    //                                      std::vector<std::string>{"Data", "Best fit"},
+    //                                      path,
+    //                                      *legendParams);
 }
 
 void MinuitFitterBase::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)

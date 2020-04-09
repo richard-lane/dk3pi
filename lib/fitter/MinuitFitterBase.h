@@ -6,6 +6,7 @@
 #include "util.h"
 
 #include "Minuit2/FunctionMinimum.h"
+#include "TF1.h"
 
 /*
  * Base class for fitters that use Minuit
@@ -16,7 +17,10 @@ class MinuitFitterBase : public BaseFitter
     /*
      * Perform a fit using Minuit, possibly holding some parameters fixed to values as specified in fixParams.
      *
-     * TODO document
+     * Uses _parameters to minimise _fitFcn; populates this->min, this->fitParams and this->statistic
+     *
+     * does not set _bestFitFunction (as we don't yet know what to do with our fit
+     * parameters); this should be set by child class implementations of this->fit().
      *
      */
     virtual void fit(const std::vector<double>&                    initialParams,
@@ -43,10 +47,12 @@ class MinuitFitterBase : public BaseFitter
                      const util::LegendParams_t* legendParams = nullptr);
 
     /*
-     * ROOT TGraph object that used for representing the best-fit of our data
-     * Maybe this should really be a TF1 TODO
+     * Our best-fit function
+     *
+     * Is not set by this class' fit function (as we don't yet know what to do with our fit parameters); should be set
+     * by child class implementations of this->fit().
      */
-    std::unique_ptr<TGraph> bestFitPlot = nullptr;
+    std::unique_ptr<TF1> bestFitFunction = nullptr;
 
     /*
      * fit status etc

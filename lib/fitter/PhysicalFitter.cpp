@@ -16,14 +16,6 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
                          const FitAlgorithm_t&                         FitMethod,
                          const std::vector<std::pair<size_t, double>>& fixParams)
 {
-    // Check our parameters have been set
-    if (!_parameters) {
-        std::cerr << "Parameters not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
-                     "the _parameters attribute."
-                  << std::endl;
-        throw D2K3PiException();
-    }
-
     // Check that we have been passed 6 initial parameters and errors
     if (initialParams.size() != 6 || initialErrors.size() != 6) {
         std::cout << "fit requires a guess of 6 parameters and their errors" << std::endl;
@@ -99,20 +91,20 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
                                           _fitData.errors.data());
 
     // Create also a best-fit dataset from our parameters and data, plotting this on the same
-    DecayParams_t bestFitParams = DecayParameters{.x     = fitParams.fitParams[0],
-                                                  .y     = fitParams.fitParams[1],
-                                                  .r     = fitParams.fitParams[2],
-                                                  .z_im  = fitParams.fitParams[3],
-                                                  .z_re  = fitParams.fitParams[4],
-                                                  .width = fitParams.fitParams[5]};
+    // DecayParams_t bestFitParams = DecayParameters{.x     = fitParams.fitParams[0],
+    //                                              .y     = fitParams.fitParams[1],
+    //                                              .r     = fitParams.fitParams[2],
+    //                                              .z_im  = fitParams.fitParams[3],
+    //                                              .z_re  = fitParams.fitParams[4],
+    //                                              .width = fitParams.fitParams[5]};
 
-    // Should use std::transform
-    std::vector<double> bestFitData(_fitData.binCentres.size());
-    std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
-    for (size_t i = 0; i < bestFitData.size(); ++i) {
-        bestFitData[i] = fitPolynomial(bestFitParams, _fitData.binCentres[i]);
-    }
+    //// Should use std::transform
+    // std::vector<double> bestFitData(_fitData.binCentres.size());
+    // std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
+    // for (size_t i = 0; i < bestFitData.size(); ++i) {
+    //    bestFitData[i] = fitPolynomial(bestFitParams, _fitData.binCentres[i]);
+    //}
 
-    bestFitPlot = std::make_unique<TGraphErrors>(
-        _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
+    // bestFitPlot = std::make_unique<TGraphErrors>(
+    //    _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
 }

@@ -57,12 +57,12 @@ void MinuitPolynomialFitter::fit(const std::vector<double>& initialParams,
                                           _fitData.errors.data());
 
     // Create also a best-fit dataset from our parameters and data, plotting this on the same
-    std::vector<double> bestFitData{_fitData.binCentres};
-    std::transform(bestFitData.begin(), bestFitData.end(), bestFitData.begin(), [&](double time) {
-        return fitParams.fitParams[0] + fitParams.fitParams[1] * time + fitParams.fitParams[2] * time * time;
-    });
-    std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
+    // std::vector<double> bestFitData{_fitData.binCentres};
+    // std::transform(bestFitData.begin(), bestFitData.end(), bestFitData.begin(), [&](double time) {
+    //    return fitParams.fitParams[0] + fitParams.fitParams[1] * time + fitParams.fitParams[2] * time * time;
+    //});
+    // std::vector<double> zeros(_fitData.numPoints, 0.0); // Want errors of 0
 
-    bestFitPlot = std::make_unique<TGraphErrors>(
-        _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
+    // bestFitPlot = std::make_unique<TGraphErrors>(
+    //    _fitData.numPoints, _fitData.binCentres.data(), bestFitData.data(), zeros.data(), zeros.data());
 }
