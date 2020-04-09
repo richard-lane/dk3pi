@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 
+#include "BaseFitter.h"
 #include "DecaySimulator.h"
 #include "FitterUtils.h"
 #include "MinuitFitter.h"
@@ -15,39 +16,6 @@
 #include "Minuit2/FunctionMinimum.h"
 #include "TGraphErrors.h"
 #include "TMatrixD.h"
-
-/*
- * Base fitter class
- */
-class BaseFitter
-{
-  public:
-    /*
-     * Parameters describing the fit
-     */
-    FitResults_t fitParams;
-
-    /*
-     * ROOT TGraph object used for holding input data.
-     */
-    std::unique_ptr<TGraphErrors> plot = nullptr;
-
-    /*
-     * The test statistic that is optimised when running our test, e.g. chi squared or a likelihood
-     */
-    std::unique_ptr<double> statistic = nullptr;
-
-  protected:
-    /*
-     * The data to be fit.
-     */
-    BaseFitter(const FitData_t& fitData);
-
-    /*
-     * The data used to make the fit
-     */
-    FitData_t _fitData;
-};
 
 /*
  * Fit to a polynomial (a + bt + ct^2) using ROOT's builtin TGraph Fit() method.

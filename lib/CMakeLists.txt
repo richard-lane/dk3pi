@@ -1,6 +1,8 @@
+set(fitter fitter/Fitter.cpp fitter/FitterUtils.cpp fitter/BaseFitter.cpp)
+
 add_library(D2K3Pi SHARED
   DecaySimulator.cpp
-  fitter/Fitter.cpp
+  ${fitter}
   MinuitFitter.cpp
   PhaseSpaceBinning.cpp
   RatioCalculator.cpp
