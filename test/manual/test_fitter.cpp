@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "DecaySimulator.h"
-#include "MinuitPolynomialFitter.h"
 #include "PullStudyHelpers.h"
+#include "fitter/MinuitPolynomialFitter.h"
 
 #include "TGraph.h"
 

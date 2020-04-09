@@ -7,7 +7,7 @@
 #ifndef BASEFITTER_H
 #define BASEFITTER_H
 
-#include <FitterUtils.h>
+#include "FitterUtils.h"
 
 #include "TGraphErrors.h"
 

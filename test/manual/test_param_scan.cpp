@@ -3,10 +3,10 @@
 #include <vector>
 
 #include "DecaySimulator.h"
-#include "MinuitPolynomialScan.h"
-#include "ParamScanner.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
+#include "fitter/MinuitPolynomialScan.h"
+#include "fitter/ParamScanner.h"
 #include "util.h"
 
 #include "TGraph.h"

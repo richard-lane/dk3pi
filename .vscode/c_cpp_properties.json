@@ -7,7 +7,6 @@
                 "${workspaceFolder}/src/*",
                 "${workspaceFolder}/lib/**",
                 "${env:ROOTSYS}/include/*",
-                "${workspaceFolder}/lib/fitter/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
