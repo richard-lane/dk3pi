@@ -171,7 +171,7 @@ void MinuitFitterBase::saveFitPlot(const std::string&          plotTitle,
 }
 
 void MinuitFitterBase::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min,
-                                             const std::vector<size_t>             fixParamIndices)
+                                             const std::vector<size_t>&            fixParamIndices)
 {
     // Set our fitParams to the values obtained in the fit
     fitParams.fitParams      = min.UserParameters().Params();

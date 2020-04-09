@@ -68,7 +68,7 @@ class MinuitFitterBase : public BaseFitter
     /*
      * Helper function to store the attributes from a Minuit2 FunctionMinimum in this class' fitParams
      */
-    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min);
+    void _storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min, const std::vector<size_t>& fixParamIndices);
 
     /*
      * Pointer to the Minuit FCN used to perform the fit
