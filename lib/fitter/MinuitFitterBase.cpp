@@ -68,14 +68,7 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
         throw D2K3PiException();
     }
 
-    // Store our fit parameters and correlation matrix as class attributes
-    // Set our fitParams to the values obtained in the fit
-    fitParams.fitParams      = min.UserParameters().Params();
-    fitParams.fitParamErrors = min.UserParameters().Errors();
-
-    // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
-    fitParams.correlationMatrix =
-        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), fixParamIndices));
+    _storeMinuitFitParams(min, fixParamIndices);
 
     // Store chi squared
     statistic = std::make_unique<double>(min.Fval());
@@ -177,13 +170,14 @@ void MinuitFitterBase::saveFitPlot(const std::string&          plotTitle,
     //                                      *legendParams);
 }
 
-void MinuitFitterBase::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min)
+void MinuitFitterBase::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min,
+                                             const std::vector<size_t>             fixParamIndices)
 {
     // Set our fitParams to the values obtained in the fit
     fitParams.fitParams      = min.UserParameters().Params();
     fitParams.fitParamErrors = min.UserParameters().Errors();
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
-    fitParams.correlationMatrix = std::make_unique<TMatrixD>(
-        covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), std::vector<size_t>{}));
+    fitParams.correlationMatrix =
+        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), fixParamIndices));
 }
