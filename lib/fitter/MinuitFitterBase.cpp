@@ -36,12 +36,7 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
     }
 
     // Set our parameters and errors to their initial values, fixing any needed
-    _parameters = std::make_unique<ROOT::Minuit2::MnUserParameters>();
-
-    for (size_t i = 0; i < initialParams.size(); ++i) {
-        _parameters->Add(std::to_string(i), initialParams[i]); // TODO can maybe do this in the constructor
-        _parameters->SetError(i, initialErrors[i]);
-    }
+    _parameters = std::make_unique<ROOT::Minuit2::MnUserParameters>(initialParams, initialErrors);
 
     // Create a minimiser
     ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
