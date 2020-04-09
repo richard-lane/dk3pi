@@ -4,6 +4,8 @@
 
 #include "DecaySimulator.h"
 #include "Fitter.h"
+#include "MinuitPolynomialFitter.h"
+#include "PhysicalFitter.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "RootFitter.h"

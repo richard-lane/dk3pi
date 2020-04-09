@@ -14,7 +14,8 @@
 
 #include "D2K3PiError.h"
 #include "DecaySimulator.h"
-#include "Fitter.h"
+#include "FitterUtils.h"
+#include "MinuitPolynomialFitter.h"
 #include "PhaseSpaceBinning.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
