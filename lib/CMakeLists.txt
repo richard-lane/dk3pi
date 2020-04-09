@@ -1,4 +1,4 @@
-set(fitter fitter/Fitter.cpp fitter/FitterUtils.cpp fitter/BaseFitter.cpp)
+set(fitter fitter/Fitter.cpp fitter/FitterUtils.cpp fitter/BaseFitter.cpp fitter/RootFitter.cpp)
 
 add_library(D2K3Pi SHARED
   DecaySimulator.cpp

@@ -4,6 +4,8 @@
  * Holds the result of the fit as FitResults_t; also has attributes
  * for a plot and chi-squared/likelihood statistic.
  */
+#ifndef BASEFITTER_H
+#define BASEFITTER_H
 
 #include <FitterUtils.h>
 
@@ -38,3 +40,5 @@ class BaseFitter
      */
     FitData_t _fitData;
 };
+
+#endif // BASEFITTER_H

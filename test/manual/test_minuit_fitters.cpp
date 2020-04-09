@@ -6,6 +6,7 @@
 #include "Fitter.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
+#include "RootFitter.h"
 #include "util.h"
 
 /*

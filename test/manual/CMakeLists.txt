@@ -1,6 +1,7 @@
 # Add lib/ to our include path so that we can access headers from our UT
 include_directories("${CMAKE_SOURCE_DIR}/lib/")
 include_directories("${CMAKE_SOURCE_DIR}/src/")
+include_directories("${CMAKE_SOURCE_DIR}/lib/fitter/")
 
 find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem system)
 

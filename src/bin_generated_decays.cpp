@@ -14,10 +14,10 @@
 #include "TH1D.h"
 #include "TRandom.h"
 
-#include "Fitter.h"
 #include "PhaseSpaceBinning.h"
 #include "RatioCalculator.h"
 #include "ReadAmpGen.h"
+#include "RootFitter.h"
 
 /*
  * Bin the CF and Mixed decays modelled in an AmpGen generated inputFile into phase bins as defined by $BIN_LIMITS
