@@ -14,6 +14,17 @@ class MinuitFitterBase : public BaseFitter
 {
   public:
     /*
+     * Perform a fit using Minuit, possibly holding some parameters fixed to values as specified in fixParams.
+     *
+     * TODO document
+     *
+     */
+    virtual void fit(const std::vector<double>&                    initialParams,
+                     const std::vector<double>&                    initialErrors,
+                     const FitAlgorithm_t&                         FitMethod,
+                     const std::vector<std::pair<size_t, double>>& fixParams);
+
+    /*
      * Given a vector representing the covariance between a set of parameters, find the covariance matrix using the
      * errors in fitParams.fitParamErrors and convert it to a TMatrixD
      *
