@@ -47,7 +47,7 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
     }
 
     for (size_t i = 0; i < initialParams.size(); ++i) {
-        _parameters->Add(std::to_string(i), initialParams[i]);
+        _parameters->Add(std::to_string(i), initialParams[i]); // TODO can maybe do this in the constructor
         _parameters->SetError(i, initialErrors[i]);
 
         // If we find index i in our list of parameters to fix, fix it.
