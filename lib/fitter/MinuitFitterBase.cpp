@@ -16,7 +16,7 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
                            const FitAlgorithm_t&                         FitMethod,
                            const std::vector<std::pair<size_t, double>>& fixParams)
 {
-    // Check our parameters have been set
+    // Check our parameters and fitFcn have been set
     if (!_parameters) {
         std::cerr << "Parameters not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
                      "the _parameters attribute."
@@ -24,10 +24,17 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
         throw D2K3PiException();
     }
 
+    if (!_fitFcn) {
+        std::cerr << "Fit fcn not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
+                     "the _fitFcn attribute."
+                  << std::endl;
+        throw D2K3PiException();
+    }
+
     size_t numFixParams   = fixParams.size();
     size_t numFitParams   = initialParams.size();
     size_t numFitParamErs = initialErrors.size();
-    if (numFixParams != numFitParams) {
+    if (numFixParams >= numFitParams) {
         std::cerr << "Cannot fix " << numFixParams << "; only have " << numFitParams << "." << std::endl;
         throw D2K3PiException();
     }
