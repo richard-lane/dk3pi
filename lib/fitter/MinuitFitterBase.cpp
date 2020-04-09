@@ -38,40 +38,39 @@ void MinuitFitterBase::fit(const std::vector<double>&                    initial
     // Set our parameters and errors to their initial values, fixing any needed
     _parameters = std::make_unique<ROOT::Minuit2::MnUserParameters>();
 
+    for (size_t i = 0; i < initialParams.size(); ++i) {
+        _parameters->Add(std::to_string(i), initialParams[i]); // TODO can maybe do this in the constructor
+        _parameters->SetError(i, initialErrors[i]);
+    }
+
     // Create a minimiser
     ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
 
+    // If we find index i in our list of parameters to fix, fix it.
     std::vector<size_t> fixParamIndices(fixParams.size());
     for (size_t i = 0; i < fixParams.size(); ++i) {
         fixParamIndices[i] = fixParams[i].first;
     }
-
-    for (size_t i = 0; i < initialParams.size(); ++i) {
-        _parameters->Add(std::to_string(i), initialParams[i]); // TODO can maybe do this in the constructor
-        _parameters->SetError(i, initialErrors[i]);
-
-        // If we find index i in our list of parameters to fix, fix it.
-        if (std::count(fixParamIndices.begin(), fixParamIndices.end(), i)) {
-            migrad.Fix(i);
-        }
+    for (auto it = fixParamIndices.begin(); it != fixParamIndices.end(); ++it) {
+        migrad.Fix(*it);
     }
 
     // Minimuse chi squared as defined by our _fitFcn
-    ROOT::Minuit2::FunctionMinimum min = migrad();
+    min = std::make_unique<ROOT::Minuit2::FunctionMinimum>(migrad());
 
     // Check that our solution is "valid"
     // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible
     // to be sure with Minuit2
-    if (!min.IsValid()) {
+    if (!min->IsValid()) {
         std::cerr << "Minuit fit invalid" << std::endl;
-        std::cerr << min << std::endl;
+        std::cerr << *min << std::endl;
         throw D2K3PiException();
     }
 
-    _storeMinuitFitParams(min, fixParamIndices);
+    _storeMinuitFitParams(fixParamIndices);
 
     // Store chi squared
-    statistic = std::make_unique<double>(min.Fval());
+    statistic = std::make_unique<double>(min->Fval());
 
     // Set our TGraph pointer to the right thing
     plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
@@ -170,14 +169,18 @@ void MinuitFitterBase::saveFitPlot(const std::string&          plotTitle,
     //                                      *legendParams);
 }
 
-void MinuitFitterBase::_storeMinuitFitParams(const ROOT::Minuit2::FunctionMinimum& min,
-                                             const std::vector<size_t>&            fixParamIndices)
+void MinuitFitterBase::_storeMinuitFitParams(const std::vector<size_t>& fixParamIndices)
 {
+    if (!min) {
+        std::cerr << "Cannot store params: fit not yet run" << std::endl;
+        throw D2K3PiException();
+    }
+
     // Set our fitParams to the values obtained in the fit
-    fitParams.fitParams      = min.UserParameters().Params();
-    fitParams.fitParamErrors = min.UserParameters().Errors();
+    fitParams.fitParams      = min->UserParameters().Params();
+    fitParams.fitParamErrors = min->UserParameters().Errors();
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
     fitParams.correlationMatrix =
-        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min.UserCovariance().Data(), fixParamIndices));
+        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min->UserCovariance().Data(), fixParamIndices));
 }
