@@ -12,10 +12,10 @@ MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : Minui
     ;
 }
 
-void MinuitPolynomialFitter::fit(const std::vector<double>&                    initialParams,
-                                 const std::vector<double>&                    initialErrors,
-                                 const FitAlgorithm_t&                         FitMethod,
-                                 const std::vector<std::pair<size_t, double>>& fixParams)
+void MinuitPolynomialFitter::fit(const std::vector<double>& initialParams,
+                                 const std::vector<double>& initialErrors,
+                                 const FitAlgorithm_t&      FitMethod,
+                                 const std::vector<size_t>& fixParams)
 {
     // Check that we have been passed 3 initial parameters and errors
     if (initialParams.size() != 3 || initialErrors.size() != 3) {

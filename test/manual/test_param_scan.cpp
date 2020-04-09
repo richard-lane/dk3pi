@@ -83,8 +83,7 @@ void test_param_scan(void)
     // Perform fit, outputu minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    MinuitChiSqScanner.fit(
-        initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<std::pair<size_t, double>>{});
+    MinuitChiSqScanner.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<size_t>{});
     std::cout << "Min chisq: " << *(MinuitChiSqScanner.statistic) << std::endl;
     std::cout << "Params: " << MinuitChiSqScanner.fitParams.fitParams[0] << " "
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
@@ -133,8 +132,7 @@ void test_2d_scan()
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    MinuitChiSqScanner.fit(
-        initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<std::pair<size_t, double>>{});
+    MinuitChiSqScanner.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<size_t>{});
     std::cout << "Min chisq: " << *(MinuitChiSqScanner.statistic) << std::endl;
     std::cout << "Params: " << MinuitChiSqScanner.fitParams.fitParams[0] << " "
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
@@ -214,10 +212,7 @@ void test_z_scan()
                                               phaseSpaceParams.z_re,
                                               phaseSpaceParams.width};
     std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
-    PhysFitter.fit(initialParameterGuess,
-                   initialErrorsGuess,
-                   ChiSquared,
-                   std::vector<std::pair<size_t, double>>{std::make_pair(0, phaseSpaceParams.x)});
+    PhysFitter.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<size_t>{0});
     std::cout << "Min chisq: " << *(PhysFitter.statistic) << std::endl;
 
     // Perform a 2d chi squared scan on the components of Z
