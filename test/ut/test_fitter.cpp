@@ -9,8 +9,11 @@
 #include <vector>
 
 #include "D2K3PiError.h"
-#include "Fitter.h"
+#include "FitterUtils.h"
+#include "MinuitPolynomialFitter.h"
+#include "PhysicalFitter.h"
 #include "RatioCalculator.h"
+#include "RootFitter.h"
 
 #include "TMatrixD.h"
 

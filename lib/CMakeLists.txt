@@ -1,5 +1,4 @@
 set(fitter
-  fitter/Fitter.cpp
   fitter/FitterUtils.cpp
   fitter/BaseFitter.cpp
   fitter/RootFitter.cpp
