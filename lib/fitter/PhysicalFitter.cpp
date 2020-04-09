@@ -16,6 +16,14 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
                          const FitAlgorithm_t&                         FitMethod,
                          const std::vector<std::pair<size_t, double>>& fixParams)
 {
+    // Check our parameters have been set
+    if (!_parameters) {
+        std::cerr << "Parameters not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
+                     "the _parameters attribute."
+                  << std::endl;
+        throw D2K3PiException();
+    }
+
     // Check that we have been passed 6 initial parameters and errors
     if (initialParams.size() != 6 || initialErrors.size() != 6) {
         std::cout << "fit requires a guess of 6 parameters and their errors" << std::endl;
@@ -52,19 +60,10 @@ void PhysicalFitter::fit(const std::vector<double>&                    initialPa
     // Create an object representing our Minuit2-compatible 2nd order polynomial
     _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 
-    // Store our parameters
-    ROOT::Minuit2::MnUserParameters parameters;
-    parameters.Add("x", initialParams[0], initialErrors[0]);
-    parameters.Add("y", initialParams[1], initialErrors[1]);
-    parameters.Add("r", initialParams[2], initialErrors[2]);
-    parameters.Add("z_im", initialParams[3], initialErrors[3]);
-    parameters.Add("z_re", initialParams[4], initialErrors[4]);
-    parameters.Add("width", initialParams[5], initialErrors[5]);
-
     // Create a minimiser and fix any parameters to the right values
-    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
+    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
     for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
-        parameters.SetValue(it->first, it->second);
+        _parameters->SetValue(it->first, it->second);
         migrad.Fix(it->first);
     }
 

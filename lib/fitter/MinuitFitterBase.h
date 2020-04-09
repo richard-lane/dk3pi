@@ -68,6 +68,13 @@ class MinuitFitterBase : public BaseFitter
      * Pointer to the Minuit FCN used to perform the fit
      */
     std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
+
+    /*
+     * Parameters that Minuit minimises
+     *
+     * Should be populated by the parent class.
+     */
+    std::unique_ptr<ROOT::Minuit2::MnUserParameters> _parameters = nullptr;
 };
 
 #endif // MINUIT_FITTER_BASE_H
