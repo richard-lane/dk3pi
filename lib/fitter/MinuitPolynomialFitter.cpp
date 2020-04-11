@@ -26,7 +26,7 @@ void MinuitPolynomialFitter::fit(const std::vector<double>& initialParams,
     // Create an object representing our Minuit2-compatible 2nd order polynomial
     _fitFcn = std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 
-    MinuitFitterBase::fit(initialParams, initialErrors, FitMethod, fixParams);
+    MinuitFitterBase::fit(fixParams);
 
     // Set our TGraph pointer to the right thing
     plot = std::make_unique<TGraphErrors>(_fitData.numPoints,

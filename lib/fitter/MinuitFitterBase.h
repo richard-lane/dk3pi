@@ -23,10 +23,14 @@ class MinuitFitterBase : public BaseFitter
      * parameters); this should be set by child class implementations of this->fit().
      *
      */
-    virtual void fit(const std::vector<double>& initialParams,
-                     const std::vector<double>& initialErrors,
-                     const FitAlgorithm_t&      FitMethod,
-                     const std::vector<size_t>& fixParams);
+    virtual void fit(const std::vector<size_t>& fixParams);
+
+    /*
+     * Set fit parameters and their names
+     */
+    void setParams(const std::vector<std::string>& names,
+                   const std::vector<double>&      values,
+                   const std::vector<double>&      errors);
 
     /*
      * Given a vector representing the covariance between a set of parameters, find the covariance matrix using the
