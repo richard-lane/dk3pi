@@ -30,7 +30,12 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
         throw D2K3PiException();
     }
 
-    // TODO check that we aren't fixing more params than we have
+    if (!_parameters) {
+        std::cerr << "Parameters not yet set- have you called setParams()?" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that we aren't fixing more params than we have
     size_t numFitParams = _parameters->Parameters().size();
     size_t numFixParams = fixParams.size();
     if (numFixParams >= numFitParams) {
@@ -39,11 +44,6 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
             std::cerr << _parameters->GetName(i) << ", ";
         }
         std::cerr << "\b\b)." << std::endl;
-        throw D2K3PiException();
-    }
-
-    if (!_parameters) {
-        std::cerr << "Parameters not yet set- have you called setParams()?" << std::endl;
         throw D2K3PiException();
     }
 
