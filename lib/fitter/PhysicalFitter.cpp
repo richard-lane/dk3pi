@@ -38,6 +38,7 @@ void PhysicalFitter::fit(const std::vector<double>& initialParams,
     _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 
     // Use base class implementation to actually perform the fit
+    setParams(_paramNames, initialParams, initialErrors);
     MinuitFitterBase::fit(fixParams);
 
     // Create a best-fit function
