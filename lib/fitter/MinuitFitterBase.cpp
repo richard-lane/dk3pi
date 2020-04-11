@@ -31,6 +31,16 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
     }
 
     // TODO check that we aren't fixing more params than we have
+    size_t numFitParams = _parameters->Parameters().size();
+    size_t numFixParams = fixParams.size();
+    if (numFixParams >= numFitParams) {
+        std::cerr << "Cannot fix " << numFixParams << " parameters, only have " << numFitParams << " (";
+        for (size_t i = 0; i < numFitParams; ++i) {
+            std::cerr << _parameters->GetName(i) << ", ";
+        }
+        std::cerr << "\b\b)." << std::endl;
+        throw D2K3PiException();
+    }
 
     if (!_parameters) {
         std::cerr << "Parameters not yet set- have you called setParams()?" << std::endl;
