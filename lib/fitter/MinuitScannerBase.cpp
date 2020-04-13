@@ -37,11 +37,6 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
     // Set parameterScan to a vector of the right length
     parameterScan = std::vector<std::pair<double, double>>(numPoints);
 
-    // Create minimiser if it doesn't exist yet
-    if (!_migrad) {
-        _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
-    }
-
     // For all of these values
     for (auto k = 0; k < numPoints; ++k) {
         // Fix parameter
@@ -55,12 +50,9 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
 
         // Populate chi squared
         parameterScan[k] = std::make_pair(parameterVals[k], min.Fval());
+
         _migrad.reset();
     }
-
-    //// Create MnScan object that will be used to perform our scan and run the scan
-    // ROOT::Minuit2::MnScan Scanner = ROOT::Minuit2::MnScan(*_fitFcn, fitParams.fitParams, fitParams.fitParamErrors);
-    // parameterScan                 = Scanner.Scan(i, numPoints + 1, low, high);
 }
 
 void MinuitScannerBase::twoDParamScan(const size_t i,
