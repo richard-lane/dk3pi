@@ -9,7 +9,7 @@
 
 PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitScannerBase(fitData)
 {
-    ;
+    _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 }
 
 void PhysicalFitter::fit(const std::vector<double>& initialParams,
@@ -32,10 +32,6 @@ void PhysicalFitter::fit(const std::vector<double>& initialParams,
         std::cerr << "Must fix one of x, y, or a component of Z for fit to be well defined" << std::endl;
         throw D2K3PiException();
     }
-
-    // Create an object representing our Minuit2-compatible 2nd order polynomial
-    // TODO move to constructor or something
-    _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 
     // Use base class implementation to actually perform the fit
     setParams(_paramNames, initialParams, initialErrors);

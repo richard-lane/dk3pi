@@ -9,7 +9,7 @@
 
 MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitScannerBase(fitData)
 {
-    ;
+    _fitFcn = std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 }
 
 void MinuitPolynomialFitter::fit(const std::vector<double>& initialParams,
@@ -22,9 +22,6 @@ void MinuitPolynomialFitter::fit(const std::vector<double>& initialParams,
         std::cout << "fitUsingMinuit2ChiSq requires a guess of all 3 parameters and their errors" << std::endl;
         throw D2K3PiException();
     }
-
-    // Create an object representing our Minuit2-compatible 2nd order polynomial
-    _fitFcn = std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 
     setParams(std::vector<std::string>{"a", "b", "c"}, initialParams, initialErrors);
     MinuitFitterBase::fit(fixParams);
