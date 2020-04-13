@@ -15,21 +15,9 @@ MinuitScannerBase::MinuitScannerBase(const FitData_t& fitData) : MinuitFitterBas
 
 void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
 {
-    // Check that a fit has been performed
-    if (!_fitFcn) {
-        std::cerr << "Must run Minuit fitter before performing parameter scan." << std::endl;
-        throw D2K3PiException();
-    }
-
     // Check that we have sensible low and high
     if (low > high) {
         std::cerr << "Low value must be below high value for parameter scan." << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Check that we don't have too many points
-    if (numPoints > 100) {
-        std::cerr << "Cannot scan a parameter at more than 100 points (sorry)." << std::endl;
         throw D2K3PiException();
     }
 
@@ -39,9 +27,32 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
         throw D2K3PiException();
     }
 
-    // Create MnScan object that will be used to perform our scan and run the scan
-    ROOT::Minuit2::MnScan Scanner = ROOT::Minuit2::MnScan(*_fitFcn, fitParams.fitParams, fitParams.fitParamErrors);
-    parameterScan                 = Scanner.Scan(i, numPoints + 1, low, high);
+    // Find a vector of the parameter values we're interested in
+    std::vector<double> parameterVals(numPoints, 0.0);
+    double              step = (high - low) / (numPoints - 1);
+    for (size_t k = 0; k < numPoints; ++k) {
+        parameterVals[k] = low + k * step;
+    }
+
+    // Set parameterScan to a vector of the right length
+    parameterScan = std::vector<std::pair<double, double>>(numPoints);
+
+    // For all of these values
+    for (auto k = 0; k < numPoints; ++k) {
+        // Fix parameter
+        _parameters->SetValue(i, parameterVals[k]);
+        _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
+
+        _migrad->Fix(i);
+
+        // Perform a fit
+        ROOT::Minuit2::FunctionMinimum min = (*_migrad)();
+
+        // Populate chi squared
+        parameterScan[k] = std::make_pair(parameterVals[k], min.Fval());
+
+        _migrad.reset();
+    }
 }
 
 void MinuitScannerBase::twoDParamScan(const size_t i,

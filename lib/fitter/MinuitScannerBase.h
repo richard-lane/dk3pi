@@ -17,7 +17,7 @@ class MinuitScannerBase : public MinuitFitterBase
      *
      * Populates parameterScan
      */
-    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low = 0., const double high = 0.);
+    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high);
 
     /*
      * Scan the i and jth parameters between the specified limits
