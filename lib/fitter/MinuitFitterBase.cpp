@@ -15,6 +15,15 @@ void MinuitFitterBase::setParams(const std::vector<std::string>& names,
                                  const std::vector<double>&      values,
                                  const std::vector<double>&      errors)
 {
+    size_t numNames  = names.size();
+    size_t numValues = values.size();
+    size_t numErrs   = errors.size();
+    if (numNames != numValues || numErrs != numValues) {
+        std::cerr << "Error setting parameters; passed " << numNames << " names, " << numValues << " values, and "
+                  << numErrs << " errors";
+        throw D2K3PiException();
+    }
+
     _parameters = std::make_unique<ROOT::Minuit2::MnUserParameters>(values, errors);
     for (size_t i = 0; i < names.size(); i++) {
         _parameters->SetName(i, names[i]);
