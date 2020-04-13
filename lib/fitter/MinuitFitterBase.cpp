@@ -80,6 +80,11 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
                                           _fitData.errors.data());
 }
 
+void MinuitFitterBase::resetMigrad()
+{
+    _migrad.reset();
+}
+
 TMatrixD MinuitFitterBase::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
                                                               const std::vector<size_t>& fixedParams)
 {

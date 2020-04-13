@@ -93,6 +93,8 @@ void test_param_scan(void)
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
               << std::endl;
 
+    MinuitChiSqScanner.resetMigrad();
+
     // Perform a chi squared scan on each parameter
     size_t numPoints = 100;
     plotScan(MinuitChiSqScanner, numPoints, 0);
