@@ -7,6 +7,7 @@ set(fitter
   fitter/MinuitPolynomialScan.cpp
   fitter/PhysicalFitter.cpp
   fitter/ParamScanner.cpp
+  fitter/MinuitScannerBase.cpp
   )
 
 add_library(D2K3Pi SHARED
