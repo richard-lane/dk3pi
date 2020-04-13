@@ -27,6 +27,12 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
         throw D2K3PiException();
     }
 
+    // Check that we haven't already set _migrad to something- it will be overwritten here
+    if (_migrad) {
+        std::cerr << "_migrad already set- this will be overwritten by the 1d scan function." << std::endl;
+        throw D2K3PiException();
+    }
+
     // Find a vector of the parameter values we're interested in
     std::vector<double> parameterVals(numPoints, 0.0);
     double              step = (high - low) / (numPoints - 1);
@@ -41,8 +47,9 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
     for (auto k = 0; k < numPoints; ++k) {
         // Fix parameter
         _parameters->SetValue(i, parameterVals[k]);
-        _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
 
+        // Must re-set _migrad to account for the new parameter values
+        _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
         _migrad->Fix(i);
 
         // Perform a fit
