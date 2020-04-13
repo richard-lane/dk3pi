@@ -27,6 +27,11 @@ class MinuitFitterBase : public BaseFitter
     virtual void fit(const std::vector<size_t>& fixParams);
 
     /*
+     * Set our minimiser using this class' _fitFcn and _parameters
+     */
+    void setMigrad();
+
+    /*
      * Reset our minimiser
      */
     void resetMigrad();

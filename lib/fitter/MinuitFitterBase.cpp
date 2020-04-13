@@ -80,6 +80,11 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
                                           _fitData.errors.data());
 }
 
+void MinuitFitterBase::setMigrad()
+{
+    _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
+}
+
 void MinuitFitterBase::resetMigrad()
 {
     _migrad.reset();
