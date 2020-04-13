@@ -7,7 +7,7 @@
 #include "Minuit2/MnPrint.h"
 #include "TF1.h"
 
-MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitFitterBase(fitData)
+MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitScannerBase(fitData)
 {
     ;
 }

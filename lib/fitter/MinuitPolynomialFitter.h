@@ -1,4 +1,4 @@
-#include "MinuitFitterBase.h"
+#include "MinuitScannerBase.h"
 
 #ifndef MINUIT_POLY_FITTER_H
 #define MINUIT_POLY_FITTER_H
@@ -6,7 +6,7 @@
 /*
  * Fit to a polynomial (a + bt + ct^2) using the Minuit2 APIs
  */
-class MinuitPolynomialFitter : public MinuitFitterBase
+class MinuitPolynomialFitter : public MinuitScannerBase
 {
   public:
     /*

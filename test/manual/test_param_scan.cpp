@@ -5,8 +5,8 @@
 #include "DecaySimulator.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
-#include "fitter/MinuitPolynomialScan.h"
-#include "fitter/ParamScanner.h"
+#include "fitter/MinuitPolynomialFitter.h"
+#include "fitter/PhysicalFitter.h"
 #include "util.h"
 
 #include "TGraph.h"
@@ -23,7 +23,7 @@ void splitVectorOfPairs(std::vector<std::pair<double, double>>& pairs,
     }
 }
 
-void plotScan(MinuitPolyScan& MinuitChiSqFitter, const size_t numPoints, const size_t paramIndex)
+void plotScan(MinuitPolynomialFitter& MinuitChiSqFitter, const size_t numPoints, const size_t paramIndex)
 {
     std::string graphTitle{""};
     switch (paramIndex) {
@@ -77,8 +77,8 @@ void test_param_scan(void)
     MyRatios.calculateRatios();
 
     // Create a fitter
-    FitData_t      MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    MinuitPolyScan MinuitChiSqScanner(MyFitData);
+    FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData);
 
     // Perform fit, outputu minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
@@ -126,8 +126,8 @@ void test_2d_scan()
     MyRatios.calculateRatios();
 
     // Create a fitter
-    FitData_t      MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    MinuitPolyScan MinuitChiSqScanner(MyFitData);
+    FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData);
 
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
@@ -201,8 +201,8 @@ void test_z_scan()
     MyRatios.calculateRatios();
 
     // Create a fitter
-    FitData_t    MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    ParamScanner PhysFitter = ParamScanner(MyFitData);
+    FitData_t      MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
 
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{phaseSpaceParams.x,

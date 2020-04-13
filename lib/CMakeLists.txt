@@ -3,11 +3,9 @@ set(fitter
   fitter/BaseFitter.cpp
   fitter/RootFitter.cpp
   fitter/MinuitFitterBase.cpp
-  fitter/MinuitPolynomialFitter.cpp
-  fitter/MinuitPolynomialScan.cpp
-  fitter/PhysicalFitter.cpp
-  fitter/ParamScanner.cpp
   fitter/MinuitScannerBase.cpp
+  fitter/MinuitPolynomialFitter.cpp
+  fitter/PhysicalFitter.cpp
   )
 
 add_library(D2K3Pi SHARED

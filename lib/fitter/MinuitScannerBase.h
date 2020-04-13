@@ -1,3 +1,6 @@
+#ifndef MINUIT_SCANNER_BASE_H
+#define MINUIT_SCANNER_BASE_H
+
 #include <utility>
 #include <vector>
 
@@ -5,6 +8,7 @@
 
 class MinuitScannerBase : public MinuitFitterBase
 {
+  public:
     /*
      * Scan the ith parameter as defined in fitParams.fitParams
      *
@@ -13,22 +17,21 @@ class MinuitScannerBase : public MinuitFitterBase
      *
      * Populates parameterScan
      */
-    virtual void
-    chiSqParameterScan(const size_t i, const size_t numPoints, const double low = 0., const double high = 0.);
+    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low = 0., const double high = 0.);
 
     /*
      * Scan the i and jth parameters between the specified limits
      *
      * Populates twoDParameterScan
      */
-    virtual void twoDParamScan(const size_t i,
-                               const size_t j,
-                               const size_t iPoints,
-                               const size_t jPoints,
-                               const double iLow,
-                               const double iHigh,
-                               const double jLow,
-                               const double jHigh);
+    void twoDParamScan(const size_t i,
+                       const size_t j,
+                       const size_t iPoints,
+                       const size_t jPoints,
+                       const double iLow,
+                       const double iHigh,
+                       const double jLow,
+                       const double jHigh);
 
     /*
      * Vector of pairs describing a parameter scan
@@ -41,4 +44,12 @@ class MinuitScannerBase : public MinuitFitterBase
      * Scans parameters i and j to find chi squared values; result is a vector of (i_value, j_value, chi_squared)
      */
     std::vector<std::vector<double>> twoDParameterScan;
+
+  protected:
+    /*
+     * Calls parent constructor
+     */
+    MinuitScannerBase(const FitData_t& fitData);
 };
+
+#endif // MINUIT_SCANNER_BASE_H
