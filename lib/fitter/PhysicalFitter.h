@@ -1,7 +1,7 @@
 #ifndef PHYSICAL_FITTER_H
 #define PHYSICAL_FITTER_H
 
-#include "MinuitFitterBase.h"
+#include "MinuitScannerBase.h"
 
 /*
  * Class for fitting the ratio of DCS to CF decay times by optimising parameters x, y, rD, Im(Z), Re(Z) and the decay
@@ -11,7 +11,7 @@
  *
  * Cannot fit without fixing at least one of x, y or a component of Z
  */
-class PhysicalFitter : public MinuitFitterBase
+class PhysicalFitter : public MinuitScannerBase
 {
   public:
     /*

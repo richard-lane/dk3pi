@@ -1,19 +1,14 @@
-#ifndef PARAM_SCANNER_H
-#define PARAM_SCANNER_H
+#ifndef MINUIT_SCANNER_BASE_H
+#define MINUIT_SCANNER_BASE_H
 
-#include "PhysicalFitter.h"
+#include <utility>
+#include <vector>
 
-/*
- * Class for perfoming scans of the physical fit parameters x, y etc.
- */
-class ParamScanner : public PhysicalFitter
+#include "MinuitFitterBase.h"
+
+class MinuitScannerBase : public MinuitFitterBase
 {
   public:
-    /*
-     * Calls parent constructor
-     */
-    ParamScanner(const FitData_t& fitData);
-
     /*
      * Scan the ith parameter as defined in fitParams.fitParams
      *
@@ -49,6 +44,12 @@ class ParamScanner : public PhysicalFitter
      * Scans parameters i and j to find chi squared values; result is a vector of (i_value, j_value, chi_squared)
      */
     std::vector<std::vector<double>> twoDParameterScan;
+
+  protected:
+    /*
+     * Calls parent constructor
+     */
+    MinuitScannerBase(const FitData_t& fitData);
 };
 
-#endif // PARAM_SCANNER_H
+#endif // MINUIT_SCANNER_BASE_H

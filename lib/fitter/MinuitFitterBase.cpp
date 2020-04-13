@@ -11,10 +11,17 @@ MinuitFitterBase::MinuitFitterBase(const FitData_t& fitData) : BaseFitter(fitDat
     ;
 }
 
-void MinuitFitterBase::fit(const std::vector<double>& initialParams,
-                           const std::vector<double>& initialErrors,
-                           const FitAlgorithm_t&      FitMethod,
-                           const std::vector<size_t>& fixParams)
+void MinuitFitterBase::setParams(const std::vector<std::string>& names,
+                                 const std::vector<double>&      values,
+                                 const std::vector<double>&      errors)
+{
+    _parameters = std::make_unique<ROOT::Minuit2::MnUserParameters>(values, errors);
+    for (size_t i = 0; i < names.size(); i++) {
+        _parameters->SetName(i, names[i]);
+    }
+}
+
+void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
 {
     if (!_fitFcn) {
         std::cerr << "Fit fcn not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
@@ -23,20 +30,22 @@ void MinuitFitterBase::fit(const std::vector<double>& initialParams,
         throw D2K3PiException();
     }
 
-    size_t numFixParams   = fixParams.size();
-    size_t numFitParams   = initialParams.size();
-    size_t numFitParamErs = initialErrors.size();
-    if (numFixParams >= numFitParams) {
-        std::cerr << "Cannot fix " << numFixParams << "; only have " << numFitParams << "." << std::endl;
-        throw D2K3PiException();
-    }
-    if (numFitParamErs != numFitParams) {
-        std::cerr << "Passed " << numFitParams << "but " << numFitParamErs << " errors." << std::endl;
+    if (!_parameters) {
+        std::cerr << "Parameters not yet set- have you called setParams()?" << std::endl;
         throw D2K3PiException();
     }
 
-    // Set our parameters and errors to their initial values, fixing any needed
-    _parameters = std::make_unique<ROOT::Minuit2::MnUserParameters>(initialParams, initialErrors);
+    // Check that we aren't fixing more params than we have
+    size_t numFitParams = _parameters->Parameters().size();
+    size_t numFixParams = fixParams.size();
+    if (numFixParams >= numFitParams) {
+        std::cerr << "Cannot fix " << numFixParams << " parameters, only have " << numFitParams << " (";
+        for (size_t i = 0; i < numFitParams; ++i) {
+            std::cerr << _parameters->GetName(i) << ", ";
+        }
+        std::cerr << "\b\b)." << std::endl;
+        throw D2K3PiException();
+    }
 
     // Create a minimiser
     ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);

@@ -7,7 +7,7 @@
 #include "Minuit2/MnPrint.h"
 #include "TF1.h"
 
-PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitFitterBase(fitData)
+PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitScannerBase(fitData)
 {
     ;
 }
@@ -38,7 +38,8 @@ void PhysicalFitter::fit(const std::vector<double>& initialParams,
     _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 
     // Use base class implementation to actually perform the fit
-    MinuitFitterBase::fit(initialParams, initialErrors, FitMethod, fixParams);
+    setParams(_paramNames, initialParams, initialErrors);
+    MinuitFitterBase::fit(fixParams);
 
     // Create a best-fit function
     bestFitFunction = std::make_unique<TF1>(

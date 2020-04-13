@@ -1,18 +1,19 @@
+
 #include <iostream>
 
 #include "D2K3PiError.h"
-#include "ParamScanner.h"
+#include "MinuitScannerBase.h"
 
 #include "Minuit2/MnMigrad.h"
 #include "Minuit2/MnPrint.h"
 #include "Minuit2/MnScan.h"
 
-ParamScanner::ParamScanner(const FitData_t& fitData) : PhysicalFitter(fitData)
+MinuitScannerBase::MinuitScannerBase(const FitData_t& fitData) : MinuitFitterBase(fitData)
 {
     ;
 }
 
-void ParamScanner::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
+void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
 {
     // Check that a fit has been performed
     if (!_fitFcn) {
@@ -43,14 +44,14 @@ void ParamScanner::chiSqParameterScan(const size_t i, const size_t numPoints, co
     parameterScan                 = Scanner.Scan(i, numPoints + 1, low, high);
 }
 
-void ParamScanner::twoDParamScan(const size_t i,
-                                 const size_t j,
-                                 const size_t iPoints,
-                                 const size_t jPoints,
-                                 const double iLow,
-                                 const double iHigh,
-                                 const double jLow,
-                                 const double jHigh)
+void MinuitScannerBase::twoDParamScan(const size_t i,
+                                      const size_t j,
+                                      const size_t iPoints,
+                                      const size_t jPoints,
+                                      const double iLow,
+                                      const double iHigh,
+                                      const double jLow,
+                                      const double jHigh)
 {
     if (i >= fitParams.fitParams.size() || j >= fitParams.fitParams.size()) {
         std::cerr << "Cannot scan params " << i << ", " << j << "; only have " << fitParams.fitParams.size()
