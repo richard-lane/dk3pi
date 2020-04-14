@@ -15,41 +15,21 @@ MinuitScannerBase::MinuitScannerBase(const FitData_t& fitData) : MinuitFitterBas
 
 void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
 {
-    // Check that we have sensible low and high
-    if (low > high) {
-        std::cerr << "Low value must be below high value for parameter scan." << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Check that our parameter index is in range
-    if (i >= fitParams.fitParams.size()) {
-        std::cerr << "Cannot scan parameter " << i << "; out of range" << std::endl;
-        throw D2K3PiException();
-    }
-
     // Find a vector of the parameter values we're interested in
+    // This already gets done in the _scanParameter function but i dont care
     std::vector<double> parameterVals(numPoints, 0.0);
     double              step = (high - low) / (numPoints - 1);
     for (size_t k = 0; k < numPoints; ++k) {
         parameterVals[k] = low + k * step;
     }
 
-    // Set parameterScan to a vector of the right length
+    // Initialise parameterScan attribute
     parameterScan = std::vector<std::pair<double, double>>(numPoints);
 
-    // For all of these values
+    // Scan the parameter and populate parameterScan
+    std::vector<double> chiSqValues = _scanParameter(i, numPoints, low, high, std::vector<size_t>{});
     for (auto k = 0; k < numPoints; ++k) {
-        // Fix parameter
-        _parameters->SetValue(i, parameterVals[k]);
-
-        ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
-        migrad.Fix(i);
-
-        // Perform a fit
-        ROOT::Minuit2::FunctionMinimum min = migrad();
-
-        // Populate chi squared
-        parameterScan[k] = std::make_pair(parameterVals[k], min.Fval());
+        parameterScan[k] = std::make_pair(parameterVals[k], chiSqValues[k]);
     }
 }
 
@@ -154,7 +134,7 @@ std::vector<double> MinuitScannerBase::_scanParameter(const size_t              
         throw D2K3PiException();
     }
 
-    std::vector<size_t> allFixParams{allFixParams};
+    std::vector<size_t> allFixParams{additionalFixParams};
     allFixParams.push_back(i);
 
     // Create a vector of the right length to store our function values
