@@ -27,12 +27,6 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
         throw D2K3PiException();
     }
 
-    // Check that we haven't already set _migrad to something- it will be overwritten here
-    if (_migrad) {
-        std::cerr << "_migrad already set- this will be overwritten by the 1d scan function." << std::endl;
-        throw D2K3PiException();
-    }
-
     // Find a vector of the parameter values we're interested in
     std::vector<double> parameterVals(numPoints, 0.0);
     double              step = (high - low) / (numPoints - 1);
@@ -48,17 +42,14 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
         // Fix parameter
         _parameters->SetValue(i, parameterVals[k]);
 
-        // Must re-set _migrad to account for the new parameter values
-        _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
-        _migrad->Fix(i);
+        ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
+        migrad.Fix(i);
 
         // Perform a fit
-        ROOT::Minuit2::FunctionMinimum min = (*_migrad)();
+        ROOT::Minuit2::FunctionMinimum min = migrad();
 
         // Populate chi squared
         parameterScan[k] = std::make_pair(parameterVals[k], min.Fval());
-
-        resetMigrad();
     }
 }
 
@@ -154,12 +145,6 @@ MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const 
         throw D2K3PiException();
     }
 
-    // Check that we haven't already set _migrad to something- it will be overwritten here
-    if (_migrad) {
-        std::cerr << "_migrad already set- this will be overwritten by the parameter scan function." << std::endl;
-        throw D2K3PiException();
-    }
-
     // Check parameters have been set
     if (_parameters) {
         std::cerr << "Cannot scan parameter: parameters have not been set." << std::endl;
@@ -181,17 +166,14 @@ MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const 
         // Fix parameter
         _parameters->SetValue(i, parameterVals[k]);
 
-        // Must re-set _migrad to account for the new parameter values
-        _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
-        _migrad->Fix(i);
+        ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
+        migrad.Fix(i);
 
         // Perform a fit
-        ROOT::Minuit2::FunctionMinimum min = (*_migrad)();
+        ROOT::Minuit2::FunctionMinimum min = migrad();
 
         // Populate chi squared
         values[k] = min.Fval();
-
-        resetMigrad();
     }
 
     return values;

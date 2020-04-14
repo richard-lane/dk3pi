@@ -57,15 +57,15 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
     }
 
     // Create a minimiser
-    _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
+    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
 
     // If we find index i in our list of parameters to fix, fix it.
     for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
-        _migrad->Fix(*it);
+        migrad.Fix(*it);
     }
 
     // Minimuse chi squared as defined by our _fitFcn
-    min = std::make_unique<ROOT::Minuit2::FunctionMinimum>((*_migrad)());
+    min = std::make_unique<ROOT::Minuit2::FunctionMinimum>(migrad());
 
     // Check that our solution is "valid"
     // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible
@@ -87,16 +87,6 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
                                           _fitData.data.data(),
                                           _fitData.binErrors.data(),
                                           _fitData.errors.data());
-}
-
-void MinuitFitterBase::setMigrad()
-{
-    _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
-}
-
-void MinuitFitterBase::resetMigrad()
-{
-    _migrad.reset();
 }
 
 TMatrixD MinuitFitterBase::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,

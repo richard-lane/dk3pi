@@ -27,16 +27,6 @@ class MinuitFitterBase : public BaseFitter
     virtual void fit(const std::vector<size_t>& fixParams);
 
     /*
-     * Set our minimiser using this class' _fitFcn and _parameters
-     */
-    void setMigrad();
-
-    /*
-     * Reset our minimiser
-     */
-    void resetMigrad();
-
-    /*
      * Set fit parameters and their names
      */
     void setParams(const std::vector<std::string>& names,
@@ -96,11 +86,6 @@ class MinuitFitterBase : public BaseFitter
      * Should be populated by the parent class.
      */
     std::unique_ptr<ROOT::Minuit2::MnUserParameters> _parameters = nullptr;
-
-    /*
-     * Minuit2 minimiser
-     */
-    std::unique_ptr<ROOT::Minuit2::MnMigrad> _migrad = nullptr;
 };
 
 #endif // MINUIT_FITTER_BASE_H
