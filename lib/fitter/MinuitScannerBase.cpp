@@ -70,42 +70,12 @@ void MinuitScannerBase::twoDParamScan(const size_t i,
         jVals[k] = jLow + k * jStep;
     }
 
-    // Loop over our desired i and j values, perform a fit with i and j fixed + fill twoDParameterScan
-    for (size_t iPoint = 0; iPoint < iPoints; ++iPoint) {
-        for (size_t jPoint = 0; jPoint < jPoints; ++jPoint) {
-            double iVal = iVals[iPoint];
-            double jVal = jVals[jPoint];
-
-            // Minimise wrt the params
-            ROOT::Minuit2::MnUserParameters parameters;
-            for (size_t param = 0; param < fitParams.fitParams.size(); ++param) {
-                parameters.Add(std::to_string(param), fitParams.fitParams[param], fitParams.fitParamErrors[param]);
-            }
-
-            parameters.SetValue(i, iVal);
-            parameters.SetValue(j, jVal);
-
-            // Create a minimiser
-            ROOT::Minuit2::MnMigrad migrad(*_fitFcn, parameters);
-
-            // Hack: if we have 6 params, assume one is width + should be fixed
-            // TODO get rid of
-            if (fitParams.fitParams.size() == 6) {
-                migrad.Fix(5);
-            }
-
-            // Fix i and j; now they are not allowed to vary from the value they get set to
-            migrad.Fix(i);
-            migrad.Fix(j);
-
-            ROOT::Minuit2::FunctionMinimum min = migrad();
-            if (!min.IsValid()) {
-                std::cerr << "Minuit fit invalid" << std::endl;
-                std::cout << min << std::endl;
-                throw D2K3PiException();
-            }
-
-            twoDParameterScan[jPoint + jPoints * iPoint] = std::vector<double>{iVal, jVal, min.Fval()};
+    // Loop over our j Values, performing a scan over i  for each one
+    for (size_t jIndex = 0; jIndex < jPoints; ++jIndex) {
+        _parameters->SetValue(j, jVals[jIndex]);
+        std::vector<double> values = _scanParameter(i, iPoints, iLow, iHigh, std::vector<size_t>{j});
+        for (size_t n = 0; n < values.size(); ++n) {
+            twoDParameterScan[jIndex + jPoints * n] = std::vector<double>{iVals[n], jVals[jIndex], values[n]};
         }
     }
 }
