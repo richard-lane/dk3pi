@@ -54,10 +54,15 @@ class MinuitScannerBase : public MinuitFitterBase
   private:
     /*
      * Perform a series of fits, holding parameter i fixed between the values specified in low and high.
+     * Also fixes the parameters specified in additionalFixParams (can be empty)
      *
      * Returns a vector of the minimised Minuit2 function values
      */
-    std::vector<double> _scanParameter(const size_t i, const size_t numPoints, const double low, const double high);
+    std::vector<double> _scanParameter(const size_t        i,
+                                       const size_t        numPoints,
+                                       const double        low,
+                                       const double        high,
+                                       std::vector<size_t> additionalFixParams);
 };
 
 #endif // MINUIT_SCANNER_BASE_H

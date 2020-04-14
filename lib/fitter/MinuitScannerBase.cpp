@@ -130,8 +130,11 @@ void MinuitScannerBase::twoDParamScan(const size_t i,
     }
 }
 
-std::vector<double>
-MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const double low, const double high)
+std::vector<double> MinuitScannerBase::_scanParameter(const size_t        i,
+                                                      const size_t        numPoints,
+                                                      const double        low,
+                                                      const double        high,
+                                                      std::vector<size_t> additionalFixParams)
 {
     // Check that we have sensible low and high
     if (low > high) {
@@ -145,11 +148,13 @@ MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const 
         throw D2K3PiException();
     }
 
-    // Check parameters have been set
-    if (_parameters) {
-        std::cerr << "Cannot scan parameter: parameters have not been set." << std::endl;
+    // Check that additionalFixParams doesn't contain the parameter we're scanning
+    if (std::find(additionalFixParams.begin(), additionalFixParams.end(), i) != additionalFixParams.end()) {
+        std::cerr << "Parameter " << i << " already fixed in param scan";
         throw D2K3PiException();
     }
+
+    additionalFixParams.push_back(i);
 
     // Create a vector of the right length to store our function values
     std::vector<double> values(numPoints);
@@ -166,14 +171,10 @@ MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const 
         // Fix parameter
         _parameters->SetValue(i, parameterVals[k]);
 
-        ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
-        migrad.Fix(i);
-
-        // Perform a fit
-        ROOT::Minuit2::FunctionMinimum min = migrad();
+        fit(additionalFixParams);
 
         // Populate chi squared
-        values[k] = min.Fval();
+        values[k] = *statistic;
     }
 
     return values;
