@@ -58,7 +58,7 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
         // Populate chi squared
         parameterScan[k] = std::make_pair(parameterVals[k], min.Fval());
 
-        _migrad.reset();
+        resetMigrad();
     }
 }
 
@@ -79,11 +79,6 @@ void MinuitScannerBase::twoDParamScan(const size_t i,
 
     if (i == j) {
         std::cerr << "Cannot perfom 2d scan on a parameter against itself" << std::endl;
-        throw D2K3PiException();
-    }
-
-    if (!_fitFcn) {
-        std::cerr << "Run fit before running 2d parameter scan" << std::endl;
         throw D2K3PiException();
     }
 

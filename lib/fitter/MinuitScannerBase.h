@@ -50,6 +50,14 @@ class MinuitScannerBase : public MinuitFitterBase
      * Calls parent constructor
      */
     MinuitScannerBase(const FitData_t& fitData);
+
+  private:
+    /*
+     * Perform a series of fits, holding parameter i fixed between the values specified in low and high.
+     *
+     * Returns a vector of the minimised Minuit2 function values
+     */
+    std::vector<double> _scanParameter(const size_t i, const size_t numPoints, const double low, const double high);
 };
 
 #endif // MINUIT_SCANNER_BASE_H
