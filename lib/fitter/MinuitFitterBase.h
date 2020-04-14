@@ -6,7 +6,6 @@
 #include "util.h"
 
 #include "Minuit2/FunctionMinimum.h"
-#include "Minuit2/MnMigrad.h"
 #include "TF1.h"
 
 /*
@@ -86,11 +85,6 @@ class MinuitFitterBase : public BaseFitter
      * Should be populated by the parent class.
      */
     std::unique_ptr<ROOT::Minuit2::MnUserParameters> _parameters = nullptr;
-
-    /*
-     * Minuit2 minimiser
-     */
-    std::unique_ptr<ROOT::Minuit2::MnMigrad> _migrad = nullptr;
 };
 
 #endif // MINUIT_FITTER_BASE_H

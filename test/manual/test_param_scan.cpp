@@ -32,12 +32,8 @@ void plotScan(MinuitPolynomialFitter& MinuitChiSqFitter, const size_t numPoints,
     case 2: graphTitle = "Parameter c ChiSq scan"; break;
     default: throw;
     }
-    double minParamVal =
-        MinuitChiSqFitter.fitParams.fitParams[paramIndex] - 2 * MinuitChiSqFitter.fitParams.fitParamErrors[paramIndex];
-    double maxParamVal =
-        MinuitChiSqFitter.fitParams.fitParams[paramIndex] + 2 * MinuitChiSqFitter.fitParams.fitParamErrors[paramIndex];
 
-    MinuitChiSqFitter.chiSqParameterScan(paramIndex, numPoints, minParamVal, maxParamVal);
+    MinuitChiSqFitter.chiSqParameterScan(paramIndex, numPoints);
     std::vector<double> values{};
     std::vector<double> chiSq{};
     splitVectorOfPairs(MinuitChiSqFitter.parameterScan, values, chiSq);
