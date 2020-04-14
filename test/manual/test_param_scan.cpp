@@ -23,7 +23,11 @@ void splitVectorOfPairs(std::vector<std::pair<double, double>>& pairs,
     }
 }
 
-void plotScan(MinuitPolynomialFitter& MinuitChiSqFitter, const size_t numPoints, const size_t paramIndex)
+void plotScan(MinuitPolynomialFitter& MinuitChiSqFitter,
+              const size_t            numPoints,
+              const size_t            paramIndex,
+              double                  min,
+              double                  max)
 {
     std::string graphTitle{""};
     switch (paramIndex) {
@@ -32,12 +36,8 @@ void plotScan(MinuitPolynomialFitter& MinuitChiSqFitter, const size_t numPoints,
     case 2: graphTitle = "Parameter c ChiSq scan"; break;
     default: throw;
     }
-    double minParamVal =
-        MinuitChiSqFitter.fitParams.fitParams[paramIndex] - 2 * MinuitChiSqFitter.fitParams.fitParamErrors[paramIndex];
-    double maxParamVal =
-        MinuitChiSqFitter.fitParams.fitParams[paramIndex] + 2 * MinuitChiSqFitter.fitParams.fitParamErrors[paramIndex];
 
-    MinuitChiSqFitter.chiSqParameterScan(paramIndex, numPoints, minParamVal, maxParamVal);
+    MinuitChiSqFitter.chiSqParameterScan(paramIndex, numPoints, min, max);
     std::vector<double> values{};
     std::vector<double> chiSq{};
     splitVectorOfPairs(MinuitChiSqFitter.parameterScan, values, chiSq);
@@ -94,10 +94,20 @@ void test_param_scan(void)
               << std::endl;
 
     // Perform a chi squared scan on each parameter
-    size_t numPoints = 100;
-    plotScan(MinuitChiSqScanner, numPoints, 0);
-    plotScan(MinuitChiSqScanner, numPoints, 1);
-    plotScan(MinuitChiSqScanner, numPoints, 2);
+    size_t                    numPoints = 100;
+    std::pair<double, double> aVals(
+        MinuitChiSqScanner.fitParams.fitParams[0] - 2 * MinuitChiSqScanner.fitParams.fitParamErrors[0],
+        MinuitChiSqScanner.fitParams.fitParams[0] + 2 * MinuitChiSqScanner.fitParams.fitParamErrors[0]);
+    std::pair<double, double> bVals(
+        MinuitChiSqScanner.fitParams.fitParams[1] - 2 * MinuitChiSqScanner.fitParams.fitParamErrors[1],
+        MinuitChiSqScanner.fitParams.fitParams[1] + 2 * MinuitChiSqScanner.fitParams.fitParamErrors[1]);
+    std::pair<double, double> cVals(
+        MinuitChiSqScanner.fitParams.fitParams[2] - 2 * MinuitChiSqScanner.fitParams.fitParamErrors[2],
+        MinuitChiSqScanner.fitParams.fitParams[2] + 2 * MinuitChiSqScanner.fitParams.fitParamErrors[2]);
+
+    plotScan(MinuitChiSqScanner, numPoints, 0, aVals.first, aVals.second);
+    plotScan(MinuitChiSqScanner, numPoints, 1, bVals.first, bVals.second);
+    plotScan(MinuitChiSqScanner, numPoints, 2, cVals.first, cVals.second);
 }
 
 void test_2d_scan()
