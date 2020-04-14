@@ -138,3 +138,61 @@ void MinuitScannerBase::twoDParamScan(const size_t i,
         }
     }
 }
+
+std::vector<double>
+MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const double low, const double high)
+{
+    // Check that we have sensible low and high
+    if (low > high) {
+        std::cerr << "Low value must be below high value for parameter scan." << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that our parameter index is in range
+    if (i >= fitParams.fitParams.size()) {
+        std::cerr << "Cannot scan parameter " << i << "; out of range" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that we haven't already set _migrad to something- it will be overwritten here
+    if (_migrad) {
+        std::cerr << "_migrad already set- this will be overwritten by the parameter scan function." << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check parameters have been set
+    if (_parameters) {
+        std::cerr << "Cannot scan parameter: parameters have not been set." << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Create a vector of the right length to store our function values
+    std::vector<double> values(numPoints);
+
+    // Find a vector of the parameter values we're interested in
+    std::vector<double> parameterVals(numPoints, 0.0);
+    double              step = (high - low) / (numPoints - 1);
+    for (size_t k = 0; k < numPoints; ++k) {
+        parameterVals[k] = low + k * step;
+    }
+
+    // For every value of the parameter we're interested in, fix the param, perform a fit + populate values
+    for (auto k = 0; k < numPoints; ++k) {
+        // Fix parameter
+        _parameters->SetValue(i, parameterVals[k]);
+
+        // Must re-set _migrad to account for the new parameter values
+        _migrad = std::make_unique<ROOT::Minuit2::MnMigrad>(*_fitFcn, *_parameters);
+        _migrad->Fix(i);
+
+        // Perform a fit
+        ROOT::Minuit2::FunctionMinimum min = (*_migrad)();
+
+        // Populate chi squared
+        values[k] = min.Fval();
+
+        resetMigrad();
+    }
+
+    return values;
+}
