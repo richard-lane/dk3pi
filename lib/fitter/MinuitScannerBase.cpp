@@ -130,11 +130,11 @@ void MinuitScannerBase::twoDParamScan(const size_t i,
     }
 }
 
-std::vector<double> MinuitScannerBase::_scanParameter(const size_t        i,
-                                                      const size_t        numPoints,
-                                                      const double        low,
-                                                      const double        high,
-                                                      std::vector<size_t> additionalFixParams)
+std::vector<double> MinuitScannerBase::_scanParameter(const size_t               i,
+                                                      const size_t               numPoints,
+                                                      const double               low,
+                                                      const double               high,
+                                                      const std::vector<size_t>& additionalFixParams)
 {
     // Check that we have sensible low and high
     if (low > high) {
@@ -154,7 +154,8 @@ std::vector<double> MinuitScannerBase::_scanParameter(const size_t        i,
         throw D2K3PiException();
     }
 
-    additionalFixParams.push_back(i);
+    std::vector<size_t> allFixParams{allFixParams};
+    allFixParams.push_back(i);
 
     // Create a vector of the right length to store our function values
     std::vector<double> values(numPoints);
@@ -171,7 +172,7 @@ std::vector<double> MinuitScannerBase::_scanParameter(const size_t        i,
         // Fix parameter
         _parameters->SetValue(i, parameterVals[k]);
 
-        fit(additionalFixParams);
+        fit(allFixParams);
 
         // Populate chi squared
         values[k] = *statistic;

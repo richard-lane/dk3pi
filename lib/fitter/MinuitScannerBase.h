@@ -58,11 +58,11 @@ class MinuitScannerBase : public MinuitFitterBase
      *
      * Returns a vector of the minimised Minuit2 function values
      */
-    std::vector<double> _scanParameter(const size_t        i,
-                                       const size_t        numPoints,
-                                       const double        low,
-                                       const double        high,
-                                       std::vector<size_t> additionalFixParams);
+    std::vector<double> _scanParameter(const size_t               i,
+                                       const size_t               numPoints,
+                                       const double               low,
+                                       const double               high,
+                                       const std::vector<size_t>& additionalFixParams);
 };
 
 #endif // MINUIT_SCANNER_BASE_H
