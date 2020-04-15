@@ -160,8 +160,8 @@ void test_2d_scan()
     size_t numAPoints     = 100;
     size_t numBPoints     = 100;
     size_t numTotalPoints = numAPoints * numBPoints;
-    double bSigma         = 3;
-    double aSigma         = 10;
+    double bSigma         = 2;
+    double aSigma         = 2;
     double minA = MinuitChiSqScanner.fitParams.fitParams[0] - aSigma * MinuitChiSqScanner.fitParams.fitParamErrors[0];
     double minB = MinuitChiSqScanner.fitParams.fitParams[1] - bSigma * MinuitChiSqScanner.fitParams.fitParamErrors[1];
     double maxA = MinuitChiSqScanner.fitParams.fitParams[0] + aSigma * MinuitChiSqScanner.fitParams.fitParamErrors[0];
