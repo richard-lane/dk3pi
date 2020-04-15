@@ -338,11 +338,93 @@ void test_ideal_z_scan()
     delete Graph;
 }
 
+void test_1d_z_scan()
+{
+    // Create an ideal dataset
+    double maxTime     = 0.002;
+    double numTimeBins = 50;
+    double error       = 0.00001;
+
+    DecayParams_t phaseSpaceParams = {
+        .x     = 0.0037,
+        .y     = 0.0066,
+        .r     = 0.055,
+        .z_im  = -0.2956,
+        .z_re  = 0.7609,
+        .width = 2439.0,
+    };
+    std::vector<double> params = util::expectedParams(phaseSpaceParams);
+    double              a      = params[0];
+    double              b      = params[1];
+    double              c      = params[2];
+
+    double              timeBinWidth = maxTime / numTimeBins;
+    std::vector<double> times        = std::vector<double>(numTimeBins, -1);
+    std::vector<double> ratioErrors  = std::vector<double>(numTimeBins, -1);
+
+    // Create idealised plot
+    for (size_t i = 0; i < numTimeBins; ++i) {
+        times[i] = i * timeBinWidth;
+    }
+    std::vector<double> ratios = idealRatios(times, error, a, b, c);
+    for (size_t i = 0; i < numTimeBins; ++i) {
+        ratioErrors[i] = ratio(a, b, c, times[i]) * error;
+    }
+
+    // Create a fitter + set params to an initial guess
+    std::vector<double> initialParameterGuess{phaseSpaceParams.x,
+                                              phaseSpaceParams.y,
+                                              phaseSpaceParams.r,
+                                              phaseSpaceParams.z_im,
+                                              phaseSpaceParams.z_re,
+                                              phaseSpaceParams.width};
+    std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
+    FitData_t      MyFitData  = FitData(times, std::vector<double>(ratios.size(), timeBinWidth), ratios, ratioErrors);
+    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
+    PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
+
+    // PhysFitter.fit(std::vector<size_t>{3});
+    // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+    // PhysFitter.saveFitPlot("fit", "fit.pdf", &legend);
+
+    // Perform 1d chi squared scans on the components of Z
+    size_t numPoints = 100;
+    double min       = -1;
+    double max       = 1;
+
+    PhysFitter.chiSqParameterScan(3, numPoints, min, max);
+
+    std::vector<double> zVals(numPoints);
+    std::vector<double> chiSquaredValsImScan(numPoints);
+    for (size_t i = 0; i < numPoints; ++i) {
+        zVals[i]                = PhysFitter.parameterScan[i].first;
+        chiSquaredValsImScan[i] = PhysFitter.parameterScan[i].second;
+    }
+
+    PhysFitter.chiSqParameterScan(3, numPoints, min, max);
+    std::vector<double> chiSquaredValsReScan(numPoints);
+    for (size_t i = 0; i < numPoints; ++i) {
+        chiSquaredValsReScan[i] = PhysFitter.parameterScan[i].second;
+    }
+
+    TGraph* ImGraph = new TGraph(numPoints, zVals.data(), chiSquaredValsImScan.data());
+    ImGraph->SetTitle("Im Z scan;Im(Z);chiSq");
+    util::saveObjectToFile(ImGraph, "Im_Z_Scan.pdf", "");
+
+    TGraph* ReGraph = new TGraph(numPoints, zVals.data(), chiSquaredValsReScan.data());
+    ReGraph->SetTitle("Re Z scan;Re(Z);chiSq");
+    util::saveObjectToFile(ReGraph, "Re_Z_Scan.pdf", "");
+
+    delete ImGraph;
+    delete ReGraph;
+}
+
 int main()
 {
     test_param_scan();
     test_2d_scan();
     test_ideal_z_scan();
     test_z_scan();
+    test_1d_z_scan();
     return 0;
 }

@@ -57,7 +57,7 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
     }
 
     // Create a minimiser
-    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters);
+    ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters, 2U);
 
     // If we find index i in our list of parameters to fix, fix it.
     for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
