@@ -129,7 +129,7 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
         MinuitPolynomialFitter MyFitter = MinuitPolynomialFitter(MyFitData);
-        MyFitter.fit(std::vector<size_t>{});
+        MyFitter.fit();
 
         // Save our fit plot to file
         if (!i) {

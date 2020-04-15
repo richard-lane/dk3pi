@@ -45,7 +45,7 @@ MinuitPolynomialFitter performFit(size_t numTimeBins, double maxTime, double a, 
     FitData_t MyFitData = FitData(times, std::vector<double>(numTimeBins, timeBinWidth), ratios, ratioErrors);
     MinuitPolynomialFitter MyFitter(MyFitData);
     MyFitter.setPolynomialParams(std::vector<double>{a, b, c}, std::vector<double>{1, 1, 1});
-    MyFitter.fit(std::vector<size_t>{});
+    MyFitter.fit();
     // MyFitter.saveFitPlot("Generated DCS/CF ratios", "baz.pdf");
 
     return MyFitter;

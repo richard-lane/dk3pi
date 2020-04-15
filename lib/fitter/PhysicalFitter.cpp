@@ -12,7 +12,7 @@ PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitScannerBase(fit
     _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 }
 
-void PhysicalFitter::fit(const std::vector<size_t>& fixParams)
+void PhysicalFitter::fit()
 {
     // Check that parameters have been set
     if (!_parameters) {
@@ -21,22 +21,21 @@ void PhysicalFitter::fit(const std::vector<size_t>& fixParams)
     }
 
     // Check that we have fixed at least one of x, y, Re(Z) or Im(Z)- otherwise our fit is poorly defined
-    if (fixParams.empty() || (std::find(fixParams.begin(), fixParams.end(), 0) == fixParams.end() && // x
-                              std::find(fixParams.begin(), fixParams.end(), 1) == fixParams.end() && // y
-                              std::find(fixParams.begin(), fixParams.end(), 3) == fixParams.end() && // z_im
-                              std::find(fixParams.begin(), fixParams.end(), 4) == fixParams.end())   // z_re
-    ) {
+    // Create a vector of Minuit's internal representations of x, y, Re(Z) and Im(Z)
+    std::vector<ROOT::Minuit2::MinuitParameter> x_y_rez_imz = _parameters->Trafo().Parameters();
+    x_y_rez_imz.erase(x_y_rez_imz.begin() + 2);
+    x_y_rez_imz.erase(x_y_rez_imz.begin() + 5);
+
+    // Check that at least one of them is fixed
+    if (std::all_of(x_y_rez_imz.begin(), x_y_rez_imz.end(), [](ROOT::Minuit2::MinuitParameter& param) {
+            return !param.IsFixed();
+        })) {
         std::cerr << "Must fix one of x, y, or a component of Z for fit to be well defined" << std::endl;
         throw D2K3PiException();
     }
 
     // Use base class implementation to actually perform the fit
-    // For now always fix width
-    std::vector<size_t> allFixParams{fixParams};
-    if (std::find(fixParams.begin(), fixParams.end(), 5) == fixParams.end()) {
-        allFixParams.push_back(5);
-    }
-    MinuitFitterBase::fit(allFixParams);
+    MinuitFitterBase::fit();
 
     // Create a best-fit function
     bestFitFunction = std::make_unique<TF1>(

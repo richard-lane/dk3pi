@@ -65,19 +65,17 @@ class MinuitScannerBase : public MinuitFitterBase
   private:
     /*
      * Perform a series of fits, holding parameter i fixed between the values specified in low and high.
-     * Also fixes the parameters specified in additionalFixParams (can be empty)
      *
      * If a default value of chi squared is provided, failed fits will be ignored + the value given will be used instead
      * (a warning message is still emitted)
      *
      * Returns a vector of the minimised Minuit2 function values
      */
-    std::vector<double> _scanParameter(const size_t               i,
-                                       const size_t               numPoints,
-                                       const double               low,
-                                       const double               high,
-                                       const std::vector<size_t>& additionalFixParams,
-                                       const double*              defaultChiSq = nullptr);
+    std::vector<double> _scanParameter(const size_t  i,
+                                       const size_t  numPoints,
+                                       const double  low,
+                                       const double  high,
+                                       const double* defaultChiSq = nullptr);
 };
 
 #endif // MINUIT_SCANNER_BASE_H

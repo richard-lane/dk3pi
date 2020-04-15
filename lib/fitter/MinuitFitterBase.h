@@ -24,16 +24,13 @@ class MinuitFitterBase : public BaseFitter
      * parameters); this should be set by child class implementations of this->fit().
      *
      */
-    virtual void fit(const std::vector<size_t>& fixParams);
+    virtual void fit();
 
     /*
      * Given a vector representing the covariance between a set of parameters, find the covariance matrix using the
      * errors in fitParams.fitParamErrors and convert it to a TMatrixD
-     *
-     * Must tell this function which parameters were fixed; {0, 2, 3} means params 0, 2 and 3 were fixed.
      */
-    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
-                                                const std::vector<size_t>& fixedParams);
+    TMatrixD covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector);
 
     /*
      * Save a plot of our data to file
@@ -45,6 +42,16 @@ class MinuitFitterBase : public BaseFitter
     virtual void saveFitPlot(const std::string&          plotTitle,
                              const std::string&          path,
                              const util::LegendParams_t* legendParams = nullptr);
+
+    /*
+     * Fix parameters by name to their current values.
+     */
+    void fixParameters(const std::vector<std::string>& fixParams);
+
+    /*
+     * Free parameters by name
+     */
+    void freeParameters(const std::vector<std::string>& freeParams);
 
     /*
      * Our best-fit function
@@ -68,7 +75,7 @@ class MinuitFitterBase : public BaseFitter
     /*
      * Helper function to store the result from a Minuit minimisation in this class' fitParams
      */
-    void _storeMinuitFitParams(const std::vector<size_t>& fixIndices);
+    void _storeMinuitFitParams();
 
     /*
      * Set fit parameters and their names

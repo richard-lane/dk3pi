@@ -23,17 +23,17 @@ class PhysicalFitter : public MinuitScannerBase
      * Fit our data to a second-order polynomial r2 + r(yRZ + xImZ)Gt + (x2+y2)(Gt)2/4 using Minuit2 and the chi-squared
      * method.
      *
-     * User should provide a vector of parameters to fix; (should not be empty) parameter numbering is defined by
-     * _paramNames.
+     * Should fix at least one of x, y, or a componenent of Z before fitting (else fit is poorly defined)
      *
      * Allocates memory to _plot and _bestFitFunction
      *
      * Populates fitParams
      */
-    void fit(const std::vector<size_t>& fixParams);
+    void fit();
 
     /*
      * Set this instance's _parameters attribute
+     *
      */
     void setPhysicalFitParams(const std::vector<double>& initialParams, const std::vector<double>& initialErrors);
 

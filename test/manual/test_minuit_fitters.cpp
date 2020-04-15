@@ -56,7 +56,7 @@ void compareRootMinuit(void)
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
     CernFitter.fit(0, maxTime, "Q");
     MinuitPolyFit.setPolynomialParams(initialParameterGuess, initialErrorsGuess);
-    MinuitPolyFit.fit(std::vector<size_t>{});
+    MinuitPolyFit.fit();
 
     std::vector<double> initialParamGuess{phaseSpaceParams.x,
                                           phaseSpaceParams.y,
@@ -67,9 +67,9 @@ void compareRootMinuit(void)
     std::vector<double> initialErrGuess{1, 1, 1, 1, 1, 1};
 
     // Perform a fit, fixing x to its "correct" value
-    std::vector<size_t> fixParams{0};
     PhysFitter.setPhysicalFitParams(initialParamGuess, initialErrGuess);
-    PhysFitter.fit(fixParams);
+    PhysFitter.fixParameters(std::vector<std::string>{"x"});
+    PhysFitter.fit();
 
     // Print fit parameters to console
     for (size_t i = 0; i < 3; ++i) {

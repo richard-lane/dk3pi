@@ -23,7 +23,7 @@ class MinuitPolynomialFitter : public MinuitScannerBase
      *
      * Populates fitParams
      */
-    void fit(const std::vector<size_t>& fixParams);
+    void fit();
 
     /*
      * Set initial values + errors for a, b, and c

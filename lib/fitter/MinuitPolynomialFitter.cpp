@@ -12,14 +12,14 @@ MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : Minui
     _fitFcn = std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 }
 
-void MinuitPolynomialFitter::fit(const std::vector<size_t>& fixParams)
+void MinuitPolynomialFitter::fit()
 {
     if (!_parameters) {
         std::cerr << "parameters not set; call this->setPolynomialParams before fitting." << std::endl;
         throw D2K3PiException();
     }
 
-    MinuitFitterBase::fit(fixParams);
+    MinuitFitterBase::fit();
 
     // Set our TGraph pointer to the right thing
     plot = std::make_unique<TGraphErrors>(_fitData.numPoints,

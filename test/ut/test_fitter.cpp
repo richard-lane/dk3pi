@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::toler
     std::vector<double> parameterGuess{0.9, 1.1, 1.2};
     std::vector<double> errorGuess{1, 1, 1};
     MyFitter.setPolynomialParams(parameterGuess, errorGuess);
-    MyFitter.fit(std::vector<size_t>{});
+    MyFitter.fit();
     CHECK_CLOSE_COLLECTIONS(MyFitter.fitParams.fitParams, expectedFitCoefficients, 0.001);
 }
 
@@ -293,17 +293,16 @@ BOOST_AUTO_TEST_CASE(test_corr_cov_conversion, *boost::unit_test::tolerance(0.00
 
     // Create a fitter object and set the errors to the right things. We will need to pass sensible bin limits to the
     // fitter
-    std::vector<double> binCentres{0, 5, 10};
-    std::vector<double> binWidths{1, 1, 1};
-    FitData_t           fitData(binCentres, binWidths, errors, errors);
-    PhysicalFitter      MyFitter(fitData);
+    std::vector<double>    binCentres{0, 5, 10};
+    std::vector<double>    binWidths{1, 1, 1};
+    FitData_t              fitData(binCentres, binWidths, errors, errors);
+    MinuitPolynomialFitter MyFitter(fitData);
+    MyFitter.setPolynomialParams(std::vector<double>(3, 1), errors);
 
-    // Trick the Fitter into thinking a fit has been performed by manually setting the fitParams.fitParamErrors
-    // attribute. It is REALLY BAD that it's possible to do this, but I trust myself enough not to abuse or get confused
-    // by it. Plus no one else is ever probably going to look at this code so its ok
+    // Hack here where I set something that shouldn't be possible
     MyFitter.fitParams.fitParamErrors = errors;
-    BOOST_CHECK(MyFitter.covarianceVector2CorrelationMatrix(covarianceVector, std::vector<size_t>{}) ==
-                expectedCorrMatrix);
+
+    BOOST_CHECK(MyFitter.covarianceVector2CorrelationMatrix(covarianceVector) == expectedCorrMatrix);
 }
 
 #endif // TEST_FITTER_CPP

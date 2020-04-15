@@ -11,6 +11,42 @@ MinuitFitterBase::MinuitFitterBase(const FitData_t& fitData) : BaseFitter(fitDat
     ;
 }
 
+void MinuitFitterBase::fixParameters(const std::vector<std::string>& fixParams)
+{
+    size_t numFitParams = _parameters->Parameters().size();
+    size_t numFixParams = fixParams.size();
+    if (numFixParams >= numFitParams) {
+        std::cerr << "Cannot fix " << numFixParams << " parameters, only have " << numFitParams << " (";
+        for (size_t i = 0; i < numFitParams; ++i) {
+            std::cerr << _parameters->GetName(i) << ", ";
+        }
+        std::cerr << "\b\b)." << std::endl;
+        throw D2K3PiException();
+    }
+
+    for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
+        _parameters->Fix(*it);
+    }
+}
+
+void MinuitFitterBase::freeParameters(const std::vector<std::string>& freeParams)
+{
+    size_t numFitParams  = _parameters->Parameters().size();
+    size_t numFreeParams = freeParams.size();
+    if (numFreeParams >= numFitParams) {
+        std::cerr << "Cannot free " << numFreeParams << " parameters, only have " << numFitParams << " (";
+        for (size_t i = 0; i < numFitParams; ++i) {
+            std::cerr << _parameters->GetName(i) << ", ";
+        }
+        std::cerr << "\b\b)." << std::endl;
+        throw D2K3PiException();
+    }
+
+    for (auto it = freeParams.begin(); it != freeParams.end(); ++it) {
+        _parameters->Release(*it);
+    }
+}
+
 void MinuitFitterBase::_setParams(const std::vector<std::string>& names,
                                   const std::vector<double>&      values,
                                   const std::vector<double>&      errors)
@@ -30,7 +66,7 @@ void MinuitFitterBase::_setParams(const std::vector<std::string>& names,
     }
 }
 
-void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
+void MinuitFitterBase::fit()
 {
     if (!_fitFcn) {
         std::cerr << "Fit fcn not yet set - cannot perform fit. Classes inheriting from MinuitFitterBase must set "
@@ -44,25 +80,8 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
         throw D2K3PiException();
     }
 
-    // Check that we aren't fixing more params than we have
-    size_t numFitParams = _parameters->Parameters().size();
-    size_t numFixParams = fixParams.size();
-    if (numFixParams >= numFitParams) {
-        std::cerr << "Cannot fix " << numFixParams << " parameters, only have " << numFitParams << " (";
-        for (size_t i = 0; i < numFitParams; ++i) {
-            std::cerr << _parameters->GetName(i) << ", ";
-        }
-        std::cerr << "\b\b)." << std::endl;
-        throw D2K3PiException();
-    }
-
     // Create a minimiser
     ROOT::Minuit2::MnMigrad migrad(*_fitFcn, *_parameters, 2U);
-
-    // If we find index i in our list of parameters to fix, fix it.
-    for (auto it = fixParams.begin(); it != fixParams.end(); ++it) {
-        migrad.Fix(*it);
-    }
 
     // Minimuse chi squared as defined by our _fitFcn
     min = std::make_unique<ROOT::Minuit2::FunctionMinimum>(migrad());
@@ -74,7 +93,7 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
         throw BadFitException(*min);
     }
 
-    _storeMinuitFitParams(fixParams);
+    _storeMinuitFitParams();
 
     // Store chi squared
     statistic = std::make_unique<double>(min->Fval());
@@ -87,17 +106,29 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
                                           _fitData.errors.data());
 }
 
-TMatrixD MinuitFitterBase::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector,
-                                                              const std::vector<size_t>& fixedParams)
+TMatrixD MinuitFitterBase::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector)
 {
+
+    if (!_parameters) {
+        std::cerr << "Parameters not set" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check which parameters are fixed and create a vector of them
+    std::vector<ROOT::Minuit2::MinuitParameter> minuitParams{_parameters->Trafo().Parameters()};
+    std::vector<ROOT::Minuit2::MinuitParameter> fixedParams{};
+    for (auto it = minuitParams.begin(); it != minuitParams.end(); ++it) {
+        if (it->IsFixed()) {
+            fixedParams.push_back(*it);
+        }
+    }
+
     // Check that we have the right number of elements in our covariance vector
     size_t numElements = covarianceVector.size();
-    size_t numParams   = fitParams.fitParamErrors.size() - fixedParams.size();
+    size_t numParams   = _parameters->Params().size() - fixedParams.size();
 
-    if (numParams == 0) {
-        std::cerr << "Fit has not yet been performed; fit param error vector is empty (or the fit has been run with 0 "
-                     "free parameters)."
-                  << std::endl;
+    if (!numParams) {
+        std::cerr << "No free parameters found when constructing covariance matrix" << std::endl;
         throw D2K3PiException();
     }
 
@@ -114,8 +145,12 @@ TMatrixD MinuitFitterBase::covarianceVector2CorrelationMatrix(const std::vector<
     // Find which error values are relevant; i.e. those which correspond to free parameters
     // Do this by copying the vector + removing the values in order, highest-first
     // Highest-first to avoid issues with looping over a vector + deleting elements from it concurrently.
-    std::vector<double> errors         = fitParams.fitParamErrors;
-    std::vector<size_t> paramsToRemove = fixedParams;
+    std::vector<double> errors = fitParams.fitParamErrors;
+    std::vector<size_t> paramsToRemove{};
+    for (auto it = fixedParams.begin(); it != fixedParams.end(); ++it) {
+        paramsToRemove.push_back(it->Number());
+    }
+
     std::sort(paramsToRemove.rbegin(), paramsToRemove.rend());
     for (auto it = paramsToRemove.begin(); it != paramsToRemove.end(); ++it) {
         errors.erase(errors.begin() + *it);
@@ -182,7 +217,7 @@ void MinuitFitterBase::saveFitPlot(const std::string&          plotTitle,
     }
 }
 
-void MinuitFitterBase::_storeMinuitFitParams(const std::vector<size_t>& fixParamIndices)
+void MinuitFitterBase::_storeMinuitFitParams()
 {
     if (!min) {
         std::cerr << "Cannot store params: fit not yet run" << std::endl;
@@ -195,5 +230,5 @@ void MinuitFitterBase::_storeMinuitFitParams(const std::vector<size_t>& fixParam
 
     // Acquire a vector representing the covariance matrix and convert it to a correlation TMatrixD
     fitParams.correlationMatrix =
-        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min->UserCovariance().Data(), fixParamIndices));
+        std::make_unique<TMatrixD>(covarianceVector2CorrelationMatrix(min->UserCovariance().Data()));
 }
