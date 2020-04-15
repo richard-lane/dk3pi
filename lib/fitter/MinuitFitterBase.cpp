@@ -11,16 +11,16 @@ MinuitFitterBase::MinuitFitterBase(const FitData_t& fitData) : BaseFitter(fitDat
     ;
 }
 
-void MinuitFitterBase::setParams(const std::vector<std::string>& names,
-                                 const std::vector<double>&      values,
-                                 const std::vector<double>&      errors)
+void MinuitFitterBase::_setParams(const std::vector<std::string>& names,
+                                  const std::vector<double>&      values,
+                                  const std::vector<double>&      errors)
 {
     size_t numNames  = names.size();
     size_t numValues = values.size();
     size_t numErrs   = errors.size();
     if (numNames != numValues || numErrs != numValues) {
         std::cerr << "Error setting parameters; passed " << numNames << " names, " << numValues << " values, and "
-                  << numErrs << " errors";
+                  << numErrs << " errors" << std::endl;
         throw D2K3PiException();
     }
 
@@ -71,9 +71,7 @@ void MinuitFitterBase::fit(const std::vector<size_t>& fixParams)
     // I think this checks that the call limit wasn't reached and that the fit converged, though it's never possible
     // to be sure with Minuit2
     if (!min->IsValid()) {
-        std::cerr << "Minuit fit invalid" << std::endl;
-        std::cerr << *min << std::endl;
-        throw D2K3PiException();
+        throw BadFitException(*min);
     }
 
     _storeMinuitFitParams(fixParams);
@@ -170,12 +168,18 @@ void MinuitFitterBase::saveFitPlot(const std::string&          plotTitle,
         std::cerr << "Must specify legend parameters if plotting a minuit-fitted graph" << std::endl;
         throw D2K3PiException();
     }
-    // bestFitPlot->SetLineColor(kRed);
-    // util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitPlot.get()},
-    //                                      std::vector<std::string>{"AP", "CSAME"},
-    //                                      std::vector<std::string>{"Data", "Best fit"},
-    //                                      path,
-    //                                      *legendParams);
+
+    if (!bestFitFunction) {
+        util::saveObjectToFile(plot.get(), path, "AP", legendParams);
+
+    } else {
+        bestFitFunction->SetLineColor(kRed);
+        util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitFunction.get()},
+                                              std::vector<std::string>{"AP", "CSAME"},
+                                              std::vector<std::string>{"Data", "Best fit"},
+                                              path,
+                                              *legendParams);
+    }
 }
 
 void MinuitFitterBase::_storeMinuitFitParams(const std::vector<size_t>& fixParamIndices)

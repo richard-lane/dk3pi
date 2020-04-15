@@ -12,6 +12,8 @@
 #include "TGraph.h"
 #include "TGraph2D.h"
 
+#include "testutil.h"
+
 void splitVectorOfPairs(std::vector<std::pair<double, double>>& pairs,
                         std::vector<double>&                    first,
                         std::vector<double>&                    second)
@@ -87,7 +89,8 @@ void test_param_scan(void)
     // Perform fit, outputu minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    MinuitChiSqScanner.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<size_t>{});
+    MinuitChiSqScanner.setPolynomialParams(initialParameterGuess, initialErrorsGuess);
+    MinuitChiSqScanner.fit(std::vector<size_t>{});
     std::cout << "Min chisq: " << *(MinuitChiSqScanner.statistic) << std::endl;
     std::cout << "Params: " << MinuitChiSqScanner.fitParams.fitParams[0] << " "
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
@@ -146,7 +149,8 @@ void test_2d_scan()
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    MinuitChiSqScanner.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<size_t>{});
+    MinuitChiSqScanner.setPolynomialParams(initialParameterGuess, initialErrorsGuess);
+    MinuitChiSqScanner.fit(std::vector<size_t>{});
     std::cout << "Min chisq: " << *(MinuitChiSqScanner.statistic) << std::endl;
     std::cout << "Params: " << MinuitChiSqScanner.fitParams.fitParams[0] << " "
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
@@ -226,8 +230,9 @@ void test_z_scan()
                                               phaseSpaceParams.z_re,
                                               phaseSpaceParams.width};
     std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
-    PhysFitter.fit(initialParameterGuess, initialErrorsGuess, ChiSquared, std::vector<size_t>{0});
-    std::cout << "Min chisq: " << *(PhysFitter.statistic) << std::endl;
+    PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
+    // PhysFitter.fit(std::vector<size_t>{0});
+    // std::cout << "Min chisq: " << *(PhysFitter.statistic) << std::endl;
 
     // Perform a 2d chi squared scan on the components of Z
     size_t numPoints      = 100;
@@ -235,7 +240,8 @@ void test_z_scan()
     double min            = -1;
     double max            = 1;
 
-    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
+    std::unique_ptr<double> defaultChiSq = std::make_unique<double>(0);
+    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max, defaultChiSq.get());
 
     std::vector<double> imVals(numTotalPoints);
     std::vector<double> reVals(numTotalPoints);
@@ -253,10 +259,90 @@ void test_z_scan()
     delete Graph;
 }
 
+/*
+ * Perform a fit to ideal data ignore the result + perform a 2d scan of im(Z) and re(Z)
+ */
+void test_ideal_z_scan()
+{
+    std::cout << "---- Ideal dataset Z scan \n\n\n";
+
+    // Create an ideal dataset
+    double maxTime     = 0.002;
+    double numTimeBins = 50;
+    double error       = 0.00001;
+
+    DecayParams_t phaseSpaceParams = {
+        .x     = 0.0037,
+        .y     = 0.0066,
+        .r     = 0.055,
+        .z_im  = -0.2956,
+        .z_re  = 0.7609,
+        .width = 2439.0,
+    };
+    std::vector<double> params = util::expectedParams(phaseSpaceParams);
+    double              a      = params[0];
+    double              b      = params[1];
+    double              c      = params[2];
+
+    double              timeBinWidth = maxTime / numTimeBins;
+    std::vector<double> times        = std::vector<double>(numTimeBins, -1);
+    std::vector<double> ratioErrors  = std::vector<double>(numTimeBins, -1);
+
+    // Create idealised plot
+    for (size_t i = 0; i < numTimeBins; ++i) {
+        times[i] = i * timeBinWidth;
+    }
+    std::vector<double> ratios = idealRatios(times, error, a, b, c);
+    for (size_t i = 0; i < numTimeBins; ++i) {
+        ratioErrors[i] = ratio(a, b, c, times[i]) * error;
+    }
+
+    // Create a fitter + set params to an initial guess
+    std::vector<double> initialParameterGuess{phaseSpaceParams.x,
+                                              phaseSpaceParams.y,
+                                              phaseSpaceParams.r,
+                                              phaseSpaceParams.z_im,
+                                              phaseSpaceParams.z_re,
+                                              phaseSpaceParams.width};
+    std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
+    FitData_t      MyFitData  = FitData(times, std::vector<double>(ratios.size(), timeBinWidth), ratios, ratioErrors);
+    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
+    PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
+
+    // PhysFitter.fit(std::vector<size_t>{3});
+    // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+    // PhysFitter.saveFitPlot("fit", "fit.pdf", &legend);
+
+    // Perform a 2d chi squared scan on the components of Z
+    size_t numPoints      = 10;
+    size_t numTotalPoints = numPoints * numPoints;
+    double min            = -1;
+    double max            = 1;
+
+    std::unique_ptr<double> defaultChiSq = std::make_unique<double>(0);
+    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max, defaultChiSq.get());
+
+    std::vector<double> imVals(numTotalPoints);
+    std::vector<double> reVals(numTotalPoints);
+    std::vector<double> chiSquaredVals(numTotalPoints);
+
+    for (size_t i = 0; i < numTotalPoints; ++i) {
+        imVals[i]         = PhysFitter.twoDParameterScan[i][0];
+        reVals[i]         = PhysFitter.twoDParameterScan[i][1];
+        chiSquaredVals[i] = PhysFitter.twoDParameterScan[i][2];
+    }
+
+    TGraph2D* Graph = new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredVals.data());
+    Graph->SetTitle("2d Z scan;Im(Z);Re(Z);chiSq");
+    util::saveObjectToFile(Graph, "z_ideal.pdf", "surf1");
+    delete Graph;
+}
+
 int main()
 {
     test_param_scan();
     test_2d_scan();
+    test_ideal_z_scan();
     test_z_scan();
     return 0;
 }

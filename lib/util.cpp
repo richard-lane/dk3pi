@@ -25,12 +25,29 @@ boost::filesystem::path concatPaths(std::string plotDir, std::string plotName, s
     return dir / file;
 }
 
-void saveObjectToFile(TObject *myObject, const std::string &path, const std::string &drawOptions)
+void saveObjectToFile(TObject *                   myObject,
+                      const std::string &         path,
+                      const std::string &         drawOptions,
+                      const util::LegendParams_t *legendParams)
 {
     TCanvas *c = new TCanvas();
     c->cd();
     myObject->Draw(drawOptions.c_str());
-    c->SaveAs(path.c_str());
+
+    if (legendParams) {
+        TLegend *legend = new TLegend(legendParams->x1,
+                                      legendParams->y1,
+                                      legendParams->x2,
+                                      legendParams->y2,
+                                      legendParams->header.c_str(),
+                                      legendParams->options.c_str());
+        legend->Draw();
+        c->SaveAs(path.c_str());
+        delete legend;
+
+    } else { // stupid
+        c->SaveAs(path.c_str());
+    }
 
     delete c;
 }

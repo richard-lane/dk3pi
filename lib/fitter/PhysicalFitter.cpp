@@ -12,14 +12,11 @@ PhysicalFitter::PhysicalFitter(const FitData_t& fitData) : MinuitScannerBase(fit
     _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
 }
 
-void PhysicalFitter::fit(const std::vector<double>& initialParams,
-                         const std::vector<double>& initialErrors,
-                         const FitAlgorithm_t&      FitMethod,
-                         const std::vector<size_t>& fixParams)
+void PhysicalFitter::fit(const std::vector<size_t>& fixParams)
 {
-    // Check that we have been passed 6 initial parameters and errors
-    if (initialParams.size() != 6 || initialErrors.size() != 6) {
-        std::cout << "fit requires a guess of 6 parameters and their errors" << std::endl;
+    // Check that parameters have been set
+    if (!_parameters) {
+        std::cerr << "Parameters not set" << std::endl;
         throw D2K3PiException();
     }
 
@@ -34,11 +31,21 @@ void PhysicalFitter::fit(const std::vector<double>& initialParams,
     }
 
     // Use base class implementation to actually perform the fit
-    setParams(_paramNames, initialParams, initialErrors);
-    MinuitFitterBase::fit(fixParams);
+    // For now always fix width
+    std::vector<size_t> allFixParams{fixParams};
+    if (std::find(fixParams.begin(), fixParams.end(), 5) == fixParams.end()) {
+        allFixParams.push_back(5);
+    }
+    MinuitFitterBase::fit(allFixParams);
 
     // Create a best-fit function
     bestFitFunction = std::make_unique<TF1>(
         "Best fit function", "[2]*[2] + [2]*([1]*[4] + [0]*[3])*[5]*x + 0.25 * ([0]*[0] + [1]*[1])*[5]*[5]*x*x");
     bestFitFunction->SetParameters(fitParams.fitParams.data());
+}
+
+void PhysicalFitter::setPhysicalFitParams(const std::vector<double>& initialParams,
+                                          const std::vector<double>& initialErrors)
+{
+    _setParams(_paramNames, initialParams, initialErrors);
 }

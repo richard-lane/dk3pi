@@ -12,13 +12,7 @@
 
 #include "TGraph.h"
 
-/*
- * Find the expected ratio at a given time
- */
-inline double ratio(const double a, const double b, const double c, const double time)
-{
-    return a + b * time + c * time * time;
-}
+#include "testutil.h"
 
 /*
  * Create an idealised set of ratios and times with the provided errors, fit them with the Fitter() class and return a
@@ -36,22 +30,22 @@ MinuitPolynomialFitter performFit(size_t numTimeBins, double maxTime, double a, 
 
     double              timeBinWidth = maxTime / numTimeBins;
     std::vector<double> times        = std::vector<double>(numTimeBins, -1);
-    std::vector<double> ratios       = std::vector<double>(numTimeBins, -1);
     std::vector<double> ratioErrors  = std::vector<double>(numTimeBins, -1);
 
     // Create idealised plot
     for (size_t i = 0; i < numTimeBins; ++i) {
-        double time      = i * timeBinWidth;
-        double thisRatio = ratio(a, b, c, time);
-        times[i]         = time;
-        ratios[i]        = thisRatio * (1 + error * distribution(mt));
-        ratioErrors[i]   = thisRatio * error;
+        times[i] = i * timeBinWidth;
+    }
+    std::vector<double> ratios = idealRatios(times, error, a, b, c);
+    for (size_t i = 0; i < numTimeBins; ++i) {
+        ratioErrors[i] = ratio(a, b, c, times[i]) * error;
     }
 
     // Fit our idealised plot
     FitData_t MyFitData = FitData(times, std::vector<double>(numTimeBins, timeBinWidth), ratios, ratioErrors);
     MinuitPolynomialFitter MyFitter(MyFitData);
-    MyFitter.fit(std::vector<double>{a, b, c}, std::vector<double>{1, 1, 1}, ChiSquared, std::vector<size_t>{});
+    MyFitter.setPolynomialParams(std::vector<double>{a, b, c}, std::vector<double>{1, 1, 1});
+    MyFitter.fit(std::vector<size_t>{});
     // MyFitter.saveFitPlot("Generated DCS/CF ratios", "baz.pdf");
 
     return MyFitter;
@@ -82,7 +76,7 @@ int main()
     // The error is calculated from error * random number
     double error = 1;
 
-    size_t              numExperiments = 100000;
+    size_t              numExperiments = 1000;
     std::vector<double> aPull          = std::vector<double>(numExperiments, std::nan("-1"));
     std::vector<double> bPull          = std::vector<double>(numExperiments, std::nan("-1"));
     std::vector<double> cPull          = std::vector<double>(numExperiments, std::nan("-1"));

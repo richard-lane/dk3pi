@@ -41,12 +41,6 @@ namespace util
 boost::filesystem::path concatPaths(std::string plotDir, std::string plotName, std::string fileExtension);
 
 /*
- * Save a TObject to file
- * The extension in the specified path determines the format of the file.
- */
-void saveObjectToFile(TObject *myObject, const std::string &path, const std::string &drawOptions = "");
-
-/*
  * Parameters that should be passed to TLegend() constructor
  *
  * Co-ordinates are the location of the legend
@@ -66,6 +60,15 @@ typedef struct LegendParams {
     // Options
     std::string options = "brNDC";
 } LegendParams_t;
+
+/*
+ * Save a TObject to file
+ * The extension in the specified path determines the format of the file.
+ */
+void saveObjectToFile(TObject *                   myObject,
+                      const std::string &         path,
+                      const std::string &         drawOptions  = "",
+                      const util::LegendParams_t *legendParams = nullptr);
 
 /*
  * Save multiple TObjects to file, useful for e.g. plotting multiple TGraphs on one canvas

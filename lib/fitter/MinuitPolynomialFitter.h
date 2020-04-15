@@ -17,20 +17,18 @@ class MinuitPolynomialFitter : public MinuitScannerBase
     /*
      * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.
      *
-     * The user should provide an initial guess at the parameters and their errors
-     * Parameters are {x, y, r, z_im, z_re, width}
+     * User should call setPolynomialParams first to set an initial guess at the parameters and their errors
      *
-     * FitMethod tells the fitter whether to use chi squared or maximum likelihood (max likelihood isn't actually
-     * implemented)
-     *
-     * Allocates memory to _plot and _bestFitPlot
+     * Allocates memory to _plot and _bestFitFunction
      *
      * Populates fitParams
      */
-    void fit(const std::vector<double>& initialParams,
-             const std::vector<double>& initialErrors,
-             const FitAlgorithm_t&      FitMethod,
-             const std::vector<size_t>& fixParams);
+    void fit(const std::vector<size_t>& fixParams);
+
+    /*
+     * Set initial values + errors for a, b, and c
+     */
+    void setPolynomialParams(const std::vector<double>& initialParams, const std::vector<double>& initialErrors);
 };
 
 #endif // MINUIT_POLY_FITTER_H

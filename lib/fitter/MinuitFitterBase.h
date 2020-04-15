@@ -27,13 +27,6 @@ class MinuitFitterBase : public BaseFitter
     virtual void fit(const std::vector<size_t>& fixParams);
 
     /*
-     * Set fit parameters and their names
-     */
-    void setParams(const std::vector<std::string>& names,
-                   const std::vector<double>&      values,
-                   const std::vector<double>&      errors);
-
-    /*
      * Given a vector representing the covariance between a set of parameters, find the covariance matrix using the
      * errors in fitParams.fitParamErrors and convert it to a TMatrixD
      *
@@ -43,13 +36,15 @@ class MinuitFitterBase : public BaseFitter
                                                 const std::vector<size_t>& fixedParams);
 
     /*
-     * Save a plot of our data and fit to file
+     * Save a plot of our data to file
      *
      * Must specify parameters for drawing a legend.
+     *
+     * Intended to be overridden for plotting best-fit
      */
-    void saveFitPlot(const std::string&          plotTitle,
-                     const std::string&          path,
-                     const util::LegendParams_t* legendParams = nullptr);
+    virtual void saveFitPlot(const std::string&          plotTitle,
+                             const std::string&          path,
+                             const util::LegendParams_t* legendParams = nullptr);
 
     /*
      * Our best-fit function
@@ -74,6 +69,13 @@ class MinuitFitterBase : public BaseFitter
      * Helper function to store the result from a Minuit minimisation in this class' fitParams
      */
     void _storeMinuitFitParams(const std::vector<size_t>& fixIndices);
+
+    /*
+     * Set fit parameters and their names
+     */
+    void _setParams(const std::vector<std::string>& names,
+                    const std::vector<double>&      values,
+                    const std::vector<double>&      errors);
 
     /*
      * Pointer to the Minuit FCN used to perform the fit
