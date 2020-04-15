@@ -401,7 +401,7 @@ void test_1d_z_scan()
         chiSquaredValsImScan[i] = PhysFitter.parameterScan[i].second;
     }
 
-    PhysFitter.chiSqParameterScan(3, numPoints, min, max);
+    PhysFitter.chiSqParameterScan(4, numPoints, min, max);
     std::vector<double> chiSquaredValsReScan(numPoints);
     for (size_t i = 0; i < numPoints; ++i) {
         chiSquaredValsReScan[i] = PhysFitter.parameterScan[i].second;
