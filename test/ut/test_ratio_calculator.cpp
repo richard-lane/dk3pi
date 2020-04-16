@@ -38,12 +38,12 @@
  * Fixture for creating a RatioCalculator
  */
 struct TestRatioCalculator {
-    TestRatioCalculator(const std::vector<double> &cfDecayTimes,
-                        const std::vector<double> &dcsDecayTimes,
+    TestRatioCalculator(const std::vector<size_t> &cfDecayCounts,
+                        const std::vector<size_t> &dcsDecayCounts,
                         const std::vector<double> &binLimits)
     {
-        Calculator  = new RatioCalculator(cfDecayTimes, dcsDecayTimes, binLimits);
-        *Calculator = RatioCalculator(cfDecayTimes, dcsDecayTimes, binLimits);
+        Calculator  = new RatioCalculator(cfDecayCounts, dcsDecayCounts, binLimits);
+        *Calculator = RatioCalculator(cfDecayCounts, dcsDecayCounts, binLimits);
     }
     ~TestRatioCalculator() { delete Calculator; }
     RatioCalculator *Calculator;
@@ -56,10 +56,10 @@ BOOST_AUTO_TEST_CASE(test_unsorted_bin_limits_exception)
 {
     const std::vector<double> unsortedVector = {0, 1, 2, 3, 4, 2};
     const std::vector<double> sortedVector   = {1, 2, 3};
+    const std::vector<size_t> counts{};
 
-    // Create a
-    BOOST_CHECK_NO_THROW(TestRatioCalculator bar(unsortedVector, unsortedVector, sortedVector));
-    BOOST_CHECK_THROW(TestRatioCalculator foo(sortedVector, sortedVector, unsortedVector), D2K3PiException);
+    BOOST_CHECK_NO_THROW(TestRatioCalculator bar(counts, counts, sortedVector));
+    BOOST_CHECK_THROW(TestRatioCalculator foo(counts, counts, unsortedVector), D2K3PiException);
 }
 
 /*
@@ -69,7 +69,9 @@ BOOST_AUTO_TEST_CASE(test_unsorted_bin_limits_exception)
 BOOST_AUTO_TEST_CASE(test_vector_ratio, *boost::unit_test::tolerance(TOLERANCE))
 {
     const std::vector<double> vector{0, 1};
-    TestRatioCalculator       MyRatioCalculator(vector, vector, vector);
+    const std::vector<size_t> counts{0, 1};
+
+    TestRatioCalculator MyRatioCalculator(counts, counts, vector);
 
     const std::vector<size_t> numerator{100};
     const std::vector<size_t> denominator{50};
@@ -90,8 +92,8 @@ BOOST_AUTO_TEST_CASE(test_vector_ratio, *boost::unit_test::tolerance(TOLERANCE))
  */
 BOOST_AUTO_TEST_CASE(test_ratio_calculation, *boost::unit_test::tolerance(TOLERANCE))
 {
-    const std::vector<double> myCfDecays(100, 5);
-    const std::vector<double> myDcsDecays(100, 5);
+    const std::vector<size_t> myCfDecays{100};
+    const std::vector<size_t> myDcsDecays{100};
     const std::vector<double> myBinLimits{4, 6};
     TestRatioCalculator       MyRatioCalculator(myCfDecays, myDcsDecays, myBinLimits);
 
@@ -111,7 +113,8 @@ BOOST_AUTO_TEST_CASE(test_ratio_calculation, *boost::unit_test::tolerance(TOLERA
 BOOST_AUTO_TEST_CASE(test_bin_centres_widths, *boost::unit_test::tolerance(TOLERANCE))
 {
     const std::vector<double> binLimits{-1, 1, 5, 10, 16};
-    TestRatioCalculator       MyRatioCalculator(binLimits, binLimits, binLimits);
+    const std::vector<size_t> counts{};
+    TestRatioCalculator       MyRatioCalculator(counts, counts, binLimits);
 
     // Expect bin centres and widths (0, 3, 7.5, 13) and (2, 4, 5, 6)
     const std::vector<double> expectedBinCentres{0, 3, 7.5, 13};
@@ -127,8 +130,8 @@ BOOST_AUTO_TEST_CASE(test_bin_centres_widths, *boost::unit_test::tolerance(TOLER
 BOOST_AUTO_TEST_CASE(test_throw_zero_points)
 {
     const std::vector<double> binLimits{0, 1, 2, 3, 4};
-    const std::vector<double> containsZero{0.5, 2.5, 3.5};
-    const std::vector<double> noZero{0.5, 1.5, 2.5, 3.5};
+    const std::vector<size_t> containsZero{1, 0, 1, 1};
+    const std::vector<size_t> noZero{1, 1, 1, 1};
 
     TestRatioCalculator MyRatioCalculator1(containsZero, noZero, binLimits);
     TestRatioCalculator MyRatioCalculator2(noZero, containsZero, binLimits);
@@ -146,42 +149,10 @@ BOOST_AUTO_TEST_CASE(test_throw_zero_points)
  */
 BOOST_AUTO_TEST_CASE(it_ratio_calculator, *boost::unit_test::tolerance(TOLERANCE))
 {
-    // Create a dataset that looks like:
-    //     100 50 30 20 15
-    //      50 30 20 15  3
-    //   points in each bin, then calculate the ratio
-    std::vector<double> numerator{};
-    std::vector<double> denominator{};
+    // Create a dataset and calculate the ratio
+    std::vector<size_t> numerator{100, 50, 30, 20, 15};
+    std::vector<size_t> denominator{50, 30, 20, 15, 3};
     std::vector<double> binLimits{0, 1, 2, 3, 4, 5};
-
-    // yep
-    for (size_t i = 0; i < 100; ++i) {
-        numerator.push_back(0.5);
-    }
-
-    for (size_t i = 0; i < 50; ++i) {
-        numerator.push_back(1.5);
-        denominator.push_back(0.6);
-    }
-
-    for (size_t i = 0; i < 30; ++i) {
-        numerator.push_back(2.4);
-        denominator.push_back(1.5);
-    }
-
-    for (size_t i = 0; i < 20; ++i) {
-        numerator.push_back(3.7);
-        denominator.push_back(2.3);
-    }
-
-    for (size_t i = 0; i < 15; ++i) {
-        numerator.push_back(4.5);
-        denominator.push_back(3.6);
-    }
-
-    for (size_t i = 0; i < 3; ++i) {
-        denominator.push_back(4.7);
-    }
 
     // Find our expected ratios and their errors
     std::vector<double> expectedRatios{2.0, 5.0 / 3.0, 3.0 / 2.0, 4.0 / 3.0, 5.0};
@@ -194,7 +165,6 @@ BOOST_AUTO_TEST_CASE(it_ratio_calculator, *boost::unit_test::tolerance(TOLERANCE
     // Use the ratio calculator to bin times and calculate ratios
     RatioCalculator MyRatioCalculator = RatioCalculator(denominator, numerator, binLimits);
     MyRatioCalculator.calculateRatios();
-    std::cout << "\t" << expectedErrors[1] << " " << MyRatioCalculator.error[1] << std::endl;
 
     CHECK_CLOSE_COLLECTIONS(expectedRatios, MyRatioCalculator.ratio, TOLERANCE);
     CHECK_CLOSE_COLLECTIONS(expectedErrors, MyRatioCalculator.error, TOLERANCE);

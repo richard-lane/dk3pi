@@ -55,8 +55,12 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         MyDecays.findCfDecayTimes(numCfEvents);
         MyDecays.findDcsDecayTimes(numDcsEvents);
 
+        // Time binning
+        std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, binLimits);
+        std::vector<size_t> dcsCounts = util::binVector(MyDecays.WSDecayTimes, binLimits);
+
         // Find the ratio
-        RatioCalculator MyRatios(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, binLimits);
+        RatioCalculator MyRatios(cfCounts, dcsCounts, binLimits);
         MyRatios.calculateRatios();
 
         // Fit the ratio

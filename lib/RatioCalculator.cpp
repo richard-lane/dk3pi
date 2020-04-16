@@ -12,8 +12,8 @@
 
 #include "TMath.h"
 
-RatioCalculator::RatioCalculator(const std::vector<double> &cfDecayTimes,
-                                 const std::vector<double> &dcsDecayTimes,
+RatioCalculator::RatioCalculator(const std::vector<size_t> &cfDecayCounts,
+                                 const std::vector<size_t> &dcsDecayCounts,
                                  const std::vector<double> &binLimits)
 {
     // Bin limits should be sorted
@@ -37,9 +37,9 @@ RatioCalculator::RatioCalculator(const std::vector<double> &cfDecayTimes,
         binWidths[i]  = (binLimits[i + 1] - binLimits[i]);
     }
 
-    // Store CF and DCS decay times as class attributes.
-    _cfDecayTimes  = cfDecayTimes;
-    _dcsDecayTimes = dcsDecayTimes;
+    // Store CF and DCS decay counts as class attributes.
+    _cfDecayCounts  = cfDecayCounts;
+    _dcsDecayCounts = dcsDecayCounts;
 }
 
 std::vector<std::pair<double, double>> RatioCalculator::findRatioAndError(const std::vector<size_t> &numerator,
@@ -71,30 +71,16 @@ std::vector<std::pair<double, double>> RatioCalculator::findRatioAndError(const 
     return ratiosAndErrors;
 }
 
-void RatioCalculator::findNumPointsPerBin(const std::string &path)
-{
-    std::ofstream f(path.c_str());
-    f << "CF\tDCS" << std::endl;
-
-    for (size_t i = 0; i < _numBins; ++i) {
-        f << std::to_string(_numCfPerBin[i]) << "\t" << std::to_string(_numDcsPerBin[i]) << std::endl;
-    }
-}
-
 void RatioCalculator::calculateRatios(void)
 {
-    // Bin both the CF and DCS vectors
-    _numCfPerBin  = util::binVector(_cfDecayTimes, _binLimits);
-    _numDcsPerBin = util::binVector(_dcsDecayTimes, _binLimits);
-
-    if (std::count(_numDcsPerBin.begin(), _numDcsPerBin.end(), 0) ||
-        std::count(_numCfPerBin.begin(), _numCfPerBin.end(), 0)) {
+    if (std::count(_cfDecayCounts.begin(), _cfDecayCounts.end(), 0) ||
+        std::count(_dcsDecayCounts.begin(), _dcsDecayCounts.end(), 0)) {
         std::cerr << "Cannot have 0 points in any bin" << std::endl;
         throw D2K3PiException();
     }
 
     // Find the ratio of CF to DCS vectors and populate the relevant attributes.
-    std::vector<std::pair<double, double>> ratiosAndErrors = findRatioAndError(_numDcsPerBin, _numCfPerBin);
+    std::vector<std::pair<double, double>> ratiosAndErrors = findRatioAndError(_dcsDecayCounts, _cfDecayCounts);
 
     // Assign the ratios and errors to the right attributes.
     ratio.resize(_numBins, 0);

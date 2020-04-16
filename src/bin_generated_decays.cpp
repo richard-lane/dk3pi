@@ -18,6 +18,7 @@
 #include "RatioCalculator.h"
 #include "ReadAmpGen.h"
 #include "RootFitter.h"
+#include "util.h"
 
 /*
  * Bin the CF and Mixed decays modelled in an AmpGen generated inputFile into phase bins as defined by $BIN_LIMITS
@@ -54,8 +55,9 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
     // Calculate the ratios between the datasets in each bin
     std::vector<RatioCalculator> ratios{};
     for (int bin = 0; bin < NUM_BINS; ++bin) {
-        ratios.push_back(
-            RatioCalculator(FavouredDataBinner._binnedTimes[bin], MixedDataBinner._binnedTimes[bin], timeBinLimits));
+        std::vector<size_t> cfCounts  = util::binVector(FavouredDataBinner._binnedTimes[bin], timeBinLimits);
+        std::vector<size_t> dcsCounts = util::binVector(MixedDataBinner._binnedTimes[bin], timeBinLimits);
+        ratios.push_back(RatioCalculator(cfCounts, dcsCounts, timeBinLimits));
         ratios[bin].calculateRatios();
     }
 

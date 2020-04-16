@@ -1,7 +1,6 @@
 #ifndef PULL_STUDY_HELPERS_CPP
 #define PULL_STUDY_HELPERS_CPP
 
-#include <boost/math/quadrature/trapezoidal.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -64,18 +63,11 @@ void plot_parameter_distribution(std::string         title,
 
 double numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpaceParams, double maxTime)
 {
-    // Our formula is prefactor * integral * numCFDecays
-    double              exp        = std::exp(-1 * phaseSpaceParams.width * maxTime);
-    std::vector<double> fit_params = util::expectedParams(phaseSpaceParams);
-    double              a          = fit_params[0];
-    double              b          = fit_params[1];
-    double              c          = fit_params[2];
+    // Our formula is numDcs = numCf * (DCS integral / CF integral), where we integrate over all allowed times
+    double dcsIntegral = util::dcsIntegral(0, maxTime, phaseSpaceParams);
+    double cfIntegral  = util::cfIntegral(0, maxTime, phaseSpaceParams);
 
-    double prefactor = phaseSpaceParams.width / (1 - exp);
-
-    auto   f        = [&](double x) { return (a + b * x + c * x * x) * std::exp(-phaseSpaceParams.width * x); };
-    double integral = boost::math::quadrature::trapezoidal(f, 0.0, maxTime, 1e-10, 20);
-    return prefactor * integral * numCFDecays;
+    return numCFDecays * dcsIntegral / cfIntegral;
 }
 
 } // namespace PullStudyHelpers

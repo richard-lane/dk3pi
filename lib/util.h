@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <boost/filesystem.hpp>
+#include <boost/math/quadrature/trapezoidal.hpp>
 
 #include "TObject.h"
 
@@ -122,6 +123,48 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
  * Returns a vector of {a, b, c}
  */
 std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
+
+/*
+ * Expected CF decay rate at a given time
+ */
+inline double rightSignDecayRate(const double time, const DecayParams_t &decayParams)
+{
+    return exp(-1.0 * decayParams.width * time);
+}
+
+/*
+ * Expected DCS decay rate at a given time
+ */
+inline double wrongSignDecayRate(const double time, const DecayParams_t &decayParams)
+{
+    // Write the decay rate as (a + bt + ct^2)e^(-gamma*t) (ignoring overall factor of B^2 that has been taken out)
+    double a = pow(decayParams.r, 2);
+    double b =
+        decayParams.r * (decayParams.y * decayParams.z_re + decayParams.x * decayParams.z_im) * decayParams.width;
+    double c = 0.25 * (pow(decayParams.x, 2) + pow(decayParams.y, 2)) * pow(decayParams.width, 2);
+
+    return (a + b * time + c * pow(time, 2)) * exp(-1.0 * decayParams.width * time);
+}
+
+/*
+ * Integral of CF rate between limits
+ */
+inline double cfIntegral(const double low, const double high, const DecayParams_t &decayParams)
+{
+    // should really use std::bind
+    auto f = [&](double x) { return rightSignDecayRate(x, decayParams); };
+    return boost::math::quadrature::trapezoidal(f, low, high, 1e-10, 20);
+}
+
+/*
+ * Integral of DCS rate between limits
+ */
+inline double dcsIntegral(const double low, const double high, const DecayParams_t &decayParams)
+{
+    // should really use std::bind
+    auto f = [&](double x) { return wrongSignDecayRate(x, decayParams); };
+    return boost::math::quadrature::trapezoidal(f, low, high, 1e-10, 20);
+}
 
 } // namespace util
 

@@ -204,7 +204,10 @@ void simulateDecays()
     numDcs = (size_t)PullStudyHelpers::numDCSDecays(numCf, MyParams, maxTime);
     MyDecays.findDcsDecayTimes(numDcs);
 
-    RatioCalculator Calculator = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, timeBinLimits);
+    std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, timeBinLimits);
+    std::vector<size_t> dcsCounts = util::binVector(MyDecays.WSDecayTimes, timeBinLimits);
+
+    RatioCalculator Calculator = RatioCalculator(cfCounts, dcsCounts, timeBinLimits);
     Calculator.calculateRatios();
 
     TGraphErrors *ratioGraph = new TGraphErrors(

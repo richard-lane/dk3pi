@@ -13,8 +13,8 @@ class RatioCalculator
     /*
      * Check that bin limits are sorted and populate decay time and bin data.
      */
-    RatioCalculator(const std::vector<double> &cfDecayTimes,
-                    const std::vector<double> &dcsDecayTimes,
+    RatioCalculator(const std::vector<size_t> &cfDecayCounts,
+                    const std::vector<size_t> &dcsDecayCounts,
                     const std::vector<double> &binLimits);
 
     /*
@@ -60,19 +60,13 @@ class RatioCalculator
     /*
      * Vectors of CF and DCS decay times
      */
-    std::vector<double> _cfDecayTimes{};
-    std::vector<double> _dcsDecayTimes{};
+    std::vector<size_t> _cfDecayCounts{};
+    std::vector<size_t> _dcsDecayCounts{};
 
     /*
      * A vector containing every bin edge, from the left edge of the lowest bin to the right edge of the highest
      */
     std::vector<double> _binLimits{};
-
-    /*
-     * Number of points in each bin
-     */
-    std::vector<size_t> _numCfPerBin{};
-    std::vector<size_t> _numDcsPerBin{};
 
     /*
      * Number of time bins
