@@ -51,6 +51,8 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
  */
 void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
 {
+    std::cerr << "This is now slightly deprecated; newest version gets built in test/manual/pull-study";
+    throw;
     // Choose which parameters to use when simulating
     // These numbers are vaguely realistic but also entirely made up
     DecayParams_t phaseSpaceParams = {

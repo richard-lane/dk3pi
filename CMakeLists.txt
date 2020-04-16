@@ -26,10 +26,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat-security -Werror 
 # Debug
 set(CMAKE_BUILD_TYPE Debug)
 
-# Pull study
-add_executable(pull.exe src/pull_study.cpp src/PullStudyHelpers.cpp)
-target_link_libraries(pull.exe PRIVATE D2K3Pi PRIVATE ${ROOT_LIBRARIES} PRIVATE ${Boost_LIBRARIES})
-
 # Bin AmpGen's generated decays
 add_executable(bin_decays.exe src/bin_generated_decays.cpp)
 target_link_libraries(bin_decays.exe PRIVATE D2K3Pi PRIVATE ${ROOT_LIBRARIES} PRIVATE ${Boost_LIBRARIES} ${CMAKE_DL_LIBS})

@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/*",
                 "${workspaceFolder}/lib/**",
-                "${env:ROOTSYS}/include/*"
+                "${env:ROOTSYS}/include/*",
+                "/home/mh19137/Documents/HEP/dk3pi/lib/"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
