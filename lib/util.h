@@ -4,7 +4,12 @@
 #include <boost/filesystem.hpp>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
+#include "D2K3PiError.h"
+
 #include "TObject.h"
+
+#define INTEGRAL_TOLERANCE 1e-15L
+#define INTEGRAL_REFINEMENTS 20
 
 /*
  * Struct encapsulating the parameters needed to simulate decays.
@@ -127,9 +132,17 @@ std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
 /*
  * Expected CF decay rate at a given time
  */
+inline double rightSignDecayRate(const double time, const double width)
+{
+    return exp(-1.0 * width * time);
+}
+
+/*
+ * Expected CF decay rate at a given time
+ */
 inline double rightSignDecayRate(const double time, const DecayParams_t &decayParams)
 {
-    return exp(-1.0 * decayParams.width * time);
+    return rightSignDecayRate(time, decayParams.width);
 }
 
 /*
@@ -148,42 +161,70 @@ inline double wrongSignDecayRate(const double time, const DecayParams_t &decayPa
 
 /*
  * Integral of CF rate between limits
+ *
+ * errorEstimate can be set to get an estimate of the error in the integral
  */
-inline double cfIntegral(const double low, const double high, const DecayParams_t &decayParams)
+inline double cfIntegral(const double low,
+                         const double high,
+                         const double width,
+                         const double tolerance      = INTEGRAL_TOLERANCE,
+                         const size_t maxRefinements = INTEGRAL_REFINEMENTS,
+                         double *     errorEstimate  = nullptr)
 {
     // should really use std::bind
-    auto f = [&](double x) { return rightSignDecayRate(x, decayParams); };
-    return boost::math::quadrature::trapezoidal(f, low, high);
+    auto f = [&](double x) { return rightSignDecayRate(x, width); };
+
+    return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
 }
 
 /*
  * Integral of DCS rate between limits
+ *
+ * errorEstimate can be set to get an estimate of the error in the integral
  */
-inline double dcsIntegral(const double low, const double high, const DecayParams_t &decayParams)
+inline double dcsIntegral(const double               low,
+                          const double               high,
+                          const std::vector<double> &abcParams,
+                          const double               width,
+                          const double               tolerance      = INTEGRAL_TOLERANCE,
+                          const size_t               maxRefinements = INTEGRAL_REFINEMENTS,
+                          double *                   errorEstimate  = nullptr)
 {
     // should really use std::bind
-    auto f = [&](double x) { return wrongSignDecayRate(x, decayParams); };
-    return boost::math::quadrature::trapezoidal(f, low, high);
+    auto f = [&](double x) { return (abcParams[0] + abcParams[1] * x + abcParams[2] * x * x) * exp(-1.0 * width * x); };
+
+    return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
 }
 
 /*
  * Integral of CF rate between limits
+ *
+ * errorEstimate can be set to get an estimate of the error in the integral
  */
-inline double cfIntegral(const double low, const double high, const double width)
+inline double cfIntegral(const double         low,
+                         const double         high,
+                         const DecayParams_t &decayParams,
+                         const double         tolerance      = INTEGRAL_TOLERANCE,
+                         const size_t         maxRefinements = INTEGRAL_REFINEMENTS,
+                         double *             errorEstimate  = nullptr)
 {
-    // should really use std::bind
-    auto f = [&](double x) { return exp(-1.0 * width * x); };
-    return boost::math::quadrature::trapezoidal(f, low, high);
+    return cfIntegral(low, high, decayParams.width, tolerance, maxRefinements, errorEstimate);
 }
 
 /*
  * Integral of DCS rate between limits
+ *
+ * errorEstimate can be set to get an estimate of the error in the integral
  */
-inline double dcsIntegral(const double low, const double high, const std::vector<double> &abcParams, const double width)
+inline double dcsIntegral(const double         low,
+                          const double         high,
+                          const DecayParams_t &decayParams,
+                          const double         tolerance      = INTEGRAL_TOLERANCE,
+                          const size_t         maxRefinements = INTEGRAL_REFINEMENTS,
+                          double *             errorEstimate  = nullptr)
 {
-    // should really use std::bind
-    auto f = [&](double x) { return (abcParams[0] + abcParams[1] * x + abcParams[2] * x * x) * exp(-1.0 * width * x); };
-    return boost::math::quadrature::trapezoidal(f, low, high);
+    return dcsIntegral(
+        low, high, util::expectedParams(decayParams), decayParams.width, tolerance, maxRefinements, errorEstimate);
 }
 
 } // namespace util
