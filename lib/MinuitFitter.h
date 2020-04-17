@@ -14,41 +14,6 @@
 #include "TMatrixD.h"
 
 /*
- * Function that caluclates (a + bt + ct^2)
- */
-double fitPolynomial(const DecayParams_t& params, const double time);
-
-/*
- * Class representing a simple a + bt + ct^2 polynomial
- */
-class SimplePolynomialFunction
-{
-  public:
-    /*
-     * Sets the parameters
-     */
-    SimplePolynomialFunction(double a, double b, double c);
-
-    /*
-     * Empty destructor
-     */
-    ~SimplePolynomialFunction();
-
-    /*
-     * Given our parameters, return the function a + bt + ct^2 evaluated at x
-     */
-    double operator()(double x) const;
-
-  private:
-    /*
-     * Polynomial coefficients
-     */
-    double _a{0};
-    double _b{0};
-    double _c{0};
-};
-
-/*
  * Base class for fitting a polynomial using Minuit2
  *
  * Does not contain the necessary operator() method needed for Minuit- child classes should define this.
@@ -116,6 +81,8 @@ class BasePolynomialFcn : public ROOT::Minuit2::FCNBase
 
 /*
  * Class fitting to a polynomial using chi squared
+ *
+ * Fits by integrating over the bins
  */
 class PolynomialChiSqFcn : public BasePolynomialFcn
 {
@@ -149,6 +116,32 @@ class PolynomialChiSqFcn : public BasePolynomialFcn
      * Decay width
      */
     const double _width{};
+};
+
+/*
+ * Class fitting to a polynomial using chi squared
+ *
+ * Does not integrate over the bins
+ */
+class PolynomialChiSqFcnNoIntegral : public BasePolynomialFcn
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    PolynomialChiSqFcnNoIntegral(const std::vector<double>& data,
+                                 const std::vector<double>& times,
+                                 const std::vector<double>& errors);
+
+    ~PolynomialChiSqFcnNoIntegral();
+
+    /*
+     * Creates a model given a vector of three parameters.
+     *
+     * Returns the chi squared value between the model given our parameters and the measured data.
+     *
+     */
+    virtual double operator()(const std::vector<double>& parameters) const;
 };
 
 /*

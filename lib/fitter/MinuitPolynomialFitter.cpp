@@ -9,11 +9,16 @@
 
 MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t&           fitData,
                                                const std::vector<double>& binLimits,
-                                               const double               width)
+                                               const double               width,
+                                               const bool                 integrate)
     : MinuitScannerBase(fitData)
 {
-    _fitFcn =
-        std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors, binLimits, width);
+    if (integrate) {
+        _fitFcn =
+            std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors, binLimits, width);
+    } else {
+        _fitFcn = std::make_unique<PolynomialChiSqFcnNoIntegral>(_fitData.data, _fitData.binCentres, _fitData.errors);
+    }
 }
 
 void MinuitPolynomialFitter::fit()

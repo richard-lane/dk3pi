@@ -14,8 +14,15 @@ class MinuitPolynomialFitter : public MinuitScannerBase
      *
      * This class needs to know about bin limits and decay width, as the fit is performed by integrating the expected
      * functions over each bin
+     *
+     * if integrate==true, the fitter will integrate over each bin when calculating chi squared. This will make the fit
+     * way slower, but also maybe more accurate?
+     * n.b. the binLimits and width params are unused if integrate = false but i cba to make this better
      */
-    MinuitPolynomialFitter(const FitData_t& fitData, const std::vector<double>& binLimits, const double width);
+    MinuitPolynomialFitter(const FitData_t&           fitData,
+                           const std::vector<double>& binLimits,
+                           const double               width,
+                           const bool                 integrate = false);
 
     /*
      * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.

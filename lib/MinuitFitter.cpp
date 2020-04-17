@@ -13,28 +13,6 @@
 #include "MinuitFitter.h"
 #include "util.h"
 
-double fitPolynomial(const DecayParams_t& params, const double time)
-{
-    return (params.r * params.r) +
-           (params.r * (params.y * params.z_re + params.x * params.z_im) * params.width * time) +
-           (0.25 * (params.x * params.x + params.y * params.y) * params.width * params.width * time * time);
-}
-
-SimplePolynomialFunction::SimplePolynomialFunction(double a, double b, double c) : _a(a), _b(b), _c(c)
-{
-    ;
-}
-
-SimplePolynomialFunction::~SimplePolynomialFunction()
-{
-    ;
-}
-
-double SimplePolynomialFunction::operator()(double x) const
-{
-    return _a + _b * x + _c * x * x;
-}
-
 BasePolynomialFcn::BasePolynomialFcn(const std::vector<double>& data,
                                      const std::vector<double>& times,
                                      const std::vector<double>& errors)
@@ -96,14 +74,41 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
         throw D2K3PiException();
     }
 
-    SimplePolynomialFunction MyPolynomial(parameters[0], parameters[1], parameters[2]);
-    double                   chi2 = 0.0;
+    double chi2 = 0.0;
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        // chi2 += std::pow((MyPolynomial(thePositions[i]) - theMeasurements[i]) / theMVariances[i], 2);
         double model = util::dcsIntegral(_binLimits[i], _binLimits[i + 1], parameters, _width, 1e-10, 10) /
                        util::cfIntegral(_binLimits[i], _binLimits[i + 1], _width, 1e-10, 10);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
+    }
+    return chi2;
+}
+
+PolynomialChiSqFcnNoIntegral::PolynomialChiSqFcnNoIntegral(const std::vector<double>& data,
+                                                           const std::vector<double>& times,
+                                                           const std::vector<double>& errors)
+    : BasePolynomialFcn(data, times, errors)
+{
+    ;
+}
+
+PolynomialChiSqFcnNoIntegral::~PolynomialChiSqFcnNoIntegral()
+{
+    ;
+}
+
+double PolynomialChiSqFcnNoIntegral::operator()(const std::vector<double>& parameters) const
+{
+    size_t numParams = parameters.size();
+    if (numParams != 3) {
+        std::cerr << "Require three parameters (a, b, c); got " << numParams << std::endl;
+        throw D2K3PiException();
+    }
+
+    double chi2 = 0.0;
+
+    for (size_t i = 0; i < theMeasurements.size(); ++i) {
+        chi2 += std::pow((util::rateRatio(thePositions[i], parameters) - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
 }
@@ -138,7 +143,7 @@ double DetailedPolynomialChiSqFcn::operator()(const std::vector<double>& paramet
 
     double chi2 = 0.0;
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        chi2 += std::pow((fitPolynomial(params, thePositions[i]) - theMeasurements[i]) / theMVariances[i], 2);
+        chi2 += std::pow((util::rateRatio(thePositions[i], params) - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
 }

@@ -130,6 +130,22 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
 std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
 
 /*
+ * Ratio of rates given parameters a, b and c
+ */
+inline double rateRatio(const double time, const std::vector<double> &abcParams)
+{
+    return abcParams[0] + time * abcParams[1] + time * time * abcParams[2];
+}
+
+/*
+ * Ratio of rates given decay parameters
+ */
+inline double rateRatio(const double time, const DecayParams_t &decayParams)
+{
+    return rateRatio(time, expectedParams(decayParams));
+}
+
+/*
  * Expected CF decay rate at a given time
  */
 inline double rightSignDecayRate(const double time, const double width)
