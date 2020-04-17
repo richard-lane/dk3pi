@@ -10,7 +10,7 @@
 
 #include <boost/progress.hpp>
 
-void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
+void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool integrate)
 {
     // Choose parameters to use when simulating
     DecayParams_t phaseSpaceParams = {
@@ -65,7 +65,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 
         // Fit the ratio
         FitData_t              MyFitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-        MinuitPolynomialFitter MyFitter(MyFitData, binLimits, phaseSpaceParams.width);
+        MinuitPolynomialFitter MyFitter(MyFitData, binLimits, phaseSpaceParams.width, integrate);
         MyFitter.setPolynomialParams(expectedFitParams, std::vector<double>(3, 1));
         MyFitter.fit();
 
@@ -89,7 +89,20 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    pull_study(10e5, 100);
+    // If -i or --integrate specified, integrate over the bins
+    bool        integrate{false};
+    std::string iStr         = "-i";
+    std::string integrateStr = "--integrate";
+    for (int arg = 1; arg < argc; ++arg) {
+        if (argv[arg] == iStr || argv[arg] == integrateStr) {
+            integrate = true;
+        }
+    }
+
+    std::string withIntegrating = integrate ? "with" : "without";
+    std::cout << "Running pull study " << withIntegrating << " integrating over bins in fit." << std::endl;
+
+    pull_study(10e5, 100, integrate);
 }
