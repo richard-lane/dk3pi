@@ -10,16 +10,6 @@ add_executable(simulator_equations.exe ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.
 target_link_libraries(simulator_equations.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
 add_test(NAME simulator_equations COMMAND simulator_equations.exe)
 
-# Fitter: test that our fitter doesn't do anything weird
-add_executable(test_fitter.exe test_fitter.cpp ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.cpp testutil.cpp)
-target_link_libraries(test_fitter.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
-add_test(NAME test_fitter COMMAND test_fitter.exe)
-
-# Test that our Fitter and calculator work..?
-add_executable(test_fitter_calculator.exe test_calculator_and_fitter.cpp ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.cpp testutil.cpp)
-target_link_libraries(test_fitter_calculator.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
-add_test(NAME test_fitter_and_calculator COMMAND test_fitter_calculator.exe)
-
 # Test that our minuit fitter and the ROOT builtin fitter do sensible things
 add_executable(test_minuit_fitter.exe test_minuit_fitters.cpp ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.cpp)
 target_link_libraries(test_minuit_fitter.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
@@ -30,7 +20,18 @@ add_executable(test_param_scan.exe test_param_scan.cpp ${CMAKE_SOURCE_DIR}/src/P
 target_link_libraries(test_param_scan.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
 add_test(NAME test_param_scan COMMAND test_param_scan.exe)
 
-# Pull study
+
+# Pull studies
+# Fitter: test that our fitter doesn't do anything weird
+add_executable(test_fitter.exe pull_fitter.cpp ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.cpp testutil.cpp)
+target_link_libraries(test_fitter.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
+add_test(NAME test_fitter COMMAND test_fitter.exe)
+
+# Pull study generating counts by integrating the expected rates
+add_executable(test_fitter_calculator.exe pull_calculator_and_fitter.cpp ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.cpp testutil.cpp)
+target_link_libraries(test_fitter_calculator.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
+add_test(NAME test_fitter_and_calculator COMMAND test_fitter_calculator.exe)
+
 # This is so slow that I won't add a make-test to it
-add_executable(pull-study test_pull_study.cpp ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.cpp)
+add_executable(pull-study pull_study.cpp ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.cpp)
 target_link_libraries(pull-study D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})

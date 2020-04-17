@@ -100,10 +100,10 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
     double                   chi2 = 0.0;
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        chi2 += std::pow((MyPolynomial(thePositions[i]) - theMeasurements[i]) / theMVariances[i], 2);
-        // double model = util::dcsIntegral(_binLimits[i], _binLimits[i + 1], parameters, _width) /
-        //                util::cfIntegral(_binLimits[i], _binLimits[i + 1], _width);
-        // chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
+        // chi2 += std::pow((MyPolynomial(thePositions[i]) - theMeasurements[i]) / theMVariances[i], 2);
+        double model = util::dcsIntegral(_binLimits[i], _binLimits[i + 1], parameters, _width, 1e-10, 10) /
+                       util::cfIntegral(_binLimits[i], _binLimits[i + 1], _width, 1e-10, 10);
+        chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
 }
