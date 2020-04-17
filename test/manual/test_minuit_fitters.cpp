@@ -47,16 +47,25 @@ void compareRootMinuit(void)
     RatioCalculator     MyRatios  = RatioCalculator(cfCounts, dcsCounts, timeBinLimits);
     MyRatios.calculateRatios();
 
-    // Create three fitters
+    // Create 4 fitters
+    // Do ROOT's builtin fit, a fit to a/b/c with/without integrating over the bins or a fit to the phase space
+    // parameters
     FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    RootFitter             CernFitter    = RootFitter(MyFitData);
-    MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width);
-    PhysicalFitter         PhysFitter    = PhysicalFitter(MyFitData);
+    RootFitter             CernFitter = RootFitter(MyFitData);
+    MinuitPolynomialFitter MinuitPolyFit =
+        MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width, true);
+    MinuitPolynomialFitter MinuitPolyFitNoIntegral =
+        MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width, false);
+    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
 
     // Perform fits
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
     CernFitter.fit(0, maxTime, "Q");
+
+    MinuitPolyFitNoIntegral.setPolynomialParams(initialParameterGuess, initialErrorsGuess);
+    MinuitPolyFitNoIntegral.fit();
+
     MinuitPolyFit.setPolynomialParams(initialParameterGuess, initialErrorsGuess);
     MinuitPolyFit.fit();
 
@@ -79,24 +88,43 @@ void compareRootMinuit(void)
                   << CernFitter.fitParams.fitParamErrors[i] << std::endl;
     }
     std::cout << "\tChiSq = " << *(CernFitter.statistic) << std::endl;
+
     for (size_t i = 0; i < 3; ++i) {
-        std::cout << "Chisq fit params: " << MinuitPolyFit.fitParams.fitParams[i] << "+-"
+        std::cout << "Polyfit params: " << MinuitPolyFit.fitParams.fitParams[i] << "+-"
                   << MinuitPolyFit.fitParams.fitParamErrors[i] << std::endl;
     }
     std::cout << "\tChiSq = " << *(MinuitPolyFit.statistic) << std::endl;
 
+    for (size_t i = 0; i < 3; ++i) {
+        std::cout << "Polyfit params (no integral): " << MinuitPolyFitNoIntegral.fitParams.fitParams[i] << "+-"
+                  << MinuitPolyFitNoIntegral.fitParams.fitParamErrors[i] << std::endl;
+    }
+    std::cout << "\tChiSq = " << *(MinuitPolyFitNoIntegral.statistic) << std::endl;
+
     // Plot fits to file
-    const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = "Compare fitters"};
-    const std::vector<std::string> legendLabels{"Root best fit", "Minuit polynomial best fit", "Minuit best fit"};
     CernFitter.plot->SetTitle("Compare Minuit and ROOT fitters;time/ns;DCS/CF ratio");
     CernFitter.plot->SetLineColor(kBlack);
+
     MinuitPolyFit.bestFitFunction->SetLineColor(kBlue);
+
+    MinuitPolyFitNoIntegral.bestFitFunction->SetLineColor(6);
+    MinuitPolyFitNoIntegral.bestFitFunction->SetLineStyle(9);
+    MinuitPolyFitNoIntegral.bestFitFunction->SetLineWidth(3);
+
     PhysFitter.bestFitFunction->SetLineColor(kGreen);
     PhysFitter.bestFitFunction->SetLineStyle(kDashed);
+
+    const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = "Compare fitters"};
+    const std::vector<std::string> legendLabels{"Root best fit (red)",
+                                                "Minuit polynomial best fit",
+                                                "Minuit polynomial best fit (no integral)",
+                                                "Minuit best fit"};
+
     util::saveObjectsToFile<TGraph>(std::vector<TObject*>{CernFitter.plot.get(),
                                                           MinuitPolyFit.bestFitFunction.get(),
+                                                          MinuitPolyFitNoIntegral.bestFitFunction.get(),
                                                           PhysFitter.bestFitFunction.get()},
-                                    std::vector<std::string>{"AP", "CSAME", "CSAME"},
+                                    std::vector<std::string>{"AP", "CSAME", "CSAME", "CSAME"},
                                     legendLabels,
                                     "compareMinuitRootPlots.pdf",
                                     legendParams);
