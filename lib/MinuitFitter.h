@@ -14,6 +14,28 @@
 #include "TMatrixD.h"
 
 /*
+ * Struct encapsulating the additional data a fitter needs to know about if it is to integrate over the bins in the chi
+ * squared model.
+ */
+typedef struct IntegralFitOptions {
+    // Initialises everything to 0
+    IntegralFitOptions(){};
+
+    // Initialises to the provided values
+    IntegralFitOptions(const double              width,
+                       const std::vector<double> binLimits,
+                       const double              tolerance      = 1e-12,
+                       const size_t              maxRefinements = 10)
+        : tolerance(tolerance), maxRefinements(maxRefinements), binLimits(binLimits), width(width){};
+
+    double tolerance{0};      // Tolerance to use for numerical integration
+    size_t maxRefinements{0}; // Maximum number of refinements to make
+
+    std::vector<double> binLimits{0}; // Our data's bin limits
+    double              width{0};     // Decay width
+} IntegralOptions_t;
+
+/*
  * Base class for fitting a polynomial using Minuit2
  *
  * Does not contain the necessary operator() method needed for Minuit- child classes should define this.
@@ -93,8 +115,7 @@ class PolynomialChiSqFcn : public BasePolynomialFcn
     PolynomialChiSqFcn(const std::vector<double>& data,
                        const std::vector<double>& times,
                        const std::vector<double>& errors,
-                       const std::vector<double>& binLimits,
-                       const double               width);
+                       const IntegralOptions_t&   integralOptions);
 
     ~PolynomialChiSqFcn();
 
@@ -108,14 +129,9 @@ class PolynomialChiSqFcn : public BasePolynomialFcn
 
   private:
     /*
-     * Bin limits that were used in performing this fit
+     * options to use while integrating
      */
-    const std::vector<double> _binLimits{};
-
-    /*
-     * Decay width
-     */
-    const double _width{};
+    IntegralOptions_t _integralOptions;
 };
 
 /*

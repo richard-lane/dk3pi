@@ -63,9 +63,15 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
         RatioCalculator MyRatios(cfCounts, dcsCounts, binLimits);
         MyRatios.calculateRatios();
 
-        // Fit the ratio
+        // Create integral options if we need them
+        std::unique_ptr<IntegralOptions_t> integralOptions = nullptr;
+        if (integrate) {
+            integralOptions = std::make_unique<IntegralOptions_t>(phaseSpaceParams.width, binLimits, 1e-10, 10);
+        }
         FitData_t              MyFitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-        MinuitPolynomialFitter MyFitter(MyFitData, binLimits, phaseSpaceParams.width, integrate);
+        MinuitPolynomialFitter MyFitter(MyFitData, binLimits, phaseSpaceParams.width, integralOptions.get());
+
+        // Fit data
         MyFitter.setPolynomialParams(expectedFitParams, std::vector<double>(3, 1));
         MyFitter.fit();
 

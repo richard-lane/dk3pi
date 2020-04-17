@@ -11,6 +11,7 @@
 
 #include "D2K3PiError.h"
 #include "MinuitFitter.h"
+#include "fitter/MinuitPolynomialFitter.h"
 #include "util.h"
 
 BasePolynomialFcn::BasePolynomialFcn(const std::vector<double>& data,
@@ -54,9 +55,8 @@ void BasePolynomialFcn::setErrorDef(double def)
 PolynomialChiSqFcn::PolynomialChiSqFcn(const std::vector<double>& data,
                                        const std::vector<double>& times,
                                        const std::vector<double>& errors,
-                                       const std::vector<double>& binLimits,
-                                       const double               width)
-    : BasePolynomialFcn(data, times, errors), _width(width), _binLimits(binLimits)
+                                       const IntegralOptions_t&   integralOptions)
+    : BasePolynomialFcn(data, times, errors), _integralOptions(integralOptions)
 {
     ;
 }
@@ -77,8 +77,17 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
     double chi2 = 0.0;
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model = util::dcsIntegral(_binLimits[i], _binLimits[i + 1], parameters, _width, 1e-10, 10) /
-                       util::cfIntegral(_binLimits[i], _binLimits[i + 1], _width, 1e-10, 10);
+        double model = util::dcsIntegral(_integralOptions.binLimits[i],
+                                         _integralOptions.binLimits[i + 1],
+                                         parameters,
+                                         _integralOptions.width,
+                                         _integralOptions.tolerance,
+                                         _integralOptions.maxRefinements) /
+                       util::cfIntegral(_integralOptions.binLimits[i],
+                                        _integralOptions.binLimits[i + 1],
+                                        _integralOptions.width,
+                                        _integralOptions.tolerance,
+                                        _integralOptions.maxRefinements);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;

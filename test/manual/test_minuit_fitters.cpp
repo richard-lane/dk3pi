@@ -48,14 +48,21 @@ void compareRootMinuit(void)
     MyRatios.calculateRatios();
 
     // Create 4 fitters
-    // Do ROOT's builtin fit, a fit to a/b/c with/without integrating over the bins or a fit to the phase space
-    // parameters
-    FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    RootFitter             CernFitter = RootFitter(MyFitData);
+    FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+
+    // Root builtin fitter
+    RootFitter CernFitter = RootFitter(MyFitData);
+
+    // Polynomial fit with integration
+    IntegralOptions_t      integralOptions(phaseSpaceParams.width, timeBinLimits, 1e-10, 10);
     MinuitPolynomialFitter MinuitPolyFit =
-        MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width, true);
+        MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width, &integralOptions);
+
+    // Polynomial fit without integration
     MinuitPolynomialFitter MinuitPolyFitNoIntegral =
-        MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width, false);
+        MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width);
+
+    // Fit to phase space params
     PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
 
     // Perform fits

@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "D2K3PiError.h"
+#include "FitterUtils.h"
 #include "MinuitPolynomialFitter.h"
 
 #include "Minuit2/MnMigrad.h"
@@ -10,12 +11,12 @@
 MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t&           fitData,
                                                const std::vector<double>& binLimits,
                                                const double               width,
-                                               const bool                 integrate)
+                                               const IntegralOptions_t*   integralOptions)
     : MinuitScannerBase(fitData)
 {
-    if (integrate) {
+    if (integralOptions) {
         _fitFcn =
-            std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors, binLimits, width);
+            std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors, *integralOptions);
     } else {
         _fitFcn = std::make_unique<PolynomialChiSqFcnNoIntegral>(_fitData.data, _fitData.binCentres, _fitData.errors);
     }
