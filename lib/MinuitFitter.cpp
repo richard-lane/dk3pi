@@ -75,8 +75,10 @@ void BasePolynomialFcn::setErrorDef(double def)
 
 PolynomialChiSqFcn::PolynomialChiSqFcn(const std::vector<double>& data,
                                        const std::vector<double>& times,
-                                       const std::vector<double>& errors)
-    : BasePolynomialFcn(data, times, errors)
+                                       const std::vector<double>& errors,
+                                       const std::vector<double>& binLimits,
+                                       const double               width)
+    : BasePolynomialFcn(data, times, errors), _width(width), _binLimits(binLimits)
 {
     ;
 }
@@ -99,6 +101,9 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
         chi2 += std::pow((MyPolynomial(thePositions[i]) - theMeasurements[i]) / theMVariances[i], 2);
+        // double model = util::dcsIntegral(_binLimits[i], _binLimits[i + 1], parameters, _width) /
+        //                util::cfIntegral(_binLimits[i], _binLimits[i + 1], _width);
+        // chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
 }

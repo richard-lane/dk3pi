@@ -7,9 +7,13 @@
 #include "Minuit2/MnPrint.h"
 #include "TF1.h"
 
-MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData) : MinuitScannerBase(fitData)
+MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t&           fitData,
+                                               const std::vector<double>& binLimits,
+                                               const double               width)
+    : MinuitScannerBase(fitData)
 {
-    _fitFcn = std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
+    _fitFcn =
+        std::make_unique<PolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors, binLimits, width);
 }
 
 void MinuitPolynomialFitter::fit()

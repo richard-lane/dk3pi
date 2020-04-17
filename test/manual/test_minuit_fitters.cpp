@@ -50,7 +50,7 @@ void compareRootMinuit(void)
     // Create three fitters
     FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
     RootFitter             CernFitter    = RootFitter(MyFitData);
-    MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData);
+    MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width);
     PhysicalFitter         PhysFitter    = PhysicalFitter(MyFitData);
 
     // Perform fits

@@ -86,7 +86,7 @@ void test_param_scan(void)
 
     // Create a fitter
     FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData);
+    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData, timeBinLimits, phaseSpaceParams.width);
 
     // Perform fit, outputu minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
@@ -148,7 +148,7 @@ void test_2d_scan()
 
     // Create a fitter
     FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData);
+    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData, timeBinLimits, phaseSpaceParams.width);
 
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};

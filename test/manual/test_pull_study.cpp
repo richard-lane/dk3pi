@@ -65,7 +65,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 
         // Fit the ratio
         FitData_t              MyFitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-        MinuitPolynomialFitter MyFitter(MyFitData);
+        MinuitPolynomialFitter MyFitter(MyFitData, binLimits, phaseSpaceParams.width);
         MyFitter.setPolynomialParams(expectedFitParams, std::vector<double>(3, 1));
         MyFitter.fit();
 

@@ -11,8 +11,11 @@ class MinuitPolynomialFitter : public MinuitScannerBase
   public:
     /*
      * Calls parent constructor
+     *
+     * This class needs to know about bin limits and decay width, as the fit is performed by integrating the expected
+     * functions over each bin
      */
-    MinuitPolynomialFitter(const FitData_t& fitData);
+    MinuitPolynomialFitter(const FitData_t& fitData, const std::vector<double>& binLimits, const double width);
 
     /*
      * Fit our data to a second-order polynomial a + bt + ct^2 using Minuit2 and the chi-squared method.

@@ -122,7 +122,9 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
         // These will get saved as WSHist.pdf and RSHist.pdf
         // MyDecays.plotRates(binLimits);
 
-        RatioCalculator MyRatios = RatioCalculator(MyDecays.RSDecayTimes, MyDecays.WSDecayTimes, binLimits);
+        std::vector<size_t> dcsCounts = util::binVector(MyDecays.WSDecayTimes, binLimits);
+        std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, binLimits);
+        RatioCalculator     MyRatios  = RatioCalculator(cfCounts, dcsCounts, binLimits);
         MyRatios.calculateRatios();
 
         // Save the number of points stored in each bin to a text file
@@ -130,7 +132,7 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
 
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-        MinuitPolynomialFitter MyFitter = MinuitPolynomialFitter(MyFitData);
+        MinuitPolynomialFitter MyFitter = MinuitPolynomialFitter(MyFitData, binLimits, phaseSpaceParams.width);
         MyFitter.fit();
 
         // Save our fit plot to file

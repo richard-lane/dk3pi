@@ -160,31 +160,34 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit, *boost::unit_test::tolerance(0.01))
  * Test that data following a quadratic function has sensible fit parameters, when we fit using Minuit2 chisq
  *
  * Again this is more like IT than UT but no one is going to notice
+ *
+ * disabled for now
  */
 BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::tolerance(0.0001))
 {
-    // Set our x data to linear spaced bins of width 0.1 centred on integers
-    std::vector<double> binCentres{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    std::vector<double> binWidths(11, 0.1);
+    //// Set our x data to linear spaced bins of width 0.1 centred on integers
+    // std::vector<double> binCentres{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    // std::vector<double> binWidths(11, 0.1);
 
-    // Use the function 1 + x + x^2
-    // Set the errors to something reasonable but small
-    std::vector<double> data{1, 3, 7, 13, 21, 31, 43, 57, 73, 91, 111};
-    std::vector<double> errors(11, 0.01);
+    //// Use the function 1 + x + x^2
+    //// Set the errors to something reasonable but small
+    // std::vector<double> data{1, 3, 7, 13, 21, 31, 43, 57, 73, 91, 111};
+    // std::vector<double> errors(11, 0.01);
 
-    // We expect the fit coefficients to all be 1
-    std::vector<double> expectedFitCoefficients{1, 1, 1};
+    //// We expect the fit coefficients to all be 1
+    // std::vector<double> expectedFitCoefficients{1, 1, 1};
 
-    // Create a fitter with our parameters
-    FitData_t              fitData(binCentres, binWidths, data, errors);
-    MinuitPolynomialFitter MyFitter(fitData);
+    //// Create a fitter with our parameters
+    // FitData_t              fitData(binCentres, binWidths, data, errors);
+    // MinuitPolynomialFitter MyFitter(fitData);
 
-    // Perform a fit and check that our coefficients are all 1
-    std::vector<double> parameterGuess{0.9, 1.1, 1.2};
-    std::vector<double> errorGuess{1, 1, 1};
-    MyFitter.setPolynomialParams(parameterGuess, errorGuess);
-    MyFitter.fit();
-    CHECK_CLOSE_COLLECTIONS(MyFitter.fitParams.fitParams, expectedFitCoefficients, 0.001);
+    //// Perform a fit and check that our coefficients are all 1
+    // std::vector<double> parameterGuess{0.9, 1.1, 1.2};
+    // std::vector<double> errorGuess{1, 1, 1};
+    // MyFitter.setPolynomialParams(parameterGuess, errorGuess);
+    // MyFitter.fit();
+    // CHECK_CLOSE_COLLECTIONS(MyFitter.fitParams.fitParams, expectedFitCoefficients, 0.001);
+    BOOST_CHECK(false);
 }
 
 /*
@@ -289,8 +292,9 @@ BOOST_AUTO_TEST_CASE(test_corr_cov_conversion, *boost::unit_test::tolerance(0.00
     // fitter
     std::vector<double>    binCentres{0, 5, 10};
     std::vector<double>    binWidths{1, 1, 1};
+    std::vector<double>    binLimits{};
     FitData_t              fitData(binCentres, binWidths, errors, errors);
-    MinuitPolynomialFitter MyFitter(fitData);
+    MinuitPolynomialFitter MyFitter(fitData, binLimits, 0);
     MyFitter.setPolynomialParams(std::vector<double>(3, 1), errors);
 
     // Hack here where I set something that shouldn't be possible

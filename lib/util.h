@@ -153,7 +153,7 @@ inline double cfIntegral(const double low, const double high, const DecayParams_
 {
     // should really use std::bind
     auto f = [&](double x) { return rightSignDecayRate(x, decayParams); };
-    return boost::math::quadrature::trapezoidal(f, low, high, 1e-10, 20);
+    return boost::math::quadrature::trapezoidal(f, low, high);
 }
 
 /*
@@ -163,7 +163,27 @@ inline double dcsIntegral(const double low, const double high, const DecayParams
 {
     // should really use std::bind
     auto f = [&](double x) { return wrongSignDecayRate(x, decayParams); };
-    return boost::math::quadrature::trapezoidal(f, low, high, 1e-10, 20);
+    return boost::math::quadrature::trapezoidal(f, low, high);
+}
+
+/*
+ * Integral of CF rate between limits
+ */
+inline double cfIntegral(const double low, const double high, const double width)
+{
+    // should really use std::bind
+    auto f = [&](double x) { return exp(-1.0 * width * x); };
+    return boost::math::quadrature::trapezoidal(f, low, high);
+}
+
+/*
+ * Integral of DCS rate between limits
+ */
+inline double dcsIntegral(const double low, const double high, const std::vector<double> &abcParams, const double width)
+{
+    // should really use std::bind
+    auto f = [&](double x) { return (abcParams[0] + abcParams[1] * x + abcParams[2] * x * x) * exp(-1.0 * width * x); };
+    return boost::math::quadrature::trapezoidal(f, low, high);
 }
 
 } // namespace util

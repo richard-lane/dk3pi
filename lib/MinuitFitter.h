@@ -125,7 +125,9 @@ class PolynomialChiSqFcn : public BasePolynomialFcn
      */
     PolynomialChiSqFcn(const std::vector<double>& data,
                        const std::vector<double>& times,
-                       const std::vector<double>& errors);
+                       const std::vector<double>& errors,
+                       const std::vector<double>& binLimits,
+                       const double               width);
 
     ~PolynomialChiSqFcn();
 
@@ -136,6 +138,17 @@ class PolynomialChiSqFcn : public BasePolynomialFcn
      *
      */
     virtual double operator()(const std::vector<double>& parameters) const;
+
+  private:
+    /*
+     * Bin limits that were used in performing this fit
+     */
+    const std::vector<double> _binLimits{};
+
+    /*
+     * Decay width
+     */
+    const double _width{};
 };
 
 /*
