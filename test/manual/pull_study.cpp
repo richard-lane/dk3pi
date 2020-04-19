@@ -21,7 +21,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
         .z_re  = 0.7609,
         .width = 2439.0,
     };
-    double              maxTime           = 0.002;
+    double              maxTime           = 10 / phaseSpaceParams.width;
     std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
     size_t              numBins           = 50;
 
