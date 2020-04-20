@@ -90,18 +90,12 @@ void SimulatedDecays::_setMaxDCSRatio(void)
 
 double SimulatedDecays::rightSignDecayRate(const double time)
 {
-    return exp(-1.0 * _DecayParams.width * time);
+    return util::rightSignDecayRate(time, _DecayParams.width);
 }
 
 double SimulatedDecays::wrongSignDecayRate(const double time)
 {
-    // Write the decay rate as (a + bt + ct^2)e^(-gamma*t) (ignoring overall factor of B^2 that has been taken out)
-    double a = pow(_DecayParams.r, 2);
-    double b =
-        _DecayParams.r * (_DecayParams.y * _DecayParams.z_re + _DecayParams.x * _DecayParams.z_im) * _DecayParams.width;
-    double c = 0.25 * (pow(_DecayParams.x, 2) + pow(_DecayParams.y, 2)) * pow(_DecayParams.width, 2);
-
-    return (a + b * time + c * pow(time, 2)) * exp(-1.0 * _DecayParams.width * time);
+    return util::wrongSignDecayRate(time, _DecayParams);
 }
 
 void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)

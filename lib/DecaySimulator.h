@@ -71,6 +71,8 @@ class SimulatedDecays
      * We only care about the ratio of RS to WS decays, so an overall factor (of B^2 as defined in papers) is omitted.
      *
      * Public for UT
+     *
+     * TODO remove
      */
     double rightSignDecayRate(const double time);
 
@@ -79,6 +81,8 @@ class SimulatedDecays
      * We only care about the ratio of RS to WS decays, so an overall factor (of B^2 as defined in papers) is omitted.
      *
      * Public for UT
+     *
+     * TODO remove
      */
     double wrongSignDecayRate(const double time);
 
