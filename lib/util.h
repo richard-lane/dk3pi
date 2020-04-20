@@ -243,9 +243,38 @@ inline double dcsIntegral(const double         low,
 /*
  * Analytical integral of CF rate between limits
  */
+inline double analyticalCfIntegral(const double low, const double high, const double width)
+{
+    return (std::exp(-width * low) - std::exp(-width * high)) / width;
+}
+
+/*
+ * Analytical integral of DCS rate between limits
+ */
+inline double
+analyticalDcsIntegral(const double low, const double high, const std::vector<double> &abcParams, const double width)
+{
+    // Our integral is composed of three terms, X + Y + Z
+
+    double X = abcParams[0] * analyticalCfIntegral(low, high, width);
+
+    auto   y = [&](double x) { return std::exp(-width * x) * (width * x + 1) / (width * width); };
+    double Y = abcParams[1] * (y(low) - y(high));
+
+    auto z = [&](double x) {
+        return std::exp(-width * x) * (2 + 2 * width * x + width * width * x * x) / (width * width * width);
+    };
+    double Z = abcParams[2] * (z(low) - z(high));
+
+    return X + Y + Z;
+}
+
+/*
+ * Analytical integral of CF rate between limits
+ */
 inline double analyticalCfIntegral(const double low, const double high, const DecayParams_t &decayParams)
 {
-    return (std::exp(-decayParams.width * low) - std::exp(-decayParams.width * high)) / decayParams.width;
+    return analyticalCfIntegral(low, high, decayParams.width);
 }
 
 /*
@@ -253,24 +282,8 @@ inline double analyticalCfIntegral(const double low, const double high, const De
  */
 inline double analyticalDcsIntegral(const double low, const double high, const DecayParams_t &decayParams)
 {
-    // Our integral is composed of three terms, X + Y + Z
     std::vector<double> abcParams = expectedParams(decayParams);
-
-    double X = abcParams[0] * analyticalCfIntegral(low, high, decayParams);
-
-    auto y = [&](double x) {
-        return std::exp(-decayParams.width * x) * (decayParams.width * x + 1) / (decayParams.width * decayParams.width);
-    };
-    double Y = abcParams[1] * (y(low) - y(high));
-
-    auto z = [&](double x) {
-        return std::exp(-decayParams.width * x) *
-               (2 + 2 * decayParams.width * x + decayParams.width * decayParams.width * x * x) /
-               (decayParams.width * decayParams.width * decayParams.width);
-    };
-    double Z = abcParams[2] * (z(low) - z(high));
-
-    return X + Y + Z;
+    return analyticalDcsIntegral(low, high, abcParams, decayParams.width);
 }
 
 } // namespace util

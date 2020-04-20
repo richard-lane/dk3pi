@@ -145,7 +145,10 @@ BOOST_AUTO_TEST_CASE(test_analytical_integral_calculators, *boost::unit_test::to
 
     // DCS integral
     BOOST_CHECK(std::abs(util::analyticalDcsIntegral(0, 3, DecayParams) - 0.12599999999966256411) < 1e-15);
+    BOOST_CHECK(std::abs(util::analyticalDcsIntegral(0, 3, util::expectedParams(DecayParams), DecayParams.width) -
+                         0.12599999999966256411) < 1e-15);
 
     // CF integral
     BOOST_CHECK(std::abs(util::analyticalCfIntegral(0, 3, DecayParams) - 0.09999999999999064237703) < 1e-15);
+    BOOST_CHECK(std::abs(util::analyticalCfIntegral(0, 3, DecayParams.width) - 0.09999999999999064237703) < 1e-15);
 }
