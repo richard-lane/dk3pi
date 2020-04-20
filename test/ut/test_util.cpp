@@ -121,11 +121,31 @@ BOOST_AUTO_TEST_CASE(test_integral_calculators, *boost::unit_test::tolerance(1e-
     BOOST_CHECK(std::abs(util::expectedParams(DecayParams)[2] - 3) < 1e-8);
 
     // DCS integrals
-    BOOST_CHECK(std::abs(util::dcsIntegral(0, 3, DecayParams) - 0.12599999999966256411) < 1e-8);
-    BOOST_CHECK(std::abs(util::dcsIntegral(0, 3, util::expectedParams(DecayParams), DecayParams.width) -
-                         0.12599999999966256411) < 1e-8);
+    BOOST_CHECK(std::abs(util::dcsIntegral(0, 3, DecayParams, 1e-16, 25) - 0.12599999999966256411) < 1e-10);
+    BOOST_CHECK(std::abs(util::dcsIntegral(0, 3, util::expectedParams(DecayParams), DecayParams.width, 1e-14, 25) -
+                         0.12599999999966256411) < 1e-10);
 
     // CF integrals
-    BOOST_CHECK(std::abs(util::cfIntegral(0, 3, DecayParams) - 0.09999999999999064237703) < 1e-8);
-    BOOST_CHECK(std::abs(util::cfIntegral(0, 3, DecayParams.width) - 0.09999999999999064237703) < 1e-8);
+    BOOST_CHECK(std::abs(util::cfIntegral(0, 3, DecayParams, 1e-15, 25) - 0.09999999999999064237703) < 1e-10);
+    BOOST_CHECK(std::abs(util::cfIntegral(0, 3, DecayParams.width, 1e-15, 25) - 0.09999999999999064237703) < 1e-10);
+}
+
+/*
+ * Test analytical integrals
+ */
+BOOST_AUTO_TEST_CASE(test_analytical_integral_calculators, *boost::unit_test::tolerance(1e-8))
+{
+    DecayParams_t DecayParams = {
+        .x = 0.0, .y = std::sqrt(0.12), .r = 1, .z_im = 0.0, .z_re = 0.2 / std::sqrt(0.12), .width = 10};
+
+    // Cursory check that expectedParams still works
+    BOOST_CHECK(std::abs(util::expectedParams(DecayParams)[0] - 1) < 1e-8);
+    BOOST_CHECK(std::abs(util::expectedParams(DecayParams)[1] - 2) < 1e-8);
+    BOOST_CHECK(std::abs(util::expectedParams(DecayParams)[2] - 3) < 1e-8);
+
+    // DCS integral
+    BOOST_CHECK(std::abs(util::analyticalDcsIntegral(0, 3, DecayParams) - 0.12599999999966256411) < 1e-15);
+
+    // CF integral
+    BOOST_CHECK(std::abs(util::analyticalCfIntegral(0, 3, DecayParams) - 0.09999999999999064237703) < 1e-15);
 }
