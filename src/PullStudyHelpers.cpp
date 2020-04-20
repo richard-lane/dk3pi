@@ -64,8 +64,8 @@ void plot_parameter_distribution(std::string         title,
 double numDCSDecays(const size_t numCFDecays, const DecayParams_t &phaseSpaceParams, double maxTime)
 {
     // Our formula is numDcs = numCf * (DCS integral / CF integral), where we integrate over all allowed times
-    double dcsIntegral = util::dcsIntegral(0, maxTime, phaseSpaceParams, 1e-18, 25);
-    double cfIntegral  = util::cfIntegral(0, maxTime, phaseSpaceParams, 1e-18, 25);
+    double dcsIntegral = util::analyticalDcsIntegral(0, maxTime, phaseSpaceParams);
+    double cfIntegral  = util::analyticalCfIntegral(0, maxTime, phaseSpaceParams);
 
     return numCFDecays * dcsIntegral / cfIntegral;
 }

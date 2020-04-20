@@ -77,17 +77,11 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
     double chi2 = 0.0;
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model = util::dcsIntegral(_integralOptions.binLimits[i],
-                                         _integralOptions.binLimits[i + 1],
-                                         parameters,
-                                         _integralOptions.width,
-                                         _integralOptions.tolerance,
-                                         _integralOptions.maxRefinements) /
-                       util::cfIntegral(_integralOptions.binLimits[i],
-                                        _integralOptions.binLimits[i + 1],
-                                        _integralOptions.width,
-                                        _integralOptions.tolerance,
-                                        _integralOptions.maxRefinements);
+        double model =
+            util::analyticalDcsIntegral(
+                _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], parameters, _integralOptions.width) /
+            util::analyticalCfIntegral(
+                _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], _integralOptions.width);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
