@@ -16,7 +16,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     DecayParams_t phaseSpaceParams = {
         .x     = 0.0037,
         .y     = 0.0066,
-        .r     = 0.055,
+        .r     = 1,
         .z_im  = -0.2956,
         .z_re  = 0.7609,
         .width = 2439.0,
@@ -93,6 +93,12 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     for (auto pair = stats.begin(); pair != stats.end(); ++pair) {
         std::cout << "Pull:\t" << pair->first << "+-" << pair->second << std::endl;
     }
+
+    PullStudyHelpers::plot_parameter_distribution("a", aPull, numExperiments);
+    PullStudyHelpers::plot_parameter_distribution("b", bPull, numExperiments);
+    PullStudyHelpers::plot_parameter_distribution("c", cPull, numExperiments);
+
+    PullStudyHelpers::plotHist(chiSquaredVals, 50, "MinuitChiSq");
 }
 
 int main(int argc, char* argv[])

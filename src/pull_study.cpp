@@ -22,31 +22,6 @@
 #include "util.h"
 
 /*
- * Plot a histogram from a vector
- */
-void plotHist(const std::vector<double>& vector, const size_t numBins, const std::string& name)
-{
-    assert((numBins != 0));
-    double min = *(std::min_element(vector.begin(), vector.end()));
-    double max = *(std::max_element(vector.begin(), vector.end()));
-
-    double              binWidth = (max - min) / numBins;
-    std::vector<double> binLimits(numBins + 1, -1);
-
-    binLimits[0]       = min * 0.99;
-    binLimits[numBins] = max * 1.01;
-    for (size_t i = 1; i < numBins + 1; i++) {
-        binLimits[i] = binWidth * i + min;
-    }
-
-    TH1D* hist = new TH1D(name.c_str(), name.c_str(), numBins, binLimits.data());
-    hist->FillN(vector.size(), vector.data(), 0);
-
-    util::saveObjectToFile(hist, name + ".pdf");
-    delete hist;
-}
-
-/*
  * Perform a pull study with a specified number of experiments and events
  */
 void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
@@ -163,7 +138,7 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
     PullStudyHelpers::plot_parameter_distribution("c", c_fit, nExperiments);
 
     // Plot the distribution of chi squared values
-    plotHist(chiSqVector, 50, "MinuitChiSq");
+    PullStudyHelpers::plotHist(chiSqVector, 50, "MinuitChiSq");
 }
 
 // Hide this program's main() function from ROOT's Cling interpreter
