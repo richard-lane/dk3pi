@@ -167,12 +167,9 @@ inline double rightSignDecayRate(const double time, const DecayParams_t &decayPa
 inline double wrongSignDecayRate(const double time, const DecayParams_t &decayParams)
 {
     // Write the decay rate as (a + bt + ct^2)e^(-gamma*t) (ignoring overall factor of B^2 that has been taken out)
-    double a = pow(decayParams.r, 2);
-    double b =
-        decayParams.r * (decayParams.y * decayParams.z_re + decayParams.x * decayParams.z_im) * decayParams.width;
-    double c = 0.25 * (pow(decayParams.x, 2) + pow(decayParams.y, 2)) * pow(decayParams.width, 2);
+    std::vector<double> abcParams = expectedParams(decayParams);
 
-    return (a + b * time + c * pow(time, 2)) * exp(-1.0 * decayParams.width * time);
+    return (abcParams[0] + abcParams[1] * time + abcParams[2] * time * time) * exp(-1.0 * decayParams.width * time);
 }
 
 /*
