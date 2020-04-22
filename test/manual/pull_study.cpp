@@ -16,7 +16,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     DecayParams_t phaseSpaceParams = {
         .x     = 0.0037,
         .y     = 0.0066,
-        .r     = 1,
+        .r     = 0.055,
         .z_im  = -0.2956,
         .z_re  = 0.7609,
         .width = 2439.0,
@@ -73,6 +73,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
 
         // Fit data
         MyFitter.setPolynomialParams(expectedFitParams, std::vector<double>(3, 1));
+        MyFitter.fixParameters(std::vector<std::string>{"a"});
         MyFitter.fit();
 
         // Store parameter and chi squared
@@ -116,5 +117,5 @@ int main(int argc, char* argv[])
     std::string withIntegrating = integrate ? "with" : "without";
     std::cout << "Running pull study " << withIntegrating << " integrating over bins in fit." << std::endl;
 
-    pull_study(10e5, 500, integrate);
+    pull_study(10e5, 100, integrate);
 }
