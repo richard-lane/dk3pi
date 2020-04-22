@@ -173,6 +173,14 @@ inline double wrongSignDecayRate(const double time, const DecayParams_t &decayPa
 }
 
 /*
+ * Expected DCS decay rate at a given time
+ */
+inline double wrongSignDecayRate(const double time, const std::vector<double> &abcParams, const double width)
+{
+    return rateRatio(time, abcParams) * rightSignDecayRate(time, width);
+}
+
+/*
  * Integral of CF rate between limits
  *
  * errorEstimate can be set to get an estimate of the error in the integral

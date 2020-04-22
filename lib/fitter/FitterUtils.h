@@ -69,9 +69,4 @@ typedef struct PolynomialFitResults {
     std::unique_ptr<TMatrixD> correlationMatrix{};
 } FitResults_t;
 
-/*
- * Enum telling the fitter what algorithm to use, if using Minuit2
- */
-typedef enum FitAlgorithm { ChiSquared } FitAlgorithm_t;
-
 #endif // FITTERUTILS_H

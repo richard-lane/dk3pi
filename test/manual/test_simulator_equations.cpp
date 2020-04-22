@@ -15,6 +15,7 @@
 #include <TLatex.h>
 
 #include "DecaySimulator.h"
+#include "MinuitFitter.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "util.h"
@@ -52,27 +53,6 @@ void setParams(DecayParams_t &DecayParams)
 }
 
 /*
- * Favoured decay rate at a given time
- */
-inline double expectedRSRate(const DecayParams_t &MyDecayParams, const double time)
-{
-    return std::exp(-1 * MyDecayParams.width * time);
-}
-
-/*
- * Suppressed decay rate at a given time
- */
-inline double expectedWSRate(const DecayParams_t &MyDecayParams, const double time)
-{
-    return std::exp(-1 * MyDecayParams.width * time) *
-           (MyDecayParams.r * MyDecayParams.r +
-            MyDecayParams.width * MyDecayParams.r *
-                (MyDecayParams.y * MyDecayParams.z_re + MyDecayParams.x * MyDecayParams.z_im) * time +
-            0.25 * (MyDecayParams.x * MyDecayParams.x + MyDecayParams.y * MyDecayParams.y) * MyDecayParams.width *
-                MyDecayParams.width * time * time);
-}
-
-/*
  * Takes in an approximate number of points, some bin limits and a function pointer (DecayParams_t, double -> double);
  * uses them to generate a distribution of points that describes the function
  *
@@ -82,7 +62,7 @@ inline double expectedWSRate(const DecayParams_t &MyDecayParams, const double ti
 std::vector<size_t> expectedFunction(const size_t               approxNumPoints,
                                      const DecayParams_t &      MyParams,
                                      const std::vector<double> &binLimits,
-                                     double (*func)(const DecayParams_t &, const double))
+                                     double (*func)(const double, const DecayParams_t &))
 {
     // Evaluate func(time) * bigNumber to get a large number in each bin
     // Otherwise wen we cast our double func() value to a size_t it will just end up being 0
@@ -92,8 +72,8 @@ std::vector<size_t> expectedFunction(const size_t               approxNumPoints,
 
     for (size_t i = 0; i < numBins; ++i) {
         double binWidth  = binLimits[i + 1] - binLimits[i];
-        double lowerFunc = func(MyParams, binLimits[i]);
-        double upperFunc = func(MyParams, binLimits[i + 1]);
+        double lowerFunc = func(binLimits[i], MyParams);
+        double upperFunc = func(binLimits[i + 1], MyParams);
         values[i]        = bigNumber * 0.5 * binWidth * (lowerFunc + upperFunc);
     }
 
@@ -139,9 +119,9 @@ void simulateDecays()
     // Take the centre of each time bin, calculate the rate in each and multiply it by a large number to get many events
     // in each bin
     std::vector<size_t> expectedCfBinPopulation =
-        expectedFunction(approxNumDecays, MyParams, timeBinLimits, expectedRSRate);
+        expectedFunction(approxNumDecays, MyParams, timeBinLimits, util::rightSignDecayRate);
     std::vector<size_t> expectedDcsBinPopulation =
-        expectedFunction(approxNumDecays, MyParams, timeBinLimits, expectedWSRate);
+        expectedFunction(approxNumDecays, MyParams, timeBinLimits, util::wrongSignDecayRate);
 
     // After rescaling, count how many of each event type we have (should be about approxNumDecays)
     size_t numCf  = std::accumulate(expectedCfBinPopulation.begin(), expectedCfBinPopulation.end(), (size_t)0);
