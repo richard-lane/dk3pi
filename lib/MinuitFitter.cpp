@@ -12,6 +12,7 @@
 #include "D2K3PiError.h"
 #include "MinuitFitter.h"
 #include "fitter/MinuitPolynomialFitter.h"
+#include "physics.h"
 #include "util.h"
 
 BasePolynomialFcn::BasePolynomialFcn(const std::vector<double>& data,
@@ -78,9 +79,9 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
         double model =
-            util::analyticalDcsIntegral(
+            Phys::analyticalDcsIntegral(
                 _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], parameters, _integralOptions.width) /
-            util::analyticalCfIntegral(
+            Phys::analyticalCfIntegral(
                 _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], _integralOptions.width);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
@@ -111,7 +112,7 @@ double PolynomialChiSqFcnNoIntegral::operator()(const std::vector<double>& param
     double chi2 = 0.0;
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        chi2 += std::pow((util::rateRatio(thePositions[i], parameters) - theMeasurements[i]) / theMVariances[i], 2);
+        chi2 += std::pow((Phys::rateRatio(thePositions[i], parameters) - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
 }
@@ -146,7 +147,7 @@ double DetailedPolynomialChiSqFcn::operator()(const std::vector<double>& paramet
 
     double chi2 = 0.0;
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        chi2 += std::pow((util::rateRatio(thePositions[i], params) - theMeasurements[i]) / theMVariances[i], 2);
+        chi2 += std::pow((Phys::rateRatio(thePositions[i], params) - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
 }

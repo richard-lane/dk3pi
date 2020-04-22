@@ -10,12 +10,6 @@ namespace PullStudyHelpers
 {
 
 /*
- * Find exponentially-distributed limits of numBins bins up to maxTime, whose width is described by exp(-decayConstant *
- * time)
- */
-std::vector<double> exponentialBinLimits(const double maxTime, const double decayConstant, const size_t numBins);
-
-/*
  * Find the mean and std dev of a vector
  */
 std::pair<double, double> meanAndStdDev(const std::vector<double>& v);

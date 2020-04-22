@@ -20,61 +20,6 @@
 #define SIMULATOR_CPP_TOLERANCE 0.0000001
 
 /*
- * Check that we get the right RS decay rate
- */
-BOOST_AUTO_TEST_CASE(test_rs_rate, *boost::unit_test::tolerance(SIMULATOR_CPP_TOLERANCE))
-{
-    DecayParams_t DecayParams = {
-        .x     = 0.004,
-        .y     = 0.007,
-        .r     = 0.05,
-        .z_im  = -0.3,
-        .z_re  = 0.8,
-        .width = 2500.0,
-    };
-
-    // Define what we expect our RS decay rate to be
-    auto expectedRSRate = [](const DecayParams_t &MyDecayParams, const double time) {
-        return std::exp(-1 * MyDecayParams.width * time);
-    };
-
-    // Create a decay simulator, check our RS rate is right
-    SimulatedDecays MyDecays = SimulatedDecays(0.5, DecayParams);
-
-    BOOST_CHECK(expectedRSRate(DecayParams, 0.1) == MyDecays.rightSignDecayRate(0.1));
-}
-
-/*
- * Check that we get the right WS decay rate
- */
-BOOST_AUTO_TEST_CASE(test_ws_rate, *boost::unit_test::tolerance(SIMULATOR_CPP_TOLERANCE))
-{
-    DecayParams_t DecayParams = {
-        .x     = 0.004,
-        .y     = 0.007,
-        .r     = 0.05,
-        .z_im  = -0.3,
-        .z_re  = 0.8,
-        .width = 2500.0,
-    };
-
-    // Define what we expect our WS decay rate to be
-    auto expectedWSRate = [](const DecayParams_t &MyDecayParams, const double time) {
-        return std::exp(-1 * MyDecayParams.width * time) *
-               (MyDecayParams.r * MyDecayParams.r +
-                MyDecayParams.width * MyDecayParams.r *
-                    (MyDecayParams.y * MyDecayParams.z_re + MyDecayParams.x * MyDecayParams.z_im) * time +
-                0.25 * (MyDecayParams.x * MyDecayParams.x + MyDecayParams.y * MyDecayParams.y) * MyDecayParams.width *
-                    MyDecayParams.width * time * time);
-    };
-
-    // Create a decay simulator, check our RS rate is right
-    SimulatedDecays MyDecays = SimulatedDecays(0.5, DecayParams);
-
-    BOOST_CHECK(expectedWSRate(DecayParams, 0.01) == MyDecays.wrongSignDecayRate(0.01));
-}
-
-/*
  * Check that accept-reject works for a point on the RS curve
  * It's impossible to have a point rejected from this distribution
  */

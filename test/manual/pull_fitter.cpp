@@ -36,7 +36,7 @@ performFit(size_t numTimeBins, double maxTime, double a, double b, double c, dou
     std::vector<double> ratioErrors   = std::vector<double>(numTimeBins, -1);
 
     // Create exponential bins
-    std::vector<double> timeBinLimits = PullStudyHelpers::exponentialBinLimits(maxTime, width, numTimeBins);
+    std::vector<double> timeBinLimits = util::exponentialBinLimits(maxTime, width, numTimeBins);
 
     // Create idealised plot
     for (size_t i = 0; i < numTimeBins; ++i) {

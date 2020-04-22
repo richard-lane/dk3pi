@@ -8,22 +8,11 @@
 #include "TH1D.h"
 
 #include "../lib/DecaySimulator.h"
+#include "../lib/physics.h"
 #include "../lib/util.h"
 
 namespace PullStudyHelpers
 {
-
-std::vector<double> exponentialBinLimits(const double maxTime, const double decayConstant, const size_t numBins)
-{
-    std::vector<double> binLimits{};
-    for (size_t i = 0; i <= numBins; ++i) {
-        double x = (double)i / numBins;
-        double z = 1 - std::exp(-1 * decayConstant * maxTime);
-        binLimits.push_back((-1 / decayConstant) * std::log(1 - z * x));
-    }
-
-    return binLimits;
-}
 
 std::pair<double, double> meanAndStdDev(const std::vector<double>& v)
 {
@@ -89,8 +78,8 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
 double numDCSDecays(const size_t numCFDecays, const DecayParams_t& phaseSpaceParams, double maxTime)
 {
     // Our formula is numDcs = numCf * (DCS integral / CF integral), where we integrate over all allowed times
-    double dcsIntegral = util::analyticalDcsIntegral(0, maxTime, phaseSpaceParams);
-    double cfIntegral  = util::analyticalCfIntegral(0, maxTime, phaseSpaceParams);
+    double dcsIntegral = Phys::analyticalDcsIntegral(0, maxTime, phaseSpaceParams);
+    double cfIntegral  = Phys::analyticalCfIntegral(0, maxTime, phaseSpaceParams);
 
     return numCFDecays * dcsIntegral / cfIntegral;
 }

@@ -32,7 +32,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     std::poisson_distribution<size_t> dcsDist(meanNumDcsDecays);
 
     // Find exponentially-spaced time bin limits to use
-    std::vector<double> binLimits = PullStudyHelpers::exponentialBinLimits(maxTime, phaseSpaceParams.width, numBins);
+    std::vector<double> binLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, numBins);
 
     // Create a decay simulator
     SimulatedDecays MyDecays(maxTime, phaseSpaceParams);

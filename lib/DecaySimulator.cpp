@@ -10,6 +10,7 @@
 #include "D2K3PiError.h"
 #include "DecaySimulator.h"
 #include "PullStudyHelpers.h"
+#include "physics.h"
 #include "util.h"
 
 SimulatedDecays::SimulatedDecays(const double maxTime, const DecayParams_t &DecayParams) : _maxTime(maxTime)
@@ -24,12 +25,14 @@ SimulatedDecays::SimulatedDecays(const double maxTime, const DecayParams_t &Deca
 
 bool SimulatedDecays::isAccepted(const double time, const double uniformVal, bool rightSign)
 {
+    // At the moment the efficiency function is a step function at tau
+    double tau = 1 / _DecayParams.width;
     // Note: a better implementation of this might pass in a function pointer or something
     double funcVal{0};
     if (rightSign) {
-        funcVal = rightSignDecayRate(time);
+        funcVal = Phys::cfRateWithEfficiency(time, _DecayParams, tau);
     } else {
-        funcVal = wrongSignDecayRate(time);
+        funcVal = Phys::dcsRateWithEfficiency(time, _DecayParams, tau);
     }
     double c = rightSign ? 1.0 : _maxDCSRatio;
 
@@ -86,16 +89,6 @@ void SimulatedDecays::_setMaxDCSRatio(void)
     double              c      = params[2];
 
     _maxDCSRatio = a > a + b * _maxTime + c * _maxTime * _maxTime ? a : a + b * _maxTime + c * _maxTime * _maxTime;
-}
-
-double SimulatedDecays::rightSignDecayRate(const double time)
-{
-    return util::rightSignDecayRate(time, _DecayParams.width);
-}
-
-double SimulatedDecays::wrongSignDecayRate(const double time)
-{
-    return util::wrongSignDecayRate(time, _DecayParams);
 }
 
 void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)

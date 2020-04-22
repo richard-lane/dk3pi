@@ -1,6 +1,7 @@
 
 #include "MinuitFitter.h"
 #include "PullStudyHelpers.h"
+#include "physics.h"
 #include "util.h"
 
 #include "TCanvas.h"
@@ -32,7 +33,7 @@ class TestSimulatorFitter : public BasePolynomialFcn
     virtual double operator()(const std::vector<double> &parameters) const
     {
 
-        double integral      = util::analyticalDcsIntegral(0, _maxTime, parameters, _width);
+        double integral      = Phys::analyticalDcsIntegral(0, _maxTime, parameters, _width);
         double logLikelihood = 0.0;
         for (size_t i = 0; i < theMeasurements.size(); ++i) {
             double prob = (parameters[0] + parameters[1] * theMeasurements[i] +
@@ -57,8 +58,8 @@ void plotFit(ROOT::Minuit2::FunctionMinimum min,
              const double                   width,
              const size_t                   numEvents)
 {
-    double integral = util::analyticalDcsIntegral(0, maxTime, min.UserParameters().Params(), width);
-    auto prob = [&](double t) { return util::wrongSignDecayRate(t, min.UserParameters().Params(), width) / integral; };
+    double integral = Phys::analyticalDcsIntegral(0, maxTime, min.UserParameters().Params(), width);
+    auto prob = [&](double t) { return Phys::wrongSignDecayRate(t, min.UserParameters().Params(), width) / integral; };
 
     // Bins
     size_t              numBins  = 50;

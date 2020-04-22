@@ -18,6 +18,7 @@
 #include "MinuitFitter.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
+#include "physics.h"
 #include "util.h"
 
 /*
@@ -119,9 +120,9 @@ void simulateDecays()
     // Take the centre of each time bin, calculate the rate in each and multiply it by a large number to get many events
     // in each bin
     std::vector<size_t> expectedCfBinPopulation =
-        expectedFunction(approxNumDecays, MyParams, timeBinLimits, util::rightSignDecayRate);
+        expectedFunction(approxNumDecays, MyParams, timeBinLimits, Phys::rightSignDecayRate);
     std::vector<size_t> expectedDcsBinPopulation =
-        expectedFunction(approxNumDecays, MyParams, timeBinLimits, util::wrongSignDecayRate);
+        expectedFunction(approxNumDecays, MyParams, timeBinLimits, Phys::wrongSignDecayRate);
 
     // After rescaling, count how many of each event type we have (should be about approxNumDecays)
     size_t numCf  = std::accumulate(expectedCfBinPopulation.begin(), expectedCfBinPopulation.end(), (size_t)0);

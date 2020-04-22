@@ -66,26 +66,6 @@ class SimulatedDecays
      */
     std::vector<double> WSDecayTimes{};
 
-    /*
-     * Find the RS decay rate at a given time.
-     * We only care about the ratio of RS to WS decays, so an overall factor (of B^2 as defined in papers) is omitted.
-     *
-     * Public for UT
-     *
-     * TODO remove
-     */
-    double rightSignDecayRate(const double time);
-
-    /*
-     * Find the WS decay rate at a given time.
-     * We only care about the ratio of RS to WS decays, so an overall factor (of B^2 as defined in papers) is omitted.
-     *
-     * Public for UT
-     *
-     * TODO remove
-     */
-    double wrongSignDecayRate(const double time);
-
   private:
     /*
      * Generate a random number from 0 to 1 from a uniform distribution

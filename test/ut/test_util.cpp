@@ -6,6 +6,7 @@
 #include <cfloat>
 
 #include "D2K3PiError.h"
+#include "physics.h"
 #include "util.h"
 
 #include "TGraph.h"
@@ -121,13 +122,13 @@ BOOST_AUTO_TEST_CASE(test_integral_calculators, *boost::unit_test::tolerance(1e-
     BOOST_CHECK(std::abs(util::expectedParams(DecayParams)[2] - 3) < 1e-8);
 
     // DCS integrals
-    BOOST_CHECK(std::abs(util::dcsIntegral(0, 3, DecayParams, 1e-16, 25) - 0.12599999999966256411) < 1e-10);
-    BOOST_CHECK(std::abs(util::dcsIntegral(0, 3, util::expectedParams(DecayParams), DecayParams.width, 1e-14, 25) -
+    BOOST_CHECK(std::abs(Phys::dcsIntegral(0, 3, DecayParams, 1e-16, 25) - 0.12599999999966256411) < 1e-10);
+    BOOST_CHECK(std::abs(Phys::dcsIntegral(0, 3, util::expectedParams(DecayParams), DecayParams.width, 1e-14, 25) -
                          0.12599999999966256411) < 1e-10);
 
     // CF integrals
-    BOOST_CHECK(std::abs(util::cfIntegral(0, 3, DecayParams, 1e-15, 25) - 0.09999999999999064237703) < 1e-10);
-    BOOST_CHECK(std::abs(util::cfIntegral(0, 3, DecayParams.width, 1e-15, 25) - 0.09999999999999064237703) < 1e-10);
+    BOOST_CHECK(std::abs(Phys::cfIntegral(0, 3, DecayParams, 1e-15, 25) - 0.09999999999999064237703) < 1e-10);
+    BOOST_CHECK(std::abs(Phys::cfIntegral(0, 3, DecayParams.width, 1e-15, 25) - 0.09999999999999064237703) < 1e-10);
 }
 
 /*
@@ -144,13 +145,13 @@ BOOST_AUTO_TEST_CASE(test_analytical_integral_calculators, *boost::unit_test::to
     BOOST_CHECK(std::abs(util::expectedParams(DecayParams)[2] - 3) < 1e-8);
 
     // DCS integral
-    BOOST_CHECK(std::abs(util::analyticalDcsIntegral(0, 3, DecayParams) - 0.12599999999966256411) < 1e-15);
-    BOOST_CHECK(std::abs(util::analyticalDcsIntegral(0, 3, util::expectedParams(DecayParams), DecayParams.width) -
+    BOOST_CHECK(std::abs(Phys::analyticalDcsIntegral(0, 3, DecayParams) - 0.12599999999966256411) < 1e-15);
+    BOOST_CHECK(std::abs(Phys::analyticalDcsIntegral(0, 3, util::expectedParams(DecayParams), DecayParams.width) -
                          0.12599999999966256411) < 1e-15);
 
     // CF integral
-    BOOST_CHECK(std::abs(util::analyticalCfIntegral(0, 3, DecayParams) - 0.09999999999999064237703) < 1e-15);
-    BOOST_CHECK(std::abs(util::analyticalCfIntegral(0, 3, DecayParams.width) - 0.09999999999999064237703) < 1e-15);
+    BOOST_CHECK(std::abs(Phys::analyticalCfIntegral(0, 3, DecayParams) - 0.09999999999999064237703) < 1e-15);
+    BOOST_CHECK(std::abs(Phys::analyticalCfIntegral(0, 3, DecayParams.width) - 0.09999999999999064237703) < 1e-15);
 }
 
 /*
@@ -164,15 +165,49 @@ BOOST_AUTO_TEST_CASE(test_rates, *boost::unit_test::tolerance(1e-8))
     std::vector<double> expectedParams = util::expectedParams(DecayParams);
 
     // Rate ratio
-    BOOST_CHECK_SMALL(util::rateRatio(100, expectedParams) - 475209.0, 1e-10);
-    BOOST_CHECK_SMALL(util::rateRatio(100, DecayParams) - 475209.0, 1e-10);
+    BOOST_CHECK_SMALL(Phys::rateRatio(100, expectedParams) - 475209.0, 1e-10);
+    BOOST_CHECK_SMALL(Phys::rateRatio(100, DecayParams) - 475209.0, 1e-10);
 
     // DCS rate
-    BOOST_CHECK_SMALL(util::wrongSignDecayRate(2, DecayParams) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::wrongSignDecayRate(2, DecayParams) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
     BOOST_CHECK_SMALL(
-        util::wrongSignDecayRate(2, expectedParams, DecayParams.width) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
+        Phys::wrongSignDecayRate(2, expectedParams, DecayParams.width) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
 
     // CF rate
-    BOOST_CHECK_SMALL(util::rightSignDecayRate(2, DecayParams) - std::exp(-DecayParams.width * 2), 1e-10);
-    BOOST_CHECK_SMALL(util::rightSignDecayRate(2, DecayParams.width) - std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::rightSignDecayRate(2, DecayParams) - std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::rightSignDecayRate(2, DecayParams.width) - std::exp(-DecayParams.width * 2), 1e-10);
+}
+
+/*
+ * Test efficiency
+ */
+BOOST_AUTO_TEST_CASE(test_efficiency)
+{
+    BOOST_CHECK(Phys::efficiency(10, 5) == 0.0);
+    BOOST_CHECK(Phys::efficiency(10, 15) == 1.0);
+}
+
+/*
+ * Test rates with efficiency
+ */
+BOOST_AUTO_TEST_CASE(test_efficiency_rates)
+{
+    DecayParams_t DecayParams = {.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
+
+    // Trust that util::expectedParams works
+    std::vector<double> expectedParams = util::expectedParams(DecayParams);
+
+    // DCS rate
+    BOOST_CHECK_SMALL(Phys::dcsRateWithEfficiency(2, DecayParams, 1) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::dcsRateWithEfficiency(2, expectedParams, DecayParams.width, 1) -
+                          693 * std::exp(-DecayParams.width * 2),
+                      1e-10);
+    BOOST_CHECK(Phys::dcsRateWithEfficiency(2, DecayParams, 3) == 0.0);
+    BOOST_CHECK(Phys::dcsRateWithEfficiency(2, expectedParams, DecayParams.width, 3) == 0.0);
+
+    // CF rate
+    BOOST_CHECK_SMALL(Phys::cfRateWithEfficiency(2, DecayParams, 1) - std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::cfRateWithEfficiency(2, DecayParams.width, 1) - std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK(Phys::cfRateWithEfficiency(2, DecayParams, 3) == 0.0);
+    BOOST_CHECK(Phys::cfRateWithEfficiency(2, DecayParams.width, 3) == 0.0);
 }

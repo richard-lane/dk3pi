@@ -10,6 +10,7 @@
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "fitter/MinuitPolynomialFitter.h"
+#include "physics.h"
 
 #include "TH1I.h"
 
@@ -28,7 +29,7 @@ size_t dcsPointsInBin(const double         binLow,
                       const double         dcsIntegral,
                       const DecayParams_t &decayParams)
 {
-    double binIntegral = util::dcsIntegral(binLow, binHigh, decayParams, 1e-12, 12);
+    double binIntegral = Phys::dcsIntegral(binLow, binHigh, decayParams, 1e-12, 12);
     return (size_t)(totalPoints * binIntegral / dcsIntegral);
 }
 
@@ -43,7 +44,7 @@ size_t cfPointsInBin(const double         binLow,
                      const double         cfIntegral,
                      const DecayParams_t &decayParams)
 {
-    double binIntegral = util::cfIntegral(binLow, binHigh, decayParams, 1e-12, 12);
+    double binIntegral = Phys::cfIntegral(binLow, binHigh, decayParams, 1e-12, 12);
     return (size_t)(totalPoints * binIntegral / cfIntegral);
 }
 
@@ -104,8 +105,8 @@ MinuitPolynomialFitter performFit(const DecayParams_t &      decayParams,
     std::mt19937       gen(rd());
 
     // Find the counts in each bin
-    const double        dcsIntegral = util::dcsIntegral(0, maxTime, decayParams);
-    const double        cfIntegral  = util::cfIntegral(0, maxTime, decayParams);
+    const double        dcsIntegral = Phys::dcsIntegral(0, maxTime, decayParams);
+    const double        cfIntegral  = Phys::cfIntegral(0, maxTime, decayParams);
     std::vector<size_t> dcsCounts   = findDcsCounts(binLimits, numDcsEvents, dcsIntegral, decayParams, gen);
     std::vector<size_t> cfCounts    = findCfCounts(binLimits, numCfEvents, cfIntegral, decayParams, gen);
 
@@ -138,7 +139,7 @@ int main()
     double maxTime     = 0.005;
     size_t numTimeBins = 50;
 
-    std::vector<double> binLimits = PullStudyHelpers::exponentialBinLimits(maxTime, DecayParams.width, numTimeBins);
+    std::vector<double> binLimits = util::exponentialBinLimits(maxTime, DecayParams.width, numTimeBins);
 
     double numCfEvents  = 10e6;
     double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, DecayParams, maxTime);
