@@ -116,5 +116,5 @@ int main(int argc, char* argv[])
     std::string withIntegrating = integrate ? "with" : "without";
     std::cout << "Running pull study " << withIntegrating << " integrating over bins in fit." << std::endl;
 
-    pull_study(10e5, 100, integrate);
+    pull_study(10e5, 500, integrate);
 }
