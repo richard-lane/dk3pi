@@ -191,7 +191,7 @@ void test_2d_scan()
 }
 
 /*
- * Perform a fit, ignore the result + perform a 2d scan of im(Z) and re(Z)
+ * 2d scan of im(Z) and re(Z)
  */
 void test_z_scan()
 {
@@ -237,8 +237,6 @@ void test_z_scan()
                                               phaseSpaceParams.width};
     std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
     PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
-    // PhysFitter.fit(std::vector<size_t>{0});
-    // std::cout << "Min chisq: " << *(PhysFitter.statistic) << std::endl;
 
     // Perform a 2d chi squared scan on the components of Z
     size_t numPoints      = 100;
@@ -246,8 +244,8 @@ void test_z_scan()
     double min            = -1;
     double max            = 1;
 
-    std::unique_ptr<double> defaultChiSq = std::make_unique<double>(0);
-    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max, defaultChiSq.get());
+    PhysFitter.fixParameters(std::vector<std::string>{"width", "x", "y"});
+    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
 
     std::vector<double> imVals(numTotalPoints);
     std::vector<double> reVals(numTotalPoints);
@@ -259,9 +257,15 @@ void test_z_scan()
         chiSquaredVals[i] = PhysFitter.twoDParameterScan[i][2];
     }
 
+    // Subtract off the minimum chi squared
+    double minChiSq = *std::min_element(chiSquaredVals.begin(), chiSquaredVals.end());
+    std::transform(
+        chiSquaredVals.begin(), chiSquaredVals.end(), chiSquaredVals.begin(), [&](double x) { return x - minChiSq; });
+
     TGraph2D* Graph = new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredVals.data());
+    Graph->SetMaximum(25);
     Graph->SetTitle("2d Z scan;Im(Z);Re(Z);chiSq");
-    util::saveObjectToFile(Graph, "z_.pdf", "surf1");
+    util::saveObjectToFile(Graph, "z_.pdf", "CONT4Z");
     delete Graph;
 }
 
@@ -325,8 +329,8 @@ void test_ideal_z_scan()
     double min            = -1;
     double max            = 1;
 
-    std::unique_ptr<double> defaultChiSq = std::make_unique<double>(0);
-    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max, defaultChiSq.get());
+    PhysFitter.fixParameters(std::vector<std::string>{"width", "x", "y"});
+    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
 
     std::vector<double> imVals(numTotalPoints);
     std::vector<double> reVals(numTotalPoints);
@@ -389,7 +393,9 @@ void test_1d_z_scan()
     PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
     PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
 
-    // PhysFitter.fit(std::vector<size_t>{3});
+    // Perform a fit so we know where this dataset's parameters lie
+    PhysFitter.fixParameters(std::vector<std::string>{"y", "x", "width"});
+    PhysFitter.fit();
     // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
     // PhysFitter.saveFitPlot("fit", "fit.pdf", &legend);
 
@@ -397,27 +403,35 @@ void test_1d_z_scan()
     size_t numPoints = 100;
     double min       = -1;
     double max       = 1;
+    // double imMin = PhysFitter.fitParams.fitParams[3] - 3 * PhysFitter.fitParams.fitParamErrors[3];
+    // double imMax = PhysFitter.fitParams.fitParams[3] + 3 * PhysFitter.fitParams.fitParamErrors[3];
+    // double reMin = PhysFitter.fitParams.fitParams[4] - 3 * PhysFitter.fitParams.fitParamErrors[4];
+    // double reMax = PhysFitter.fitParams.fitParams[4] + 3 * PhysFitter.fitParams.fitParamErrors[4];
 
+    // Need to fix 3 params- choose y and decay width as well as our component of Z
     PhysFitter.chiSqParameterScan(3, numPoints, min, max);
 
-    std::vector<double> zVals(numPoints);
+    std::vector<double> imZVals(numPoints);
+    std::vector<double> reZVals(numPoints);
     std::vector<double> chiSquaredValsImScan(numPoints);
     for (size_t i = 0; i < numPoints; ++i) {
-        zVals[i]                = PhysFitter.parameterScan[i].first;
+        imZVals[i]              = PhysFitter.parameterScan[i].first;
         chiSquaredValsImScan[i] = PhysFitter.parameterScan[i].second;
     }
 
+    // Fix x and width
     PhysFitter.chiSqParameterScan(4, numPoints, min, max);
     std::vector<double> chiSquaredValsReScan(numPoints);
     for (size_t i = 0; i < numPoints; ++i) {
+        reZVals[i]              = PhysFitter.parameterScan[i].first;
         chiSquaredValsReScan[i] = PhysFitter.parameterScan[i].second;
     }
 
-    TGraph* ImGraph = new TGraph(numPoints, zVals.data(), chiSquaredValsImScan.data());
+    TGraph* ImGraph = new TGraph(numPoints, imZVals.data(), chiSquaredValsImScan.data());
     ImGraph->SetTitle("Im Z scan;Im(Z);chiSq");
     util::saveObjectToFile(ImGraph, "Im_Z_Scan.pdf", "");
 
-    TGraph* ReGraph = new TGraph(numPoints, zVals.data(), chiSquaredValsReScan.data());
+    TGraph* ReGraph = new TGraph(numPoints, reZVals.data(), chiSquaredValsReScan.data());
     ReGraph->SetTitle("Re Z scan;Re(Z);chiSq");
     util::saveObjectToFile(ReGraph, "Re_Z_Scan.pdf", "");
 
@@ -469,7 +483,7 @@ void test_1d_r_scan()
     FitData_t      MyFitData  = FitData(times, std::vector<double>(ratios.size(), timeBinWidth), ratios, ratioErrors);
     PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
     PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
-    PhysFitter.fixParameters(std::vector<std::string>{"z_im", "z_re"});
+    PhysFitter.fixParameters(std::vector<std::string>{"z_im", "z_re", "width"});
 
     PhysFitter.fit();
     // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
@@ -497,12 +511,16 @@ void test_1d_r_scan()
 
 int main()
 {
+    // a b c polynomial scans
     test_param_scan();
     test_2d_scan();
+
+    // 1d scans of physical fit parameters
     test_1d_r_scan();
     test_1d_z_scan();
 
+    // 2d scans
     // test_ideal_z_scan();
-    // test_z_scan();
+    test_z_scan();
     return 0;
 }

@@ -12,37 +12,26 @@ class MinuitScannerBase : public MinuitFitterBase
     /*
      * Scan the ith parameter as defined in _parameters
      *
-     * Also may pass in a default value for chi squared; if this is set, then this will be used if a fit fails (a
-     * warning message will be emitted).
-     *
      * Populates parameterScan
      */
-    void chiSqParameterScan(const size_t  i,
-                            const size_t  numPoints,
-                            const double  low,
-                            const double  high,
-                            const double* defaultChiSq = nullptr);
+    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high);
 
     /*
      * Scan the i and jth parameters between the specified limits
-     *
-     * Also may pass in a default value for chi squared; if this is set, then this will be used if a fit fails (a
-     * warning message will be emitted).
      *
      * Populates twoDParameterScan
      *
      *
      * TODO this has too many args
      */
-    void twoDParamScan(const size_t  i,
-                       const size_t  j,
-                       const size_t  iPoints,
-                       const size_t  jPoints,
-                       const double  iLow,
-                       const double  iHigh,
-                       const double  jLow,
-                       const double  jHigh,
-                       const double* defaultChiSq = nullptr);
+    void twoDParamScan(const size_t i,
+                       const size_t j,
+                       const size_t iPoints,
+                       const size_t jPoints,
+                       const double iLow,
+                       const double iHigh,
+                       const double jLow,
+                       const double jHigh);
 
     /*
      * Vector of pairs describing a parameter scan
@@ -66,16 +55,9 @@ class MinuitScannerBase : public MinuitFitterBase
     /*
      * Perform a series of fits, holding parameter i fixed between the values specified in low and high.
      *
-     * If a default value of chi squared is provided, failed fits will be ignored + the value given will be used instead
-     * (a warning message is still emitted)
-     *
      * Returns a vector of the minimised Minuit2 function values
      */
-    std::vector<double> _scanParameter(const size_t  i,
-                                       const size_t  numPoints,
-                                       const double  low,
-                                       const double  high,
-                                       const double* defaultChiSq = nullptr);
+    std::vector<double> _scanParameter(const size_t i, const size_t numPoints, const double low, const double high);
 };
 
 #endif // MINUIT_SCANNER_BASE_H

@@ -20,17 +20,23 @@ void PhysicalFitter::fit()
         throw D2K3PiException();
     }
 
-    // Check that we have fixed at least one of x, y, Re(Z) or Im(Z)- otherwise our fit is poorly defined
-    // Create a vector of Minuit's internal representations of x, y, Re(Z) and Im(Z)
+    // Check that we have fixed at least three of x, y, Re(Z), Im(Z) and decay width.
+    // Copy the parameters we have into a vector + remove r
     std::vector<ROOT::Minuit2::MinuitParameter> x_y_rez_imz = _parameters->Trafo().Parameters();
     x_y_rez_imz.erase(x_y_rez_imz.begin() + 2);
-    x_y_rez_imz.erase(x_y_rez_imz.begin() + 5);
 
-    // Check that at least one of them is fixed
-    if (std::all_of(x_y_rez_imz.begin(), x_y_rez_imz.end(), [](ROOT::Minuit2::MinuitParameter& param) {
-            return !param.IsFixed();
-        })) {
-        std::cerr << "Must fix one of x, y, or a component of Z for fit to be well defined" << std::endl;
+    // Count how many of the relevant parameters are fixed
+    short unsigned int numFixedParams{0};
+    for (auto it = x_y_rez_imz.begin(); it != x_y_rez_imz.end(); ++it) {
+        if (it->IsFixed()) {
+            ++numFixedParams;
+        }
+    }
+
+    // Raise if not enough are fixed
+    if (numFixedParams < 3) {
+        std::cerr << "Must fix at least three of {x, y, width, Im(Z), Re(Z)} for fit to be well defined ("
+                  << numFixedParams << " fixed)." << std::endl;
         throw D2K3PiException();
     }
 
@@ -46,5 +52,10 @@ void PhysicalFitter::fit()
 void PhysicalFitter::setPhysicalFitParams(const std::vector<double>& initialParams,
                                           const std::vector<double>& initialErrors)
 {
+    if (initialParams.size() != 6 || initialErrors.size() != 6) {
+        std::cerr << "Must provide 6 initial parameters and errors for x, y, rD, Im(Z), Re(Z) and decay width."
+                  << std::endl;
+        throw D2K3PiException();
+    }
     _setParams(_paramNames, initialParams, initialErrors);
 }

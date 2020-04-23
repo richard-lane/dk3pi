@@ -109,7 +109,7 @@ void simulateDecays()
     size_t              numTimeBins = 50;
     std::vector<double> timeBinLimits{};
     for (size_t i = 0; i < numTimeBins + 1; ++i) {
-        timeBinLimits.push_back(i * maxTime / numTimeBins);
+        timeBinLimits.push_back((1 / MyParams.width) + i * (maxTime - 1 / MyParams.width) / numTimeBins);
     }
 
     // Choose about how many decays we want

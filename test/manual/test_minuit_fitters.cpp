@@ -85,9 +85,9 @@ void compareRootMinuit(void)
                                           phaseSpaceParams.width};
     std::vector<double> initialErrGuess{1, 1, 1, 1, 1, 1};
 
-    // Perform a fit, fixing x to its "correct" value
+    // Perform a fit, fixing x, y and the width to their model values
     PhysFitter.setPhysicalFitParams(initialParamGuess, initialErrGuess);
-    PhysFitter.fixParameters(std::vector<std::string>{"x"});
+    PhysFitter.fixParameters(std::vector<std::string>{"x", "y", "width"});
     PhysFitter.fit();
 
     // Print fit parameters to console

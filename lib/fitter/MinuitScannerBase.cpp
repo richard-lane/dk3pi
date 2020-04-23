@@ -1,6 +1,8 @@
 
 #include <iostream>
 
+#include <boost/progress.hpp>
+
 #include "D2K3PiError.h"
 #include "MinuitScannerBase.h"
 
@@ -13,11 +15,7 @@ MinuitScannerBase::MinuitScannerBase(const FitData_t& fitData) : MinuitFitterBas
     ;
 }
 
-void MinuitScannerBase::chiSqParameterScan(const size_t  i,
-                                           const size_t  numPoints,
-                                           const double  low,
-                                           const double  high,
-                                           const double* defaultChiSq)
+void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
 {
     // Find a vector of the parameter values we're interested in
     // This already gets done in the _scanParameter function but i dont care
@@ -31,21 +29,20 @@ void MinuitScannerBase::chiSqParameterScan(const size_t  i,
     parameterScan = std::vector<std::pair<double, double>>(numPoints);
 
     // Scan the parameter and populate parameterScan
-    std::vector<double> chiSqValues = _scanParameter(i, numPoints, low, high, defaultChiSq);
+    std::vector<double> chiSqValues = _scanParameter(i, numPoints, low, high);
     for (auto k = 0; k < numPoints; ++k) {
         parameterScan[k] = std::make_pair(parameterVals[k], chiSqValues[k]);
     }
 }
 
-void MinuitScannerBase::twoDParamScan(const size_t  i,
-                                      const size_t  j,
-                                      const size_t  iPoints,
-                                      const size_t  jPoints,
-                                      const double  iLow,
-                                      const double  iHigh,
-                                      const double  jLow,
-                                      const double  jHigh,
-                                      const double* defaultChiSq)
+void MinuitScannerBase::twoDParamScan(const size_t i,
+                                      const size_t j,
+                                      const size_t iPoints,
+                                      const size_t jPoints,
+                                      const double iLow,
+                                      const double iHigh,
+                                      const double jLow,
+                                      const double jHigh)
 {
     if (i >= _parameters->Params().size() || j >= _parameters->Params().size()) {
         std::cerr << "Cannot scan params " << i << ", " << j << "; only have " << fitParams.fitParams.size()
@@ -77,21 +74,20 @@ void MinuitScannerBase::twoDParamScan(const size_t  i,
 
     // Loop over our j Values, performing a scan over i  for each one
     _parameters->Fix(j);
+    boost::progress_display showProgress(jPoints);
     for (size_t jIndex = 0; jIndex < jPoints; ++jIndex) {
         _parameters->SetValue(j, jVals[jIndex]);
-        std::vector<double> values = _scanParameter(i, iPoints, iLow, iHigh, defaultChiSq);
+        std::vector<double> values = _scanParameter(i, iPoints, iLow, iHigh);
         for (size_t n = 0; n < values.size(); ++n) {
             twoDParameterScan[jIndex + jPoints * n] = std::vector<double>{iVals[n], jVals[jIndex], values[n]};
         }
+        ++showProgress;
     }
     _parameters->Release(j);
 }
 
-std::vector<double> MinuitScannerBase::_scanParameter(const size_t  i,
-                                                      const size_t  numPoints,
-                                                      const double  low,
-                                                      const double  high,
-                                                      const double* defaultChiSq)
+std::vector<double>
+MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const double low, const double high)
 {
     // Check that we have sensible low and high
     if (low > high) {
@@ -120,20 +116,9 @@ std::vector<double> MinuitScannerBase::_scanParameter(const size_t  i,
     for (auto k = 0; k < numPoints; ++k) {
         _parameters->SetValue(i, parameterVals[k]);
 
-        try {
-            // Perform a fit and insert the statistic value we get into values[]
-            fit();
-            values[k] = *statistic;
-
-        } catch (const BadFitException& e) {
-            // Catch our error + set the default statistic if the fit fails
-            if (!defaultChiSq) {
-                throw e;
-            }
-            std::cerr << "WARNING: fit failed to converge, but failure ignored" << std::endl;
-            std::cerr << e.min << std::endl;
-            values[k] = *defaultChiSq;
-        }
+        // Perform a fit and insert the statistic value we get into values[]
+        fit();
+        values[k] = *statistic;
     }
     _parameters->Release(i);
 
