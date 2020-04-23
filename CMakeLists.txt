@@ -16,12 +16,12 @@ include(${ROOT_USE_FILE})
 find_package( Boost COMPONENTS system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Some standard flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat-security -Werror -Og -g")
+
 # Add our core library
 # This defines a static library D2K3Pi
 add_subdirectory("${CMAKE_SOURCE_DIR}/lib")
-
-# Some standard flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat-security -Werror -O0 -g")
 
 # Debug
 set(CMAKE_BUILD_TYPE Debug)

@@ -56,12 +56,10 @@ void compareRootMinuit(void)
 
     // Polynomial fit with integration
     IntegralOptions_t      integralOptions(phaseSpaceParams.width, timeBinLimits, 1e-10, 10);
-    MinuitPolynomialFitter MinuitPolyFit =
-        MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width, &integralOptions);
+    MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData, &integralOptions);
 
     // Polynomial fit without integration
-    MinuitPolynomialFitter MinuitPolyFitNoIntegral =
-        MinuitPolynomialFitter(MyFitData, timeBinLimits, phaseSpaceParams.width);
+    MinuitPolynomialFitter MinuitPolyFitNoIntegral = MinuitPolynomialFitter(MyFitData);
 
     // Fit to phase space params
     PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);

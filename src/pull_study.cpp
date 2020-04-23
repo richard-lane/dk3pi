@@ -107,7 +107,7 @@ void pull_study(size_t nExperiments = 100, size_t nEvents = 800000)
 
         // Fit our decays
         FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-        MinuitPolynomialFitter MyFitter = MinuitPolynomialFitter(MyFitData, binLimits, phaseSpaceParams.width);
+        MinuitPolynomialFitter MyFitter = MinuitPolynomialFitter(MyFitData);
         MyFitter.fit();
 
         // Save our fit plot to file

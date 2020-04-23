@@ -30,7 +30,7 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
 
     // Scan the parameter and populate parameterScan
     std::vector<double> chiSqValues = _scanParameter(i, numPoints, low, high);
-    for (auto k = 0; k < numPoints; ++k) {
+    for (size_t k = 0; k < numPoints; ++k) {
         parameterScan[k] = std::make_pair(parameterVals[k], chiSqValues[k]);
     }
 }
@@ -113,7 +113,7 @@ MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const 
 
     // For every value of the parameter we're interested in, fix the param, perform a fit + populate values
     _parameters->Fix(i);
-    for (auto k = 0; k < numPoints; ++k) {
+    for (size_t k = 0; k < numPoints; ++k) {
         _parameters->SetValue(i, parameterVals[k]);
 
         // Perform a fit and insert the statistic value we get into values[]

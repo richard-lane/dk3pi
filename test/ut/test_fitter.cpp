@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::toler
 
     // Create a fitter with our parameters
     FitData_t              fitData(binCentres, binWidths, data, errors);
-    MinuitPolynomialFitter MyFitter(fitData, std::vector<double>{}, 0.0);
+    MinuitPolynomialFitter MyFitter(fitData);
 
     // Perform a fit and check that our coefficients are all 1
     std::vector<double> parameterGuess{0.9, 1.1, 1.2};
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE(test_corr_cov_conversion, *boost::unit_test::tolerance(0.00
     std::vector<double>    binWidths{1, 1, 1};
     std::vector<double>    binLimits{};
     FitData_t              fitData(binCentres, binWidths, errors, errors);
-    MinuitPolynomialFitter MyFitter(fitData, binLimits, 0);
+    MinuitPolynomialFitter MyFitter(fitData);
     MyFitter.setPolynomialParams(std::vector<double>(3, 1), errors);
 
     // Hack here where I set something that shouldn't be possible

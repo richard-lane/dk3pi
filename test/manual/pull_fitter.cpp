@@ -51,7 +51,7 @@ performFit(size_t numTimeBins, double maxTime, double a, double b, double c, dou
 
     // Fit our idealised plot
     FitData_t              MyFitData = FitData(times, timeBinWidths, ratios, ratioErrors);
-    MinuitPolynomialFitter MyFitter(MyFitData, timeBinLimits, width);
+    MinuitPolynomialFitter MyFitter(MyFitData);
     MyFitter.setPolynomialParams(std::vector<double>{a, b, c}, std::vector<double>{1, 1, 1});
     MyFitter.fit();
     // const util::LegendParams_t legendParams = {

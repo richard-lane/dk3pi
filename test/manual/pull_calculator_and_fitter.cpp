@@ -117,7 +117,7 @@ MinuitPolynomialFitter performFit(const DecayParams_t &      decayParams,
     // Fit our idealised plot
     FitData_t MyFitData(
         MyRatioCalculator.binCentres, MyRatioCalculator.binWidths, MyRatioCalculator.ratio, MyRatioCalculator.error);
-    MinuitPolynomialFitter MyFitter(MyFitData, binLimits, decayParams.width);
+    MinuitPolynomialFitter MyFitter(MyFitData);
 
     MyFitter.setPolynomialParams(util::expectedParams(decayParams), std::vector<double>{1, 1, 1});
     MyFitter.fit();

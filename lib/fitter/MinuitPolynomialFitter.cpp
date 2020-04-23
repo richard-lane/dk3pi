@@ -8,10 +8,7 @@
 #include "Minuit2/MnPrint.h"
 #include "TF1.h"
 
-MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t&           fitData,
-                                               const std::vector<double>& binLimits,
-                                               const double               width,
-                                               const IntegralOptions_t*   integralOptions)
+MinuitPolynomialFitter::MinuitPolynomialFitter(const FitData_t& fitData, const IntegralOptions_t* integralOptions)
     : MinuitScannerBase(fitData)
 {
     if (integralOptions) {
