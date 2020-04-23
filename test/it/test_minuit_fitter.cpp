@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "MinuitFitter.h"
+#include "MinuitFcns.h"
 
 /*
  * Test chi squared comes out right

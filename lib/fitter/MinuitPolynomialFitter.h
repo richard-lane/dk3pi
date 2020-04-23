@@ -1,7 +1,7 @@
 #ifndef MINUIT_POLY_FITTER_H
 #define MINUIT_POLY_FITTER_H
 
-#include "MinuitFitter.h"
+#include "MinuitFcns.h"
 #include "MinuitScannerBase.h"
 
 /*

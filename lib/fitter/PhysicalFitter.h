@@ -16,14 +16,17 @@ class PhysicalFitter : public MinuitScannerBase
   public:
     /*
      * Calls parent constructor
+     *
+     * Includes option to constrian x and y to their world average values.
      */
-    PhysicalFitter(const FitData_t& fitData);
+    PhysicalFitter(const FitData_t& fitData, const bool constrainXY = false);
 
     /*
      * Fit our data to a second-order polynomial r2 + r(yRZ + xImZ)Gt + (x2+y2)(Gt)2/4 using Minuit2 and the chi-squared
      * method.
      *
-     * Should fix at least one of x, y, or a componenent of Z before fitting (else fit is poorly defined)
+     * If xy are not constrained, must fix at least three of {x, y, z_im, z_re, width} before fitting (else fit is
+     * poorly defined). If xy are constrained, then only one of {z_im, z_re, width} needs to be fixed.
      *
      * Allocates memory to _plot and _bestFitFunction
      *
@@ -44,6 +47,12 @@ class PhysicalFitter : public MinuitScannerBase
      * Useful for indexing + consistency; we can use this to e.g. fix a parameter by name
      */
     const std::vector<std::string> _paramNames{"x", "y", "r", "z_im", "z_re", "width"};
+
+  private:
+    /*
+     * Whether to impose the world averages as a constraint onto x and y
+     */
+    bool _constrainXY = false;
 };
 
 #endif // PHYSICAL_FITTER_H

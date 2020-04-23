@@ -11,7 +11,7 @@ set(fitter
 add_library(D2K3Pi SHARED
   DecaySimulator.cpp
   ${fitter}
-  MinuitFitter.cpp
+  MinuitFcns.cpp
   PhaseSpaceBinning.cpp
   RatioCalculator.cpp
   ReadAmpGen.cpp

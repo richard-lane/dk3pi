@@ -191,14 +191,14 @@ void test_2d_scan()
 }
 
 /*
- * 2d scan of im(Z) and re(Z)
+ * 2d scan of im(Z) and re(Z), both with and without a constraint
  */
 void test_z_scan()
 {
     // Create an accept-reject dataset
     DecayParams_t phaseSpaceParams = {
-        .x     = 0.0037,
-        .y     = 0.0066,
+        .x     = 0.0039,
+        .y     = 0.0065,
         .r     = 0.055,
         .z_im  = -0.2956,
         .z_re  = 0.7609,
@@ -224,9 +224,10 @@ void test_z_scan()
     RatioCalculator     MyRatios  = RatioCalculator(cfCounts, dcsCounts, timeBinLimits);
     MyRatios.calculateRatios();
 
-    // Create a fitter
+    // Create fitters
     FitData_t      MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
     PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
+    PhysicalFitter PhysFitterConstraint = PhysicalFitter(MyFitData, true);
 
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{phaseSpaceParams.x,
@@ -237,6 +238,7 @@ void test_z_scan()
                                               phaseSpaceParams.width};
     std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
     PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
+    PhysFitterConstraint.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
 
     // Perform a 2d chi squared scan on the components of Z
     size_t numPoints      = 100;
@@ -247,105 +249,50 @@ void test_z_scan()
     PhysFitter.fixParameters(std::vector<std::string>{"width", "x", "y"});
     PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
 
+    PhysFitterConstraint.fixParameters(std::vector<std::string>{"width"});
+    PhysFitterConstraint.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
+
     std::vector<double> imVals(numTotalPoints);
     std::vector<double> reVals(numTotalPoints);
-    std::vector<double> chiSquaredVals(numTotalPoints);
+    std::vector<double> chiSquaredValsNoConstraint(numTotalPoints);
+    std::vector<double> chiSquaredValsWithConstraint(numTotalPoints);
 
     for (size_t i = 0; i < numTotalPoints; ++i) {
-        imVals[i]         = PhysFitter.twoDParameterScan[i][0];
-        reVals[i]         = PhysFitter.twoDParameterScan[i][1];
-        chiSquaredVals[i] = PhysFitter.twoDParameterScan[i][2];
+        imVals[i]                       = PhysFitter.twoDParameterScan[i][0];
+        reVals[i]                       = PhysFitter.twoDParameterScan[i][1];
+        chiSquaredValsNoConstraint[i]   = PhysFitter.twoDParameterScan[i][2];
+        chiSquaredValsWithConstraint[i] = PhysFitterConstraint.twoDParameterScan[i][2];
     }
 
     // Subtract off the minimum chi squared
-    double minChiSq = *std::min_element(chiSquaredVals.begin(), chiSquaredVals.end());
-    std::transform(
-        chiSquaredVals.begin(), chiSquaredVals.end(), chiSquaredVals.begin(), [&](double x) { return x - minChiSq; });
+    std::transform(chiSquaredValsNoConstraint.begin(),
+                   chiSquaredValsNoConstraint.end(),
+                   chiSquaredValsNoConstraint.begin(),
+                   [&](double x) {
+                       return x -
+                              *std::min_element(chiSquaredValsNoConstraint.begin(), chiSquaredValsNoConstraint.end());
+                   });
+    std::transform(chiSquaredValsWithConstraint.begin(),
+                   chiSquaredValsWithConstraint.end(),
+                   chiSquaredValsWithConstraint.begin(),
+                   [&](double x) {
+                       return x - *std::min_element(chiSquaredValsWithConstraint.begin(),
+                                                    chiSquaredValsWithConstraint.end());
+                   });
 
-    TGraph2D* Graph = new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredVals.data());
-    Graph->SetMaximum(25);
-    Graph->SetTitle("2d Z scan;Im(Z);Re(Z);chiSq");
-    util::saveObjectToFile(Graph, "z_.pdf", "CONT4Z");
-    delete Graph;
-}
+    TGraph2D* NoConstraintGraph =
+        new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredValsNoConstraint.data());
+    NoConstraintGraph->SetMaximum(25);
+    NoConstraintGraph->SetTitle("2d Z scan;Im(Z);Re(Z);chiSq");
+    util::saveObjectToFile(NoConstraintGraph, "z_.pdf", "CONT4Z");
+    delete NoConstraintGraph;
 
-/*
- * Perform a fit to ideal data ignore the result + perform a 2d scan of im(Z) and re(Z)
- */
-void test_ideal_z_scan()
-{
-    std::cout << "---- Ideal dataset Z scan \n\n\n";
-
-    // Create an ideal dataset
-    double maxTime     = 0.002;
-    double numTimeBins = 50;
-    double error       = 0.00001;
-
-    DecayParams_t phaseSpaceParams = {
-        .x     = 0.0037,
-        .y     = 0.0066,
-        .r     = 0.055,
-        .z_im  = -0.2956,
-        .z_re  = 0.7609,
-        .width = 2439.0,
-    };
-    std::vector<double> params = util::expectedParams(phaseSpaceParams);
-    double              a      = params[0];
-    double              b      = params[1];
-    double              c      = params[2];
-
-    double              timeBinWidth = maxTime / numTimeBins;
-    std::vector<double> times        = std::vector<double>(numTimeBins, -1);
-    std::vector<double> ratioErrors  = std::vector<double>(numTimeBins, -1);
-
-    // Create idealised plot
-    for (size_t i = 0; i < numTimeBins; ++i) {
-        times[i] = i * timeBinWidth;
-    }
-    std::vector<double> ratios = idealRatios(times, error, a, b, c);
-    for (size_t i = 0; i < numTimeBins; ++i) {
-        ratioErrors[i] = ratio(a, b, c, times[i]) * error;
-    }
-
-    // Create a fitter + set params to an initial guess
-    std::vector<double> initialParameterGuess{phaseSpaceParams.x,
-                                              phaseSpaceParams.y,
-                                              phaseSpaceParams.r,
-                                              phaseSpaceParams.z_im,
-                                              phaseSpaceParams.z_re,
-                                              phaseSpaceParams.width};
-    std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
-    FitData_t      MyFitData  = FitData(times, std::vector<double>(ratios.size(), timeBinWidth), ratios, ratioErrors);
-    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
-    PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
-
-    // PhysFitter.fit(std::vector<size_t>{3});
-    // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
-    // PhysFitter.saveFitPlot("fit", "fit.pdf", &legend);
-
-    // Perform a 2d chi squared scan on the components of Z
-    size_t numPoints      = 10;
-    size_t numTotalPoints = numPoints * numPoints;
-    double min            = -1;
-    double max            = 1;
-
-    PhysFitter.fixParameters(std::vector<std::string>{"width", "x", "y"});
-    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
-
-    std::vector<double> imVals(numTotalPoints);
-    std::vector<double> reVals(numTotalPoints);
-    std::vector<double> chiSquaredVals(numTotalPoints);
-
-    for (size_t i = 0; i < numTotalPoints; ++i) {
-        imVals[i]         = PhysFitter.twoDParameterScan[i][0];
-        reVals[i]         = PhysFitter.twoDParameterScan[i][1];
-        chiSquaredVals[i] = PhysFitter.twoDParameterScan[i][2];
-    }
-
-    TGraph2D* Graph = new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredVals.data());
-    Graph->SetTitle("2d Z scan;Im(Z);Re(Z);chiSq");
-    util::saveObjectToFile(Graph, "z_ideal.pdf", "surf1");
-    delete Graph;
+    TGraph2D* ConstraintGraph =
+        new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredValsWithConstraint.data());
+    ConstraintGraph->SetMaximum(25);
+    ConstraintGraph->SetTitle("2d Z scan with constraint;Im(Z);Re(Z);chiSq");
+    util::saveObjectToFile(ConstraintGraph, "z_constraint.pdf", "CONT4Z");
+    delete ConstraintGraph;
 }
 
 void test_1d_z_scan()
@@ -520,7 +467,6 @@ int main()
     test_1d_z_scan();
 
     // 2d scans
-    // test_ideal_z_scan();
     test_z_scan();
     return 0;
 }

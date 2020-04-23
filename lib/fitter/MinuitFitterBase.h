@@ -2,7 +2,7 @@
 #define MINUIT_FITTER_BASE_H
 
 #include "BaseFitter.h"
-#include "MinuitFitter.h"
+#include "MinuitFcns.h"
 #include "util.h"
 
 #include "Minuit2/FunctionMinimum.h"

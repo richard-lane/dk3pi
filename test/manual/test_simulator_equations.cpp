@@ -15,7 +15,7 @@
 #include <TLatex.h>
 
 #include "DecaySimulator.h"
-#include "MinuitFitter.h"
+#include "MinuitFcns.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "physics.h"

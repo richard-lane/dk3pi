@@ -1,8 +1,16 @@
 /*
- * Fit binned data with Minuit
+ * Fit data with Minuit
+ *
+ * Minuit uses a special class to perform the fit; the ones I might want to use are defined here.
  */
 #ifndef MINUIT_FITTER_H
 #define MINUIT_FITTER_H
+
+#define WORLD_AVERAGE_X (0.0039183)
+#define WORLD_AVERAGE_X_ERR (0.0011489)
+#define WORLD_AVERAGE_Y (0.0065139)
+#define WORLD_AVERAGE_Y_ERR (0.00064945)
+#define X_Y_CORRELATION (-0.301)
 
 #include <memory>
 #include <vector>
@@ -43,13 +51,6 @@ typedef struct IntegralFitOptions {
 class BasePolynomialFcn : public ROOT::Minuit2::FCNBase
 {
   public:
-    /*
-     * Sets the various private members
-     */
-    BasePolynomialFcn(const std::vector<double>& data,
-                      const std::vector<double>& times,
-                      const std::vector<double>& errors);
-
     /*
      * Maybe we need a destructor
      */
@@ -99,6 +100,14 @@ class BasePolynomialFcn : public ROOT::Minuit2::FCNBase
      * I don't know
      */
     double theErrorDef;
+
+  protected:
+    /*
+     * Sets the various private members
+     */
+    BasePolynomialFcn(const std::vector<double>& data,
+                      const std::vector<double>& times,
+                      const std::vector<double>& errors);
 };
 
 /*
@@ -179,6 +188,31 @@ class DetailedPolynomialChiSqFcn : public BasePolynomialFcn
      * Creates a model given a vector of {x, y, r, z_im, z_re, width};
      *
      * Returns chi squared value between the model given our params and the measured data
+     */
+    virtual double operator()(const std::vector<double>& parameters) const;
+};
+
+/*
+ * Class fitting to a detailed polynomial (r^2 + r(yRZ + xImZ)*Gamma*t + (x2 +y2)/4 (Gamma*t)2), with constraint on X
+ * and Y
+ */
+class DetailedChiSqConstrainXYFcn : public BasePolynomialFcn
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    DetailedChiSqConstrainXYFcn(const std::vector<double>& data,
+                                const std::vector<double>& times,
+                                const std::vector<double>& errors);
+
+    ~DetailedChiSqConstrainXYFcn();
+
+    /*
+     * Creates a model given a vector of {x, y, r, z_im, z_re, width};
+     *
+     * Returns chi squared value between the model given our params and the measured data, constraining X and Y to the
+     * values
      */
     virtual double operator()(const std::vector<double>& parameters) const;
 };

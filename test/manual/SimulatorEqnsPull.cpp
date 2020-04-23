@@ -1,5 +1,5 @@
 
-#include "MinuitFitter.h"
+#include "MinuitFcns.h"
 #include "PullStudyHelpers.h"
 #include "physics.h"
 #include "util.h"

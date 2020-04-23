@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "D2K3PiError.h"
-#include "MinuitFitter.h"
+#include "MinuitFcns.h"
 #include "fitter/MinuitPolynomialFitter.h"
 #include "physics.h"
 #include "util.h"
@@ -148,6 +148,49 @@ double DetailedPolynomialChiSqFcn::operator()(const std::vector<double>& paramet
     double chi2 = 0.0;
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
         chi2 += std::pow((Phys::rateRatio(thePositions[i], params) - theMeasurements[i]) / theMVariances[i], 2);
+    }
+    return chi2;
+}
+
+DetailedChiSqConstrainXYFcn::DetailedChiSqConstrainXYFcn(const std::vector<double>& data,
+                                                         const std::vector<double>& times,
+                                                         const std::vector<double>& errors)
+    : BasePolynomialFcn(data, times, errors)
+{
+    ;
+}
+
+DetailedChiSqConstrainXYFcn::~DetailedChiSqConstrainXYFcn()
+{
+    ;
+}
+
+double DetailedChiSqConstrainXYFcn::operator()(const std::vector<double>& parameters) const
+{
+    size_t numParams = parameters.size();
+    if (numParams != 6) {
+        std::cerr << "Require six parameters(x, y, r, z_im, z_re, width); got " << numParams << std::endl;
+        throw D2K3PiException();
+    }
+
+    DecayParams_t params = DecayParameters{.x     = parameters[0],
+                                           .y     = parameters[1],
+                                           .r     = parameters[2],
+                                           .z_im  = parameters[3],
+                                           .z_re  = parameters[4],
+                                           .width = parameters[5]};
+
+    double chi2 = 0.0;
+    for (size_t i = 0; i < theMeasurements.size(); ++i) {
+        // Introduce constraint by modifying chi squared
+        double dx = parameters[0] - WORLD_AVERAGE_X;
+        double dy = parameters[1] - WORLD_AVERAGE_Y;
+        double baseChiSq =
+            std::pow((Phys::rateRatio(thePositions[i], params) - theMeasurements[i]) / theMVariances[i], 2);
+        double constraint = (1 / (1 - X_Y_CORRELATION)) *
+                            (std::pow(dx / WORLD_AVERAGE_X_ERR, 2) + std::pow(dy / WORLD_AVERAGE_Y_ERR, 2) -
+                             2 * X_Y_CORRELATION * dx * dy / (WORLD_AVERAGE_Y_ERR * WORLD_AVERAGE_X_ERR));
+        chi2 += baseChiSq + constraint;
     }
     return chi2;
 }
