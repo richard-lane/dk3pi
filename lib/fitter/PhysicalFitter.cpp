@@ -7,13 +7,17 @@
 #include "Minuit2/MnPrint.h"
 #include "TF1.h"
 
-PhysicalFitter::PhysicalFitter(const FitData_t& fitData, const bool constrainXY)
+PhysicalFitter::PhysicalFitter(const FitData_t&         fitData,
+                               const IntegralOptions_t& integralOptions,
+                               const bool               constrainXY)
     : MinuitScannerBase(fitData), _constrainXY(constrainXY)
 {
     if (_constrainXY) {
-        _fitFcn = std::make_unique<DetailedChiSqConstrainXYFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
+        _fitFcn = std::make_unique<DetailedChiSqConstrainXYFcn>(
+            _fitData.data, _fitData.binCentres, _fitData.errors, integralOptions);
     } else {
-        _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(_fitData.data, _fitData.binCentres, _fitData.errors);
+        _fitFcn = std::make_unique<DetailedPolynomialChiSqFcn>(
+            _fitData.data, _fitData.binCentres, _fitData.errors, integralOptions);
     }
 }
 

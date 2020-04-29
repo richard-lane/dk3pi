@@ -180,7 +180,8 @@ class DetailedPolynomialChiSqFcn : public BasePolynomialFcn
      */
     DetailedPolynomialChiSqFcn(const std::vector<double>& data,
                                const std::vector<double>& times,
-                               const std::vector<double>& errors);
+                               const std::vector<double>& errors,
+                               const IntegralOptions_t&   integralOptions);
 
     ~DetailedPolynomialChiSqFcn();
 
@@ -190,6 +191,9 @@ class DetailedPolynomialChiSqFcn : public BasePolynomialFcn
      * Returns chi squared value between the model given our params and the measured data
      */
     virtual double operator()(const std::vector<double>& parameters) const;
+
+  private:
+    IntegralOptions_t _integralOptions;
 };
 
 /*
@@ -204,7 +208,8 @@ class DetailedChiSqConstrainXYFcn : public BasePolynomialFcn
      */
     DetailedChiSqConstrainXYFcn(const std::vector<double>& data,
                                 const std::vector<double>& times,
-                                const std::vector<double>& errors);
+                                const std::vector<double>& errors,
+                                const IntegralOptions_t&   integralOptions);
 
     ~DetailedChiSqConstrainXYFcn();
 
@@ -215,6 +220,9 @@ class DetailedChiSqConstrainXYFcn : public BasePolynomialFcn
      * values
      */
     virtual double operator()(const std::vector<double>& parameters) const;
+
+  private:
+    IntegralOptions_t _integralOptions;
 };
 
 #endif // MINUIT_FITTER_H

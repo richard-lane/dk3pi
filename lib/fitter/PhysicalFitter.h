@@ -17,9 +17,12 @@ class PhysicalFitter : public MinuitScannerBase
     /*
      * Calls parent constructor
      *
+     * Must tell this class the options to use when integrating (bin limits etc.), as the model for the fit integrates
+     * over the bins to find the expected ratios.
+     *
      * Includes option to constrian x and y to their world average values.
      */
-    PhysicalFitter(const FitData_t& fitData, const bool constrainXY = false);
+    PhysicalFitter(const FitData_t& fitData, const IntegralOptions_t& integralOptions, const bool constrainXY = false);
 
     /*
      * Fit our data to a second-order polynomial r2 + r(yRZ + xImZ)Gt + (x2+y2)(Gt)2/4 using Minuit2 and the chi-squared

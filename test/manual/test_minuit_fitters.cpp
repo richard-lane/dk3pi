@@ -62,7 +62,7 @@ void compareRootMinuit(void)
     MinuitPolynomialFitter MinuitPolyFitNoIntegral = MinuitPolynomialFitter(MyFitData);
 
     // Fit to phase space params
-    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
+    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData, integralOptions);
 
     // Perform fits
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};

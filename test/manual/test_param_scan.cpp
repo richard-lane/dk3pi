@@ -11,6 +11,7 @@
 
 #include "TGraph.h"
 #include "TGraph2D.h"
+#include "TH2.h"
 
 #include "testutil.h"
 
@@ -225,9 +226,10 @@ void test_z_scan()
     MyRatios.calculateRatios();
 
     // Create fitters
-    FitData_t      MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
-    PhysicalFitter PhysFitterConstraint = PhysicalFitter(MyFitData, true);
+    IntegralOptions_t integralOptions(phaseSpaceParams.width, timeBinLimits);
+    FitData_t         MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    PhysicalFitter    PhysFitter = PhysicalFitter(MyFitData, integralOptions);
+    PhysicalFitter    PhysFitterConstraint = PhysicalFitter(MyFitData, integralOptions, true);
 
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{phaseSpaceParams.x,
@@ -265,20 +267,18 @@ void test_z_scan()
     }
 
     // Subtract off the minimum chi squared
+    double minChiSqNoConstraint =
+        *std::min_element(chiSquaredValsNoConstraint.begin(), chiSquaredValsNoConstraint.end());
+    double minChiSqWithConstraint =
+        *std::min_element(chiSquaredValsWithConstraint.begin(), chiSquaredValsWithConstraint.end());
     std::transform(chiSquaredValsNoConstraint.begin(),
                    chiSquaredValsNoConstraint.end(),
                    chiSquaredValsNoConstraint.begin(),
-                   [&](double x) {
-                       return x -
-                              *std::min_element(chiSquaredValsNoConstraint.begin(), chiSquaredValsNoConstraint.end());
-                   });
+                   [&](double x) { return x - minChiSqNoConstraint; });
     std::transform(chiSquaredValsWithConstraint.begin(),
                    chiSquaredValsWithConstraint.end(),
                    chiSquaredValsWithConstraint.begin(),
-                   [&](double x) {
-                       return x - *std::min_element(chiSquaredValsWithConstraint.begin(),
-                                                    chiSquaredValsWithConstraint.end());
-                   });
+                   [&](double x) { return x - minChiSqWithConstraint; });
 
     TGraph2D* NoConstraintGraph =
         new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredValsNoConstraint.data());
@@ -290,170 +290,10 @@ void test_z_scan()
     TGraph2D* ConstraintGraph =
         new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredValsWithConstraint.data());
     ConstraintGraph->SetMaximum(25);
+    ConstraintGraph->GetHistogram()->SetContour(50);
     ConstraintGraph->SetTitle("2d Z scan with constraint;Im(Z);Re(Z);chiSq");
     util::saveObjectToFile(ConstraintGraph, "z_constraint.pdf", "CONT4Z");
     delete ConstraintGraph;
-}
-
-void test_1d_z_scan()
-{
-    // Create an ideal dataset
-    double maxTime     = 0.002;
-    double numTimeBins = 50;
-    double error       = 0.00001;
-
-    DecayParams_t phaseSpaceParams = {
-        .x     = 0.0037,
-        .y     = 0.0066,
-        .r     = 0.055,
-        .z_im  = -0.2956,
-        .z_re  = 0.7609,
-        .width = 2439.0,
-    };
-    std::vector<double> params = util::expectedParams(phaseSpaceParams);
-    double              a      = params[0];
-    double              b      = params[1];
-    double              c      = params[2];
-
-    double              timeBinWidth = maxTime / numTimeBins;
-    std::vector<double> times        = std::vector<double>(numTimeBins, -1);
-    std::vector<double> ratioErrors  = std::vector<double>(numTimeBins, -1);
-
-    // Create idealised plot
-    for (size_t i = 0; i < numTimeBins; ++i) {
-        times[i] = i * timeBinWidth;
-    }
-    std::vector<double> ratios = idealRatios(times, error, a, b, c);
-    for (size_t i = 0; i < numTimeBins; ++i) {
-        ratioErrors[i] = ratio(a, b, c, times[i]) * error;
-    }
-
-    // Create a fitter + set params to an initial guess
-    std::vector<double> initialParameterGuess{phaseSpaceParams.x,
-                                              phaseSpaceParams.y,
-                                              phaseSpaceParams.r,
-                                              phaseSpaceParams.z_im,
-                                              phaseSpaceParams.z_re,
-                                              phaseSpaceParams.width};
-    std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
-    FitData_t      MyFitData  = FitData(times, std::vector<double>(ratios.size(), timeBinWidth), ratios, ratioErrors);
-    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
-    PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
-
-    // Perform a fit so we know where this dataset's parameters lie
-    PhysFitter.fixParameters(std::vector<std::string>{"y", "x", "width"});
-    PhysFitter.fit();
-    // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
-    // PhysFitter.saveFitPlot("fit", "fit.pdf", &legend);
-
-    // Perform 1d chi squared scans on the components of Z
-    size_t numPoints = 100;
-    double min       = -1;
-    double max       = 1;
-    // double imMin = PhysFitter.fitParams.fitParams[3] - 3 * PhysFitter.fitParams.fitParamErrors[3];
-    // double imMax = PhysFitter.fitParams.fitParams[3] + 3 * PhysFitter.fitParams.fitParamErrors[3];
-    // double reMin = PhysFitter.fitParams.fitParams[4] - 3 * PhysFitter.fitParams.fitParamErrors[4];
-    // double reMax = PhysFitter.fitParams.fitParams[4] + 3 * PhysFitter.fitParams.fitParamErrors[4];
-
-    // Need to fix 3 params- choose y and decay width as well as our component of Z
-    PhysFitter.chiSqParameterScan(3, numPoints, min, max);
-
-    std::vector<double> imZVals(numPoints);
-    std::vector<double> reZVals(numPoints);
-    std::vector<double> chiSquaredValsImScan(numPoints);
-    for (size_t i = 0; i < numPoints; ++i) {
-        imZVals[i]              = PhysFitter.parameterScan[i].first;
-        chiSquaredValsImScan[i] = PhysFitter.parameterScan[i].second;
-    }
-
-    // Fix x and width
-    PhysFitter.chiSqParameterScan(4, numPoints, min, max);
-    std::vector<double> chiSquaredValsReScan(numPoints);
-    for (size_t i = 0; i < numPoints; ++i) {
-        reZVals[i]              = PhysFitter.parameterScan[i].first;
-        chiSquaredValsReScan[i] = PhysFitter.parameterScan[i].second;
-    }
-
-    TGraph* ImGraph = new TGraph(numPoints, imZVals.data(), chiSquaredValsImScan.data());
-    ImGraph->SetTitle("Im Z scan;Im(Z);chiSq");
-    util::saveObjectToFile(ImGraph, "Im_Z_Scan.pdf", "");
-
-    TGraph* ReGraph = new TGraph(numPoints, reZVals.data(), chiSquaredValsReScan.data());
-    ReGraph->SetTitle("Re Z scan;Re(Z);chiSq");
-    util::saveObjectToFile(ReGraph, "Re_Z_Scan.pdf", "");
-
-    delete ImGraph;
-    delete ReGraph;
-}
-
-void test_1d_r_scan()
-{
-    // Create an ideal dataset
-    double maxTime     = 0.002;
-    double numTimeBins = 50;
-    double error       = 0.00001;
-
-    DecayParams_t phaseSpaceParams = {
-        .x     = 0.0037,
-        .y     = 0.0066,
-        .r     = 0.055,
-        .z_im  = -0.2956,
-        .z_re  = 0.7609,
-        .width = 2439.0,
-    };
-    std::vector<double> params = util::expectedParams(phaseSpaceParams);
-    double              a      = params[0];
-    double              b      = params[1];
-    double              c      = params[2];
-
-    double              timeBinWidth = maxTime / numTimeBins;
-    std::vector<double> times        = std::vector<double>(numTimeBins, -1);
-    std::vector<double> ratioErrors  = std::vector<double>(numTimeBins, -1);
-
-    // Create idealised plot
-    for (size_t i = 0; i < numTimeBins; ++i) {
-        times[i] = i * timeBinWidth;
-    }
-    std::vector<double> ratios = idealRatios(times, error, a, b, c);
-    for (size_t i = 0; i < numTimeBins; ++i) {
-        ratioErrors[i] = ratio(a, b, c, times[i]) * error;
-    }
-
-    // Create a fitter + set params to an initial guess
-    std::vector<double> initialParameterGuess{phaseSpaceParams.x,
-                                              phaseSpaceParams.y,
-                                              phaseSpaceParams.r,
-                                              phaseSpaceParams.z_im,
-                                              phaseSpaceParams.z_re,
-                                              phaseSpaceParams.width};
-    std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
-    FitData_t      MyFitData  = FitData(times, std::vector<double>(ratios.size(), timeBinWidth), ratios, ratioErrors);
-    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData);
-    PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
-    PhysFitter.fixParameters(std::vector<std::string>{"z_im", "z_re", "width"});
-
-    PhysFitter.fit();
-    // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
-    // PhysFitter.saveFitPlot("fit", "fit.pdf", &legend);
-
-    // Perform 1d chi squared scan on r
-    size_t numPoints = 100;
-    double min       = PhysFitter.fitParams.fitParams[0] - 3 * PhysFitter.fitParams.fitParamErrors[0];
-    double max       = PhysFitter.fitParams.fitParams[0] + 3 * PhysFitter.fitParams.fitParamErrors[0];
-
-    PhysFitter.chiSqParameterScan(0, numPoints, min, max);
-
-    std::vector<double> rVals(numPoints);
-    std::vector<double> chiSquaredVals(numPoints);
-    for (size_t i = 0; i < numPoints; ++i) {
-        rVals[i]          = PhysFitter.parameterScan[i].first;
-        chiSquaredVals[i] = PhysFitter.parameterScan[i].second;
-    }
-
-    TGraph* Graph = new TGraph(numPoints, rVals.data(), chiSquaredVals.data());
-    Graph->SetTitle("r scan;r;chiSq");
-    util::saveObjectToFile(Graph, "r_Scan.pdf", "");
-    delete Graph;
 }
 
 int main()
@@ -461,10 +301,6 @@ int main()
     // a b c polynomial scans
     test_param_scan();
     test_2d_scan();
-
-    // 1d scans of physical fit parameters
-    test_1d_r_scan();
-    test_1d_z_scan();
 
     // 2d scans
     test_z_scan();
