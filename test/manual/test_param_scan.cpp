@@ -9,6 +9,8 @@
 #include "fitter/PhysicalFitter.h"
 #include "util.h"
 
+#include "TCanvas.h"
+#include "TEllipse.h"
 #include "TGraph.h"
 #include "TGraph2D.h"
 #include "TH2.h"
@@ -287,20 +289,57 @@ void test_z_scan()
     util::saveObjectToFile(NoConstraintGraph, "z_.pdf", "CONT4Z");
     delete NoConstraintGraph;
 
+    // Square canvas
+    TCanvas* c = new TCanvas();
+    c->cd();
+    c->SetWindowSize(1000, 1000);
+
+    // Draw a circle to show the allowed Z values
+    double radius = 0.56; // No idea how TEllipse works but this is the factor i need to scale my ellipse by to give it
+                          // a radius of 1?
+    TEllipse* boundary = new TEllipse(0, 0, radius, radius);
+    boundary->SetFillColorAlpha(0, 0); // Transparent
+
+    // Take square root to find standard deviations
+    std::vector<double> constrainedFitSigmaVals{chiSquaredValsWithConstraint};
+    std::transform(constrainedFitSigmaVals.begin(),
+                   constrainedFitSigmaVals.end(),
+                   constrainedFitSigmaVals.begin(),
+                   [&](double x) { return std::sqrt(x); }); // Could use std::bind
+
+    // Draw contour plot up to 5 sigma
+    size_t    numContours                = 6;
+    size_t    maxSigma                   = numContours - 1;
+    double    contourLevels[numContours] = {0, 1, 2, 3, 4, 5};
     TGraph2D* ConstraintGraph =
-        new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), chiSquaredValsWithConstraint.data());
-    ConstraintGraph->SetMaximum(25);
-    ConstraintGraph->GetHistogram()->SetContour(50);
-    ConstraintGraph->SetTitle("2d Z scan with constraint;Im(Z);Re(Z);chiSq");
-    util::saveObjectToFile(ConstraintGraph, "z_constraint.pdf", "CONT4Z");
+        new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), constrainedFitSigmaVals.data());
+    ConstraintGraph->SetMaximum(maxSigma);
+    ConstraintGraph->GetHistogram()->SetContour(numContours, contourLevels);
+    ConstraintGraph->SetTitle("Z Scan;Im(Z);Re(Z);\\sigmas");
+
+    // Point representing "true" value of Z
+    TEllipse* trueZ =
+        new TEllipse(radius * phaseSpaceParams.z_im, // Again have to scale by this mysterious radius factor
+                     radius * phaseSpaceParams.z_re,
+                     0.01,
+                     0.01);
+
+    // Save as an image
+    ConstraintGraph->Draw("CONT4Z");
+    boundary->Draw();
+    trueZ->Draw();
+    c->SaveAs("z_constraint.png");
+    delete trueZ;
+    delete boundary;
+    delete c;
     delete ConstraintGraph;
 }
 
 int main()
 {
     // a b c polynomial scans
-    test_param_scan();
-    test_2d_scan();
+    // test_param_scan();
+    // test_2d_scan();
 
     // 2d scans
     test_z_scan();
