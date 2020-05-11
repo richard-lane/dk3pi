@@ -142,6 +142,13 @@ exponentialBinLimits(const double minTime, const double maxTime, const double de
  */
 std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
 
+/*
+ * Take two vectors of Re() and Im() values, output a vector of (magnitude, phase) pairs
+ * Phase is between 0 and 2pi
+ */
+std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> real,
+                                                     const std::vector<double> imaginary);
+
 } // namespace util
 
 #endif // UTIL_H

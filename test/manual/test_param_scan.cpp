@@ -203,8 +203,8 @@ void test_z_scan()
         .x     = 0.0039,
         .y     = 0.0065,
         .r     = 0.055,
-        .z_im  = -0.2956,
-        .z_re  = 0.7609,
+        .z_im  = -0.434,
+        .z_re  = -0.304,
         .width = 2439.0,
     };
     double maxTime = 0.002;
@@ -245,7 +245,7 @@ void test_z_scan()
     PhysFitterConstraint.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
 
     // Perform a 2d chi squared scan on the components of Z
-    size_t numPoints      = 100;
+    size_t numPoints      = 200;
     size_t numTotalPoints = numPoints * numPoints;
     double min            = -1;
     double max            = 1;
@@ -333,6 +333,47 @@ void test_z_scan()
     delete boundary;
     delete c;
     delete ConstraintGraph;
+
+    // Also plot contours in the R-delta plane
+    // pretty much just a copy-paste of the above code with "magphase" stuck on the end of some variable names
+    std::vector<std::pair<double, double>> magAndPhase = util::reIm2magPhase(reVals, imVals);
+    std::vector<double>                    magnitudes(numTotalPoints);
+    std::vector<double>                    phases(numTotalPoints);
+    for (size_t i = 0; i < numTotalPoints; ++i) {
+        magnitudes[i] = magAndPhase[i].first;
+        phases[i]     = magAndPhase[i].second;
+    }
+
+    // Square canvas
+    TCanvas* c2 = new TCanvas();
+    c2->cd();
+    c2->SetWindowSize(1000, 1000);
+
+    // Draw contour plot up to 5 sigma
+    size_t    numContoursMagPhase                = 6;
+    size_t    maxSigmaMagPhase                   = numContoursMagPhase - 1;
+    double    contourLevelsMagPhase[numContours] = {0, 1, 2, 3, 4, 5};
+    TGraph2D* ConstraintGraphMagPhase =
+        new TGraph2D(numTotalPoints, magnitudes.data(), phases.data(), constrainedFitSigmaVals.data());
+    ConstraintGraphMagPhase->SetMaximum(maxSigmaMagPhase);
+    ConstraintGraphMagPhase->GetHistogram()->SetContour(numContoursMagPhase, contourLevelsMagPhase);
+    ConstraintGraphMagPhase->SetTitle("Z Scan;R;\\delta;\\sigmas");
+
+    // Point representing "true" value of Z
+    std::vector<std::pair<double, double>> trueZmagPhaseVals =
+        util::reIm2magPhase(std::vector<double>{phaseSpaceParams.z_re}, std::vector<double>{phaseSpaceParams.z_im});
+    // Need to multiply by mysterious radius factor again
+    double    trueR         = radius * (2 * trueZmagPhaseVals[0].first - 1);
+    double    trueDelta     = radius * (trueZmagPhaseVals[0].second / M_PI - 1);
+    TEllipse* trueZMagPhase = new TEllipse(trueR, trueDelta, 0.01, 0.01);
+
+    // Axis limits
+    ConstraintGraphMagPhase->GetXaxis()->SetLimits(0, 1);
+
+    // Save as an image
+    ConstraintGraphMagPhase->Draw("CONT4Z");
+    trueZMagPhase->Draw();
+    c2->SaveAs("z_Rdelta.png");
 }
 
 int main()

@@ -225,6 +225,36 @@ template void saveObjectsToFile<TGraphErrors>(const std::vector<TObject *> &  my
                                               const std::vector<std::string> &legendLabel,
                                               const std::string &             path,
                                               const LegendParams_t &          legendParams);
+
+std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> real,
+                                                     const std::vector<double> imaginary)
+{
+    if (real.size() != imaginary.size()) {
+        std::cerr << "im and re vectors different lengths- cannot convert to magnitude + phase" << std::endl;
+        throw D2K3PiException();
+    }
+
+    std::vector<std::pair<double, double>> outVector(real.size());
+
+    for (size_t i = 0; i < real.size(); ++i) {
+        // If our point is (0 + 0i), choose the phase to be 0
+        // Otherwise use the normal definition
+        if (real[i] == 0. && imaginary[i] == 0.) {
+            outVector[i].first  = 0;
+            outVector[i].second = 0;
+        } else {
+            outVector[i].first = std::sqrt(real[i] * real[i] + imaginary[i] * imaginary[i]);
+            // Use atan2 to determine the quadrant
+            double phase = std::fmod(std::atan2(imaginary[i], real[i]), 2 * M_PI);
+            if (phase < 0) {
+                phase += 2 * M_PI;
+            }
+            outVector[i].second = phase;
+        }
+    }
+    return outVector;
+}
+
 } // namespace util
 
 #endif // UTIL_CPP
