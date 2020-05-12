@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "DecaySimulator.h"
+#include "MinuitFcns.h"
 #include "MinuitPolynomialFitter.h"
 #include "PhysicalFitter.h"
 #include "RatioCalculator.h"
@@ -15,8 +16,8 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
 {
     // Choose parameters to use when simulating
     DecayParams_t phaseSpaceParams = {
-        .x     = 0.0037,
-        .y     = 0.0066,
+        .x     = WORLD_AVERAGE_X,
+        .y     = WORLD_AVERAGE_Y,
         .r     = 0.055,
         .z_im  = -0.2956,
         .z_re  = 0.7609,
@@ -24,7 +25,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     };
     double maxTime = 10 / phaseSpaceParams.width;
     // std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
-    size_t numBins = 50;
+    size_t numBins = 25;
 
     // Create RNGs for numbers of decays
     double       meanNumDcsDecays = PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime);
@@ -33,8 +34,9 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     std::poisson_distribution<size_t> dcsDist(meanNumDcsDecays);
 
     // Find exponentially-spaced time bin limits to use
-    std::vector<double> binLimits =
-        util::exponentialBinLimits(1 / phaseSpaceParams.width, maxTime, phaseSpaceParams.width, numBins);
+    std::vector<double> binLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, numBins);
+    binLimits.erase(binLimits.begin() + 1, binLimits.begin() + 3);
+    binLimits.erase(binLimits.begin() + 5);
 
     // Create a decay simulator
     SimulatedDecays MyDecays(maxTime, phaseSpaceParams);
@@ -44,7 +46,8 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     // std::vector<double> bPull(numExperiments, -1);
     // std::vector<double> cPull(numExperiments, -1);
     std::vector<double> rPull(numExperiments, -1);
-    std::vector<double> imZPull(numExperiments, -1);
+    std::vector<double> xPull(numExperiments, -1);
+    std::vector<double> yPull(numExperiments, -1);
     std::vector<double> chiSquaredVals(numExperiments, -1);
 
     boost::progress_display showProgress(numExperiments);
@@ -58,6 +61,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
         // Simulate them
         MyDecays.findCfDecayTimes(numCfEvents);
         MyDecays.findDcsDecayTimes(numDcsEvents);
+        // MyDecays.plotRates(binLimits);
 
         // Time binning
         std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, binLimits);
@@ -80,7 +84,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
         // MyFitter.fixParameters(std::vector<std::string>{"a"});
         // MyFitter.fit();
 
-        PhysicalFitter MyFitter(MyFitData, *integralOptions);
+        PhysicalFitter MyFitter(MyFitData, *integralOptions, false);
         MyFitter.setPhysicalFitParams(std::vector<double>{phaseSpaceParams.x,
                                                           phaseSpaceParams.y,
                                                           phaseSpaceParams.r,
@@ -88,12 +92,15 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
                                                           phaseSpaceParams.z_re,
                                                           phaseSpaceParams.width},
                                       std::vector<double>(6, 1));
-        MyFitter.fixParameters(std::vector<std::string>{"width", "z_re", "x", "y"});
+        MyFitter.fixParameters(std::vector<std::string>{"width", "z_re", "z_im"});
         MyFitter.fit();
+        // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+        // MyFitter.saveFitPlot("fit", "fit.pdf", &legend);
 
         // Store parameter and chi squared
-        rPull[i]   = (MyFitter.fitParams.fitParams[2] - phaseSpaceParams.r) / MyFitter.fitParams.fitParamErrors[2];
-        imZPull[i] = (MyFitter.fitParams.fitParams[3] - phaseSpaceParams.z_im) / MyFitter.fitParams.fitParamErrors[3];
+        xPull[i] = (MyFitter.fitParams.fitParams[0] - phaseSpaceParams.x) / MyFitter.fitParams.fitParamErrors[0];
+        yPull[i] = (MyFitter.fitParams.fitParams[1] - phaseSpaceParams.y) / MyFitter.fitParams.fitParamErrors[1];
+        rPull[i] = (MyFitter.fitParams.fitParams[2] - phaseSpaceParams.r) / MyFitter.fitParams.fitParamErrors[2];
         chiSquaredVals[i] = *MyFitter.statistic;
 
         ++showProgress;
@@ -106,14 +113,16 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     // stats.push_back(PullStudyHelpers::meanAndStdDev(cPull));
 
     stats.push_back(PullStudyHelpers::meanAndStdDev(rPull));
-    stats.push_back(PullStudyHelpers::meanAndStdDev(imZPull));
+    stats.push_back(PullStudyHelpers::meanAndStdDev(xPull));
+    stats.push_back(PullStudyHelpers::meanAndStdDev(yPull));
 
     for (auto pair = stats.begin(); pair != stats.end(); ++pair) {
         std::cout << "Pull:\t" << pair->first << "+-" << pair->second << std::endl;
     }
 
     PullStudyHelpers::plot_parameter_distribution("r", rPull, numExperiments);
-    PullStudyHelpers::plot_parameter_distribution("imZ", imZPull, numExperiments);
+    PullStudyHelpers::plot_parameter_distribution("x", xPull, numExperiments);
+    PullStudyHelpers::plot_parameter_distribution("y", yPull, numExperiments);
 
     PullStudyHelpers::plotHist(chiSquaredVals, 50, "MinuitChiSq");
 }
@@ -133,5 +142,5 @@ int main(int argc, char* argv[])
     std::string withIntegrating = integrate ? "with" : "without";
     std::cout << "Running pull study " << withIntegrating << " integrating over bins in fit." << std::endl;
 
-    pull_study(10e5, 100, integrate);
+    pull_study(1e6, 100, integrate);
 }

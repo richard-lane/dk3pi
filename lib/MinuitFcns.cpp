@@ -148,9 +148,8 @@ double DetailedPolynomialChiSqFcn::operator()(const std::vector<double>& paramet
 
     double chi2 = 0.0;
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model =
-            Phys::analyticalDcsIntegral(_integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], params) /
-            Phys::analyticalCfIntegral(_integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], params.width);
+        double model = Phys::dcsRateWithEfficiency(thePositions[i], params, 1 / params.width) /
+                       Phys::cfRateWithEfficiency(thePositions[i], params, 1 / params.width);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
@@ -185,11 +184,12 @@ double DetailedChiSqConstrainXYFcn::operator()(const std::vector<double>& parame
                                            .z_re  = parameters[4],
                                            .width = parameters[5]};
 
+    std::vector<double> expectedParams = util::expectedParams(params);
+
     double chi2 = 0.0;
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model =
-            Phys::analyticalDcsIntegral(_integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], params) /
-            Phys::analyticalCfIntegral(_integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], params.width);
+        double model = Phys::dcsRateWithEfficiency(thePositions[i], params, 1 / params.width) /
+                       Phys::cfRateWithEfficiency(thePositions[i], params, 1 / params.width);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     // Introduce constraint by modifying chi squared

@@ -177,11 +177,11 @@ inline double analyticalDcsIntegral(const double low, const double high, const D
 
 /*
  * Efficiency function
- * Step function at tau
+ * tanh(time/tau)
  */
 inline double efficiency(const double tau, const double time)
 {
-    return time < tau ? 0.0 : 1.0;
+    return std::tanh(time / tau);
 }
 
 /*
@@ -215,6 +215,65 @@ inline double
 dcsRateWithEfficiency(const double time, const std::vector<double> &abcParams, const double width, const double tau)
 {
     return wrongSignDecayRate(time, abcParams, width) * efficiency(tau, time);
+}
+
+/*
+ * Integral of CF rate between limits, with efficiency
+ * Uses 1/width as tau in the efficiency
+ *
+ * doesn't actually use any of the tolerance/maxrefinements/errorestimate params
+ *
+ * errorEstimate can be set to get an estimate of the error in the integral
+ */
+inline double cfIntegralWithEfficiency(const double low,
+                                       const double high,
+                                       const double width,
+                                       const double tolerance      = INTEGRAL_TOLERANCE,
+                                       const size_t maxRefinements = INTEGRAL_REFINEMENTS,
+                                       double *     errorEstimate  = nullptr)
+{
+    // should really use std::bind
+    auto   f         = [&](double x) { return cfRateWithEfficiency(x, width, 1 / width); };
+    double range     = high - low;
+    double midpoint  = low + range / 2;
+    double lowerTrap = 0.5 * (range / 2) * (f(midpoint) - f(low));
+    double upperTrap = 0.5 * (range / 2) * (f(high) - f(midpoint));
+    (void)tolerance;
+    (void)maxRefinements;
+    (void)errorEstimate;
+
+    return lowerTrap + upperTrap;
+}
+
+/*
+ * Integral of DCS rate between limits with efficiency
+ * Uses 1/width as tau in the efficiency
+ *
+ * doesn't actually use any of the tolerance/maxrefinements/errorestimate params
+ * Just does a trapzium thing
+ *
+ * errorEstimate can be set to get an estimate of the error in the integral
+ */
+inline double dcsIntegralWithEfficiency(const double               low,
+                                        const double               high,
+                                        const std::vector<double> &abcParams,
+                                        const double               width,
+                                        const double               tolerance      = INTEGRAL_TOLERANCE,
+                                        const size_t               maxRefinements = INTEGRAL_REFINEMENTS,
+                                        double *                   errorEstimate  = nullptr)
+{
+    // should really use std::bind
+    auto   f         = [&](double x) { return dcsRateWithEfficiency(x, abcParams, width, 1 / width); };
+    double range     = high - low;
+    double midpoint  = low + range / 2;
+    double lowerTrap = 0.5 * (range / 2) * (f(midpoint) - f(low));
+    double upperTrap = 0.5 * (range / 2) * (f(high) - f(midpoint));
+
+    (void)tolerance;
+    (void)maxRefinements;
+    (void)errorEstimate;
+
+    return lowerTrap + upperTrap;
 }
 
 } // namespace Phys
