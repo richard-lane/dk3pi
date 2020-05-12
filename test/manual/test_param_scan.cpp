@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "DecaySimulator.h"
+#include "MinuitFcns.h"
 #include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "fitter/MinuitPolynomialFitter.h"
@@ -200,8 +201,8 @@ void test_z_scan()
 {
     // Create an accept-reject dataset
     DecayParams_t phaseSpaceParams = {
-        .x     = 0.0039,
-        .y     = 0.0065,
+        .x     = WORLD_AVERAGE_X,
+        .y     = WORLD_AVERAGE_Y,
         .r     = 0.055,
         .z_im  = -0.434,
         .z_re  = -0.304,
@@ -357,7 +358,7 @@ void test_z_scan()
         new TGraph2D(numTotalPoints, magnitudes.data(), phases.data(), constrainedFitSigmaVals.data());
     ConstraintGraphMagPhase->SetMaximum(maxSigmaMagPhase);
     ConstraintGraphMagPhase->GetHistogram()->SetContour(numContoursMagPhase, contourLevelsMagPhase);
-    ConstraintGraphMagPhase->SetTitle("Z Scan;R;\\delta;\\sigmas");
+    ConstraintGraphMagPhase->SetTitle("Z Scan Transformed to Polar Coords;R;\\delta;\\sigmas");
 
     // Point representing "true" value of Z
     std::vector<std::pair<double, double>> trueZmagPhaseVals =
