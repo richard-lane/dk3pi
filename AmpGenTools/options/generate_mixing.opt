@@ -1,7 +1,7 @@
-# Make an alias for the D0 meson (i.e. with all the same quantum numbers) just called D. 
+# Make an alias for the D0 meson (i.e. with all the same quantum numbers) just called D.
 # This will be the label for the time-dependent state, i.e. that with inderterminant flavour
-# which will have a time-constant coupling to the D0 state (i.e. for the DCS amplitude) 
-# and a time-dependent coupling to the Dbar0 state (i.e. for the mixing + CF amplitude) 
+# which will have a time-constant coupling to the D0 state (i.e. for the DCS amplitude)
+# and a time-dependent coupling to the Dbar0 state (i.e. for the mixing + CF amplitude)
 
 ParticlePropertiesList::Alias D0 D
 
@@ -11,7 +11,8 @@ GenerateTimeDependent         true
 
 # DCS model, also imports the CF model as some of the couplings are in common.
 
-Import                        $AMPGENROOT/../binning/D02piKpipi.opt
+# Hard coded. Fight me
+Import                        /home/mh19137/Documents/HEP/AmpGen/../dk3pi/AmpGenTools/options/D02piKpipi.opt
 
 # Mixing parameters
 
@@ -19,27 +20,27 @@ y                             2      0.0066  0
 x                             2      0.0037  0
 
 # Average strong-phase difference and relative amplitude between DCS and CF decays,
-# these are not predicted by the model therefore must come from some external source, 
-# i.e. arXiv:1602.07430  
+# these are not predicted by the model therefore must come from some external source,
+# i.e. arXiv:1602.07430
 
-dD                            2    128.0000  0 
+dD                            2    128.0000  0
 rD                            2      0.0549  0
 
-# These seemingly random numbers are offsets that can be calculated from the model(s) 
+# These seemingly random numbers are offsets that can be calculated from the model(s)
 # such that the ratio of amplitudes, and the relative strong phase, come out as the values input above
-# These couple the D of unfixed flavour (D) to that of well-defined flavour (D0), which then decays via 
-# the DCS model. 
+# These couple the D of unfixed flavour (D) to that of well-defined flavour (D0), which then decays via
+# the DCS model.
 
 
-D{D0}_Re                      =    rD * 1.09601                
-D{D0}_Im                      =    dD + 0.869                  
+D{D0}_Re                      =    rD * 1.09601
+D{D0}_Im                      =    dD + 0.869
 
 
 # Amplitude and phase of the D -> Dbar amplitude, i.e. the mixing amplitude
-# Dbar0 then proceeds to decay via the CF model. The propagator TD gives a linear time dependence, normalised 
+# Dbar0 then proceeds to decay via the CF model. The propagator TD gives a linear time dependence, normalised
 # by twice the lifetime.
-# All couplings are given in (amp, phase), where phase is given in degrees, as this how the models 
-# are defined in D02piKpipi.opt  
+# All couplings are given in (amp, phase), where phase is given in degrees, as this how the models
+# are defined in D02piKpipi.opt
 
-D[TD]{Dbar0}_Re               =    sqrt ( x * x + y * y ) 
+D[TD]{Dbar0}_Re               =    sqrt ( x * x + y * y )
 D[TD]{Dbar0}_Im               =    atan ( x / y ) * 180 / PI + 180
