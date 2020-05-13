@@ -4,6 +4,8 @@ AmpGenTools
 This dir is for extra tools + stuff pertaining to AmpGen, such as options files (*.opt)
 It also contains the D-> K3pi CF and DCS amplitude model file things; these are needed to perform the phase space binning (lib/k3pi_binning.h).
 
+This is useful for the generated decays binning code.
+
 How to use options files to generate D->K3pi
 --------------------------------------------
 
@@ -23,4 +25,7 @@ To generate D events (no mixing), use:
 > --Output dBar.root --GenerateTimeDependent
 
 Obviously change the number of events and filename to whatever you want
+
+Note: I've hard-coded some file paths in these option files. If you aren't using my laptop, then you'll need to change them if you want to generate
+decays with ampgen
 
