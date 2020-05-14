@@ -110,8 +110,8 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
     }
 
     size_t numBins = timeBinLimits.size() - 1;
-    TH1D * RSHist  = new TH1D("Test accept-reject, RS", "", numBins, timeBinLimits.data());
-    TH1D * WSHist  = new TH1D("Test accept-reject, WS", "", numBins, timeBinLimits.data());
+    TH1D * RSHist  = new TH1D("Times", "Right Sign Decay Times", numBins, timeBinLimits.data());
+    TH1D * WSHist  = new TH1D("Times", "Wrong Sign Decay Times", numBins, timeBinLimits.data());
 
     RSHist->FillN(RSDecayTimes.size(), RSDecayTimes.data(), nullptr);
     WSHist->FillN(WSDecayTimes.size(), WSDecayTimes.data(), nullptr);

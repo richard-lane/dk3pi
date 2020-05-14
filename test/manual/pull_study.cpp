@@ -25,7 +25,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     };
     double maxTime = 10 / phaseSpaceParams.width;
     // std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
-    size_t numBins = 25;
+    size_t numBins = 100;
 
     // Create RNGs for numbers of decays
     double       meanNumDcsDecays = PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime);
@@ -34,9 +34,11 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     std::poisson_distribution<size_t> dcsDist(meanNumDcsDecays);
 
     // Find exponentially-spaced time bin limits to use
-    std::vector<double> binLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, numBins);
-    binLimits.erase(binLimits.begin() + 1, binLimits.begin() + 3);
-    binLimits.erase(binLimits.begin() + 5);
+    // std::vector<double> binLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, numBins);
+    std::vector<double> binLimits(numBins + 1);
+    for (size_t i = 0; i <= numBins; ++i) {
+        binLimits[i] = i * maxTime / numBins;
+    }
 
     // Create a decay simulator
     SimulatedDecays MyDecays(maxTime, phaseSpaceParams);
@@ -61,7 +63,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
         // Simulate them
         MyDecays.findCfDecayTimes(numCfEvents);
         MyDecays.findDcsDecayTimes(numDcsEvents);
-        // MyDecays.plotRates(binLimits);
+        MyDecays.plotRates(binLimits);
 
         // Time binning
         std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, binLimits);
@@ -142,5 +144,5 @@ int main(int argc, char* argv[])
     std::string withIntegrating = integrate ? "with" : "without";
     std::cout << "Running pull study " << withIntegrating << " integrating over bins in fit." << std::endl;
 
-    pull_study(1e6, 100, integrate);
+    pull_study(1e7, 100, integrate);
 }
