@@ -7,6 +7,8 @@
 
 #include "TLorentzVector.h"
 
+#include "boost/progress.hpp"
+
 #include "D2K3PiError.h"
 #include "PhaseSpaceBinning.h"
 #include "k3pi_binning.h"
@@ -34,6 +36,10 @@ void PhaseSpaceBinning::performBinning()
         std::cerr << _dcsFile << " or " << _cfFile << " not found." << std::endl;
         throw D2K3PiException();
     }
+
+    // Progress bar
+    boost::progress_display progressBar(_numEvents);
+
     // Define our bins
     k3pi_binning::binning bins(_dcsFile, _cfFile, _dcs_offset, {BIN_LIMITS});
 
@@ -52,6 +58,8 @@ void PhaseSpaceBinning::performBinning()
         // TODO A marginally cleverer implementation might set binnedTimes[bin] to the number of points we have, and
         // then just reshape the whole thing once we've finished binning.
         _binnedTimes[bin].push_back(_decayTimes[i]);
+
+        ++progressBar;
     }
 
     // Output how many points are in each bin

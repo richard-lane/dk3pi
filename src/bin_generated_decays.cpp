@@ -32,7 +32,9 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
     // Create D2K3PiData classes to represent our data and populate them.
     D2K3PiData MixedData    = D2K3PiData(mixedDecays, "DalitzEventList");
     D2K3PiData FavouredData = D2K3PiData(favouredDecays, "DalitzEventList");
+    std::cout << "Reading D ROOT file" << std::endl;
     MixedData.populate("D_decayTime");
+    std::cout << "Reading Dbar ROOT file" << std::endl;
     FavouredData.populate("Dbar0_decayTime");
 
     // Pass the times and kinematic data into the phase space binner and perform binning
@@ -43,15 +45,17 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
                                                              FavouredData.pi1Vectors,
                                                              FavouredData.pi2Vectors,
                                                              FavouredData.pi3Vectors);
+    std::cout << "Binning D decays" << std::endl;
     MixedDataBinner.performBinning();
+
+    std::cout << "Binning Dbar decays" << std::endl;
     FavouredDataBinner.performBinning();
 
     // Define time-space bin limits to perform ratio calculation with
     std::vector<double> timeBinLimits{};
-    for (size_t i = 0; i < 200; ++i) {
-        timeBinLimits.push_back(i * i * i * 0.006 / (200 * 200 * 200));
-    }
+    timeBinLimits = util::exponentialBinLimits(0.006, 2500, 15);
 
+    std::cout << "Taking ratios" << std::endl;
     // Calculate the ratios between the datasets in each bin
     std::vector<RatioCalculator> ratios{};
     for (int bin = 0; bin < NUM_BINS; ++bin) {
@@ -62,6 +66,7 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
     }
 
     // Fit each ratio to a plot
+    std::cout << "performing fits" << std::endl;
     std::vector<RootFitter> fitters{};
     for (int bin = 0; bin < NUM_BINS; ++bin) {
         FitData_t thisBinFitData =
@@ -69,7 +74,7 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
         fitters.push_back(RootFitter(thisBinFitData));
         fitters[bin].fit(0, 1); // Might need to change the max time here
         std::string title = "PhaseSpaceBin" + std::to_string(bin) + ".pdf";
-        fitters[bin].saveFitPlot(title, title);
+        fitters[bin].saveFitPlot("Phase Space Bin " + std::to_string(bin), title);
     }
 }
 

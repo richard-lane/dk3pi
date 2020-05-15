@@ -53,8 +53,8 @@ class PhaseSpaceBinning
     std::vector<TLorentzVector> _pi3Vectors{};
 
     // Parameters needed for binning
-    const std::string          _dcsFile{"AmpGenTools/dcs.so"};
-    const std::string          _cfFile{"AmpGenTools/cf.so"};
+    const std::string          _dcsFile{"../AmpGenTools/dcs.so"};
+    const std::string          _cfFile{"../AmpGenTools/cf.so"};
     const std::complex<double> _dcs_offset = DCS_MAGNITUDE * exp(std::complex<double>(0, 1) * DCS_PHASE * M_PI / 180.);
     size_t                     _numEvents{0};
 };
