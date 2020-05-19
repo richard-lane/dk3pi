@@ -316,7 +316,8 @@ void test_z_scan()
         new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), constrainedFitSigmaVals.data());
     ConstraintGraph->SetMaximum(maxSigma);
     ConstraintGraph->GetHistogram()->SetContour(numContours, contourLevels);
-    ConstraintGraph->SetTitle("Z Scan;Im(Z);Re(Z);\\sigmas");
+    ConstraintGraph->SetTitle("Z Scan;Im(Z);Re(Z)");
+    ConstraintGraph->GetZaxis()->SetTitle("\\sigma");
 
     // Point representing "true" value of Z
     TEllipse* trueZ =
@@ -326,6 +327,8 @@ void test_z_scan()
                      0.01);
 
     // Save as an image
+    c->SetRightMargin(0.15);
+    c->SetLeftMargin(0.15);
     ConstraintGraph->Draw("CONT4Z");
     boundary->Draw();
     trueZ->Draw();
