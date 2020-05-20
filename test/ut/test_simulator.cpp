@@ -21,46 +21,6 @@
 #define SIMULATOR_CPP_TOLERANCE 0.0000001
 
 /*
- * Check that accept-reject works for a point on the RS curve
- * It's impossible to have a point rejected from this distribution
- */
-BOOST_AUTO_TEST_CASE(test_acc_rej_rs)
-{
-    DecayParams_t DecayParams = {
-        .x     = 0.004,
-        .y     = 0.007,
-        .r     = 0.05,
-        .z_im  = -0.3,
-        .z_re  = 0.8,
-        .width = 2500.0,
-    };
-
-    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
-
-    BOOST_CHECK(MyDecays.isAccepted(0.0005, 0.25, true));
-}
-
-/*
- * Check that accept-reject works for two points on the RS curve
- */
-BOOST_AUTO_TEST_CASE(test_acc_rej_ws)
-{
-    DecayParams_t DecayParams = {
-        .x     = 0.004,
-        .y     = 0.007,
-        .r     = 0.05,
-        .z_im  = -0.3,
-        .z_re  = 0.8,
-        .width = 2500.0,
-    };
-
-    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
-
-    BOOST_CHECK(MyDecays.isAccepted(0.0005, 0.699, false));
-    BOOST_CHECK(!MyDecays.isAccepted(0.0005, 0.700, false));
-}
-
-/*
  * Test that attempting to plot the hists without setting WS or RS causes an error
  */
 BOOST_AUTO_TEST_CASE(test_hist_error_ws_rs_not_set)

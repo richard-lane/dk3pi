@@ -177,37 +177,3 @@ BOOST_AUTO_TEST_CASE(test_rates, *boost::unit_test::tolerance(1e-8))
     BOOST_CHECK_SMALL(Phys::rightSignDecayRate(2, DecayParams) - std::exp(-DecayParams.width * 2), 1e-10);
     BOOST_CHECK_SMALL(Phys::rightSignDecayRate(2, DecayParams.width) - std::exp(-DecayParams.width * 2), 1e-10);
 }
-
-/*
- * Test efficiency
- */
-BOOST_AUTO_TEST_CASE(test_efficiency)
-{
-    BOOST_CHECK(Phys::efficiency(10, 5) == 0.0);
-    BOOST_CHECK(Phys::efficiency(10, 15) == 1.0);
-}
-
-/*
- * Test rates with efficiency
- */
-BOOST_AUTO_TEST_CASE(test_efficiency_rates)
-{
-    DecayParams_t DecayParams = {.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
-
-    // Trust that util::expectedParams works
-    std::vector<double> expectedParams = util::expectedParams(DecayParams);
-
-    // DCS rate
-    BOOST_CHECK_SMALL(Phys::dcsRateWithEfficiency(2, DecayParams, 1) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
-    BOOST_CHECK_SMALL(Phys::dcsRateWithEfficiency(2, expectedParams, DecayParams.width, 1) -
-                          693 * std::exp(-DecayParams.width * 2),
-                      1e-10);
-    BOOST_CHECK(Phys::dcsRateWithEfficiency(2, DecayParams, 3) == 0.0);
-    BOOST_CHECK(Phys::dcsRateWithEfficiency(2, expectedParams, DecayParams.width, 3) == 0.0);
-
-    // CF rate
-    BOOST_CHECK_SMALL(Phys::cfRateWithEfficiency(2, DecayParams, 1) - std::exp(-DecayParams.width * 2), 1e-10);
-    BOOST_CHECK_SMALL(Phys::cfRateWithEfficiency(2, DecayParams.width, 1) - std::exp(-DecayParams.width * 2), 1e-10);
-    BOOST_CHECK(Phys::cfRateWithEfficiency(2, DecayParams, 3) == 0.0);
-    BOOST_CHECK(Phys::cfRateWithEfficiency(2, DecayParams.width, 3) == 0.0);
-}

@@ -159,9 +159,7 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit, *boost::unit_test::tolerance(0.01))
 /*
  * Test that data following a quadratic function has sensible fit parameters, when we fit using Minuit2 chisq
  *
- * Again this is more like IT than UT but no one is going to notice
- *
- * disabled for now
+ * this is more like IT than UT but no one is going to notice
  */
 BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::tolerance(0.0001))
 {

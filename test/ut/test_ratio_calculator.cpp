@@ -36,6 +36,8 @@
 
 /*
  * Fixture for creating a RatioCalculator
+ *
+ * This is completely unnecessary
  */
 struct TestRatioCalculator {
     TestRatioCalculator(const std::vector<size_t> &cfDecayCounts,
