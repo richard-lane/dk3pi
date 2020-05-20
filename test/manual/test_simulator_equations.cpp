@@ -14,9 +14,9 @@
 #include <TH1D.h>
 #include <TLatex.h>
 
-#include "DecaySimulator.h"
-#include "MinuitFcns.h"
+#include "../pull_study/DecaySimulator.h"
 #include "../pull_study/PullStudyHelpers.h"
+#include "MinuitFcns.h"
 #include "RatioCalculator.h"
 #include "physics.h"
 #include "util.h"

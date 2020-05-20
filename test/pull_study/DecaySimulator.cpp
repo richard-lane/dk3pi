@@ -9,7 +9,7 @@
 
 #include "D2K3PiError.h"
 #include "DecaySimulator.h"
-#include "../test/pull_study/PullStudyHelpers.h"
+#include "PullStudyHelpers.h"
 #include "physics.h"
 #include "util.h"
 

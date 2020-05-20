@@ -5,8 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "DecaySimulator.h"
-
+#include "../pull_study/DecaySimulator.h"
 #include "../pull_study/PullStudyHelpers.h"
 
 /*

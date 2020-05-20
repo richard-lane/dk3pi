@@ -6,7 +6,7 @@
 #include <random>
 #include <vector>
 
-#include "DecaySimulator.h"
+#include "../pull_study/DecaySimulator.h"
 #include "../pull_study/PullStudyHelpers.h"
 #include "fitter/MinuitPolynomialFitter.h"
 

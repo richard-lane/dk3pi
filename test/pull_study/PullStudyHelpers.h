@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "../lib/DecaySimulator.h"
+#include "DecaySimulator.h"
 
 namespace PullStudyHelpers
 {

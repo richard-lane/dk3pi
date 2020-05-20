@@ -15,7 +15,7 @@
 #include <memory>
 #include <vector>
 
-#include "DecaySimulator.h"
+#include "../../test/pull_study/DecaySimulator.h"
 
 #include "Minuit2/FCNBase.h"
 #include "TGraphErrors.h"

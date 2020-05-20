@@ -2,9 +2,9 @@
 #include <iostream>
 #include <vector>
 
-#include "DecaySimulator.h"
-#include "MinuitFcns.h"
+#include "../pull_study/DecaySimulator.h"
 #include "../pull_study/PullStudyHelpers.h"
+#include "MinuitFcns.h"
 #include "RatioCalculator.h"
 #include "fitter/MinuitPolynomialFitter.h"
 #include "fitter/PhysicalFitter.h"

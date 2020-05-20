@@ -11,7 +11,7 @@
 
 #include "D2K3PiError.h"
 #include "MinuitFcns.h"
-#include "fitter/MinuitPolynomialFitter.h"
+#include "MinuitPolynomialFitter.h"
 #include "physics.h"
 #include "util.h"
 

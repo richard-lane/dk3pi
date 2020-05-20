@@ -7,9 +7,9 @@
 
 #include "TH1D.h"
 
-#include "../lib/DecaySimulator.h"
-#include "../lib/physics.h"
-#include "../lib/util.h"
+#include "DecaySimulator.h"
+#include "physics.h"
+#include "util.h"
 
 namespace PullStudyHelpers
 {
