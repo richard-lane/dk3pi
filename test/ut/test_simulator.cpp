@@ -13,6 +13,7 @@
 
 #include "D2K3PiError.h"
 #include "DecaySimulator.h"
+#include "physics.h"
 
 /*
  * Floating point tolerance for this UT module
@@ -41,7 +42,6 @@ BOOST_AUTO_TEST_CASE(test_acc_rej_rs)
 
 /*
  * Check that accept-reject works for two points on the RS curve
- * Uses the same two points as the RS test as the curves are basically the same (right..?)
  */
 BOOST_AUTO_TEST_CASE(test_acc_rej_ws)
 {

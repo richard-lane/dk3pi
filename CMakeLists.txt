@@ -26,9 +26,8 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/lib")
 # Debug
 set(CMAKE_BUILD_TYPE Debug)
 
-# Bin AmpGen's generated decays
-add_executable(bin_decays.exe src/bin_generated_decays.cpp)
-target_link_libraries(bin_decays.exe PRIVATE D2K3Pi PRIVATE ${ROOT_LIBRARIES} PRIVATE ${Boost_LIBRARIES} ${CMAKE_DL_LIBS})
+# Bin ampgen decays
+add_subdirectory("${CMAKE_SOURCE_DIR}/test/bin_decays/")
 
 # UT
 enable_testing()
@@ -40,3 +39,6 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/test/it/")
 
 # Stupid manual tests
 add_subdirectory("${CMAKE_SOURCE_DIR}/test/manual/")
+
+# Pull study
+add_subdirectory("${CMAKE_SOURCE_DIR}/test/pull_study/")

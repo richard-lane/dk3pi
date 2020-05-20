@@ -7,7 +7,7 @@
 
 #include "DecaySimulator.h"
 
-#include "PullStudyHelpers.h"
+#include "../pull_study/PullStudyHelpers.h"
 
 /*
  * Test we find the correct values of a, b and c

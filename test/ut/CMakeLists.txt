@@ -4,7 +4,7 @@ include_directories("${CMAKE_SOURCE_DIR}/src")
 
 find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem system)
 
-add_executable(ut.exe ut.cpp ${CMAKE_SOURCE_DIR}/src/PullStudyHelpers.cpp)
+add_executable(ut.exe ut.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/PullStudyHelpers.cpp)
 target_link_libraries(ut.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
 add_test(NAME ut COMMAND ut.exe)

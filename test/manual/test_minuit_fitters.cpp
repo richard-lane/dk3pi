@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "DecaySimulator.h"
-#include "PullStudyHelpers.h"
+#include "../pull_study/PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "fitter/MinuitPolynomialFitter.h"
 #include "fitter/PhysicalFitter.h"

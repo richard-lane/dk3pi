@@ -16,7 +16,7 @@
 
 #include "DecaySimulator.h"
 #include "MinuitFcns.h"
-#include "PullStudyHelpers.h"
+#include "../pull_study/PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "physics.h"
 #include "util.h"
