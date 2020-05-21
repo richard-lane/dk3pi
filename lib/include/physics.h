@@ -47,10 +47,8 @@ inline double rightSignDecayRate(const double time, const DecayParams_t &decayPa
  */
 inline double wrongSignDecayRate(const double time, const DecayParams_t &decayParams)
 {
-    // Write the decay rate as (a + bt + ct^2)e^(-gamma*t) (ignoring overall factor of B^2 that has been taken out)
     std::vector<double> abcParams = util::expectedParams(decayParams);
-
-    return (abcParams[0] + abcParams[1] * time + abcParams[2] * time * time) * exp(-1.0 * decayParams.width * time);
+    return rateRatio(time, abcParams) * rightSignDecayRate(time, decayParams.width);
 }
 
 /*
@@ -130,53 +128,8 @@ inline double dcsIntegral(const double         low,
 }
 
 /*
- * Analytical integral of CF rate between limits
- */
-inline double analyticalCfIntegral(const double low, const double high, const double width)
-{
-    return (std::exp(-width * low) - std::exp(-width * high)) / width;
-}
-
-/*
- * Analytical integral of DCS rate between limits
- */
-inline double
-analyticalDcsIntegral(const double low, const double high, const std::vector<double> &abcParams, const double width)
-{
-    // Our integral is composed of three terms, X + Y + Z
-
-    double X = abcParams[0] * analyticalCfIntegral(low, high, width);
-
-    auto   y = [&](double x) { return std::exp(-width * x) * (width * x + 1) / (width * width); };
-    double Y = abcParams[1] * (y(low) - y(high));
-
-    auto z = [&](double x) {
-        return std::exp(-width * x) * (2 + 2 * width * x + width * width * x * x) / (width * width * width);
-    };
-    double Z = abcParams[2] * (z(low) - z(high));
-
-    return X + Y + Z;
-}
-
-/*
- * Analytical integral of CF rate between limits
- */
-inline double analyticalCfIntegral(const double low, const double high, const DecayParams_t &decayParams)
-{
-    return analyticalCfIntegral(low, high, decayParams.width);
-}
-
-/*
- * Analytical integral of DCS rate between limits
- */
-inline double analyticalDcsIntegral(const double low, const double high, const DecayParams_t &decayParams)
-{
-    std::vector<double> abcParams = util::expectedParams(decayParams);
-    return analyticalDcsIntegral(low, high, abcParams, decayParams.width);
-}
-
-/*
  * Efficiency function
+ *
  * tanh(time/tau)
  */
 inline double efficiency(const double tau, const double time)
@@ -221,8 +174,6 @@ dcsRateWithEfficiency(const double time, const std::vector<double> &abcParams, c
  * Integral of CF rate between limits, with efficiency
  * Uses 1/width as tau in the efficiency
  *
- * doesn't actually use any of the tolerance/maxrefinements/errorestimate params
- *
  * errorEstimate can be set to get an estimate of the error in the integral
  */
 inline double cfIntegralWithEfficiency(const double low,
@@ -233,25 +184,14 @@ inline double cfIntegralWithEfficiency(const double low,
                                        double *     errorEstimate  = nullptr)
 {
     // should really use std::bind
-    auto   f         = [&](double x) { return cfRateWithEfficiency(x, width, 1 / width); };
-    double range     = high - low;
-    double midpoint  = low + range / 2;
-    double lowerTrap = 0.5 * (range / 2) * (f(midpoint) - f(low));
-    double upperTrap = 0.5 * (range / 2) * (f(high) - f(midpoint));
-    (void)tolerance;
-    (void)maxRefinements;
-    (void)errorEstimate;
-
-    return lowerTrap + upperTrap;
+    auto f = [&](double x) { return cfRateWithEfficiency(x, width, 1 / width); };
+    return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
 }
 
 /*
  * Integral of DCS rate between limits with efficiency
  * Uses 1/width as tau in the efficiency
- *
- * doesn't actually use any of the tolerance/maxrefinements/errorestimate params
- * Just does a trapzium thing
- *
+
  * errorEstimate can be set to get an estimate of the error in the integral
  */
 inline double dcsIntegralWithEfficiency(const double               low,
@@ -263,17 +203,8 @@ inline double dcsIntegralWithEfficiency(const double               low,
                                         double *                   errorEstimate  = nullptr)
 {
     // should really use std::bind
-    auto   f         = [&](double x) { return dcsRateWithEfficiency(x, abcParams, width, 1 / width); };
-    double range     = high - low;
-    double midpoint  = low + range / 2;
-    double lowerTrap = 0.5 * (range / 2) * (f(midpoint) - f(low));
-    double upperTrap = 0.5 * (range / 2) * (f(high) - f(midpoint));
-
-    (void)tolerance;
-    (void)maxRefinements;
-    (void)errorEstimate;
-
-    return lowerTrap + upperTrap;
+    auto f = [&](double x) { return dcsRateWithEfficiency(x, abcParams, width, 1 / width); };
+    return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
 }
 
 } // namespace Phys

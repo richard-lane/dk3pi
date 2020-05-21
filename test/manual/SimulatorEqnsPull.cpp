@@ -1,4 +1,4 @@
-
+/*
 #include "MinuitFcns.h"
 #include "../pull_study/PullStudyHelpers.h"
 #include "physics.h"
@@ -14,11 +14,11 @@
 
 #include <boost/progress.hpp>
 
-/*
+
  * Fitter class for fitting to (a + bt + ct^2)e^-(width * t)
  *
  * Performs an unbinned likelihood fit using Minuit2 API
- */
+/
 class TestSimulatorFitter : public BasePolynomialFcn
 {
   public:
@@ -49,9 +49,9 @@ class TestSimulatorFitter : public BasePolynomialFcn
     double _maxTime{0.0};
 };
 
-/*
+*
  * Overlay a plot of a fit onto data
- */
+ *
 void plotFit(ROOT::Minuit2::FunctionMinimum min,
              SimulatedDecays                MyDecays,
              const double                   maxTime,
@@ -135,9 +135,7 @@ void scan(const double               mean,
     delete Graph;
 }
 
-/*
  * Generate DCS and CF events, fit to them using (a + bt + ct^2)e^(-width*t)
- */
 void dcsTimesPull()
 {
     DecayParams_t MyParams{
@@ -228,8 +226,10 @@ void dcsTimesPull()
     std::cout << PullStudyHelpers::meanAndStdDev(cPull).first << "+-" << PullStudyHelpers::meanAndStdDev(cPull).second
               << std::endl;
 }
+*/
 
 int main()
 {
-    dcsTimesPull();
+    //dcsTimesPull();
+    return 0;
 }

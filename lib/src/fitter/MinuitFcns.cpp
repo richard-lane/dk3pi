@@ -78,11 +78,9 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
     double chi2 = 0.0;
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model =
-            Phys::analyticalDcsIntegral(
-                _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], parameters, _integralOptions.width) /
-            Phys::analyticalCfIntegral(
-                _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], _integralOptions.width);
+        double model = Phys::dcsRateWithEfficiency(
+                           thePositions[i], parameters, _integralOptions.width, 1 / _integralOptions.width) /
+                       Phys::cfRateWithEfficiency(thePositions[i], _integralOptions.width, 1 / _integralOptions.width);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
