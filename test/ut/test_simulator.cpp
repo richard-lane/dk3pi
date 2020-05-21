@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(test_hist_error_ws_rs_not_set)
         .width = 2500.0,
     };
 
-    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams, 0);
 
     BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0, 1}), D2K3PiException);
 }
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(test_hist_error_rs_not_set)
         .width = 2500.0,
     };
 
-    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams, 0);
     MyDecays.findCfDecayTimes(1);
 
     BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0, 1}), D2K3PiException);
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(test_hist_error_ws_not_set)
         .width = 2500.0,
     };
 
-    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams, 0);
     MyDecays.findDcsDecayTimes(1);
 
     BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0, 1}), D2K3PiException);
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(test_hist_unsorted_bin_limits)
         .width = 2500.0,
     };
 
-    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams);
+    SimulatedDecays MyDecays = SimulatedDecays(0.002, DecayParams, 0);
     MyDecays.findCfDecayTimes(1);
     MyDecays.findDcsDecayTimes(1);
 

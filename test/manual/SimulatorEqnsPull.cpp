@@ -168,7 +168,7 @@ void dcsTimesPull()
     boost::progress_display showProgress(numExperiments);
 
     for (size_t i = 0; i < numExperiments; ++i) {
-        SimulatedDecays MyDecays = SimulatedDecays(maxTime, MyParams);
+        SimulatedDecays MyDecays = SimulatedDecays(maxTime, MyParams, 0);
         MyDecays.findDcsDecayTimes(numDecays);
 
         // Create fitter

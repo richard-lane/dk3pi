@@ -32,7 +32,7 @@ void compareRootMinuit(void)
     size_t numCfEvents  = 1000000;
     double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime);
 
-    SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams);
+    SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams, 0);
     MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
     MyDecays.findCfDecayTimes(numCfEvents);
 

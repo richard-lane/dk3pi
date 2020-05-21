@@ -13,7 +13,12 @@
 #include "physics.h"
 #include "util.h"
 
-SimulatedDecays::SimulatedDecays(const double maxTime, const DecayParams_t &DecayParams) : _maxTime(maxTime)
+#include <boost/math/tools/minima.hpp>
+
+SimulatedDecays::SimulatedDecays(const double         maxTime,
+                                 const DecayParams_t &DecayParams,
+                                 const double         efficiencyTimescale)
+    : _maxTime(maxTime), _efficiencyTimescale(efficiencyTimescale)
 {
     _DecayParams = DecayParams;
     _setMaxDCSRatio();
@@ -25,20 +30,20 @@ SimulatedDecays::SimulatedDecays(const double maxTime, const DecayParams_t &Deca
 
 bool SimulatedDecays::isAccepted(const double time, const double uniformVal, bool rightSign)
 {
-    // At the moment the efficiency function is a step function at tau
-    double tau = 1 / _DecayParams.width;
-    // Note: a better implementation of this might pass in a function pointer or something
+    // a better implementation of this might pass in a function pointer or something
     double funcVal{0};
     if (rightSign) {
-        funcVal = Phys::cfRateWithEfficiency(time, _DecayParams, tau);
+        funcVal = _cfRate(time);
     } else {
-        funcVal = Phys::dcsRateWithEfficiency(time, _DecayParams, tau);
+        funcVal = _dcsRate(time);
     }
     double c = rightSign ? 1.0 : _maxDCSRatio;
 
     // Check that the RHS of our acc-rej inequality is indeed between 0 and 1
     double rhs = funcVal / (c * std::exp(-1.0 * _DecayParams.width * time));
     if (rhs < 0 || rhs > 1.0) {
+        std::string rs = rightSign ? "Right" : "Wrong";
+        std::cerr << "For " << rs << " sign decay:" << std::endl;
         std::cerr << "Accept-reject error: f(t)/c*exp(width*t) returned a value " << rhs << " out of range [0, 1]."
                   << std::endl;
         throw D2K3PiException();
@@ -83,12 +88,16 @@ void SimulatedDecays::findCfDecayTimes(size_t numEvents)
 
 void SimulatedDecays::_setMaxDCSRatio(void)
 {
-    std::vector<double> params = util::expectedParams(_DecayParams);
-    double              a      = params[0];
-    double              b      = params[1];
-    double              c      = params[2];
+    // Boost's minimising algorithm thing only finds minima, so find the minimum of -1 * DCS rate/generating exponential
+    // to find the maximum value.
+    auto ratioFunc = [&](double const &x) { return -1 * _dcsRate(x) / std::exp(-_DecayParams.width * x); };
 
-    _maxDCSRatio = a > a + b * _maxTime + c * _maxTime * _maxTime ? a : a + b * _maxTime + c * _maxTime * _maxTime;
+    // Find the minimum as accurately as possible
+    int                       bits = std::numeric_limits<double>::digits;
+    std::pair<double, double> r    = boost::math::tools::brent_find_minima(ratioFunc, (double)0., _maxTime, bits);
+
+    // Set _maxDCSRatio to the maximum value of
+    _maxDCSRatio = -r.second;
 }
 
 void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
@@ -134,6 +143,16 @@ double SimulatedDecays::_getRandomTime(void)
     double x = _getRandomUniform();
     double z = 1 - std::exp(-1 * _DecayParams.width * _maxTime);
     return (-1 / _DecayParams.width) * std::log(1 - z * x);
+}
+
+double SimulatedDecays::_cfRate(const double time)
+{
+    return Phys::cfRateWithEfficiency(time, _DecayParams, _efficiencyTimescale);
+}
+
+double SimulatedDecays::_dcsRate(const double time)
+{
+    return Phys::dcsRateWithEfficiency(time, _DecayParams, _efficiencyTimescale);
 }
 
 #endif // DECAYSIMULATOR_CPP

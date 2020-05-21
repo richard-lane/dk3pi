@@ -129,7 +129,7 @@ void simulateDecays()
     size_t numDcs = std::accumulate(expectedDcsBinPopulation.begin(), expectedDcsBinPopulation.end(), (size_t)0);
 
     // Create our Decay simulator object and generate CF and DCS times using accept-reject
-    SimulatedDecays MyDecays = SimulatedDecays(maxTime, MyParams);
+    SimulatedDecays MyDecays = SimulatedDecays(maxTime, MyParams, 0);
     MyDecays.findCfDecayTimes(numCf);
     MyDecays.findDcsDecayTimes(numDcs);
 

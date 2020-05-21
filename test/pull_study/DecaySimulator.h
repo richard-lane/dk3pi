@@ -1,6 +1,3 @@
-/*
- * Class for simulating the D->K3Pi decays according to time-dependent 2nd order polynomials
- */
 #ifndef DECAYSIMULATOR_HPP
 #define DECAYSIMULATOR_HPP
 
@@ -11,23 +8,32 @@
 
 /*
  * Class for running a Monte-Carlo simulaton of a D -> K3Pi experiment
+ *
  * Calculate decay times for CF and DCS events with findCfDecayTimes() and findDcsDecayTimes()
  *
- * CF events generated according to exponential decay; DCS events generated according to the (a + bt + ct^2) *
- * exponential.
+ * CF events generated according to exponential decay
+ * DCS events generated according to the (a + bt + ct^2) * exponential.
  *
  * As the DCS rate may not be bounded at large times, must provide a maximum time to the constructor.
+ *
+ * Based on the notes at this URL:
+ *     http://www.columbia.edu/~ks20/4703-Sigman/4703-07-Notes-ARM.pdf
  */
 class SimulatedDecays
 {
   public:
     /*
-     * Set the allowed time and decay rate values for our simulated decay, and seed our random number generator.
+     * Constructor
      *
-     * Also calculate the maximum ratio between our DCS decay and our model function; we need this to perform
+     * Set the max allowed time and parameters for our simulated decay
+     * Also set a timescale to use for decay-time efficiency.
+     *
+     * Seeds the random number generator used for generating times
+     *
+     * Also calculates the maximum ratio between our DCS decay and our model function; we need this to perform
      * accept-reject
      */
-    SimulatedDecays(const double maxTime, const DecayParams_t &DecayParams);
+    SimulatedDecays(const double maxTime, const DecayParams_t &DecayParams, const double efficiencyTimescale);
 
     /*
      * Check whether a time is accepted as being from one of the distributions, using a number selected froma uniform
@@ -80,18 +86,30 @@ class SimulatedDecays
 
     /*
      * Find the maximum ratio of our DCS ratio to our exponential distribution and set _maxDCSRatio
-     *
-     * Parameter c in (a + bt + ct^2) is necessarily positive (c = 0.25 * x^2 * y^2 * width*2), so the maximum will
-     * either be at t=0 or t=maxTime
      */
     void _setMaxDCSRatio(void);
+
+    /*
+     * CF decay rate at a given time
+     */
+    double _cfRate(const double time);
+
+    /*
+     * DCS decay rate at a given time
+     */
+    double _dcsRate(const double time);
 
     /*
      * Times to generate up to
      * Cannot be arbitrarily large as our (a + bt + ct^2) DCS/CF rate approximation is only valid at low times, and
      * hence is not bounded at large times
      */
-    double _maxTime{0.0};
+    const double _maxTime{0.0};
+
+    /*
+     * Timescale to use for decay-time efficiency function
+     */
+    const double _efficiencyTimescale{0.0};
 
     /*
      * Maximum ratio of our DCS rate / exponential function
