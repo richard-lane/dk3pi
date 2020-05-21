@@ -11,18 +11,6 @@
 
 #include "TGraph.h"
 
-BOOST_AUTO_TEST_CASE(test_concat_paths_no_extension)
-{
-    std::string expectedPath{"foo/bar"};
-    BOOST_CHECK(util::concatPaths("foo", "bar", "") == expectedPath);
-}
-
-BOOST_AUTO_TEST_CASE(test_concat_paths_file_extension)
-{
-    std::string expectedPath{"foo/bar.pdf"};
-    BOOST_CHECK(util::concatPaths("foo", "bar", ".pdf") == expectedPath);
-}
-
 BOOST_AUTO_TEST_CASE(test_find_bin_limits_unsorted_data)
 {
     std::vector<double> unsortedData = {1, 2, 3, 4, 2.5};

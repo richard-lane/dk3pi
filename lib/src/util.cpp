@@ -18,13 +18,6 @@
 namespace util
 {
 
-boost::filesystem::path concatPaths(std::string plotDir, std::string plotName, std::string fileExtension)
-{
-    boost::filesystem::path dir(plotDir);
-    boost::filesystem::path file(plotName + fileExtension);
-    return dir / file;
-}
-
 void saveObjectToFile(TObject *                   myObject,
                       const std::string &         path,
                       const std::string &         drawOptions,
