@@ -192,20 +192,6 @@ std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams)
     return std::vector<double>{expected_a, expected_b, expected_c};
 }
 
-// Explicitly instantiate the types we want to use
-// This is Ugly and Bad but also idgaf
-template void saveObjectsToFile<TGraph>(const std::vector<TObject *> &  myObjects,
-                                        const std::vector<std::string> &drawOptions,
-                                        const std::vector<std::string> &legendLabel,
-                                        const std::string &             path,
-                                        const LegendParams_t &          legendParams);
-
-template void saveObjectsToFile<TGraphErrors>(const std::vector<TObject *> &  myObjects,
-                                              const std::vector<std::string> &drawOptions,
-                                              const std::vector<std::string> &legendLabel,
-                                              const std::string &             path,
-                                              const LegendParams_t &          legendParams);
-
 std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> real,
                                                      const std::vector<double> imaginary)
 {
@@ -234,6 +220,20 @@ std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> r
     }
     return outVector;
 }
+
+// Explicitly instantiate the types we want to use
+// This is Ugly and Bad but also i dont mind
+template void saveObjectsToFile<TGraph>(const std::vector<TObject *> &  myObjects,
+                                        const std::vector<std::string> &drawOptions,
+                                        const std::vector<std::string> &legendLabel,
+                                        const std::string &             path,
+                                        const LegendParams_t &          legendParams);
+
+template void saveObjectsToFile<TGraphErrors>(const std::vector<TObject *> &  myObjects,
+                                              const std::vector<std::string> &drawOptions,
+                                              const std::vector<std::string> &legendLabel,
+                                              const std::string &             path,
+                                              const LegendParams_t &          legendParams);
 
 } // namespace util
 
