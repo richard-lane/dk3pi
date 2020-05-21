@@ -18,7 +18,6 @@ add_test(NAME test_compare_minuit_root COMMAND test_minuit_fitter.exe)
 # Test that our parameter scan works ok for a fit to a simple polynomial
 add_executable(test_param_scan.exe test_param_scan.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/PullStudyHelpers.cpp testutil.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
 target_link_libraries(test_param_scan.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
-add_test(NAME test_param_scan COMMAND test_param_scan.exe)
 
 
 # Pull studies
