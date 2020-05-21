@@ -134,6 +134,10 @@ inline double dcsIntegral(const double         low,
  */
 inline double efficiency(const double tau, const double time)
 {
+    // Special case for tau = 0.0; efficiency is just 1 here
+    if (tau == 0.0) {
+        return 1.0;
+    }
     return std::tanh(time / tau);
 }
 
@@ -179,12 +183,13 @@ dcsRateWithEfficiency(const double time, const std::vector<double> &abcParams, c
 inline double cfIntegralWithEfficiency(const double low,
                                        const double high,
                                        const double width,
+                                       const double efficiencyTimescale,
                                        const double tolerance      = INTEGRAL_TOLERANCE,
                                        const size_t maxRefinements = INTEGRAL_REFINEMENTS,
                                        double *     errorEstimate  = nullptr)
 {
     // should really use std::bind
-    auto f = [&](double x) { return cfRateWithEfficiency(x, width, 1 / width); };
+    auto f = [&](double x) { return cfRateWithEfficiency(x, width, efficiencyTimescale); };
     return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
 }
 
@@ -198,12 +203,13 @@ inline double dcsIntegralWithEfficiency(const double               low,
                                         const double               high,
                                         const std::vector<double> &abcParams,
                                         const double               width,
+                                        const double               efficiencyTimescale,
                                         const double               tolerance      = INTEGRAL_TOLERANCE,
                                         const size_t               maxRefinements = INTEGRAL_REFINEMENTS,
                                         double *                   errorEstimate  = nullptr)
 {
     // should really use std::bind
-    auto f = [&](double x) { return dcsRateWithEfficiency(x, abcParams, width, 1 / width); };
+    auto f = [&](double x) { return dcsRateWithEfficiency(x, abcParams, width, efficiencyTimescale); };
     return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
 }
 

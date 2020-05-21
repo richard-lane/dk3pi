@@ -142,7 +142,7 @@ int main()
     std::vector<double> binLimits = util::exponentialBinLimits(maxTime, DecayParams.width, numTimeBins);
 
     double numCfEvents  = 10e6;
-    double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, DecayParams, maxTime);
+    double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, DecayParams, maxTime, 0);
 
     size_t              numExperiments = 1000;
     std::vector<double> aPull          = std::vector<double>(numExperiments, std::nan("-1"));

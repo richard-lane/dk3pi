@@ -28,8 +28,9 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     size_t numBins = 25;
 
     // Create RNGs for numbers of decays
-    double       meanNumDcsDecays = PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime);
-    std::mt19937 gen;
+    double meanNumDcsDecays =
+        PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
+    std::mt19937                      gen;
     std::poisson_distribution<size_t> cfDist(meanNumCfEvents);
     std::poisson_distribution<size_t> dcsDist(meanNumDcsDecays);
 

@@ -75,12 +75,15 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
     delete hist;
 }
 
-double numDCSDecays(const size_t numCFDecays, const DecayParams_t& phaseSpaceParams, double maxTime)
+double numDCSDecays(const size_t         numCFDecays,
+                    const DecayParams_t& phaseSpaceParams,
+                    double               maxTime,
+                    double               efficiencyTimescale)
 {
     // Our formula is numDcs = numCf * (DCS integral / CF integral), where we integrate over all allowed times
-    double dcsIntegral =
-        Phys::dcsIntegralWithEfficiency(0, maxTime, util::expectedParams(phaseSpaceParams), phaseSpaceParams.width);
-    double cfIntegral = Phys::cfIntegralWithEfficiency(0, maxTime, phaseSpaceParams.width);
+    double dcsIntegral = Phys::dcsIntegralWithEfficiency(
+        0, maxTime, util::expectedParams(phaseSpaceParams), phaseSpaceParams.width, efficiencyTimescale);
+    double cfIntegral = Phys::cfIntegralWithEfficiency(0, maxTime, phaseSpaceParams.width, efficiencyTimescale);
 
     return numCFDecays * dcsIntegral / cfIntegral;
 }

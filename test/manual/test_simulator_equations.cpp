@@ -182,7 +182,7 @@ void simulateDecays()
     expectedRatioFunc->SetParameter(1, expectedParams[1]);
     expectedRatioFunc->SetParameter(2, expectedParams[2]);
 
-    numDcs = (size_t)PullStudyHelpers::numDCSDecays(numCf, MyParams, maxTime);
+    numDcs = (size_t)PullStudyHelpers::numDCSDecays(numCf, MyParams, maxTime, 0);
     MyDecays.findDcsDecayTimes(numDcs);
 
     std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, timeBinLimits);
