@@ -101,8 +101,6 @@ std::vector<size_t> binVector(const std::vector<double> &myVector, const std::ve
  * Note this may result in some very wide bins at the start/end if lowBin/highBin are specified as much lower or higher
  * than the extreme values in the dataset.
  *
- * TODO: this currently sucks for the above reason. so make it not suck
- *
  * Params:
  *   dataset         - data to find bins for. Should be sorted.
  *   minPointsPerBin - minimum number of points per bin.
@@ -119,13 +117,6 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
  * exp(-decayConstant * time)
  */
 std::vector<double> exponentialBinLimits(const double maxTime, const double decayConstant, const size_t numBins);
-
-/*
- * Find exponentially-distributed limits of numBins bins from minTime up to maxTime, whose width is described by
- * exp(-decayConstant * time)
- */
-std::vector<double>
-exponentialBinLimits(const double minTime, const double maxTime, const double decayConstant, const size_t numBins);
 
 /*
  * Find our expected a, b and c in (a + bt + ct^2) from a set of phase space parameters.

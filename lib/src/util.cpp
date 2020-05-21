@@ -180,19 +180,6 @@ std::vector<double> exponentialBinLimits(const double maxTime, const double deca
     return binLimits;
 }
 
-std::vector<double>
-exponentialBinLimits(const double minTime, const double maxTime, const double decayConstant, const size_t numBins)
-{
-    std::vector<double> binLimits{};
-    for (size_t i = 0; i <= numBins; ++i) {
-        double x = (double)i / numBins;
-        double z = 1 - std::exp(-1 * decayConstant * (maxTime - minTime));
-        binLimits.push_back(minTime - (1 / decayConstant) * std::log(1 - z * x));
-    }
-
-    return binLimits;
-}
-
 std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams)
 {
     double expected_a = phaseSpaceParams.r * phaseSpaceParams.r;
