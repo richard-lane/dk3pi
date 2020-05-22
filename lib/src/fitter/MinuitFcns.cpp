@@ -78,9 +78,8 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
     double chi2 = 0.0;
 
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model = Phys::dcsRateWithEfficiency(
-                           thePositions[i], parameters, _integralOptions.width, 1 / _integralOptions.width) /
-                       Phys::cfRateWithEfficiency(thePositions[i], _integralOptions.width, 1 / _integralOptions.width);
+        double model = Phys::dcsRate(thePositions[i], parameters, _integralOptions.width, 1 / _integralOptions.width) /
+                       Phys::cfRate(thePositions[i], _integralOptions.width, 1 / _integralOptions.width);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
@@ -146,8 +145,8 @@ double DetailedPolynomialChiSqFcn::operator()(const std::vector<double>& paramet
 
     double chi2 = 0.0;
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model = Phys::dcsRateWithEfficiency(thePositions[i], params, 1 / params.width) /
-                       Phys::cfRateWithEfficiency(thePositions[i], params, 1 / params.width);
+        double model = Phys::dcsRate(thePositions[i], params, 1 / params.width) /
+                       Phys::cfRate(thePositions[i], params, 1 / params.width);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     return chi2;
@@ -186,8 +185,8 @@ double DetailedChiSqConstrainXYFcn::operator()(const std::vector<double>& parame
 
     double chi2 = 0.0;
     for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model = Phys::dcsRateWithEfficiency(thePositions[i], params, 1 / params.width) /
-                       Phys::cfRateWithEfficiency(thePositions[i], params, 1 / params.width);
+        double model = Phys::dcsRate(thePositions[i], params, 1 / params.width) /
+                       Phys::cfRate(thePositions[i], params, 1 / params.width);
         chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
     }
     // Introduce constraint by modifying chi squared

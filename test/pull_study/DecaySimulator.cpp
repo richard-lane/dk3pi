@@ -147,12 +147,12 @@ double SimulatedDecays::_getRandomTime(void)
 
 double SimulatedDecays::_cfRate(const double time)
 {
-    return Phys::cfRateWithEfficiency(time, _DecayParams, _efficiencyTimescale);
+    return Phys::cfRate(time, _DecayParams, _efficiencyTimescale);
 }
 
 double SimulatedDecays::_dcsRate(const double time)
 {
-    return Phys::dcsRateWithEfficiency(time, _DecayParams, _efficiencyTimescale);
+    return Phys::dcsRate(time, _DecayParams, _efficiencyTimescale);
 }
 
 #endif // DECAYSIMULATOR_CPP

@@ -136,11 +136,11 @@ BOOST_AUTO_TEST_CASE(test_rates, *boost::unit_test::tolerance(1e-8))
     BOOST_CHECK_SMALL(Phys::rateRatio(100, DecayParams) - 475209.0, 1e-10);
 
     // DCS rate
-    BOOST_CHECK_SMALL(Phys::wrongSignDecayRate(2, DecayParams) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
-    BOOST_CHECK_SMALL(
-        Phys::wrongSignDecayRate(2, expectedParams, DecayParams.width) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::dcsRate(2, DecayParams, 0) - 693 * std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::dcsRate(2, expectedParams, DecayParams.width, 0) - 693 * std::exp(-DecayParams.width * 2),
+                      1e-10);
 
     // CF rate
-    BOOST_CHECK_SMALL(Phys::rightSignDecayRate(2, DecayParams) - std::exp(-DecayParams.width * 2), 1e-10);
-    BOOST_CHECK_SMALL(Phys::rightSignDecayRate(2, DecayParams.width) - std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::cfRate(2, DecayParams, 0) - std::exp(-DecayParams.width * 2), 1e-10);
+    BOOST_CHECK_SMALL(Phys::cfRate(2, DecayParams.width, 0) - std::exp(-DecayParams.width * 2), 1e-10);
 }

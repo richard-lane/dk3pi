@@ -119,10 +119,10 @@ void simulateDecays()
 
     // Take the centre of each time bin, calculate the rate in each and multiply it by a large number to get many events
     // in each bin
-    std::vector<size_t> expectedCfBinPopulation =
-        expectedFunction(approxNumDecays, MyParams, timeBinLimits, Phys::rightSignDecayRate);
-    std::vector<size_t> expectedDcsBinPopulation =
-        expectedFunction(approxNumDecays, MyParams, timeBinLimits, Phys::wrongSignDecayRate);
+    auto rsRate = [](const double x, const DecayParams_t &params) { return Phys::cfRate(x, params, 0); };
+    auto wsRate = [](const double x, const DecayParams_t &params) { return Phys::dcsRate(x, params, 0); };
+    std::vector<size_t> expectedCfBinPopulation  = expectedFunction(approxNumDecays, MyParams, timeBinLimits, rsRate);
+    std::vector<size_t> expectedDcsBinPopulation = expectedFunction(approxNumDecays, MyParams, timeBinLimits, wsRate);
 
     // After rescaling, count how many of each event type we have (should be about approxNumDecays)
     size_t numCf  = std::accumulate(expectedCfBinPopulation.begin(), expectedCfBinPopulation.end(), (size_t)0);

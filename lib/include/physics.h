@@ -27,39 +27,6 @@ inline double rateRatio(const double time, const DecayParams_t &decayParams)
 }
 
 /*
- * Expected CF decay rate at a given time
- */
-inline double rightSignDecayRate(const double time, const double width)
-{
-    return exp(-1.0 * width * time);
-}
-
-/*
- * Expected CF decay rate at a given time
- */
-inline double rightSignDecayRate(const double time, const DecayParams_t &decayParams)
-{
-    return rightSignDecayRate(time, decayParams.width);
-}
-
-/*
- * Expected DCS decay rate at a given time
- */
-inline double wrongSignDecayRate(const double time, const DecayParams_t &decayParams)
-{
-    std::vector<double> abcParams = util::expectedParams(decayParams);
-    return rateRatio(time, abcParams) * rightSignDecayRate(time, decayParams.width);
-}
-
-/*
- * Expected DCS decay rate at a given time
- */
-inline double wrongSignDecayRate(const double time, const std::vector<double> &abcParams, const double width)
-{
-    return rateRatio(time, abcParams) * rightSignDecayRate(time, width);
-}
-
-/*
  * Efficiency function
  *
  * tanh(time/tau)
@@ -76,34 +43,34 @@ inline double efficiency(const double tau, const double time)
 /*
  * CF decay rate with efficiency, parametrised by tau
  */
-inline double cfRateWithEfficiency(const double time, const double width, const double tau)
+inline double cfRate(const double time, const double width, const double tau)
 {
-    return rightSignDecayRate(time, width) * efficiency(tau, time);
+    return exp(-1.0 * width * time) * efficiency(tau, time);
 }
 
 /*
  * CF decay rate with efficiency parametrised by tau
  */
-inline double cfRateWithEfficiency(const double time, const DecayParams_t &decayParams, const double tau)
+inline double cfRate(const double time, const DecayParams_t &decayParams, const double tau)
 {
-    return cfRateWithEfficiency(time, decayParams.width, tau);
+    return cfRate(time, decayParams.width, tau);
 }
 
 /*
  * Expected DCS decay rate at a given time with efficiency parameterise by tau
  */
-inline double dcsRateWithEfficiency(const double time, const DecayParams_t &decayParams, const double tau)
+inline double dcsRate(const double time, const DecayParams_t &decayParams, const double tau)
 {
-    return wrongSignDecayRate(time, decayParams) * efficiency(tau, time);
+    std::vector<double> abcParams = util::expectedParams(decayParams);
+    return rateRatio(time, abcParams) * cfRate(time, decayParams.width, tau);
 }
 
 /*
  * Expected DCS decay rate at a given time with efficiency parametrised by tau
  */
-inline double
-dcsRateWithEfficiency(const double time, const std::vector<double> &abcParams, const double width, const double tau)
+inline double dcsRate(const double time, const std::vector<double> &abcParams, const double width, const double tau)
 {
-    return wrongSignDecayRate(time, abcParams, width) * efficiency(tau, time);
+    return rateRatio(time, abcParams) * cfRate(time, width, tau);
 }
 
 /*
@@ -121,7 +88,7 @@ inline double cfIntegralWithEfficiency(const double low,
                                        double *     errorEstimate  = nullptr)
 {
     // should really use std::bind
-    auto f = [&](double x) { return cfRateWithEfficiency(x, width, efficiencyTimescale); };
+    auto f = [&](double x) { return cfRate(x, width, efficiencyTimescale); };
     return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
 }
 
@@ -141,7 +108,7 @@ inline double dcsIntegralWithEfficiency(const double               low,
                                         double *                   errorEstimate  = nullptr)
 {
     // should really use std::bind
-    auto f = [&](double x) { return dcsRateWithEfficiency(x, abcParams, width, efficiencyTimescale); };
+    auto f = [&](double x) { return dcsRate(x, abcParams, width, efficiencyTimescale); };
     return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
 }
 
