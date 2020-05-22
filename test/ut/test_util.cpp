@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(test_vector_binning)
 /*
  * Check that passing vectors with different numbers of objects/options or 0 options causes an err
  */
-BOOST_AUTO_TEST_CASE(test_draw_multiple_objects_)
+BOOST_AUTO_TEST_CASE(test_draw_multiple_objects)
 {
     TGraph *MyTGraph1 = new TGraph();
     TGraph *MyTGraph2 = new TGraph();
@@ -110,13 +110,15 @@ BOOST_AUTO_TEST_CASE(test_integral_calculators, *boost::unit_test::tolerance(1e-
     BOOST_CHECK(std::abs(util::expectedParams(DecayParams)[2] - 3) < 1e-8);
 
     // DCS integrals
-    BOOST_CHECK(std::abs(Phys::dcsIntegral(0, 3, DecayParams, 1e-16, 25) - 0.12599999999966256411) < 1e-10);
-    BOOST_CHECK(std::abs(Phys::dcsIntegral(0, 3, util::expectedParams(DecayParams), DecayParams.width, 1e-14, 25) -
+    // Use efficiency timescale of 0 such that the efficiency is unity
+    BOOST_CHECK(std::abs(Phys::dcsIntegralWithEfficiency(
+                             0, 3, util::expectedParams(DecayParams), DecayParams.width, 0, 1e-14, 25) -
                          0.12599999999966256411) < 1e-10);
 
     // CF integrals
-    BOOST_CHECK(std::abs(Phys::cfIntegral(0, 3, DecayParams, 1e-15, 25) - 0.09999999999999064237703) < 1e-10);
-    BOOST_CHECK(std::abs(Phys::cfIntegral(0, 3, DecayParams.width, 1e-15, 25) - 0.09999999999999064237703) < 1e-10);
+    // Use efficiency timescale of 0 such that the efficiency is unity
+    BOOST_CHECK(std::abs(Phys::cfIntegralWithEfficiency(0, 3, DecayParams.width, 0, 1e-15, 25) -
+                         0.09999999999999064237703) < 1e-10);
 }
 
 /*

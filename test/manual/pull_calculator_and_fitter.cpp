@@ -1,6 +1,6 @@
 /*
  * Input ideal decay counts our calculator and fitter and hope that it outputs the right fit parameters
- */
+/
 
 #include <iostream>
 #include <random>
@@ -18,11 +18,11 @@
 
 #include "testutil.h"
 
-/*
+*
  * Find the number of DCS points expected in a bin
  *
  * Must provide the integral of the DCS rate between 0 maxtime
- */
+ /
 size_t dcsPointsInBin(const double         binLow,
                       const double         binHigh,
                       const size_t         totalPoints,
@@ -33,11 +33,11 @@ size_t dcsPointsInBin(const double         binLow,
     return (size_t)(totalPoints * binIntegral / dcsIntegral);
 }
 
-/*
+*
  * Find the number of CF points expected in a bin
  *
  * Must provide the integral of the CF rate between 0 and maxtime
- */
+ /
 size_t cfPointsInBin(const double         binLow,
                      const double         binHigh,
                      const size_t         totalPoints,
@@ -48,9 +48,9 @@ size_t cfPointsInBin(const double         binLow,
     return (size_t)(totalPoints * binIntegral / cfIntegral);
 }
 
-/*
+*
  * Find the number of DCS points in each bin, drawing the counts from poisson distributions
- */
+ /
 std::vector<size_t> findDcsCounts(const std::vector<double> &binLimits,
                                   const size_t               totalNumEvents,
                                   const double               dcsIntegral,
@@ -67,9 +67,9 @@ std::vector<size_t> findDcsCounts(const std::vector<double> &binLimits,
     return counts;
 }
 
-/*
+*
  * Find the number of CF points in each bin, drawing the counts from poisson distributions
- */
+ /
 std::vector<size_t> findCfCounts(const std::vector<double> &binLimits,
                                  const size_t               totalNumEvents,
                                  const double               cfIntegral,
@@ -86,14 +86,14 @@ std::vector<size_t> findCfCounts(const std::vector<double> &binLimits,
     return counts;
 }
 
-/*
+*
  * Create idealised binned DCS and CF counts, divide them with a RatioCalculator + fit the ratios with a
  * MinuitPolynomialFitter
  *
  * Takes loads of parameters because i cba to make it better
  *
  * returns the fitter cus why not
- */
+ /
 MinuitPolynomialFitter performFit(const DecayParams_t &      decayParams,
                                   const double               maxTime,
                                   const size_t               numDcsEvents,
@@ -124,9 +124,10 @@ MinuitPolynomialFitter performFit(const DecayParams_t &      decayParams,
 
     return MyFitter;
 }
-
+*/
 int main()
 {
+    /*
     DecayParams_t DecayParams = {
         .x     = 0.004,
         .y     = 0.007,
@@ -173,5 +174,6 @@ int main()
     PullStudyHelpers::plot_parameter_distribution("b", bPull, numExperiments);
     PullStudyHelpers::plot_parameter_distribution("c", cPull, numExperiments);
 
+*/
     return 0;
 }
