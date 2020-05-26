@@ -12,38 +12,25 @@ class MinuitScannerBase : public MinuitFitterBase
     /*
      * Scan the ith parameter as defined in _parameters
      *
-     * Populates parameterScan
+     * Returns a vector std::pairs (parameter val, fit statistic val)
      */
-    void chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high);
+    std::vector<std::pair<double, double>>
+    chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high);
 
     /*
-     * Scan the i and jth parameters between the specified limits
+     * Scan the i and jth parameters between the specified limits (iRange) and (jRange)
      *
      * Populates twoDParameterScan
      *
+     * returns a vector of (parameter i val, parameter j val, fit statistic value)
      *
-     * TODO this has too many args
      */
-    void twoDParamScan(const size_t i,
-                       const size_t j,
-                       const size_t iPoints,
-                       const size_t jPoints,
-                       const double iLow,
-                       const double iHigh,
-                       const double jLow,
-                       const double jHigh);
-
-    /*
-     * Vector of pairs describing a parameter scan
-     */
-    std::vector<std::pair<double, double>> parameterScan;
-
-    /*
-     * Vector of tuples describing a 2d parameter scan
-     *
-     * Scans parameters i and j to find chi squared values; result is a vector of (i_value, j_value, chi_squared)
-     */
-    std::vector<std::vector<double>> twoDParameterScan;
+    std::vector<std::vector<double>> twoDParamScan(const size_t                    i,
+                                                   const size_t                    j,
+                                                   const size_t                    iPoints,
+                                                   const size_t                    jPoints,
+                                                   const std::pair<double, double> iRange,
+                                                   const std::pair<double, double> jRange);
 
   protected:
     /*

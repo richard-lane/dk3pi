@@ -96,14 +96,12 @@ void MinuitFitterBase::fit()
     _storeMinuitFitParams();
 
     // Store chi squared
-    statistic = std::make_unique<double>(min->Fval());
+    fitParams.fitStatistic = min->Fval();
 
     // Set our TGraph pointer to the right thing
-    plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
-                                          _fitData.binCentres.data(),
-                                          _fitData.data.data(),
-                                          _fitData.binErrors.data(),
-                                          _fitData.errors.data());
+    std::vector<double> xErrors(_fitData.numBins, 0);
+    plot = std::make_unique<TGraphErrors>(
+        _fitData.numBins, _fitData.binCentres.data(), _fitData.data.data(), xErrors.data(), _fitData.errors.data());
 }
 
 TMatrixD MinuitFitterBase::covarianceVector2CorrelationMatrix(const std::vector<double>& covarianceVector)
@@ -194,27 +192,22 @@ void MinuitFitterBase::saveFitPlot(const std::string&          plotTitle,
         throw D2K3PiException();
     }
 
-    // Set the plot title; for some reason this is also how to set axis labels?
-    plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
-
-    // Save our fit to file
-    // If root's builtin was used, _bestFitPlot will not have been assigned
+    // Check that a legend has been provided
     if (!legendParams) {
         std::cerr << "Must specify legend parameters if plotting a minuit-fitted graph" << std::endl;
         throw D2K3PiException();
     }
 
-    if (!bestFitFunction) {
-        util::saveObjectToFile(plot.get(), path, "AP", legendParams);
+    // Set plot title and axis labels
+    bestFitFunction->SetLineColor(kRed);
+    plot->SetTitle((plotTitle + ";time/ns;DCS/CF ratio").c_str());
 
-    } else {
-        bestFitFunction->SetLineColor(kRed);
-        util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitFunction.get()},
-                                              std::vector<std::string>{"AP", "CSAME"},
-                                              std::vector<std::string>{"Data", "Best fit"},
-                                              path,
-                                              *legendParams);
-    }
+    // Save our fit to file
+    util::saveObjectsToFile<TGraphErrors>(std::vector<TObject*>{plot.get(), bestFitFunction.get()},
+                                          std::vector<std::string>{"AP", "CSAME"},
+                                          std::vector<std::string>{"Data", "Best fit"},
+                                          path,
+                                          *legendParams);
 }
 
 void MinuitFitterBase::_storeMinuitFitParams()

@@ -6,44 +6,32 @@
 
 #include "TMath.h"
 
-FitData::FitData() {}
+FitData::FitData()
+{
+    ;
+}
 
-FitData::FitData(const std::vector<double>& myBinCentres,
-                 const std::vector<double>& myBinWidths,
+FitData::FitData(const std::vector<double>& myBinLimits,
                  const std::vector<double>& myData,
                  const std::vector<double>& myErrors)
 {
 
-    // Check that our bin centres are sorted
-    if (!std::is_sorted(myBinCentres.begin(), myBinCentres.end())) {
+    // Check that our bin limitsare sorted
+    if (!std::is_sorted(myBinLimits.begin(), myBinLimits.end())) {
         std::cerr << "Bins should be sorted" << std::endl;
         throw D2K3PiException();
     }
 
     // Check that all of our vectors are the same length
-    size_t binCentreSize = myBinCentres.size();
-    size_t binWidthSize  = myBinWidths.size();
-    size_t dataLength    = myData.size();
-    size_t errorsSize    = myErrors.size();
-    if (binCentreSize != errorsSize || binWidthSize != errorsSize || dataLength != errorsSize) {
+    numBins           = myBinLimits.size() - 1;
+    size_t dataLength = myData.size();
+    size_t errorsSize = myErrors.size();
+    if (numBins != errorsSize || dataLength != errorsSize) {
         std::cerr << "FitData parameters must all be the same length." << std::endl;
         throw D2K3PiException();
     }
 
-    // Check that none of our bins overlap
-    for (size_t i = 0; i < binWidthSize - 1; ++i) {
-        double leftEdge  = myBinCentres[i] + 0.5 * myBinWidths[i];
-        double rightEdge = myBinCentres[i + 1] - 0.5 * myBinWidths[i + 1];
-
-        // An overlap is when the upper edge of a lower bin is higher than the lower edge of a higher bin.
-        if (leftEdge > rightEdge + DBL_EPSILON) {
-            std::cerr << "Bins may not overlap; bin " << i << " and bin " << i + 1 << " have values " << leftEdge
-                      << " and " << rightEdge << std::endl;
-            throw D2K3PiException();
-        }
-    }
-
-    // Check that the data is all finite
+    // Check that the data is all finite because -infs and 0s keep sneaking in and its annoying
     for (auto it = myData.begin(); it != myData.end(); ++it) {
         // Use TMath::Finite instead of std::is_finite() because for some reason including the ROOT headers makes
         // std::is_finite(-inf) sometimes return true...
@@ -54,18 +42,52 @@ FitData::FitData(const std::vector<double>& myBinCentres,
     }
 
     // Now that all the checks have passed, set the class attributes
-    binCentres = myBinCentres;
-    data       = myData;
-    errors     = myErrors;
-    numPoints  = binCentreSize;
+    binLimits = myBinLimits;
+    data      = myData;
+    errors    = myErrors;
 
-    /* Commented out as we don't want our data to have any x-uncertainty
-    // Divide bin widths by 2 to get bin errors
-    binErrors = myBinWidths;
-    std::transform(binErrors.begin(),
-                   binErrors.end(),
-                   binErrors.begin(),
-                   std::bind(std::multiplies<double>(), std::placeholders::_1, 0.5));
-    */
-    binErrors = std::vector<double>(dataLength, 0.0);
+    binCentres = std::vector<double>(numBins);
+    for (size_t i = 0; i < numBins; ++i) {
+        binCentres[i] = (binLimits[i] + binLimits[i + 1]) / 2;
+    }
+}
+
+MyBaseFcn::MyBaseFcn(const std::vector<double>& data,
+                     const std::vector<double>& times,
+                     const std::vector<double>& errors,
+                     const IntegralOptions_t&   integralOptions)
+    : theMeasurements(data), thePositions(times), theMVariances(errors), theErrorDef(1.),
+      _integralOptions(integralOptions)
+{
+    ;
+}
+
+MyBaseFcn::~MyBaseFcn()
+{
+    ;
+}
+
+double MyBaseFcn::Up() const
+{
+    return theErrorDef;
+}
+
+std::vector<double> MyBaseFcn::measurements() const
+{
+    return theMeasurements;
+}
+
+std::vector<double> MyBaseFcn::positions() const
+{
+    return thePositions;
+}
+
+std::vector<double> MyBaseFcn::variances() const
+{
+    return theMVariances;
+}
+
+void MyBaseFcn::setErrorDef(double def)
+{
+    theErrorDef = def;
 }

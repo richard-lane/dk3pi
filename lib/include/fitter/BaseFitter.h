@@ -1,9 +1,3 @@
-/*
- * Base class that other fitters inherit from
- *
- * Holds the result of the fit as FitResults_t; also has attributes
- * for a plot and chi-squared/likelihood statistic.
- */
 #ifndef BASEFITTER_H
 #define BASEFITTER_H
 
@@ -11,6 +5,12 @@
 
 #include "TGraphErrors.h"
 
+/*
+ * Base class that other fitters inherit from
+ *
+ * Holds the result of the fit as FitResults_t; also has attributes
+ * for a plot and chi-squared/likelihood statistic.
+ */
 class BaseFitter
 {
   public:
@@ -20,14 +20,9 @@ class BaseFitter
     FitResults_t fitParams;
 
     /*
-     * ROOT TGraph object used for holding input data.
+     * ROOT TGraph object, used for saving plots and stuff
      */
     std::unique_ptr<TGraphErrors> plot = nullptr;
-
-    /*
-     * The test statistic that is optimised when running our test, e.g. chi squared or a likelihood
-     */
-    std::unique_ptr<double> statistic = nullptr;
 
   protected:
     /*

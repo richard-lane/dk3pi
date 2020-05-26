@@ -16,7 +16,6 @@
 
 #include "../pull_study/DecaySimulator.h"
 #include "../pull_study/PullStudyHelpers.h"
-#include "MinuitFcns.h"
 #include "RatioCalculator.h"
 #include "physics.h"
 #include "util.h"

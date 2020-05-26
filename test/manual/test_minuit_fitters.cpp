@@ -14,14 +14,14 @@
  * Create a dataset using accept-reject and our RatioCalculator then fit it to polynomials using ROOT's builtin TGraph
  * fitter, Minuit ChiSq and Minuit Max Likelihood
  *
- * Plot the dataset along with all three trendlines, and print out the fit parameters
+ * Plot the dataset with best fit lines, and print out the fit parameters
  */
 void compareRootMinuit(void)
 {
     // Create an accept-reject dataset
     DecayParams_t phaseSpaceParams = {
-        .x     = 0.0037,
-        .y     = 0.0066,
+        .x     = WORLD_AVERAGE_X,
+        .y     = WORLD_AVERAGE_Y,
         .r     = 0.055,
         .z_im  = -0.2956,
         .z_re  = 0.7609,
@@ -29,7 +29,7 @@ void compareRootMinuit(void)
     };
     double maxTime = 0.002;
 
-    size_t numCfEvents = 1000000;
+    size_t numCfEvents = 1e7;
     double numDcsEvents =
         PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
 
@@ -38,9 +38,7 @@ void compareRootMinuit(void)
     MyDecays.findCfDecayTimes(numCfEvents);
 
     // Define some time bins
-    std::vector<double> dcsTimes{MyDecays.WSDecayTimes};
-    std::sort(dcsTimes.begin(), dcsTimes.end());
-    std::vector<double> timeBinLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, 10);
+    std::vector<double> timeBinLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, 15);
 
     // Divide using RatioCalculator
     std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, timeBinLimits);
@@ -48,26 +46,31 @@ void compareRootMinuit(void)
     RatioCalculator     MyRatios  = RatioCalculator(cfCounts, dcsCounts, timeBinLimits);
     MyRatios.calculateRatios();
 
-    // Create 4 fitters
-    FitData_t MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+    // Create fitters
+    // Fit using ROOT builtin polynomial fit, Minuit2 fit to a + bt + ct^2
+    // and Minuit2 fit to (rD2 + rD(yReZ + xImZ)Gamma t + (x2 + y2)/4 (Gamma t)2), with/without constraint on X and Y
+    // All with/without integration
+    FitData_t MyFitData = FitData(timeBinLimits, MyRatios.ratio, MyRatios.error);
 
-    // Root builtin fitter
-    RootFitter CernFitter = RootFitter(MyFitData);
+    RootFitter BuiltInFitter = RootFitter(MyFitData);
 
-    // Polynomial fit with integration
-    IntegralOptions_t      integralOptions(phaseSpaceParams.width, timeBinLimits, 1e-10, 10);
-    MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData, &integralOptions);
+    IntegralOptions_t integralOptions(
+        true, phaseSpaceParams.width, timeBinLimits, 1 / phaseSpaceParams.width, 1e-10, 10);
+    IntegralOptions_t      integralOptionsNoIntegral(false, 0, timeBinLimits, 0);
+    MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData, integralOptions);
 
-    // Polynomial fit without integration
-    MinuitPolynomialFitter MinuitPolyFitNoIntegral = MinuitPolynomialFitter(MyFitData);
+    MinuitPolynomialFitter MinuitPolyFitNoIntegral = MinuitPolynomialFitter(MyFitData, integralOptionsNoIntegral);
 
-    // Fit to phase space params
-    PhysicalFitter PhysFitter = PhysicalFitter(MyFitData, integralOptions);
+    PhysicalFitter PhysFitter           = PhysicalFitter(MyFitData, integralOptions);
+    PhysicalFitter PhysFitterNoIntegral = PhysicalFitter(MyFitData, integralOptionsNoIntegral);
+
+    PhysicalFitter ConstrainXY           = PhysicalFitter(MyFitData, integralOptions, true);
+    PhysicalFitter ConstrainXYNoIntegral = PhysicalFitter(MyFitData, integralOptionsNoIntegral, true);
 
     // Perform fits
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
-    CernFitter.fit(0, maxTime, "Q");
+    BuiltInFitter.fit(0, maxTime, "Q");
 
     MinuitPolyFitNoIntegral.setPolynomialParams(initialParameterGuess, initialErrorsGuess);
     MinuitPolyFitNoIntegral.fit();
@@ -84,56 +87,76 @@ void compareRootMinuit(void)
     std::vector<double> initialErrGuess{1, 1, 1, 1, 1, 1};
 
     // Perform a fit, fixing x, y and the width to their model values
-    PhysFitter.setPhysicalFitParams(initialParamGuess, initialErrGuess);
+    PhysFitter.setFitParams(initialParamGuess, initialErrGuess);
     PhysFitter.fixParameters(std::vector<std::string>{"x", "y", "width"});
     PhysFitter.fit();
 
-    // Print fit parameters to console
-    for (size_t i = 0; i < 3; ++i) {
-        std::cout << "ROOT fit params: " << CernFitter.fitParams.fitParams[i] << "+-"
-                  << CernFitter.fitParams.fitParamErrors[i] << std::endl;
-    }
-    std::cout << "\tChiSq = " << *(CernFitter.statistic) << std::endl;
+    PhysFitterNoIntegral.setFitParams(initialParamGuess, initialErrGuess);
+    PhysFitterNoIntegral.fixParameters(std::vector<std::string>{"x", "y", "width"});
+    PhysFitterNoIntegral.fit();
 
-    for (size_t i = 0; i < 3; ++i) {
-        std::cout << "Polyfit params: " << MinuitPolyFit.fitParams.fitParams[i] << "+-"
-                  << MinuitPolyFit.fitParams.fitParamErrors[i] << std::endl;
-    }
-    std::cout << "\tChiSq = " << *(MinuitPolyFit.statistic) << std::endl;
+    ConstrainXY.setFitParams(initialParamGuess, initialErrGuess);
+    ConstrainXY.fixParameters(std::vector<std::string>{"width"});
+    ConstrainXY.fit();
 
-    for (size_t i = 0; i < 3; ++i) {
-        std::cout << "Polyfit params (no integral): " << MinuitPolyFitNoIntegral.fitParams.fitParams[i] << "+-"
-                  << MinuitPolyFitNoIntegral.fitParams.fitParamErrors[i] << std::endl;
-    }
-    std::cout << "\tChiSq = " << *(MinuitPolyFitNoIntegral.statistic) << std::endl;
+    ConstrainXYNoIntegral.setFitParams(initialParamGuess, initialErrGuess);
+    ConstrainXYNoIntegral.fixParameters(std::vector<std::string>{"width"});
+    ConstrainXYNoIntegral.fit();
 
     // Plot fits to file
-    CernFitter.plot->SetTitle("Compare Minuit and ROOT fitters;time/ns;DCS/CF ratio");
-    CernFitter.plot->SetLineColor(kBlack);
+    BuiltInFitter.plot->SetTitle("Compare Minuit and ROOT fitters;time/ns;DCS/CF ratio");
+    BuiltInFitter.plot->SetLineColor(kBlack);
 
     MinuitPolyFit.bestFitFunction->SetLineColor(kBlue);
 
-    MinuitPolyFitNoIntegral.bestFitFunction->SetLineColor(6);
-    MinuitPolyFitNoIntegral.bestFitFunction->SetLineStyle(9);
+    MinuitPolyFitNoIntegral.bestFitFunction->SetLineColor(kTeal);
+    MinuitPolyFitNoIntegral.bestFitFunction->SetLineStyle(kDotted);
     MinuitPolyFitNoIntegral.bestFitFunction->SetLineWidth(3);
+
+    PhysFitterNoIntegral.bestFitFunction->SetLineColor(kOrange);
+    PhysFitterNoIntegral.bestFitFunction->SetLineStyle(kDotted);
 
     PhysFitter.bestFitFunction->SetLineColor(kGreen);
     PhysFitter.bestFitFunction->SetLineStyle(kDashed);
 
+    ConstrainXY.bestFitFunction->SetLineColor(kMagenta);
+    ConstrainXY.bestFitFunction->SetLineStyle(kDashed);
+
+    ConstrainXYNoIntegral.bestFitFunction->SetLineColor(kPink);
+    ConstrainXYNoIntegral.bestFitFunction->SetLineStyle(kDashed);
+
+    TF1*                trueFit        = new TF1("true fit", "[0] +[1]*x+[2]*x*x", 0, maxTime);
+    std::vector<double> expectedParams = util::expectedParams(phaseSpaceParams);
+    trueFit->SetParameter(0, expectedParams[0]);
+    trueFit->SetParameter(1, expectedParams[1]);
+    trueFit->SetParameter(2, expectedParams[2]);
+    trueFit->SetLineColor(kGray);
+
     const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = "Compare fitters"};
     const std::vector<std::string> legendLabels{"Root best fit (red)",
-                                                "Minuit polynomial best fit",
-                                                "Minuit polynomial best fit (no integral)",
-                                                "Minuit best fit"};
+                                                "Minuit polynomial fit with integral",
+                                                "Minuit polynomial fit (no integral)",
+                                                "Fixed x, y",
+                                                "Constrained x, y",
+                                                "Fixed x, y (no integral)",
+                                                "Constrained x, y (no integral)",
+                                                "true fit"};
 
-    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{CernFitter.plot.get(),
-                                                          MinuitPolyFit.bestFitFunction.get(),
-                                                          MinuitPolyFitNoIntegral.bestFitFunction.get(),
-                                                          PhysFitter.bestFitFunction.get()},
-                                    std::vector<std::string>{"AP", "CSAME", "CSAME", "CSAME"},
-                                    legendLabels,
-                                    "compareMinuitRootPlots.pdf",
-                                    legendParams);
+    util::saveObjectsToFile<TGraph>(
+        std::vector<TObject*>{BuiltInFitter.plot.get(),
+                              MinuitPolyFit.bestFitFunction.get(),
+                              MinuitPolyFitNoIntegral.bestFitFunction.get(),
+                              PhysFitter.bestFitFunction.get(),
+                              ConstrainXY.bestFitFunction.get(),
+                              PhysFitterNoIntegral.bestFitFunction.get(),
+                              ConstrainXYNoIntegral.bestFitFunction.get(),
+                              trueFit},
+        std::vector<std::string>{"AP", "CSAME", "CSAME", "CSAME", "CSAME", "CSAME", "CSAME", "CSAME"},
+        legendLabels,
+        "compareMinuitRootPlots.pdf",
+        legendParams);
+
+    delete trueFit;
 }
 
 int main()

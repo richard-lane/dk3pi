@@ -16,11 +16,11 @@ class RootFitter : public BaseFitter
 
     /*
      * Fit our data to the equation we expect to see, using ROOT's builtin TGraph fitter.
-     * At the moment this is just a second order polynomial.
+     * This fits to (a + bt + ct^2)
      *
      * minTime and maxTime define the range over which the function is defined.
      *
-     * Populates fitParams and allocated memory to plot
+     * Populates this->fitParams and allocated memory to this->plot
      */
     void fit(const double minTime, const double maxTime, const std::string& options = "");
 

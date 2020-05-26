@@ -3,6 +3,62 @@
 
 #include "MinuitScannerBase.h"
 
+#define WORLD_AVERAGE_X (0.0039183)
+#define WORLD_AVERAGE_X_ERR (0.0011489)
+#define WORLD_AVERAGE_Y (0.0065139)
+#define WORLD_AVERAGE_Y_ERR (0.00064945)
+#define X_Y_CORRELATION (-0.301)
+
+/*
+ * Class fitting to (r^2 + r(yRZ + xImZ)*Gamma*t + (x2 +y2)/4 (Gamma*t)2)
+ */
+class PhysicalFitFcn : public MyBaseFcn
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    PhysicalFitFcn(const std::vector<double>& data,
+                   const std::vector<double>& times,
+                   const std::vector<double>& errors,
+                   const IntegralOptions_t&   integralOptions);
+
+    ~PhysicalFitFcn();
+
+    /*
+     * Creates a model given a vector of {x, y, r, z_im, z_re, width};
+     *
+     * Returns chi squared value between the model given our params and the measured data
+     */
+    virtual double operator()(const std::vector<double>& parameters) const;
+};
+
+/*
+ * Class fitting to a detailed polynomial (r^2 + r(yRZ + xImZ)*Gamma*t + (x2 +y2)/4 (Gamma*t)2), with constraint on X
+ * and Y
+ */
+class ConstrainXYFcn : public MyBaseFcn
+{
+  public:
+    /*
+     * Calls parent constructor
+     */
+    ConstrainXYFcn(const std::vector<double>& data,
+                   const std::vector<double>& times,
+                   const std::vector<double>& errors,
+                   const IntegralOptions_t&   integralOptions);
+
+    ~ConstrainXYFcn();
+
+    /*
+     * Creates a model given a vector of {x, y, r, z_im, z_re, width};
+     *
+     * Returns chi squared value between the model given our params and the measured data, constraining X and Y to the
+     * values
+     */
+    virtual double operator()(const std::vector<double>& parameters) const;
+};
+
 /*
  * Class for fitting the ratio of DCS to CF decay times by optimising parameters x, y, rD, Im(Z), Re(Z) and the decay
  * width
@@ -41,7 +97,7 @@ class PhysicalFitter : public MinuitScannerBase
      * Set this instance's _parameters attribute
      *
      */
-    void setPhysicalFitParams(const std::vector<double>& initialParams, const std::vector<double>& initialErrors);
+    void setFitParams(const std::vector<double>& initialParams, const std::vector<double>& initialErrors);
 
   protected:
     /*

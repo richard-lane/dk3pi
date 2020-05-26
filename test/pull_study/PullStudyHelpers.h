@@ -37,8 +37,6 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
  * The ratio of DCS to CF decays is calculated from the ratio of the integrals of their decay rates.
  * CF rate is exponential; DCS is exp * (a + bt + ct^2)
  *
- * Both are modulated by an efficiency function, characterised by efficiencyTimescale
- *
  * Returns a double so e.g. can be used as the mean of a distribution. Cast to an integer type before using as a
  * count!
  *

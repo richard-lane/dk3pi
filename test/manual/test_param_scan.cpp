@@ -4,7 +4,6 @@
 
 #include "../pull_study/DecaySimulator.h"
 #include "../pull_study/PullStudyHelpers.h"
-#include "MinuitFcns.h"
 #include "RatioCalculator.h"
 #include "fitter/MinuitPolynomialFitter.h"
 #include "fitter/PhysicalFitter.h"
@@ -43,10 +42,11 @@ void plotScan(MinuitPolynomialFitter& MinuitChiSqFitter,
     default: throw;
     }
 
-    MinuitChiSqFitter.chiSqParameterScan(paramIndex, numPoints, min, max);
+    std::vector<std::pair<double, double>> parameterScan =
+        MinuitChiSqFitter.chiSqParameterScan(paramIndex, numPoints, min, max);
     std::vector<double> values{};
     std::vector<double> chiSq{};
-    splitVectorOfPairs(MinuitChiSqFitter.parameterScan, values, chiSq);
+    splitVectorOfPairs(parameterScan, values, chiSq);
     TGraph* Graph = new TGraph(numPoints, values.data(), chiSq.data());
     Graph->SetTitle((graphTitle + ";value;chiSq").c_str());
     util::saveObjectToFile(Graph, (graphTitle + ".pdf").c_str(), "AP");
@@ -90,15 +90,16 @@ void test_param_scan(void)
     MyRatios.calculateRatios();
 
     // Create a fitter
-    FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData);
+    FitData_t              MyFitData = FitData(timeBinLimits, MyRatios.ratio, MyRatios.error);
+    IntegralOptions_t      integralOptions(false, 0, timeBinLimits, 0);
+    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData, integralOptions);
 
     // Perform fit, outputu minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
     MinuitChiSqScanner.setPolynomialParams(initialParameterGuess, initialErrorsGuess);
     MinuitChiSqScanner.fit();
-    std::cout << "Min chisq: " << *(MinuitChiSqScanner.statistic) << std::endl;
+    std::cout << "Min chisq: " << MinuitChiSqScanner.fitParams.fitStatistic << std::endl;
     std::cout << "Params: " << MinuitChiSqScanner.fitParams.fitParams[0] << " "
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
               << std::endl;
@@ -153,15 +154,16 @@ void test_2d_scan()
     MyRatios.calculateRatios();
 
     // Create a fitter
-    FitData_t              MyFitData = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData);
+    FitData_t              MyFitData = FitData(timeBinLimits, MyRatios.ratio, MyRatios.error);
+    IntegralOptions_t      integralOptions(false, 0, timeBinLimits, 0);
+    MinuitPolynomialFitter MinuitChiSqScanner(MyFitData, integralOptions);
 
     // Perform fit, output minimum statistic
     std::vector<double> initialParameterGuess{0.02, 1.0, 100.0};
     std::vector<double> initialErrorsGuess{0.01, 1.0, 100.0};
     MinuitChiSqScanner.setPolynomialParams(initialParameterGuess, initialErrorsGuess);
     MinuitChiSqScanner.fit();
-    std::cout << "Min chisq: " << *(MinuitChiSqScanner.statistic) << std::endl;
+    std::cout << "Min chisq: " << MinuitChiSqScanner.fitParams.fitStatistic << std::endl;
     std::cout << "Params: " << MinuitChiSqScanner.fitParams.fitParams[0] << " "
               << MinuitChiSqScanner.fitParams.fitParams[1] << " " << MinuitChiSqScanner.fitParams.fitParams[2]
               << std::endl;
@@ -177,16 +179,17 @@ void test_2d_scan()
     double maxA = MinuitChiSqScanner.fitParams.fitParams[0] + aSigma * MinuitChiSqScanner.fitParams.fitParamErrors[0];
     double maxB = MinuitChiSqScanner.fitParams.fitParams[1] + bSigma * MinuitChiSqScanner.fitParams.fitParamErrors[1];
 
-    MinuitChiSqScanner.twoDParamScan(0, 1, numAPoints, numBPoints, minA, maxA, minB, maxB);
+    std::vector<std::vector<double>> twoDParameterScan = MinuitChiSqScanner.twoDParamScan(
+        0, 1, numAPoints, numBPoints, std::make_pair(minA, maxA), std::make_pair(minB, maxB));
 
     std::vector<double> aVals(numTotalPoints);
     std::vector<double> bVals(numTotalPoints);
     std::vector<double> chiSquaredVals(numTotalPoints);
 
     for (size_t i = 0; i < numTotalPoints; ++i) {
-        aVals[i]          = MinuitChiSqScanner.twoDParameterScan[i][0];
-        bVals[i]          = MinuitChiSqScanner.twoDParameterScan[i][1];
-        chiSquaredVals[i] = MinuitChiSqScanner.twoDParameterScan[i][2];
+        aVals[i]          = twoDParameterScan[i][0];
+        bVals[i]          = twoDParameterScan[i][1];
+        chiSquaredVals[i] = twoDParameterScan[i][2];
     }
 
     TGraph2D* Graph = new TGraph2D(numTotalPoints, aVals.data(), bVals.data(), chiSquaredVals.data());
@@ -232,9 +235,9 @@ void test_z_scan()
     MyRatios.calculateRatios();
 
     // Create fitters
-    IntegralOptions_t integralOptions(phaseSpaceParams.width, timeBinLimits);
-    FitData_t         MyFitData  = FitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
-    PhysicalFitter    PhysFitter = PhysicalFitter(MyFitData, integralOptions);
+    IntegralOptions_t integralOptions(true, phaseSpaceParams.width, timeBinLimits, 1 / phaseSpaceParams.width);
+    FitData_t         MyFitData            = FitData(timeBinLimits, MyRatios.ratio, MyRatios.error);
+    PhysicalFitter    PhysFitter           = PhysicalFitter(MyFitData, integralOptions);
     PhysicalFitter    PhysFitterConstraint = PhysicalFitter(MyFitData, integralOptions, true);
 
     // Perform fit, output minimum statistic
@@ -245,8 +248,8 @@ void test_z_scan()
                                               phaseSpaceParams.z_re,
                                               phaseSpaceParams.width};
     std::vector<double> initialErrorsGuess{1, 1, 1, 1, 1, 1};
-    PhysFitter.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
-    PhysFitterConstraint.setPhysicalFitParams(initialParameterGuess, initialErrorsGuess);
+    PhysFitter.setFitParams(initialParameterGuess, initialErrorsGuess);
+    PhysFitterConstraint.setFitParams(initialParameterGuess, initialErrorsGuess);
 
     // Perform a 2d chi squared scan on the components of Z
     size_t numPoints      = 200;
@@ -255,10 +258,12 @@ void test_z_scan()
     double max            = 1;
 
     PhysFitter.fixParameters(std::vector<std::string>{"width", "x", "y"});
-    PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
+    std::vector<std::vector<double>> twoDParameterScan =
+        PhysFitter.twoDParamScan(3, 4, numPoints, numPoints, std::make_pair(min, max), std::make_pair(min, max));
 
     PhysFitterConstraint.fixParameters(std::vector<std::string>{"width"});
-    PhysFitterConstraint.twoDParamScan(3, 4, numPoints, numPoints, min, max, min, max);
+    std::vector<std::vector<double>> twoDParameterScanConstraint = PhysFitterConstraint.twoDParamScan(
+        3, 4, numPoints, numPoints, std::make_pair(min, max), std::make_pair(min, max));
 
     std::vector<double> imVals(numTotalPoints);
     std::vector<double> reVals(numTotalPoints);
@@ -266,10 +271,10 @@ void test_z_scan()
     std::vector<double> chiSquaredValsWithConstraint(numTotalPoints);
 
     for (size_t i = 0; i < numTotalPoints; ++i) {
-        imVals[i]                       = PhysFitter.twoDParameterScan[i][0];
-        reVals[i]                       = PhysFitter.twoDParameterScan[i][1];
-        chiSquaredValsNoConstraint[i]   = PhysFitter.twoDParameterScan[i][2];
-        chiSquaredValsWithConstraint[i] = PhysFitterConstraint.twoDParameterScan[i][2];
+        imVals[i]                       = twoDParameterScan[i][0];
+        reVals[i]                       = twoDParameterScan[i][1];
+        chiSquaredValsNoConstraint[i]   = twoDParameterScan[i][2];
+        chiSquaredValsWithConstraint[i] = twoDParameterScanConstraint[i][2];
     }
 
     // Subtract off the minimum chi squared

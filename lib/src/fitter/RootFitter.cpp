@@ -15,11 +15,9 @@ RootFitter::RootFitter(const FitData_t& fitData) : BaseFitter(fitData)
 void RootFitter::fit(const double minTime, const double maxTime, const std::string& options)
 {
     // Set our TGraph pointer to the right thing
-    plot = std::make_unique<TGraphErrors>(_fitData.numPoints,
-                                          _fitData.binCentres.data(),
-                                          _fitData.data.data(),
-                                          _fitData.binErrors.data(),
-                                          _fitData.errors.data());
+    std::vector<double> xErrors(_fitData.numBins, 0);
+    plot = std::make_unique<TGraphErrors>(
+        _fitData.numBins, _fitData.binCentres.data(), _fitData.data.data(), xErrors.data(), _fitData.errors.data());
 
     // Define our custom function to fit with and initalise parameters
     // Init them all to 1 for now
@@ -44,7 +42,7 @@ void RootFitter::fit(const double minTime, const double maxTime, const std::stri
     fitParams.correlationMatrix = std::make_unique<TMatrixD>(fitResult->GetCorrelationMatrix());
 
     // Set chi squared to the value stored in func
-    statistic = std::make_unique<double>(plot->Chisquare(func.get()));
+    fitParams.fitStatistic = plot->Chisquare(func.get());
 }
 
 void RootFitter::saveFitPlot(const std::string& plotTitle, const std::string& path)

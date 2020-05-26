@@ -38,106 +38,14 @@
 #endif // CHECK_CLOSE_COLLECTIONS
 
 /*
- * Test that passing in data and bins of differing lengths causes an error
- */
-BOOST_AUTO_TEST_CASE(test_bad_fitdata)
-{
-    std::vector<double> threeLength = {1, 2, 3};
-    std::vector<double> twoLength   = {1, 2};
-
-    BOOST_CHECK_THROW(FitData MyData(threeLength, threeLength, twoLength, twoLength), D2K3PiException);
-}
-
-/*
- * Test that creating a FitData object with overlapping bin limits causes an error
- */
-BOOST_AUTO_TEST_CASE(test_overlapping_bins)
-{
-    std::vector<double> linspace{1, 2, 3};
-    std::vector<double> widths{1.5, 1.5, 1.5};
-
-    BOOST_CHECK_THROW(FitData MyData(linspace, widths, linspace, linspace), D2K3PiException);
-}
-
-/*
- * Test that creating a FitData object with nearly overlapping bins doesn't cause an error
- * This is an integration test? lol?
- */
-BOOST_AUTO_TEST_CASE(test_nearly_overlapping_bins)
-{
-    // Create some realistic bin limits and counts
-    std::vector<double> timeBinLimits{0, 1, 2, 3, 4};
-    std::vector<size_t> counts{1, 1, 1, 1};
-
-    // Create a RatioCalculator to turn our bin limits into widths and centres
-    RatioCalculator Calculator(counts, counts, timeBinLimits);
-    Calculator.calculateRatios();
-
-    std::vector<double> widths  = Calculator.binWidths;
-    std::vector<double> centres = Calculator.binCentres;
-    std::vector<double> ratios  = Calculator.ratio;
-
-    // Pass our stuff into FitData; the widths will be close but shouldn't cause an error.
-    BOOST_CHECK_NO_THROW(FitData MyData(centres, widths, ratios, ratios));
-}
-
-/*
- * Test that creating a FitData object containing inf causes an error
- */
-BOOST_AUTO_TEST_CASE(test_inf_data_error)
-{
-    std::vector<double> v      = {1, 2};
-    std::vector<double> widths = {0.1, 0.1};
-    std::vector<double> infs   = {1.0 / 0.0, 1.0 / 0.0};
-
-    BOOST_CHECK_THROW(FitData MyData(v, widths, infs, v), D2K3PiException);
-}
-
-/*
- * Test that creating a FitData object containing NaNs causes an error
- */
-BOOST_AUTO_TEST_CASE(test_nan_data_error)
-{
-    std::vector<double> v      = {1, 2};
-    std::vector<double> widths = {0.1, 0.1};
-    std::vector<double> nans   = {0.0 / 0.0, 0.0 / 0.0};
-
-    BOOST_CHECK_THROW(FitData MyData(v, widths, nans, v), D2K3PiException);
-}
-
-/*
- * Test that creating a FitData object containing zeros causes an error
- */
-BOOST_AUTO_TEST_CASE(test_zero_data_error)
-{
-    std::vector<double> v      = {1, 2};
-    std::vector<double> widths = {0.1, 0.1};
-    std::vector<double> zeros  = {0.0, 0.0};
-
-    BOOST_CHECK_THROW(FitData MyData(v, widths, zeros, v), D2K3PiException);
-}
-
-/*
- * Test that unsorted bin centres causes an error
- */
-BOOST_AUTO_TEST_CASE(test_unsorted_bin_centres_exception)
-{
-    std::vector<double> centres{1, 2, 1.5};
-    std::vector<double> widths{0.1, 0.1, 0.1};
-
-    BOOST_CHECK_THROW(FitData MyData(centres, widths, widths, widths), D2K3PiException);
-}
-
-/*
  * Test that data following a quadratic function has sensible fit parameters
  *
  * Again this is more like IT than UT but no one is going to notice
  */
 BOOST_AUTO_TEST_CASE(test_quadratic_fit, *boost::unit_test::tolerance(0.01))
 {
-    // Set our x data to linear spaced bins of width 0.1 centred on integers
-    std::vector<double> binCentres{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    std::vector<double> binWidths(11, 0.1);
+    // Set our x data to linear spaced bins centred on integers
+    std::vector<double> binLimits{-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5};
 
     // Use the function 1 + x + x^2
     // Set the errors to something reasonable but small
@@ -148,7 +56,7 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit, *boost::unit_test::tolerance(0.01))
     std::vector<double> expectedFitCoefficients{1, 1, 1};
 
     // Create a fitter with our parameters
-    FitData_t  fitData(binCentres, binWidths, data, errors);
+    FitData_t  fitData(binLimits, data, errors);
     RootFitter MyFitter(fitData);
 
     // Perform a fit and check that our coefficients are all 1
@@ -163,9 +71,8 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit, *boost::unit_test::tolerance(0.01))
  */
 BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::tolerance(0.0001))
 {
-    // Set our x data to linear spaced bins of width 0.1 centred on integers
-    std::vector<double> binCentres{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    std::vector<double> binWidths(11, 0.1);
+    // Set our x data to linear spaced bins centred on integers
+    std::vector<double> binLimits{-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5};
 
     // Use the function 1 + x + x^2
     // Set the errors to something reasonable but small
@@ -176,8 +83,9 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::toler
     std::vector<double> expectedFitCoefficients{1, 1, 1};
 
     // Create a fitter with our parameters
-    FitData_t              fitData(binCentres, binWidths, data, errors);
-    MinuitPolynomialFitter MyFitter(fitData);
+    FitData_t              fitData(binLimits, data, errors);
+    IntegralOptions_t      integralOptions(false, 0, errors, 0);
+    MinuitPolynomialFitter MyFitter(fitData, integralOptions);
 
     // Perform a fit and check that our coefficients are all 1
     std::vector<double> parameterGuess{0.9, 1.1, 1.2};
@@ -192,9 +100,9 @@ BOOST_AUTO_TEST_CASE(test_quadratic_fit_minuit2_chi_sq, *boost::unit_test::toler
  */
 BOOST_AUTO_TEST_CASE(test_plot_before_fit)
 {
+    std::vector<double> oneTwoThree{1, 2, 3};
     std::vector<double> oneTwo{1, 2};
-    std::vector<double> zeros{0, 0};
-    FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
+    FitData_t           fitData(oneTwoThree, oneTwo, oneTwo);
     RootFitter          MyFitter(fitData);
 
     BOOST_CHECK_THROW(MyFitter.saveFitPlot("foo", "bar"), D2K3PiException);
@@ -205,13 +113,13 @@ BOOST_AUTO_TEST_CASE(test_plot_before_fit)
  */
 BOOST_AUTO_TEST_CASE(test_plot_already_exists)
 {
+    std::vector<double> oneTwoThree{1, 2, 3};
     std::vector<double> oneTwo{1, 2};
-    std::vector<double> zeros{0, 0};
-    FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
+    FitData_t           fitData(oneTwoThree, oneTwo, oneTwo);
     RootFitter          MyFitter(fitData);
 
-    // Change the fit parameter to a non empty vector so that we will not hit the plot before fit error
-    MyFitter.fitParams.fitParams = {1};
+    // Run the fit, which allows us to attempt to save the plot
+    MyFitter.fit(0, 1, "Q");
 
     // Create a temporary file and attempt to save a plot there
     // Cleanup isn't automatic, so this might leave temp files all over the place
@@ -231,9 +139,9 @@ BOOST_AUTO_TEST_CASE(test_plot_already_exists)
  */
 BOOST_AUTO_TEST_CASE(test_plot_created)
 {
+    std::vector<double> oneTwoThree{1, 2, 3};
     std::vector<double> oneTwo{1, 2};
-    std::vector<double> zeros{0, 0};
-    FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
+    FitData_t           fitData(oneTwoThree, oneTwo, oneTwo);
     RootFitter          MyFitter(fitData);
 
     // Run the fit, which allows us to attempt to save the plot
@@ -254,9 +162,9 @@ BOOST_AUTO_TEST_CASE(test_plot_created)
  */
 BOOST_AUTO_TEST_CASE(test_matrix_assigned)
 {
+    std::vector<double> oneTwoThree{1, 2, 3};
     std::vector<double> oneTwo{1, 2};
-    std::vector<double> zeros{0, 0};
-    FitData_t           fitData(oneTwo, zeros, oneTwo, oneTwo);
+    FitData_t           fitData(oneTwoThree, oneTwo, oneTwo);
     RootFitter          MyFitter(fitData);
 
     // Run the fit, which allows us to attempt to save the plot
@@ -287,11 +195,10 @@ BOOST_AUTO_TEST_CASE(test_corr_cov_conversion, *boost::unit_test::tolerance(0.00
 
     // Create a fitter object and set the errors to the right things. We will need to pass sensible bin limits to the
     // fitter
-    std::vector<double>    binCentres{0, 5, 10};
-    std::vector<double>    binWidths{1, 1, 1};
-    std::vector<double>    binLimits{};
-    FitData_t              fitData(binCentres, binWidths, errors, errors);
-    MinuitPolynomialFitter MyFitter(fitData);
+    std::vector<double>    binLimits{0, 1, 2, 3};
+    FitData_t              fitData(binLimits, errors, errors);
+    IntegralOptions_t      integralOptions(false, 0, errors, 0);
+    MinuitPolynomialFitter MyFitter(fitData, integralOptions);
     MyFitter.setPolynomialParams(std::vector<double>(3, 1), errors);
 
     // Hack here where I set something that shouldn't be possible

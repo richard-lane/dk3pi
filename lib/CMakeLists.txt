@@ -6,7 +6,6 @@ set(fitter
   src/fitter/MinuitScannerBase.cpp
   src/fitter/MinuitPolynomialFitter.cpp
   src/fitter/PhysicalFitter.cpp
-  src/fitter/MinuitFcns.cpp
   )
 
 add_library(D2K3Pi STATIC

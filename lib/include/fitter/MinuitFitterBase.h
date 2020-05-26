@@ -2,7 +2,6 @@
 #define MINUIT_FITTER_BASE_H
 
 #include "BaseFitter.h"
-#include "MinuitFcns.h"
 #include "util.h"
 
 #include "Minuit2/FunctionMinimum.h"
@@ -16,13 +15,12 @@ class MinuitFitterBase : public BaseFitter
 {
   public:
     /*
-     * Perform a fit using Minuit, possibly holding some parameters fixed as specified in fixParams.
+     * Perform a fit using Minuit
      *
      * Uses _parameters to minimise _fitFcn; populates this->min, this->fitParams and this->statistic
      *
      * does not set _bestFitFunction (as we don't yet know what to do with our fit
      * parameters); this should be set by child class implementations of this->fit().
-     *
      */
     virtual void fit();
 
@@ -87,7 +85,7 @@ class MinuitFitterBase : public BaseFitter
     /*
      * Pointer to the Minuit FCN used to perform the fit
      */
-    std::unique_ptr<BasePolynomialFcn> _fitFcn = nullptr;
+    std::unique_ptr<MyBaseFcn> _fitFcn = nullptr;
 
     /*
      * Parameters that Minuit minimises

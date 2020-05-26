@@ -69,8 +69,7 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
     std::cout << "performing fits" << std::endl;
     std::vector<RootFitter> fitters{};
     for (int bin = 0; bin < NUM_BINS; ++bin) {
-        FitData_t thisBinFitData =
-            FitData(ratios[bin].binCentres, ratios[bin].binWidths, ratios[bin].ratio, ratios[bin].error);
+        FitData_t thisBinFitData = FitData(timeBinLimits, ratios[bin].ratio, ratios[bin].error);
         fitters.push_back(RootFitter(thisBinFitData));
         fitters[bin].fit(0, 1); // Might need to change the max time here
         std::string title = "PhaseSpaceBin" + std::to_string(bin) + ".pdf";

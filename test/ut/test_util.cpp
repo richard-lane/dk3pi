@@ -97,9 +97,9 @@ BOOST_AUTO_TEST_CASE(test_draw_multiple_objects)
 }
 
 /*
- * Test rate integral calculators
+ * Test rate integrals
  */
-BOOST_AUTO_TEST_CASE(test_integral_calculators, *boost::unit_test::tolerance(1e-8))
+BOOST_AUTO_TEST_CASE(test_integrals, *boost::unit_test::tolerance(1e-8))
 {
     DecayParams_t DecayParams = {
         .x = 0.0, .y = std::sqrt(0.12), .r = 1, .z_im = 0.0, .z_re = 0.2 / std::sqrt(0.12), .width = 10};

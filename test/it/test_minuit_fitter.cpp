@@ -3,10 +3,10 @@
 
 #include <vector>
 
-#include "MinuitFcns.h"
+#include "MinuitPolynomialFitter.h"
 
 /*
- * Test chi squared comes out right
+ * Test chi squared comes out right when finding chi sq, not integrating
  */
 BOOST_AUTO_TEST_CASE(test_chi_squared, *boost::unit_test::tolerance(0.000000000000001))
 {
@@ -19,7 +19,8 @@ BOOST_AUTO_TEST_CASE(test_chi_squared, *boost::unit_test::tolerance(0.0000000000
     double expectedChiSq = 1.070386944129503;
 
     // Create a PolynomialFitFcn object and find chi squared
-    PolynomialChiSqFcnNoIntegral MyFitFcn(data, times, errors);
+    IntegralOptions_t integralOptions(false, 0, errors, 0);
+    PolynomialChiSqFcn MyFitFcn(data, times, errors, integralOptions);
 
     BOOST_CHECK(std::fabs(MyFitFcn(std::vector<double>{1.0, 1.0, 1.0}) - expectedChiSq) < 1e-7);
 }

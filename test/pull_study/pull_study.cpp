@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "DecaySimulator.h"
-#include "MinuitFcns.h"
 #include "MinuitPolynomialFitter.h"
 #include "PhysicalFitter.h"
 #include "RatioCalculator.h"
@@ -12,7 +11,7 @@
 
 #include <boost/progress.hpp>
 
-void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool integrate)
+void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 {
     // Choose parameters to use when simulating
     DecayParams_t phaseSpaceParams = {
@@ -23,19 +22,22 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
         .z_re  = 0.7609,
         .width = 2439.0,
     };
-    double maxTime = 10 / phaseSpaceParams.width;
-    // std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
-    size_t numBins = 25;
+    double              maxTime             = 10 / phaseSpaceParams.width;
+    std::vector<double> expectedFitParams   = util::expectedParams(phaseSpaceParams);
+    size_t              numBins             = 25;
+    double              efficiencyTimescale = 1 / phaseSpaceParams.width;
 
     // Create RNGs for numbers of decays
     double meanNumDcsDecays =
-        PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
+        PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
     std::mt19937                      gen;
     std::poisson_distribution<size_t> cfDist(meanNumCfEvents);
     std::poisson_distribution<size_t> dcsDist(meanNumDcsDecays);
 
     // Find exponentially-spaced time bin limits to use
     std::vector<double> binLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, numBins);
+
+    // Make some bins at the start wider (because of the efficiency)
     binLimits.erase(binLimits.begin() + 1, binLimits.begin() + 3);
     binLimits.erase(binLimits.begin() + 4);
     // std::vector<double> binLimits(numBins + 1);
@@ -44,12 +46,14 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
     // }
 
     // Create a decay simulator
-    SimulatedDecays MyDecays(maxTime, phaseSpaceParams, 1 / phaseSpaceParams.width);
+    SimulatedDecays MyDecays(maxTime, phaseSpaceParams, efficiencyTimescale);
 
     // Initialise vectors of fit parameter pulls and chi squared
-    // std::vector<double> aPull(numExperiments, -1);
-    // std::vector<double> bPull(numExperiments, -1);
-    // std::vector<double> cPull(numExperiments, -1);
+    std::vector<double> aPull(numExperiments, -1);
+    std::vector<double> bPull(numExperiments, -1);
+    std::vector<double> cPull(numExperiments, -1);
+    std::vector<double> polyChiSqVals(numExperiments, -1);
+
     std::vector<double> rPull(numExperiments, -1);
     std::vector<double> reZPull(numExperiments, -1);
     std::vector<double> chiSquaredVals(numExperiments, -1);
@@ -75,73 +79,75 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments, bool 
         RatioCalculator MyRatios(cfCounts, dcsCounts, binLimits);
         MyRatios.calculateRatios();
 
-        // Create integral options if we need them
-        std::unique_ptr<IntegralOptions_t> integralOptions = nullptr;
-        if (integrate) {
-            integralOptions = std::make_unique<IntegralOptions_t>(phaseSpaceParams.width, binLimits, 1e-10, 10);
-        }
-        FitData_t MyFitData(MyRatios.binCentres, MyRatios.binWidths, MyRatios.ratio, MyRatios.error);
+        IntegralOptions_t integralOptions(true, phaseSpaceParams.width, binLimits, efficiencyTimescale);
+        FitData_t         MyFitData(binLimits, MyRatios.ratio, MyRatios.error);
 
-        // Fit data
-        // MinuitPolynomialFitter MyFitter(MyFitData, integralOptions.get());
-        // MyFitter.setPolynomialParams(expectedFitParams, std::vector<double>(3, 1));
-        // MyFitter.fixParameters(std::vector<std::string>{"a"});
-        // MyFitter.fit();
+        // Fit data with minuit polynomial fitter and with constrained X, Y
+        MinuitPolynomialFitter PolyFitter(MyFitData, integralOptions);
+        PolyFitter.setPolynomialParams(expectedFitParams, std::vector<double>(3, 1));
+        PolyFitter.fit();
 
-        PhysicalFitter MyFitter(MyFitData, *integralOptions, true);
-        MyFitter.setPhysicalFitParams(std::vector<double>{phaseSpaceParams.x,
-                                                          phaseSpaceParams.y,
-                                                          phaseSpaceParams.r,
-                                                          phaseSpaceParams.z_im,
-                                                          phaseSpaceParams.z_re,
-                                                          phaseSpaceParams.width},
-                                      std::vector<double>(6, 1));
+        PhysicalFitter MyFitter(MyFitData, integralOptions, true);
+        MyFitter.setFitParams(std::vector<double>{phaseSpaceParams.x,
+                                                  phaseSpaceParams.y,
+                                                  phaseSpaceParams.r,
+                                                  phaseSpaceParams.z_im,
+                                                  phaseSpaceParams.z_re,
+                                                  phaseSpaceParams.width},
+                              std::vector<double>(6, 1));
         MyFitter.fixParameters(std::vector<std::string>{"width", "z_im"});
         MyFitter.fit();
         // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
         // MyFitter.saveFitPlot("fit", "fit.pdf", &legend);
 
         // Store parameter and chi squared
+        aPull[i] = (PolyFitter.fitParams.fitParams[0] - expectedFitParams[0]) / PolyFitter.fitParams.fitParamErrors[0];
+        bPull[i] = (PolyFitter.fitParams.fitParams[1] - expectedFitParams[1]) / PolyFitter.fitParams.fitParamErrors[1];
+        cPull[i] = (PolyFitter.fitParams.fitParams[2] - expectedFitParams[2]) / PolyFitter.fitParams.fitParamErrors[2];
+        polyChiSqVals[i] = PolyFitter.fitParams.fitStatistic;
+
         reZPull[i] = (MyFitter.fitParams.fitParams[4] - phaseSpaceParams.z_re) / MyFitter.fitParams.fitParamErrors[4];
         rPull[i]   = (MyFitter.fitParams.fitParams[2] - phaseSpaceParams.r) / MyFitter.fitParams.fitParamErrors[2];
-        chiSquaredVals[i] = *MyFitter.statistic;
+        chiSquaredVals[i] = MyFitter.fitParams.fitStatistic;
 
         ++showProgress;
     }
 
     // Output mean and std dev of pulls
+    std::vector<std::pair<double, double>> polyStats{};
     std::vector<std::pair<double, double>> stats{};
-    // stats.push_back(PullStudyHelpers::meanAndStdDev(aPull));
-    // stats.push_back(PullStudyHelpers::meanAndStdDev(bPull));
-    // stats.push_back(PullStudyHelpers::meanAndStdDev(cPull));
+
+    polyStats.push_back(PullStudyHelpers::meanAndStdDev(aPull));
+    polyStats.push_back(PullStudyHelpers::meanAndStdDev(bPull));
+    polyStats.push_back(PullStudyHelpers::meanAndStdDev(cPull));
 
     stats.push_back(PullStudyHelpers::meanAndStdDev(rPull));
     stats.push_back(PullStudyHelpers::meanAndStdDev(reZPull));
 
+    std::cout << "Constrained XY Fit:" << std::endl;
     for (auto pair = stats.begin(); pair != stats.end(); ++pair) {
         std::cout << "Pull:\t" << pair->first << "+-" << pair->second << std::endl;
     }
+    std::cout << std::endl;
+
+    std::cout << "Polynomial fit:" << std::endl;
+    for (auto pair = polyStats.begin(); pair != polyStats.end(); ++pair) {
+        std::cout << "Pull:\t" << pair->first << "+-" << pair->second << std::endl;
+    }
+    std::cout << std::endl;
 
     PullStudyHelpers::plot_parameter_distribution("r", rPull, numExperiments);
     PullStudyHelpers::plot_parameter_distribution("Re(Z)", reZPull, numExperiments);
 
+    PullStudyHelpers::plot_parameter_distribution("a", aPull, numExperiments);
+    PullStudyHelpers::plot_parameter_distribution("b", bPull, numExperiments);
+    PullStudyHelpers::plot_parameter_distribution("c", cPull, numExperiments);
+
     PullStudyHelpers::plotHist(chiSquaredVals, 50, "MinuitChiSq");
+    PullStudyHelpers::plotHist(polyChiSqVals, 50, "polyMinuitChiSq");
 }
 
-int main(int argc, char* argv[])
+int main()
 {
-    // If -i or --integrate specified, integrate over the bins
-    bool        integrate{false};
-    std::string iStr         = "-i";
-    std::string integrateStr = "--integrate";
-    for (int arg = 1; arg < argc; ++arg) {
-        if (argv[arg] == iStr || argv[arg] == integrateStr) {
-            integrate = true;
-        }
-    }
-
-    std::string withIntegrating = integrate ? "with" : "without";
-    std::cout << "Running pull study " << withIntegrating << " integrating over bins in fit." << std::endl;
-
-    pull_study(1e6, 100, integrate);
+    pull_study(1e6, 100);
 }

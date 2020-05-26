@@ -10,12 +10,14 @@
 #include "Minuit2/MnPrint.h"
 #include "Minuit2/MnScan.h"
 
-MinuitScannerBase::MinuitScannerBase(const FitData_t& fitData) : MinuitFitterBase(fitData)
+MinuitScannerBase::MinuitScannerBase(const FitData_t& fitData)
+    : MinuitFitterBase(fitData)
 {
     ;
 }
 
-void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
+std::vector<std::pair<double, double>>
+MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoints, const double low, const double high)
 {
     // Find a vector of the parameter values we're interested in
     // This already gets done in the _scanParameter function but i dont care
@@ -25,24 +27,22 @@ void MinuitScannerBase::chiSqParameterScan(const size_t i, const size_t numPoint
         parameterVals[k] = low + k * step;
     }
 
-    // Initialise parameterScan attribute
-    parameterScan = std::vector<std::pair<double, double>>(numPoints);
-
     // Scan the parameter and populate parameterScan
-    std::vector<double> chiSqValues = _scanParameter(i, numPoints, low, high);
+    std::vector<std::pair<double, double>> parameterScan(numPoints);
+    std::vector<double>                    chiSqValues = _scanParameter(i, numPoints, low, high);
     for (size_t k = 0; k < numPoints; ++k) {
         parameterScan[k] = std::make_pair(parameterVals[k], chiSqValues[k]);
     }
+
+    return parameterScan;
 }
 
-void MinuitScannerBase::twoDParamScan(const size_t i,
-                                      const size_t j,
-                                      const size_t iPoints,
-                                      const size_t jPoints,
-                                      const double iLow,
-                                      const double iHigh,
-                                      const double jLow,
-                                      const double jHigh)
+std::vector<std::vector<double>> MinuitScannerBase::twoDParamScan(const size_t                    i,
+                                                                  const size_t                    j,
+                                                                  const size_t                    iPoints,
+                                                                  const size_t                    jPoints,
+                                                                  const std::pair<double, double> iRange,
+                                                                  const std::pair<double, double> jRange)
 {
     if (i >= _parameters->Params().size() || j >= _parameters->Params().size()) {
         std::cerr << "Cannot scan params " << i << ", " << j << "; only have " << fitParams.fitParams.size()
@@ -56,20 +56,20 @@ void MinuitScannerBase::twoDParamScan(const size_t i,
     }
 
     // Create vectors to store the i, j values we're interested in, and a vector to store our result in
-    std::vector<double> iVals(iPoints);
-    std::vector<double> jVals(jPoints);
-    twoDParameterScan = std::vector<std::vector<double>>(iPoints * jPoints);
+    std::vector<double>              iVals(iPoints);
+    std::vector<double>              jVals(jPoints);
+    std::vector<std::vector<double>> twoDParameterScan(iPoints * jPoints);
 
     // Fill vectors of i and j values
     // Technically we could do all this in the big loop where we do the minimisation but i think this is clearer to
     // think about
-    double iStep = (iHigh - iLow) / (iPoints - 1);
-    double jStep = (jHigh - jLow) / (jPoints - 1);
+    double iStep = (iRange.second - iRange.first) / (iPoints - 1);
+    double jStep = (jRange.second - jRange.first) / (jPoints - 1);
     for (size_t k = 0; k < iPoints; ++k) {
-        iVals[k] = iLow + k * iStep;
+        iVals[k] = iRange.first + k * iStep;
     }
     for (size_t k = 0; k < jPoints; ++k) {
-        jVals[k] = jLow + k * jStep;
+        jVals[k] = jRange.first + k * jStep;
     }
 
     // Loop over our j Values, performing a scan over i  for each one
@@ -77,13 +77,15 @@ void MinuitScannerBase::twoDParamScan(const size_t i,
     boost::progress_display showProgress(jPoints);
     for (size_t jIndex = 0; jIndex < jPoints; ++jIndex) {
         _parameters->SetValue(j, jVals[jIndex]);
-        std::vector<double> values = _scanParameter(i, iPoints, iLow, iHigh);
+        std::vector<double> values = _scanParameter(i, iPoints, iRange.first, iRange.second);
         for (size_t n = 0; n < values.size(); ++n) {
             twoDParameterScan[jIndex + jPoints * n] = std::vector<double>{iVals[n], jVals[jIndex], values[n]};
         }
         ++showProgress;
     }
     _parameters->Release(j);
+
+    return twoDParameterScan;
 }
 
 std::vector<double>
@@ -118,7 +120,7 @@ MinuitScannerBase::_scanParameter(const size_t i, const size_t numPoints, const 
 
         // Perform a fit and insert the statistic value we get into values[]
         fit();
-        values[k] = *statistic;
+        values[k] = fitParams.fitStatistic;
     }
     _parameters->Release(i);
 
