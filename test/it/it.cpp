@@ -1,3 +1,2 @@
-#include "test_decay_simulator.cpp"
-#include "test_minuit_fitter.cpp"
-#include "test_ratio_calculator.cpp"
+#define BOOST_TEST_MODULE "IT for DK3Pi key functionality"
+#include <boost/test/included/unit_test.hpp>

@@ -1,14 +1,11 @@
-#ifndef TEST_RATIO_CALCULATOR
-#define TEST_RATIO_CALCULATOR
-
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MAIN
-#include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include "RatioCalculator.h"
 
 #include <cmath>
+
+BOOST_AUTO_TEST_SUITE(calculator_IT)
+
 /*
  * Integration-style test that the ratio calculator actually works
  */
@@ -44,4 +41,4 @@ BOOST_AUTO_TEST_CASE(it_ratio_calculator)
     BOOST_CHECK_CLOSE(expectedErrors[4], MyRatioCalculator.error[4], 1e-10);
 }
 
-#endif // TEST_RATIO_CALCULATOR
+BOOST_AUTO_TEST_SUITE_END()
