@@ -1,4 +1,5 @@
 #!/bin/bash
+# This should probably be a python script
 
 # Must have built target "ampgenpull" in the "build/test/ampGenPull" dir for this to work
 
@@ -6,14 +7,14 @@ set -e
 
 DIR="$(dirname $(readlink -f $0))"
 
-# Find how many of each event type to generate
 # This is based on making some numbers up
 # Event numbers to use get written to a file
 export MEANNUMDCS=231
 export MEANNUMCF=70000
 
-for i in {1..5}
+for i in {1..2}
 do
+  # Find how many of each event type to generate
   python $DIR/find_event_nums.py
   NUMDCS=$(sed '1q;d' event_nums.txt)
   NUMCF=$(sed '2q;d' event_nums.txt)
@@ -26,3 +27,6 @@ do
   # Read the ROOT files, calculate ratio of decay counts, perform a fit and save the fit parameters to a file
   $DIR/../../build/test/ampGenPull/ampgenpull d.root dBar.root
 done
+
+# Find the mean + std dev of pulls
+python $DIR/find_pull.py
