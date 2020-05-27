@@ -42,3 +42,6 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/test/manual/")
 
 # Pull study
 add_subdirectory("${CMAKE_SOURCE_DIR}/test/pull_study/")
+
+# Ampgen pull study
+add_subdirectory("${CMAKE_SOURCE_DIR}/test/ampGenPull")
