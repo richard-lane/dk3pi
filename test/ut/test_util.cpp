@@ -144,3 +144,30 @@ BOOST_AUTO_TEST_CASE(test_rates, *boost::unit_test::tolerance(1e-8))
     BOOST_CHECK_SMALL(Phys::cfRate(2, DecayParams, 0) - std::exp(-DecayParams.width * 2), 1e-10);
     BOOST_CHECK_SMALL(Phys::cfRate(2, DecayParams.width, 0) - std::exp(-DecayParams.width * 2), 1e-10);
 }
+
+/*
+ * Test conversion between Re/Im and magnitude/phase
+ */
+BOOST_AUTO_TEST_CASE(test_mag_phase)
+{
+    std::vector<double> real{2, -1, -1, 2};
+    std::vector<double> imaginary{1, 1, -2, -2};
+
+    std::vector<std::pair<double, double>> expectedMagPhase{std::make_pair(2.2361, 0.4636),
+                                                            std::make_pair(1.4142, 2.3562),
+                                                            std::make_pair(2.2361, 4.2487),
+                                                            std::make_pair(2.8284, 5.4978)};
+    std::vector<std::pair<double, double>> result = util::reIm2magPhase(real, imaginary);
+
+    BOOST_CHECK_SMALL(result[0].first - expectedMagPhase[0].first, 1e-4);
+    BOOST_CHECK_SMALL(result[0].second - expectedMagPhase[0].second, 1e-4);
+
+    BOOST_CHECK_SMALL(result[1].first - expectedMagPhase[1].first, 1e-4);
+    BOOST_CHECK_SMALL(result[1].second - expectedMagPhase[1].second, 1e-4);
+
+    BOOST_CHECK_SMALL(result[2].first - expectedMagPhase[2].first, 1e-4);
+    BOOST_CHECK_SMALL(result[2].second - expectedMagPhase[2].second, 1e-4);
+
+    BOOST_CHECK_SMALL(result[3].first - expectedMagPhase[3].first, 1e-4);
+    BOOST_CHECK_SMALL(result[3].second - expectedMagPhase[3].second, 1e-4);
+}
