@@ -7,7 +7,12 @@
 
 #include <TFile.h>
 
+#include <boost/filesystem.hpp>
+
+#include <fstream>
 #include <memory>
+
+#define RESULTS_FILE ("pull.txt")
 
 /*
  * Read in two ROOT files d.root and dBar.root, take their ratios of decay times
@@ -49,14 +54,31 @@ void ampgenFit(const char* dFile, const char* dBarFile)
     fitter.fit();
 
     // Save the fit parameters and errors to a text file
+    std::string r    = std::to_string(fitter.fitParams.fitParams[2]);
+    std::string dr   = std::to_string(fitter.fitParams.fitParamErrors[2]);
+    std::string reZ  = std::to_string(fitter.fitParams.fitParams[3]);
+    std::string dreZ = std::to_string(fitter.fitParams.fitParamErrors[3]);
+    std::string imZ  = std::to_string(fitter.fitParams.fitParams[4]);
+    std::string dimZ = std::to_string(fitter.fitParams.fitParamErrors[4]);
+
+    std::string   resultStr = r + "," + dr + "," + reZ + "," + dreZ + "," + imZ + "," + dimZ;
+    std::ofstream resultsFile;
+    resultsFile.open(RESULTS_FILE, std::ios_base::app);
+    resultsFile << resultStr << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
     // Should probably also check that D and Dbar have been passed in the right order
-    // but what are the chances of that
+    // but what are the chances of that going wrong
     if (argc != 3) {
         std::cerr << "Usage: ./ampgenpull <d root file> <d bar root file>" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that the file we'll write to exists
+    if (!boost::filesystem::exists(RESULTS_FILE)) {
+        std::cerr << RESULTS_FILE << " does not exist; will be unable to append fit results to it" << std::endl;
         throw D2K3PiException();
     }
 
