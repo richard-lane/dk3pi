@@ -9,10 +9,10 @@ DIR="$(dirname $(readlink -f $0))"
 
 # This is based on making some numbers up
 # Event numbers to use get written to a file
-export MEANNUMDCS=231
-export MEANNUMCF=70000
+export MEANNUMDCS=800
+export MEANNUMCF=60000
 
-for i in {1..2}
+for i in {1..10}
 do
   # Find how many of each event type to generate
   python $DIR/find_event_nums.py
