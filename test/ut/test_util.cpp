@@ -97,6 +97,29 @@ BOOST_AUTO_TEST_CASE(test_draw_multiple_objects)
 }
 
 /*
+ * Test we find the correct values of a, b and c
+ * Use a small value of tolerance; we are comparing resonably large floats
+ * Should move this to test util
+ */
+BOOST_AUTO_TEST_CASE(test_expected_params, *boost::unit_test::tolerance(0.0000000001))
+{
+    // Set our decay parameters and what we expect a, b and c to evaluate to
+    DecayParams_t DecayParams = DecayParams_t{.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
+
+    // Parameters are described by eq. 2.10 in 1412.7254v2
+    double expectedA = 9;
+    double expectedB = 252;
+    double expectedC = 45;
+
+    std::vector<double> params = util::expectedParams(DecayParams);
+
+    BOOST_CHECK(expectedA == params[0]);
+    BOOST_CHECK(expectedB == params[1]);
+    BOOST_CHECK(expectedC == params[2]);
+}
+
+
+/*
  * Test rate integrals
  */
 BOOST_AUTO_TEST_CASE(test_integrals, *boost::unit_test::tolerance(1e-8))

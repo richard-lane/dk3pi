@@ -9,24 +9,16 @@
 #include "../pull_study/PullStudyHelpers.h"
 
 /*
- * Test we find the correct values of a, b and c
- * Use a small value of tolerance; we are comparing resonably large floats
+ * Test mean + std dev function
  */
-BOOST_AUTO_TEST_CASE(test_expected_params, *boost::unit_test::tolerance(0.0000000001))
+BOOST_AUTO_TEST_CASE(test_mean_std)
 {
-    // Set our decay parameters and what we expect a, b and c to evaluate to
-    DecayParams_t DecayParams = DecayParams_t{.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
+    std::vector<double>       data{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    std::pair<double, double> expected = std::make_pair(6.5, 3.45205);
+    std::pair<double, double> actual   = PullStudyHelpers::meanAndStdDev(data);
 
-    // Parameters are described by eq. 2.10 in 1412.7254v2
-    double expectedA = 9;
-    double expectedB = 252;
-    double expectedC = 45;
-
-    std::vector<double> params = util::expectedParams(DecayParams);
-
-    BOOST_CHECK(expectedA == params[0]);
-    BOOST_CHECK(expectedB == params[1]);
-    BOOST_CHECK(expectedC == params[2]);
+    BOOST_CHECK_SMALL(expected.first - actual.first, 1e-5);
+    BOOST_CHECK_SMALL(expected.second - actual.second, 1e-5);
 }
 
 /*
