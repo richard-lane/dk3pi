@@ -11,6 +11,7 @@ set(fitter
 add_library(D2K3Pi STATIC
   src/PhaseSpaceBinning.cpp
   src/RatioCalculator.cpp
+  src/ReadAmpGen.cpp
   src/util.cpp
   ${fitter}
   )
