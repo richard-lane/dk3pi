@@ -98,7 +98,9 @@ def main(args):
             "ampgenpull",
         )
     )
-    subprocess.run([fitter_executable, dcs_root_file, cf_root_file], check=True)
+    subprocess.run(
+        [fitter_executable, dcs_root_file, cf_root_file, out_file], check=True
+    )
 
     r_pulls = []
     with open(out_file, "r") as f:
