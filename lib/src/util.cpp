@@ -221,7 +221,7 @@ std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> r
     return outVector;
 }
 
-// Explicitly instantiate the types we want to use
+// Explicitly instantiate the types we want to use for saving objects to file
 // This is Ugly and Bad but also i dont mind
 template void saveObjectsToFile<TGraph>(const std::vector<TObject *> &  myObjects,
                                         const std::vector<std::string> &drawOptions,

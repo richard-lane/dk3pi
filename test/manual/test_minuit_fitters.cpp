@@ -54,8 +54,7 @@ void compareRootMinuit(void)
 
     RootFitter BuiltInFitter = RootFitter(MyFitData);
 
-    IntegralOptions_t integralOptions(
-        true, phaseSpaceParams.width, timeBinLimits, 1 / phaseSpaceParams.width, 1e-10, 10);
+    IntegralOptions_t      integralOptions(true, phaseSpaceParams.width, timeBinLimits, 1 / phaseSpaceParams.width);
     IntegralOptions_t      integralOptionsNoIntegral(false, 0, timeBinLimits, 0);
     MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData, integralOptions);
 

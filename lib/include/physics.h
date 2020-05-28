@@ -8,6 +8,9 @@
 
 #include "util.h"
 
+#define INTEGRAL_TOLERANCE (std::numeric_limits<double>::epsilon())
+#define INTEGRAL_REFINEMENTS (25)
+
 namespace Phys
 {
 /*
@@ -79,17 +82,12 @@ inline double dcsRate(const double time, const std::vector<double> &abcParams, c
  *
  * errorEstimate can be set to get an estimate of the error in the integral
  */
-inline double cfIntegralWithEfficiency(const double low,
-                                       const double high,
-                                       const double width,
-                                       const double efficiencyTimescale,
-                                       const double tolerance      = INTEGRAL_TOLERANCE,
-                                       const size_t maxRefinements = INTEGRAL_REFINEMENTS,
-                                       double *     errorEstimate  = nullptr)
+inline double
+cfIntegralWithEfficiency(const double low, const double high, const double width, const double efficiencyTimescale)
 {
     // should really use std::bind
     auto f = [&](double x) { return cfRate(x, width, efficiencyTimescale); };
-    return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
+    return util::gaussLegendreQuad(f, low, high);
 }
 
 /*
@@ -102,14 +100,11 @@ inline double dcsIntegralWithEfficiency(const double               low,
                                         const double               high,
                                         const std::vector<double> &abcParams,
                                         const double               width,
-                                        const double               efficiencyTimescale,
-                                        const double               tolerance      = INTEGRAL_TOLERANCE,
-                                        const size_t               maxRefinements = INTEGRAL_REFINEMENTS,
-                                        double *                   errorEstimate  = nullptr)
+                                        const double               efficiencyTimescale)
 {
     // should really use std::bind
     auto f = [&](double x) { return dcsRate(x, abcParams, width, efficiencyTimescale); };
-    return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
+    return util::gaussLegendreQuad(f, low, high);
 }
 
 } // namespace Phys

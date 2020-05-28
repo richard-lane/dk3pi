@@ -118,7 +118,6 @@ BOOST_AUTO_TEST_CASE(test_expected_params, *boost::unit_test::tolerance(0.000000
     BOOST_CHECK(expectedC == params[2]);
 }
 
-
 /*
  * Test rate integrals
  */
@@ -134,14 +133,14 @@ BOOST_AUTO_TEST_CASE(test_integrals, *boost::unit_test::tolerance(1e-8))
 
     // DCS integrals
     // Use efficiency timescale of 0 such that the efficiency is unity
-    BOOST_CHECK(std::abs(Phys::dcsIntegralWithEfficiency(
-                             0, 3, util::expectedParams(DecayParams), DecayParams.width, 0, 1e-14, 25) -
-                         0.12599999999966256411) < 1e-10);
+    BOOST_CHECK(
+        std::abs(Phys::dcsIntegralWithEfficiency(0, 3, util::expectedParams(DecayParams), DecayParams.width, 0) -
+                 0.12599999999966256411) < 1e-10);
 
     // CF integrals
     // Use efficiency timescale of 0 such that the efficiency is unity
-    BOOST_CHECK(std::abs(Phys::cfIntegralWithEfficiency(0, 3, DecayParams.width, 0, 1e-15, 25) -
-                         0.09999999999999064237703) < 1e-10);
+    BOOST_CHECK(std::abs(Phys::cfIntegralWithEfficiency(0, 3, DecayParams.width, 0) - 0.09999999999999064237703) <
+                1e-10);
 }
 
 /*
@@ -193,4 +192,38 @@ BOOST_AUTO_TEST_CASE(test_mag_phase)
 
     BOOST_CHECK_SMALL(result[3].first - expectedMagPhase[3].first, 1e-4);
     BOOST_CHECK_SMALL(result[3].second - expectedMagPhase[3].second, 1e-4);
+}
+
+/*
+ * Test adaptive quadrature integral with a lambda
+ */
+BOOST_AUTO_TEST_CASE(test_adaptive_integral_lambda)
+{
+    auto f = [](double x) { return x * x * std::exp(-x); };
+
+    double low  = 0;
+    double high = 4;
+    double expectedIntegral =
+        (low * low + 2 * low + 2) * std::exp(-low) - (high * high + 2 * high + 2) * std::exp(-high);
+
+    double actualIntegral = util::adadptiveTrapQuad(f, low, high, INTEGRAL_TOLERANCE, INTEGRAL_REFINEMENTS);
+
+    BOOST_CHECK_SMALL(actualIntegral - expectedIntegral, 1e-13);
+}
+
+/*
+ * Test Gauss-Legendre quadrature with a lambda
+ */
+BOOST_AUTO_TEST_CASE(test_gauss_legendre_lambda)
+{
+    auto f = [](double x) { return x * x * std::exp(-x); };
+
+    double low  = 0;
+    double high = 4;
+    double expectedIntegral =
+        (low * low + 2 * low + 2) * std::exp(-low) - (high * high + 2 * high + 2) * std::exp(-high);
+
+    double actualIntegral = util::gaussLegendreQuad(f, low, high);
+
+    BOOST_CHECK_SMALL(actualIntegral - expectedIntegral, 1e-15);
 }
