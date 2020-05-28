@@ -39,15 +39,11 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
                                                            _integralOptions.binLimits[i + 1],
                                                            parameters,
                                                            _integralOptions.width,
-                                                           _integralOptions.efficiencyTimescale,
-                                                           _integralOptions.tolerance,
-                                                           _integralOptions.maxRefinements) /
+                                                           _integralOptions.efficiencyTimescale) /
                            Phys::cfIntegralWithEfficiency(_integralOptions.binLimits[i],
                                                           _integralOptions.binLimits[i + 1],
                                                           _integralOptions.width,
-                                                          _integralOptions.efficiencyTimescale,
-                                                          _integralOptions.tolerance,
-                                                          _integralOptions.maxRefinements);
+                                                          _integralOptions.efficiencyTimescale);
             chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
         }
     } else {

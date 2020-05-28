@@ -80,23 +80,12 @@ double numDCSDecays(const size_t         numCFDecays,
                     double               maxTime,
                     double               efficiencyTimescale)
 {
-    double errEstimate{0.0};
-
     // Our formula is numDcs = numCf * (DCS integral / CF integral), where we integrate over all allowed times
-    double dcsIntegral = Phys::dcsIntegralWithEfficiency(0,
-                                                         maxTime,
-                                                         util::expectedParams(phaseSpaceParams),
-                                                         phaseSpaceParams.width,
-                                                         efficiencyTimescale,
-                                                         1e-18,
-                                                         25,
-                                                         &errEstimate);
+    double dcsIntegral = Phys::dcsIntegralWithEfficiency(
+        0, maxTime, util::expectedParams(phaseSpaceParams), phaseSpaceParams.width, efficiencyTimescale);
     std::cout << "dcsIntegral val " << dcsIntegral << std::endl;
-    std::cout << "Error in dcs integral~ " << errEstimate << std::endl;
-    double cfIntegral = Phys::cfIntegralWithEfficiency(
-        0, maxTime, phaseSpaceParams.width, efficiencyTimescale, 1e-18, 25, &errEstimate);
+    double cfIntegral = Phys::cfIntegralWithEfficiency(0, maxTime, phaseSpaceParams.width, efficiencyTimescale);
     std::cout << "cfIntegral val " << cfIntegral << std::endl;
-    std::cout << "Error in cf integral~ " << errEstimate << std::endl;
 
     return numCFDecays * dcsIntegral / cfIntegral;
 }

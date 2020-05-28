@@ -2,14 +2,12 @@
 #define UTIL_H
 
 #include <boost/filesystem.hpp>
+#include <boost/math/quadrature/gauss.hpp>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
 #include "D2K3PiError.h"
 
 #include "TObject.h"
-
-#define INTEGRAL_TOLERANCE 1e-15L
-#define INTEGRAL_REFINEMENTS 20
 
 /*
  * Struct encapsulating the parameters needed to simulate decays.
@@ -131,6 +129,30 @@ std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
  */
 std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> real,
                                                      const std::vector<double> imaginary);
+
+/*
+ * Use adaptive quadrature to find an approximation to the integral of f between low and high limits
+ */
+template <typename Func>
+double adadptiveTrapQuad(Func         f,
+                         const double low,
+                         const double high,
+                         const double tolerance,
+                         const size_t maxRefinements,
+                         double *     errorEstimate = nullptr)
+{
+    return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
+}
+
+/*
+ * Use Gauss-Legendre quadrature to find an approximation to the integral of f between low and high limits
+ *
+ * Evaluates the function at 10 points
+ */
+template <typename Func> double gaussLegendreQuad(Func f, const double low, const double high)
+{
+    return boost::math::quadrature::gauss<double, 15>::integrate(f, low, high);
+}
 
 } // namespace util
 

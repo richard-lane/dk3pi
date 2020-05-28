@@ -85,14 +85,8 @@ typedef struct IntegralFitOptions {
     IntegralFitOptions(const bool                integrate,
                        const double              width,
                        const std::vector<double> binLimits,
-                       const double              efficiencyTimescale,
-                       const double              tolerance      = 1e-12,
-                       const size_t              maxRefinements = 10)
-        : tolerance(tolerance), maxRefinements(maxRefinements), binLimits(binLimits), width(width),
-          efficiencyTimescale(efficiencyTimescale), integrate(integrate){};
-
-    double tolerance{0};      // Tolerance to use for numerical integration
-    size_t maxRefinements{0}; // Maximum number of refinements to make
+                       const double              efficiencyTimescale)
+        : binLimits(binLimits), width(width), efficiencyTimescale(efficiencyTimescale), integrate(integrate){};
 
     std::vector<double> binLimits{0};           // Our data's bin limits
     double              width{0};               // Decay width
