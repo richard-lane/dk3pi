@@ -5,6 +5,14 @@ import argparse
 import numpy as np
 
 
+def num_events(dcs_mean, cf_mean):
+    """
+    Returns number of DCS and CF events to generate
+
+    """
+    return np.random.poisson(dcs_mean), np.random.poisson(cf_mean)
+
+
 def cli():
     """
     CLI parsing
@@ -30,12 +38,12 @@ def cli():
 
 
 def main(args):
-    # Find how many events to generate from a poisson distribution
-    num_cf = args.numCF
-    out_file = args.out_file
-    num_dcs = int(
-        num_cf / 75
+    dcs_fraction = (
+        75
     )  # Calculated from the phase space params that we expect, given the inputs to AmpGen
+
+    # Find how many events to generate from a poisson distribution
+    num_cf, num_dcs = num_events(args.numCF / dcs_fraction, args.numCF)
 
     # Run AmpGen
     ampgen_generator = os.path.abspath(
