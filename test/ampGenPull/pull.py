@@ -24,6 +24,10 @@ def cli():
 
 def main(args):
     # Find how many events to generate from a poisson distribution
+    num_cf = args.numCF
+    num_dcs = int(
+        num_dcs / 75
+    )  # Calculated from the phase space params that we expect, given the inputs to AmpGen
 
     # Run AmpGen
 
