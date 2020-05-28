@@ -13,6 +13,30 @@ def num_events(dcs_mean, cf_mean):
     return np.random.poisson(dcs_mean), np.random.poisson(cf_mean)
 
 
+def run_ampgen(options_file, root_file, num_events, event_type):
+    """
+    Run ampgen with the provided abspaths to options/root files
+
+    """
+    ampgen_generator = os.path.abspath(
+        os.path.join(os.environ["AMPGENROOT"], "build", "bin", "Generator")
+    )
+
+    subprocess.run(
+        [
+            ampgen_generator,
+            options_file,
+            "--nEvents",
+            num_events,
+            "--EventType",
+            event_type,
+            "--Output",
+            root_file,
+        ],
+        check=True,
+    )
+
+
 def cli():
     """
     CLI parsing
@@ -46,9 +70,6 @@ def main(args):
     num_cf, num_dcs = num_events(args.numCF / dcs_fraction, args.numCF)
 
     # Run AmpGen
-    ampgen_generator = os.path.abspath(
-        os.path.join(os.environ["AMPGENROOT"], "build", "bin", "Generator")
-    )
     cf_opt_file = os.path.abspath(
         os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -67,34 +88,11 @@ def main(args):
     )
     dcs_root_file = "d.root"
     cf_root_file = "dBar.root"
+    dcs_event_type = "D K+ pi- pi- pi+"
+    cf_event_type = "Dbar0 K+ pi- pi- pi+"
 
-    subprocess.run(
-        [
-            ampgen_generator,
-            dcs_opt_file,
-            "--nEvents",
-            str(num_dcs),
-            "--EventType",
-            "D K+ pi- pi- pi+",
-            "--Output",
-            dcs_root_file,
-        ],
-        check=True,
-    )
-    subprocess.run(
-        [
-            ampgen_generator,
-            cf_opt_file,
-            "--nEvents",
-            str(num_cf),
-            "--EventType",
-            "Dbar0 K+ pi- pi- pi+",
-            "--Output",
-            cf_root_file,
-            "--GenerateTimeDependent",
-        ],
-        check=True,
-    )
+    run_ampgen(dcs_opt_file, dcs_root_file, num_dcs, dcs_event_type)
+    run_ampgen(cf_opt_file, cf_root_file, num_cf, cf_event_type)
 
     # Read ROOT files, calculate ratios, fit + save the results to a file
     fitter_executable = os.path.abspath(
