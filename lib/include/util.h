@@ -147,7 +147,7 @@ double adadptiveTrapQuad(Func         f,
 /*
  * Use Gauss-Legendre quadrature to find an approximation to the integral of f between low and high limits
  *
- * Evaluates the function at 10 points
+ * Evaluates the function at 15 points, as the weights and abcissa have been precalculated for this number of points.
  */
 template <typename Func> double gaussLegendreQuad(Func f, const double low, const double high)
 {
