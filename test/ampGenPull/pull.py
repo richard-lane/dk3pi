@@ -1,3 +1,9 @@
+"""
+Maybe this could do with some tests, but i probably won't bother until
+something breaks
+
+"""
+
 import sys
 import os
 import subprocess
@@ -78,16 +84,20 @@ def cli():
         type=str,
         help="file to write fit results to. format defined by the fit executable",
     )
+    parser.add_argument(
+        "--numExperiments",
+        default=1,
+        type=int,
+        help="number of pseudo experiments to run. defaults to 1 cus why not",
+    )
     return parser.parse_args()
 
 
 def main(args):
-    # Find how many events to generate from a poisson distribution
     # Calculate relative number of events from phase space params given by AmpGen
     dcs_fraction = 75
-    num_dcs, num_cf = num_events(int(args.numCF / dcs_fraction), int(args.numCF))
 
-    # Run AmpGen
+    # Filepaths and things needed for running ampgen and fit
     cf_opt_file = os.path.abspath(
         os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -109,13 +119,6 @@ def main(args):
     dcs_event_type = "D K+ pi- pi- pi+"
     cf_event_type = "Dbar0 K+ pi- pi- pi+"
 
-    run_ampgen(dcs_opt_file, dcs_root_file, num_dcs, dcs_event_type)
-    run_ampgen(cf_opt_file, cf_root_file, num_cf, cf_event_type)
-
-    # Create out_file if it doesn't exist
-    open(args.out_file, "w+").close()
-
-    # Read ROOT files, calculate ratios, fit + save the results to a file
     fitter_executable = os.path.abspath(
         os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -125,9 +128,24 @@ def main(args):
             "ampgenpull",
         )
     )
-    subprocess.run(
-        [fitter_executable, dcs_root_file, cf_root_file, args.out_file], check=True
-    )
+
+    # Create out_file; error if it already exists
+    if os.path.exists(args.out_file):
+        raise FileExistsError(args.out_file)
+    open(args.out_file, "w").close()
+
+    for _ in range(args.numExperiments):
+        # Find how many events to generate from a poisson distribution
+        num_dcs, num_cf = num_events(int(args.numCF / dcs_fraction), int(args.numCF))
+
+        # Generate events
+        run_ampgen(dcs_opt_file, dcs_root_file, num_dcs, dcs_event_type)
+        run_ampgen(cf_opt_file, cf_root_file, num_cf, cf_event_type)
+
+        # Read ROOT files, calculate ratios, fit + save the results to a file
+        subprocess.run(
+            [fitter_executable, dcs_root_file, cf_root_file, args.out_file], check=True
+        )
 
     # Find and print pull for r
     find_pull(args.out_file)
