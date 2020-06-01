@@ -31,13 +31,12 @@ void compareRootMinuit(void)
     };
     double maxTime = 0.002;
 
-    size_t numCfEvents = 1e7;
-    double numDcsEvents =
-        PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
+    size_t numCfEvents         = 1e7;
+    double efficiencyTimescale = 5 / phaseSpaceParams.width;
+    double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
 
-    double efficiencyTimescale = 1 / phaseSpaceParams.width;
-    auto   cfRate              = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
-    auto   dcsRate             = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
+    auto cfRate  = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
+    auto dcsRate = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
 
     // Generator and PDF for random numbers
     std::random_device                     rd;
