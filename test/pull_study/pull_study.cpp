@@ -11,6 +11,25 @@
 
 #include <boost/progress.hpp>
 
+void plotFit(std::vector<double>&  expectedFitParams,
+             const PhysicalFitter& MyFitter,
+             const double          maxTime,
+             const size_t          i)
+{
+    TF1* trueFit = new TF1("true fit", "[0] +[1]*x+[2]*x*x", 0, maxTime);
+    trueFit->SetParameter(0, expectedFitParams[0]);
+    trueFit->SetParameter(1, expectedFitParams[1]);
+    trueFit->SetParameter(2, expectedFitParams[2]);
+    trueFit->SetLineColor(kGray);
+    const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get(), trueFit},
+                                    std::vector<std::string>{"AP", "SAME", "SAME"},
+                                    std::vector<std::string>{"Data", "best fit", "'True' fit"},
+                                    std::string{"fit" + std::to_string(i) + ".pdf"},
+                                    legend);
+    delete trueFit;
+}
+
 void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 {
     // Choose parameters to use when simulating
@@ -28,11 +47,11 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     double              efficiencyTimescale = 1 / phaseSpaceParams.width;
 
     // Create RNGs for numbers of decays
-    double meanNumDcsDecays =
+    double meanNumDcsEvents =
         PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
     std::mt19937                      rndGen;
     std::poisson_distribution<size_t> cfDist(meanNumCfEvents);
-    std::poisson_distribution<size_t> dcsDist(meanNumDcsDecays);
+    std::poisson_distribution<size_t> dcsDist(meanNumDcsEvents);
 
     // Find exponentially-spaced time bin limits to use
     std::vector<double> binLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, numBins);
@@ -112,8 +131,8 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
                               std::vector<double>(6, 1));
         MyFitter.fixParameters(std::vector<std::string>{"width", "z_im"});
         MyFitter.fit();
-        // const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
-        // MyFitter.saveFitPlot("fit", "fit.pdf", &legend);
+
+        plotFit(expectedFitParams, MyFitter, maxTime, i);
 
         // Store parameter and chi squared
         aPull[i] = (PolyFitter.fitParams.fitParams[0] - expectedFitParams[0]) / PolyFitter.fitParams.fitParamErrors[0];

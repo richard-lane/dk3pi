@@ -35,8 +35,7 @@ void compareRootMinuit(void)
     double numDcsEvents =
         PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
 
-    // No efficiency
-    double efficiencyTimescale = 0;
+    double efficiencyTimescale = 1 / phaseSpaceParams.width;
     auto   cfRate              = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
     auto   dcsRate             = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
 
@@ -53,8 +52,8 @@ void compareRootMinuit(void)
     auto genPDF = [&](double x) { return std::exp(-phaseSpaceParams.width * x); };
 
     SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), _gen);
-    MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
     MyDecays.findCfDecayTimes(numCfEvents);
+    MyDecays.findDcsDecayTimes(numDcsEvents);
 
     // Define some time bins
     std::vector<double> timeBinLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, 15);
