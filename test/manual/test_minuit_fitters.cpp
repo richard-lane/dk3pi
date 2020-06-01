@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -8,6 +9,7 @@
 #include "fitter/MinuitPolynomialFitter.h"
 #include "fitter/PhysicalFitter.h"
 #include "fitter/RootFitter.h"
+#include "physics.h"
 #include "util.h"
 
 /*
@@ -33,7 +35,24 @@ void compareRootMinuit(void)
     double numDcsEvents =
         PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
 
-    SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams, 0);
+    // No efficiency
+    double efficiencyTimescale = 0;
+    auto   cfRate              = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
+    auto   dcsRate             = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
+
+    // Generator and PDF for random numbers
+    std::random_device                     rd;
+    std::shared_ptr<std::mt19937>          _gen = std::make_shared<std::mt19937>(rd());
+    std::uniform_real_distribution<double> uniform;
+
+    auto gen = [&](void) {
+        double x = uniform(*_gen);
+        double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
+        return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
+    };
+    auto genPDF = [&](double x) { return std::exp(-phaseSpaceParams.width * x); };
+
+    SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), _gen);
     MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
     MyDecays.findCfDecayTimes(numCfEvents);
 

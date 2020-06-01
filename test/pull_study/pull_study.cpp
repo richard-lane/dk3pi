@@ -1,12 +1,12 @@
 #include <iostream>
 
 #include "DecaySimulator.h"
+#include "FitterUtils.h"
 #include "MinuitPolynomialFitter.h"
 #include "PhysicalFitter.h"
-#include "RatioCalculator.h"
-
-#include "FitterUtils.h"
 #include "PullStudyHelpers.h"
+#include "RatioCalculator.h"
+#include "physics.h"
 #include "util.h"
 
 #include <boost/progress.hpp>
@@ -30,7 +30,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     // Create RNGs for numbers of decays
     double meanNumDcsDecays =
         PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
-    std::mt19937                      gen;
+    std::mt19937                      rndGen;
     std::poisson_distribution<size_t> cfDist(meanNumCfEvents);
     std::poisson_distribution<size_t> dcsDist(meanNumDcsDecays);
 
@@ -46,7 +46,22 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     // }
 
     // Create a decay simulator
-    SimulatedDecays MyDecays(maxTime, phaseSpaceParams, efficiencyTimescale);
+    auto cfRate  = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
+    auto dcsRate = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
+
+    // Generator and PDF for random numbers
+    std::random_device                     rd;
+    std::shared_ptr<std::mt19937>          _gen = std::make_shared<std::mt19937>(rd());
+    std::uniform_real_distribution<double> uniform;
+
+    auto gen = [&](void) {
+        double x = uniform(*_gen);
+        double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
+        return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
+    };
+    auto genPDF = [&](double x) { return std::exp(-phaseSpaceParams.width * x); };
+
+    SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), _gen);
 
     // Initialise vectors of fit parameter pulls and chi squared
     std::vector<double> aPull(numExperiments, -1);
@@ -63,8 +78,8 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     for (size_t i = 0; i < numExperiments; ++i) {
 
         // Find how many decays to simulate
-        size_t numCfEvents  = cfDist(gen);
-        size_t numDcsEvents = dcsDist(gen);
+        size_t numCfEvents  = cfDist(rndGen);
+        size_t numDcsEvents = dcsDist(rndGen);
 
         // Simulate them
         MyDecays.findCfDecayTimes(numCfEvents);
