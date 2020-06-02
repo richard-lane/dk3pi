@@ -34,6 +34,13 @@ SimulatedDecays::SimulatedDecays(const std::function<double(void)> &  generateTi
     _cfRate  = cfRate;
     _dcsRate = dcsRate;
 
+    // Check that our generating pdf is normalised correctly
+    if (std::abs(util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) - 1.0) > DBL_EPSILON) {
+        std::cerr << "generating pdf not normalised; integral between " << _minTime << " and " << _maxTime
+                  << " evaluates to " << util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) << std::endl;
+        throw D2K3PiException();
+    }
+
     // Find the maximum rates; we need these to perform the  accept-reject
     _setMaxRatios();
 }
@@ -54,13 +61,9 @@ void SimulatedDecays::test(const size_t numPoints, const std::vector<double> &bi
     std::cout << "for compiler bug reasons, need to print out some numbers here: " << debug << " ," << debug2
               << std::endl;
 
-    // Normalise the PDF and find the number of decays we expect in each bin
-    double pdfIntegral   = util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime);
-    auto   normalisedPDF = [&](double x) { return _generatingPDF(x) / pdfIntegral; };
-
     std::vector<double> expectedNormalisedBinPop(numBins, -1);
     for (size_t i = 0; i < numBins; ++i) {
-        expectedNormalisedBinPop[i] = util::gaussLegendreQuad(normalisedPDF, binLimits[i], binLimits[i + 1]);
+        expectedNormalisedBinPop[i] = util::gaussLegendreQuad(_generatingPDF, binLimits[i], binLimits[i + 1]);
     }
 
     // Generate numPoints points and bin them

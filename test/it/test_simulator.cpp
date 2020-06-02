@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(it_simulator)
     std::uniform_real_distribution<double> uniform;
 
     // Use e^-x as our PDF
-    auto pdf           = [&](double x) { return std::exp(-1 * x); };
+    auto pdf           = [&](double x) { return std::exp(-1 * x) / (1 - std::exp(-1 * maxTime)); };
     auto numberFromPDF = [&](void) {
         double x = uniform(*_gen);
         double z = 1 - std::exp(-1 * maxTime);

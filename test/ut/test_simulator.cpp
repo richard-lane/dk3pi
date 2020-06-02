@@ -26,11 +26,11 @@
  */
 BOOST_AUTO_TEST_CASE(test_hist_error_ws_rs_not_set)
 {
-    auto                          fcn = [](double x) { return x; };
-    auto                          gen = [](void) { return 0; };
+    auto                          fcn = [](double x) { return 2 * x; };
+    auto                          gen = [&]() { return 1.; };
     std::shared_ptr<std::mt19937> generator;
 
-    SimulatedDecays MyDecays = SimulatedDecays(gen, fcn, fcn, fcn, std::make_pair(0.0, 0.0), generator);
+    SimulatedDecays MyDecays = SimulatedDecays(gen, fcn, fcn, fcn, std::make_pair(0.0, 1.), generator);
 
     BOOST_CHECK_THROW(MyDecays.plotRates(std::vector<double>{0, 1}), D2K3PiException);
 }
@@ -40,8 +40,8 @@ BOOST_AUTO_TEST_CASE(test_hist_error_ws_rs_not_set)
  */
 BOOST_AUTO_TEST_CASE(test_hist_unsorted_bin_limits)
 {
-    auto                          rate = [](double x) { return x; };
-    auto                          gen  = [](void) { return 1; };
+    auto                          rate      = [](double x) { return 2 * x; };
+    auto                          gen       = [&]() { return 1.; };
     std::shared_ptr<std::mt19937> generator = std::make_shared<std::mt19937>();
 
     SimulatedDecays MyDecays = SimulatedDecays(gen, rate, rate, rate, std::make_pair(0., 1.), generator);
@@ -57,23 +57,35 @@ BOOST_AUTO_TEST_CASE(test_hist_unsorted_bin_limits)
  */
 BOOST_AUTO_TEST_CASE(test_max_dcs_ratio)
 {
-    // These params should give us a,b,c = 9,252,45
+    // These params should give us a,b,c = 9, 252, 45
     DecayParams_t       DecayParams = DecayParams_t{.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
     std::vector<double> abcParams   = util::expectedParams(DecayParams);
+    double              maxTime     = 1;
 
     // No efficiency
     double efficiencyTimescale = 0;
     auto   cfRate              = [&](double x) { return Phys::cfRate(x, DecayParams, efficiencyTimescale); };
     auto   dcsRate             = [&](double x) { return Phys::dcsRate(x, DecayParams, efficiencyTimescale); };
-    auto   gen                 = [](void) { return 0; };
-    auto   genPDF              = [&](double x) { return std::exp(-DecayParams.width * x); };
+    auto   gen                 = [](void) { return 1.; };
+    auto   genPDF              = [&](double x) {
+        return std::exp(-DecayParams.width * x) * DecayParams.width / (1 - std::exp(-DecayParams.width * maxTime));
+    };
     std::shared_ptr<std::mt19937> generator;
 
-    SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., 1), generator);
+    SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), generator);
 
     // Apparently the algorithm is so good that float equality works here
-    BOOST_CHECK(MyDecays.maxCFRatio() == 1.);
-    BOOST_CHECK(MyDecays.maxDCSRatio() == 306.);
+    std::cout << MyDecays.maxCFRatio() << std::endl;
+
+    // expect this to be ~0.16, so check it is correct to the machine double epsilon
+    BOOST_CHECK(std::abs(MyDecays.maxCFRatio() -
+                         1. / (DecayParams.width / (1 - std::exp(-DecayParams.width * maxTime)))) < DBL_EPSILON);
+
+    // expect this to be ~50.8, so check it is correct to ~100x machine double epsilon
+    // that should be good enough..
+    BOOST_CHECK(
+        std::abs(MyDecays.maxDCSRatio() - 306. / (DecayParams.width / (1 - std::exp(-DecayParams.width * maxTime)))) <
+        100 * DBL_EPSILON);
 }
 
 #endif // TEST_SIMULATOR_CPP

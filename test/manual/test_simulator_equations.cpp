@@ -95,7 +95,9 @@ void simulateDecays()
         double z = 1 - std::exp(-1 * MyParams.width * maxTime);
         return (-1 / MyParams.width) * std::log(1 - z * x);
     };
-    auto genPDF = [&](double x) { return std::exp(-MyParams.width * x); };
+    auto genPDF = [&](double x) {
+        return std::exp(-MyParams.width * x) * MyParams.width / (1 - std::exp(-MyParams.width * maxTime));
+    };
 
     SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, rsRate, wsRate, std::make_pair(0., maxTime), _gen);
     MyDecays.findCfDecayTimes(numDecays);

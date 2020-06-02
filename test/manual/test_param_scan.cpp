@@ -90,7 +90,10 @@ void test_param_scan(void)
         double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
         return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
     };
-    auto genPDF = [&](double x) { return std::exp(-phaseSpaceParams.width * x); };
+    auto genPDF = [&](double x) {
+        return std::exp(-phaseSpaceParams.width * x) * phaseSpaceParams.width /
+               (1 - std::exp(-phaseSpaceParams.width * maxTime));
+    };
 
     SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), _gen);
     MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
@@ -171,7 +174,10 @@ void test_2d_scan()
         double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
         return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
     };
-    auto genPDF = [&](double x) { return std::exp(-phaseSpaceParams.width * x); };
+    auto genPDF = [&](double x) {
+        return std::exp(-phaseSpaceParams.width * x) * phaseSpaceParams.width /
+               (1 - std::exp(-phaseSpaceParams.width * maxTime));
+    };
 
     SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), _gen);
     MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
@@ -269,7 +275,10 @@ void test_z_scan()
         double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
         return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
     };
-    auto genPDF = [&](double x) { return std::exp(-phaseSpaceParams.width * x); };
+    auto genPDF = [&](double x) {
+        return std::exp(-phaseSpaceParams.width * x) * phaseSpaceParams.width /
+               (1 - std::exp(-phaseSpaceParams.width * maxTime));
+    };
 
     SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), _gen);
     MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
