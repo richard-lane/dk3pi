@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -8,6 +9,7 @@
 #include "fitter/MinuitPolynomialFitter.h"
 #include "fitter/PhysicalFitter.h"
 #include "fitter/RootFitter.h"
+#include "physics.h"
 #include "util.h"
 
 /*
@@ -29,13 +31,28 @@ void compareRootMinuit(void)
     };
     double maxTime = 0.002;
 
-    size_t numCfEvents = 1e7;
-    double numDcsEvents =
-        PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
+    size_t numCfEvents         = 1e7;
+    double efficiencyTimescale = 1 / phaseSpaceParams.width;
+    double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
 
-    SimulatedDecays MyDecays = SimulatedDecays(maxTime, phaseSpaceParams, 0);
-    MyDecays.findDcsDecayTimes((size_t)numDcsEvents);
+    auto cfRate  = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
+    auto dcsRate = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
+
+    // Generator and PDF for random numbers
+    std::random_device                     rd;
+    std::shared_ptr<std::mt19937>          _gen = std::make_shared<std::mt19937>(rd());
+    std::uniform_real_distribution<double> uniform;
+
+    auto gen = [&](void) {
+        double x = uniform(*_gen);
+        double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
+        return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
+    };
+    auto genPDF = [&](double x) { return std::exp(-phaseSpaceParams.width * x); };
+
+    SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), _gen);
     MyDecays.findCfDecayTimes(numCfEvents);
+    MyDecays.findDcsDecayTimes(numDcsEvents);
 
     // Define some time bins
     std::vector<double> timeBinLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, 15);
@@ -54,7 +71,7 @@ void compareRootMinuit(void)
 
     RootFitter BuiltInFitter = RootFitter(MyFitData);
 
-    IntegralOptions_t      integralOptions(true, phaseSpaceParams.width, timeBinLimits, 1 / phaseSpaceParams.width);
+    IntegralOptions_t      integralOptions(true, phaseSpaceParams.width, timeBinLimits, efficiencyTimescale);
     IntegralOptions_t      integralOptionsNoIntegral(false, 0, timeBinLimits, 0);
     MinuitPolynomialFitter MinuitPolyFit = MinuitPolynomialFitter(MyFitData, integralOptions);
 

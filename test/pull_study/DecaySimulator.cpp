@@ -5,27 +5,93 @@
 #include <iostream>
 #include <utility>
 
+#include <TGraphErrors.h>
 #include <TH1D.h>
 
 #include "D2K3PiError.h"
 #include "DecaySimulator.h"
-#include "PullStudyHelpers.h"
 #include "physics.h"
 #include "util.h"
 
 #include <boost/math/tools/minima.hpp>
 
-SimulatedDecays::SimulatedDecays(const double         maxTime,
-                                 const DecayParams_t &DecayParams,
-                                 const double         efficiencyTimescale)
-    : _maxTime(maxTime), _efficiencyTimescale(efficiencyTimescale)
+SimulatedDecays::SimulatedDecays(const std::function<double(void)> &  generateTime,
+                                 const std::function<double(double)> &generatingPDF,
+                                 const std::function<double(double)> &cfRate,
+                                 const std::function<double(double)> &dcsRate,
+                                 const std::pair<double, double> &    timeDomain,
+                                 const std::shared_ptr<std::mt19937> &generator)
+    : _minTime(timeDomain.first), _maxTime(timeDomain.second)
 {
-    _DecayParams = DecayParams;
-    _setMaxDCSRatio();
+    // Set our generator to the provided random device
+    _gen = generator;
 
-    // Set our generator to a new random device
-    std::random_device rd;
-    _gen = std::mt19937(rd());
+    // Set generating functions
+    _getRandomTime = generateTime;
+    _generatingPDF = generatingPDF;
+
+    // Set rate equations
+    _cfRate  = cfRate;
+    _dcsRate = dcsRate;
+
+    // Find the maximum rates; we need these to perform the  accept-reject
+    _setMaxRatios();
+}
+
+void SimulatedDecays::test(const size_t numPoints, const std::vector<double> &binLimits)
+{
+    size_t              numBins = binLimits.size() - 1;
+    std::vector<double> binCentres(numBins, -1);
+    std::vector<double> binWidths(numBins, -1);
+    for (size_t i = 0; i < numBins; ++i) {
+        binCentres[i] = (binLimits[i] + binLimits[i + 1]) / 2;
+        binWidths[i]  = (binLimits[i + 1] - binLimits[i]);
+    }
+
+    // Prevent the wrong things being optimised out (?) when using -0g
+    int debug  = binCentres.size() + binWidths.size();
+    int debug2 = binCentres.capacity() + binWidths.capacity();
+    std::cout << "for compiler bug reasons, need to print out some numbers here: " << debug << " ," << debug2
+              << std::endl;
+
+    // Normalise the PDF and find the number of decays we expect in each bin
+    double pdfIntegral   = util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime);
+    auto   normalisedPDF = [&](double x) { return _generatingPDF(x) / pdfIntegral; };
+
+    std::vector<double> expectedNormalisedBinPop(numBins, -1);
+    for (size_t i = 0; i < numBins; ++i) {
+        expectedNormalisedBinPop[i] = util::gaussLegendreQuad(normalisedPDF, binLimits[i], binLimits[i + 1]);
+    }
+
+    // Generate numPoints points and bin them
+    std::vector<double> generatedTimes(numPoints, -1);
+    for (size_t i = 0; i < numPoints; ++i) {
+        generatedTimes[i] = _getRandomTime();
+    }
+    std::vector<size_t> generatedBinPopulations = util::binVector(generatedTimes, binLimits);
+
+    // Cast to a double cus im tired and dont want to think about it too hard
+    std::vector<double> normalisedBinPops(numBins, -1);
+    for (size_t i = 0; i < numBins; ++i) {
+        normalisedBinPops[i] = (double)generatedBinPopulations[i] / numPoints;
+    }
+
+    // Plot a graph of number of points generated and overlay the theoretical thing
+    TGraphErrors *testPdf = new TGraphErrors(numBins, binCentres.data(), normalisedBinPops.data(), binWidths.data(), 0);
+    testPdf->SetTitle("Test Decay Simulator PDF;time;normalised PDF");
+
+    TGraphErrors *actualPdf = new TGraphErrors(numBins, binCentres.data(), expectedNormalisedBinPop.data(), 0, 0);
+
+    const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+
+    util::saveObjectsToFile<TGraphErrors>(std::vector<TObject *>{testPdf, actualPdf},
+                                          std::vector<std ::string>{"", "SAME"},
+                                          std::vector<std::string>{"Expected PDF", "Generated data"},
+                                          "testPDF.pdf",
+                                          legendParams);
+
+    delete actualPdf;
+    delete testPdf;
 }
 
 bool SimulatedDecays::isAccepted(const double time, const double uniformVal, bool rightSign)
@@ -37,10 +103,10 @@ bool SimulatedDecays::isAccepted(const double time, const double uniformVal, boo
     } else {
         funcVal = _dcsRate(time);
     }
-    double c = rightSign ? 1.0 : _maxDCSRatio;
+    double c = rightSign ? _maxCFRatio : _maxDCSRatio;
 
     // Check that the RHS of our acc-rej inequality is indeed between 0 and 1
-    double rhs = funcVal / (c * std::exp(-1.0 * _DecayParams.width * time));
+    double rhs = funcVal / (c * _generatingPDF(time));
     if (rhs < 0 || rhs > 1.0) {
         std::string rs = rightSign ? "Right" : "Wrong";
         std::cerr << "For " << rs << " sign decay:" << std::endl;
@@ -86,18 +152,21 @@ void SimulatedDecays::findCfDecayTimes(size_t numEvents)
     }
 }
 
-void SimulatedDecays::_setMaxDCSRatio(void)
+void SimulatedDecays::_setMaxRatios(void)
 {
-    // Boost's minimising algorithm thing only finds minima, so find the minimum of -1 * DCS rate/generating exponential
+    // Boost's minimising algorithm thing only finds minima, so find the minimum of -1 * rate/generating exponential
     // to find the maximum value.
-    auto ratioFunc = [&](double const &x) { return -1 * _dcsRate(x) / std::exp(-_DecayParams.width * x); };
+    auto dcsRatioFunc = [&](double const &x) { return -1 * _dcsRate(x) / _generatingPDF(x); };
+    auto cfRatioFunc  = [&](double const &x) { return -1 * _cfRate(x) / _generatingPDF(x); };
 
-    // Find the minimum as accurately as possible
-    int                       bits = std::numeric_limits<double>::digits;
-    std::pair<double, double> r    = boost::math::tools::brent_find_minima(ratioFunc, (double)0., _maxTime, bits);
+    // Find the minima as accurately as possible
+    int                       bits   = std::numeric_limits<double>::digits;
+    std::pair<double, double> dcsMin = boost::math::tools::brent_find_minima(dcsRatioFunc, _minTime, _maxTime, bits);
+    std::pair<double, double> cfMin  = boost::math::tools::brent_find_minima(cfRatioFunc, _minTime, _maxTime, bits);
 
     // Set _maxDCSRatio to the maximum value of
-    _maxDCSRatio = -r.second;
+    _maxDCSRatio = -dcsMin.second;
+    _maxCFRatio  = -cfMin.second;
 }
 
 void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
@@ -133,26 +202,17 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
 
 double SimulatedDecays::_getRandomUniform(void)
 {
-    return _uniform(_gen);
+    return _uniform(*_gen);
 }
 
-double SimulatedDecays::_getRandomTime(void)
+double SimulatedDecays::maxDCSRatio(void)
 {
-    // Get a random number from our uniform distribution and use an analytical formula to convert it to one from an
-    // exponential distribution up to a maximum time.
-    double x = _getRandomUniform();
-    double z = 1 - std::exp(-1 * _DecayParams.width * _maxTime);
-    return (-1 / _DecayParams.width) * std::log(1 - z * x);
+    return _maxDCSRatio;
 }
 
-double SimulatedDecays::_cfRate(const double time)
+double SimulatedDecays::maxCFRatio(void)
 {
-    return Phys::cfRate(time, _DecayParams, _efficiencyTimescale);
-}
-
-double SimulatedDecays::_dcsRate(const double time)
-{
-    return Phys::dcsRate(time, _DecayParams, _efficiencyTimescale);
+    return _maxCFRatio;
 }
 
 #endif // DECAYSIMULATOR_CPP

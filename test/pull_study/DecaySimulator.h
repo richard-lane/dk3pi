@@ -1,6 +1,7 @@
 #ifndef DECAYSIMULATOR_HPP
 #define DECAYSIMULATOR_HPP
 
+#include <functional>
 #include <random>
 #include <utility>
 
@@ -11,8 +12,10 @@
  *
  * Calculate decay times for CF and DCS events with findCfDecayTimes() and findDcsDecayTimes()
  *
- * CF events generated according to exponential decay
+ * CF events generated according to to exponential decay
  * DCS events generated according to the (a + bt + ct^2) * exponential.
+ *
+ * Events selected from an exponential distribution
  *
  * As the DCS rate may not be bounded at large times, must provide a maximum time to the constructor.
  *
@@ -24,16 +27,37 @@ class SimulatedDecays
   public:
     /*
      * Constructor
-     *
-     * Set the max allowed time and parameters for our simulated decay
-     * Also set a timescale to use for decay-time efficiency.
-     *
      * Seeds the random number generator used for generating times
      *
+     * Sets the functions to be used as cf and dcs Rates; these can be e.g. lambdas
+     *
+     * Should also pass the function to be used to generate times (generateTime) and the PDF that this corresponds to
+     * (generatingPDF). Note that NO CONSISTENCY CHECKS are performed between the time generation and the expected PDF;
+     * it is entirely possible to pass in the "wrong" PDF for a given generator function. To test for this, a method
+     * testGeneratingPDF is provided.
+     *
+     * To avoid seeding two separate random number generators which may not be indepdendent, a std::mt19937 should be
+     * passed to this class which will be used to generate numbers for the accept-reject. This should be the same
+     * mt19937 object used to create random numbers by generateTime().
+     *
      * Also calculates the maximum ratio between our DCS decay and our model function; we need this to perform
-     * accept-reject
+     * accept-reject. Need to pass a std::pair of times to consider in order to calculate this. These should cover
+     * the same range of times as generatingPDF.
      */
-    SimulatedDecays(const double maxTime, const DecayParams_t &DecayParams, const double efficiencyTimescale);
+    SimulatedDecays(const std::function<double(void)> &  generateTime,
+                    const std::function<double(double)> &generatingPDF,
+                    const std::function<double(double)> &cfRate,
+                    const std::function<double(double)> &dcsRate,
+                    const std::pair<double, double> &    timeDomain,
+                    const std::shared_ptr<std::mt19937> &generator);
+
+    /*
+     * Plot a graph of the generating PDF against a histogram of values generated using the provided time generation
+     * function.
+     *
+     * Saves a plot to testPDF.pdf
+     */
+    void test(const size_t numPoints, const std::vector<double> &binLimits);
 
     /*
      * Check whether a time is accepted as being from one of the distributions, using a number selected froma uniform
@@ -63,6 +87,18 @@ class SimulatedDecays
     void plotRates(const std::vector<double> &binLimits);
 
     /*
+     * Max ratio between DCS rate and generating function
+     * For UT
+     */
+    double maxDCSRatio(void);
+
+    /*
+     * Max ratio between CF rate and generating function
+     * For UT
+     */
+    double maxCFRatio(void);
+
+    /*
      * RS decay times
      */
     std::vector<double> RSDecayTimes{};
@@ -79,37 +115,51 @@ class SimulatedDecays
     double _getRandomUniform(void);
 
     /*
-     * Generate a random time, exponentially distributed with characteristic time 1/_DecayParams.width, between 0 and
-     * _maxTime
+     * Find the maximum ratio of our rates to our exponential distribution and set _maxDCSRatio and _maxCFRatio
      */
-    double _getRandomTime(void);
+    void _setMaxRatios(void);
 
     /*
-     * Find the maximum ratio of our DCS ratio to our exponential distribution and set _maxDCSRatio
+     * Generate a random time according to the distribution passed in to the constructor
      */
-    void _setMaxDCSRatio(void);
+    std::function<double(void)> _getRandomTime = [](void) {
+        std::cerr << "generating fcn not set" << std::endl;
+        throw D2K3PiException();
+        return 0;
+    };
+
+    /*
+     * The PDF we generate times from when _getRandomTime is called
+     */
+    std::function<double(double)> _generatingPDF = [](double x) {
+        std::cerr << "generating pdf not set" << std::endl;
+        throw D2K3PiException();
+        return x;
+    };
 
     /*
      * CF decay rate at a given time
      */
-    double _cfRate(const double time);
+    std::function<double(double)> _cfRate = [](double x) {
+        std::cerr << "cf rate not set" << std::endl;
+        throw D2K3PiException();
+        return x;
+    };
 
     /*
      * DCS decay rate at a given time
      */
-    double _dcsRate(const double time);
+    std::function<double(double)> _dcsRate = [](double x) {
+        std::cerr << "dcs rate not set" << std::endl;
+        throw D2K3PiException();
+        return x;
+    };
 
     /*
-     * Times to generate up to
-     * Cannot be arbitrarily large as our (a + bt + ct^2) DCS/CF rate approximation is only valid at low times, and
-     * hence is not bounded at large times
+     * Domain to consider
      */
+    const double _minTime{0.0};
     const double _maxTime{0.0};
-
-    /*
-     * Timescale to use for decay-time efficiency function
-     */
-    const double _efficiencyTimescale{0.0};
 
     /*
      * Maximum ratio of our DCS rate / exponential function
@@ -118,21 +168,22 @@ class SimulatedDecays
     double _maxDCSRatio{0.0};
 
     /*
+     * Maximum ratio of our CF rate / exponential function
+     * Needed to perform the acc-rej
+     */
+    double _maxCFRatio{0.0};
+
+    /*
      * Mersenne Twister engine
      *
      * Initialised on construction
      */
-    std::mt19937 _gen;
+    std::shared_ptr<std::mt19937> _gen = nullptr;
 
     /*
      * Uniform distribution to draw numbers from when _getRandomUniform() is called
      */
     std::uniform_real_distribution<double> _uniform;
-
-    /*
-     * Mixing parameters
-     */
-    DecayParams_t _DecayParams;
 };
 
 #endif // DECAYSIMULATOR_HPP

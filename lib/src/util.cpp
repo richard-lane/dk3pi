@@ -100,6 +100,18 @@ std::vector<size_t> binVector(const std::vector<double> &myVector, const std::ve
     std::vector<double> sortedVector = myVector;
     std::sort(sortedVector.begin(), sortedVector.end());
 
+    // Check that our binLimits cover the right range
+    double firstPoint = sortedVector[0];
+    double lastPoint  = sortedVector.back();
+    double lowBin     = binLimits[0];
+    double highBin    = binLimits.back();
+
+    if (firstPoint < lowBin || lastPoint > highBin) {
+        std::cerr << "bin limits from " << lowBin << " to " << highBin << " do not cover range of data from "
+                  << firstPoint << " to " << lastPoint << std::endl;
+        throw D2K3PiException();
+    }
+
     // Iterate over the vector
     size_t currentBin = 1;
     for (auto it = sortedVector.begin(); it != sortedVector.end(); ++it) {
@@ -107,7 +119,7 @@ std::vector<size_t> binVector(const std::vector<double> &myVector, const std::ve
         while (*it > binLimits[currentBin]) {
             ++currentBin;
 
-            // Ensure that we never try to put a point into a bin that doesn't exist
+            // This error might never get hit but I can't be bothered to think about it right now
             if (currentBin > numBins) {
                 std::cerr << "Attempted to insert points into a bin that doesn't exist." << std::endl;
                 throw D2K3PiException();

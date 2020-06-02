@@ -66,6 +66,28 @@ BOOST_AUTO_TEST_CASE(test_vector_binning)
 }
 
 /*
+ * Test bin overflow
+ */
+BOOST_AUTO_TEST_CASE(test_bin_overflow)
+{
+    const std::vector<double> decayTimes = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    const std::vector<double> binLimits  = {0.5, 1.5, 3.5, 7.5, 9.5};
+
+    BOOST_CHECK_THROW(util::binVector(decayTimes, binLimits), D2K3PiException);
+}
+
+/*
+ * Test bin underflow
+ */
+BOOST_AUTO_TEST_CASE(test_bin_underflow)
+{
+    const std::vector<double> decayTimes = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+    const std::vector<double> binLimits  = {0.5, 1.5, 3.5, 7.5, 9.5};
+
+    BOOST_CHECK_THROW(util::binVector(decayTimes, binLimits), D2K3PiException);
+}
+
+/*
  * Check that passing vectors with different numbers of objects/options or 0 options causes an err
  */
 BOOST_AUTO_TEST_CASE(test_draw_multiple_objects)

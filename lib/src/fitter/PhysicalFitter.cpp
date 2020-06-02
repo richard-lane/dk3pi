@@ -44,11 +44,11 @@ double PhysicalFitFcn::operator()(const std::vector<double>& parameters) const
                                                            _integralOptions.binLimits[i + 1],
                                                            util::expectedParams(params),
                                                            params.width,
-                                                           _integralOptions.efficiencyTimescale) /
+                                                           0.0) /
                            Phys::cfIntegralWithEfficiency(_integralOptions.binLimits[i],
                                                           _integralOptions.binLimits[i + 1],
                                                           params.width,
-                                                          _integralOptions.efficiencyTimescale);
+                                                          0.0);
             chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
         }
     } else {

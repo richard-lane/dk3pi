@@ -37,7 +37,7 @@ inline double rateRatio(const double time, const DecayParams_t &decayParams)
 inline double efficiency(const double tau, const double time)
 {
     // Special case for tau = 0.0; efficiency is just 1 here
-    if (tau == 0.0) {
+    if (std::abs(tau) <= DBL_EPSILON) {
         return 1.0;
     }
     return std::tanh(time / tau);
