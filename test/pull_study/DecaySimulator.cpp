@@ -45,7 +45,7 @@ void SimulatedDecays::test(const size_t numPoints, const std::vector<double> &bi
     std::vector<double> binWidths(numBins, -1);
     for (size_t i = 0; i < numBins; ++i) {
         binCentres[i] = (binLimits[i] + binLimits[i + 1]) / 2;
-        binWidths[i]  = (binLimits[i + 1] - binLimits[i]);
+        binWidths[i]  = 0.5 * (binLimits[i + 1] - binLimits[i]);
     }
 
     // Prevent the wrong things being optimised out (?) when using -0g
@@ -82,7 +82,7 @@ void SimulatedDecays::test(const size_t numPoints, const std::vector<double> &bi
 
     TGraphErrors *actualPdf = new TGraphErrors(numBins, binCentres.data(), expectedNormalisedBinPop.data(), 0, 0);
 
-    const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+    const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.7, .y2 = 0.9, .header = ""};
 
     util::saveObjectsToFile<TGraphErrors>(std::vector<TObject *>{testPdf, actualPdf},
                                           std::vector<std ::string>{"", "SAME"},
