@@ -121,8 +121,8 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         MyFitter.fixParameters(std::vector<std::string>{"width", "z_im"});
         MyFitter.fit();
 
-        // std::vector<double> expectedFitParams   = util::expectedParams(phaseSpaceParams);
-        // plotFit(expectedFitParams, MyFitter, maxTime, i);
+        std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
+        plotFit(expectedFitParams, MyFitter, maxTime, i);
 
         // Store parameter and chi squared
         reZPull[i] = (MyFitter.fitParams.fitParams[4] - phaseSpaceParams.z_re) / MyFitter.fitParams.fitParamErrors[4];

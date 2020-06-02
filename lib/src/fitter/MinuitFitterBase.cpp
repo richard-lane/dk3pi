@@ -99,7 +99,12 @@ void MinuitFitterBase::fit()
     fitParams.fitStatistic = min->Fval();
 
     // Set our TGraph pointer to the right thing
-    std::vector<double> xErrors(_fitData.numBins, 0);
+    // The x error bars should show the bin widths
+    std::vector<double> xErrors(_fitData.numBins, -1);
+    for (size_t i = 0; i < _fitData.numBins; ++i) {
+        xErrors[i] = 0.5 * (_fitData.binLimits[i + 1] - _fitData.binLimits[i]);
+    }
+
     plot = std::make_unique<TGraphErrors>(
         _fitData.numBins, _fitData.binCentres.data(), _fitData.data.data(), xErrors.data(), _fitData.errors.data());
 }
