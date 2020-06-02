@@ -55,12 +55,6 @@ void SimulatedDecays::test(const size_t numPoints, const std::vector<double> &bi
         binWidths[i]  = 0.5 * (binLimits[i + 1] - binLimits[i]);
     }
 
-    // Prevent the wrong things being optimised out (?) when using -0g
-    int debug  = binCentres.size() + binWidths.size();
-    int debug2 = binCentres.capacity() + binWidths.capacity();
-    std::cout << "for compiler bug reasons, need to print out some numbers here: " << debug << " ," << debug2
-              << std::endl;
-
     std::vector<double> expectedNormalisedBinPop(numBins, -1);
     for (size_t i = 0; i < numBins; ++i) {
         expectedNormalisedBinPop[i] = util::gaussLegendreQuad(_generatingPDF, binLimits[i], binLimits[i + 1]);
