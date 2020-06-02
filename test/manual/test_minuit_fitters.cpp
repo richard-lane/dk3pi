@@ -32,7 +32,7 @@ void compareRootMinuit(void)
     double maxTime = 0.002;
 
     size_t numCfEvents         = 1e7;
-    double efficiencyTimescale = 5 / phaseSpaceParams.width;
+    double efficiencyTimescale = 1 / phaseSpaceParams.width;
     double numDcsEvents = PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
 
     auto cfRate  = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };

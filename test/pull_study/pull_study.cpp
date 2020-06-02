@@ -149,5 +149,5 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 
 int main()
 {
-    pull_study(1e6, 100);
+    pull_study(1e6, 250);
 }
