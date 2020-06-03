@@ -5,6 +5,7 @@
 #define UTIL_CPP
 
 #include <boost/filesystem.hpp>
+#include <cmath>
 #include <iostream>
 
 #include "TCanvas.h"
@@ -231,6 +232,186 @@ std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> r
         }
     }
     return outVector;
+}
+
+std::pair<double, double> meanAndStdDev(const std::vector<double> &v)
+{
+
+    double sum  = std::accumulate(v.begin(), v.end(), 0.0);
+    double mean = sum / v.size();
+
+    std::vector<double> diff(v.size());
+    std::transform(v.begin(), v.end(), diff.begin(), std::bind2nd(std::minus<double>(), mean));
+    double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    double stdev  = std::sqrt(sq_sum / v.size());
+
+    return std::make_pair(mean, stdev);
+}
+
+std::vector<std::vector<double>> covarianceMatrix(const std::vector<std::vector<double>> &data)
+{
+    size_t numDatasets = data.size();
+    size_t dataLength  = data[0].size();
+
+    // Check all datasets are the same length
+    for (auto it = data.begin() + 1; it != data.end(); ++it) {
+        if (it->size() != dataLength) {
+            std::cerr << "passed in datasets of different lengths; cannot calculate covariance" << std::endl;
+            throw D2K3PiException();
+        }
+    }
+
+    // Initialise cov matrix
+    std::vector<std::vector<double>> outMatrix(
+        numDatasets, std::vector<double>(numDatasets, std::numeric_limits<double>::quiet_NaN()));
+
+    // Fill it
+    for (size_t i = 0; i < numDatasets; ++i) {
+        double iMean = meanAndStdDev(data[i]).first;
+
+        for (size_t j = 0; j < numDatasets; ++j) {
+            double jMean = meanAndStdDev(data[j]).first;
+            double cov{0.0};
+            for (size_t k = 0; k < dataLength; ++k) {
+                cov += (data[i][k] - iMean) * (data[j][k] - jMean);
+            }
+            outMatrix[i][j] = cov / dataLength;
+        }
+    }
+    return outMatrix;
+}
+
+bool isSquare(const std::vector<std::vector<double>> &matrix)
+{
+    size_t matrixDimension = matrix.size();
+    for (size_t i = 0; i < matrixDimension; ++i) {
+        if (matrix[i].size() != matrixDimension) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::vector<double> multiply(const std::vector<std::vector<double>> &matrix, const std::vector<double> &vector)
+{
+    if (!isSquare(matrix)) {
+        std::cerr << "matrix not square; cannot perform Cholesky decomposition" << std::endl;
+        throw D2K3PiException();
+    }
+
+    if (matrix.size() != vector.size()) {
+        std::cerr << "matrix and vector incompatible sizes" << std::endl;
+        throw D2K3PiException();
+    }
+
+    std::vector<double> outVector(vector.size(), 0);
+
+    for (size_t i = 0; i < vector.size(); ++i) {
+        for (size_t j = 0; j < vector.size(); ++j) {
+            outVector[i] += matrix[i][j] * vector[j];
+        }
+    }
+
+    return outVector;
+}
+
+std::vector<std::vector<double>> correlatedGaussianNumbers(const std::shared_ptr<std::mt19937> &   gen,
+                                                           const size_t                            count,
+                                                           const std::vector<double> &             means,
+                                                           const std::vector<std::vector<double>> &covarianceMatrix)
+{
+    size_t dimension = covarianceMatrix.size();
+    if (means.size() != dimension) {
+        std::cerr << "incompatible means + covariance matrix provided" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Gaussian generator
+    std::normal_distribution<double> distribution(0, 1);
+
+    // Find Cholesky decomposition of our covariance matrix
+    std::vector<std::vector<double>> lowerTriangular = choleskyDecomp(covarianceMatrix);
+
+    // Create vectors of normally-distributed random numbers
+    std::vector<std::vector<double>> randomNumbers(dimension, std::vector<double>(count, -1));
+    for (size_t i = 0; i < dimension; ++i) {
+        for (size_t j = 0; j < count; ++j) {
+            randomNumbers[i][j] = distribution(*gen);
+        }
+    }
+
+    // Transform them to correlated random numbers
+    for (size_t i = 0; i < count; ++i) {
+        // Create a vector of uncorrelated random numbers
+        std::vector<double> uncorrelated(dimension, -1);
+        for (size_t j = 0; j < dimension; ++j) {
+            uncorrelated[j] = randomNumbers[j][i];
+        }
+
+        // multiply this vector by the lower triangular matrix to get correlated random numbers
+        uncorrelated = multiply(lowerTriangular, uncorrelated);
+
+        // Insert them back into the vector of vectors, giving them the correct mean
+        for (size_t j = 0; j < dimension; ++j) {
+            randomNumbers[j][i] = means[j] + uncorrelated[j];
+        }
+    }
+
+    return randomNumbers;
+}
+
+std::vector<std::vector<double>> choleskyDecomp(const std::vector<std::vector<double>> &matrix)
+{
+    size_t matrixDimension = matrix.size();
+    if (!isSquare(matrix)) {
+        std::cerr << "matrix not square; cannot perform Cholesky decomposition" << std::endl;
+        throw D2K3PiException();
+    }
+
+    // Check that it is symmetric
+    for (size_t i = 0; i < matrixDimension; ++i) {
+        for (size_t j = 0; j < matrixDimension; ++j) {
+            // No the most efficient check but should be fine
+            if (matrix[i][j] != matrix[j][i]) {
+                std::cerr << "matrix not symmetric; cannot perform Cholesky decomposition" << std::endl;
+                throw D2K3PiException();
+            }
+        }
+    }
+
+    // Initialise our output matrix to NaN
+    std::vector<std::vector<double>> lower(
+        matrixDimension, std::vector<double>(matrixDimension, std::numeric_limits<double>::quiet_NaN()));
+
+    // Cholesky-Branachiewicz algorithm
+    for (size_t i = 0; i < matrixDimension; ++i) {
+        for (size_t j = 0; j < matrixDimension; ++j) {
+
+            // Upper triangle
+            if (j > i) {
+                lower[i][j] = 0;
+            }
+
+            // Diagonal
+            else if (i == j) {
+                double sum{0.0};
+                for (int k = 0; k < (int)j; ++k) {
+                    sum += lower[j][k] * lower[j][k];
+                }
+                lower[j][j] = std::sqrt(matrix[j][j] - sum);
+            }
+
+            // Lower triangle
+            else {
+                double sum{0.0};
+                for (int k = 0; k < int(j); ++k) {
+                    sum += lower[i][k] * lower[j][k];
+                }
+                lower[i][j] = (matrix[i][j] - sum) / lower[j][j];
+            }
+        }
+    }
+    return lower;
 }
 
 // Explicitly instantiate the types we want to use for saving objects to file

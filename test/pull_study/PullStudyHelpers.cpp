@@ -14,20 +14,6 @@
 namespace PullStudyHelpers
 {
 
-std::pair<double, double> meanAndStdDev(const std::vector<double>& v)
-{
-
-    double sum  = std::accumulate(v.begin(), v.end(), 0.0);
-    double mean = sum / v.size();
-
-    std::vector<double> diff(v.size());
-    std::transform(v.begin(), v.end(), diff.begin(), std::bind2nd(std::minus<double>(), mean));
-    double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
-    double stdev  = std::sqrt(sq_sum / v.size());
-
-    return std::make_pair(mean, stdev);
-}
-
 void plot_parameter_distribution(std::string         title,
                                  std::vector<double> parameter,
                                  size_t              nExperiments,

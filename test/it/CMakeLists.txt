@@ -4,7 +4,14 @@ include_directories("${CMAKE_SOURCE_DIR}/src")
 
 find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem system)
 
-add_executable(it.exe it.cpp test_minuit_fitter.cpp test_ratio_calculator.cpp test_simulator.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
+add_executable(it.exe
+               it.cpp
+               test_correlated_random_numbers.cpp
+               test_minuit_fitter.cpp
+               test_ratio_calculator.cpp
+               test_simulator.cpp
+               ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
+
 target_link_libraries(it.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
 add_test(NAME it COMMAND it.exe)

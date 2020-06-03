@@ -135,8 +135,8 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     // Output mean and std dev of pulls
     std::vector<std::pair<double, double>> stats{};
 
-    stats.push_back(PullStudyHelpers::meanAndStdDev(rPull));
-    stats.push_back(PullStudyHelpers::meanAndStdDev(reZPull));
+    stats.push_back(util::meanAndStdDev(rPull));
+    stats.push_back(util::meanAndStdDev(reZPull));
 
     std::cout << "Constrained XY Fit:" << std::endl;
     for (auto pair = stats.begin(); pair != stats.end(); ++pair) {

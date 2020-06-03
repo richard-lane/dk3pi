@@ -9,19 +9,6 @@
 #include "../pull_study/PullStudyHelpers.h"
 
 /*
- * Test mean + std dev function
- */
-BOOST_AUTO_TEST_CASE(test_mean_std)
-{
-    std::vector<double>       data{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    std::pair<double, double> expected = std::make_pair(6.5, 3.45205);
-    std::pair<double, double> actual   = PullStudyHelpers::meanAndStdDev(data);
-
-    BOOST_CHECK_SMALL(expected.first - actual.first, 1e-5);
-    BOOST_CHECK_SMALL(expected.second - actual.second, 1e-5);
-}
-
-/*
  * Test we find the correct relative number of DCS to CF decays
  */
 BOOST_AUTO_TEST_CASE(test_numbers_of_decays, *boost::unit_test::tolerance(1))

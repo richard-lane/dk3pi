@@ -10,11 +10,6 @@ namespace PullStudyHelpers
 {
 
 /*
- * Find the mean and std dev of a vector
- */
-std::pair<double, double> meanAndStdDev(const std::vector<double>& v);
-
-/*
  * Plot the distribution of a vector as a histogram of 200 bins
  *
  * Plot is centred on expectedMean and spans 10*expectedSigma

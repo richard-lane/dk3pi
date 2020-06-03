@@ -249,3 +249,121 @@ BOOST_AUTO_TEST_CASE(test_gauss_legendre_lambda)
 
     BOOST_CHECK_SMALL(actualIntegral - expectedIntegral, 1e-15);
 }
+
+/*
+ * Test covariance matrix
+ */
+BOOST_AUTO_TEST_CASE(test_cov_matrix)
+{
+    std::vector<std::vector<double>> data{std::vector<double>{1, 2, 3, 4, 5}, std::vector<double>{2, 4, 5, 7, 9}};
+
+    std::vector<std::vector<double>> expectedCov{std::vector<double>{2, 3.4}, std::vector<double>{3.4, 5.84}};
+    std::vector<std::vector<double>> cov = util::covarianceMatrix(data);
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        CHECK_CLOSE_COLLECTIONS(expectedCov[i], cov[i], 1e-8);
+    }
+}
+
+/*
+ * Test mean + std dev function
+ */
+BOOST_AUTO_TEST_CASE(test_mean_std)
+{
+    std::vector<double>       data{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    std::pair<double, double> expected = std::make_pair(6.5, 3.45205);
+    std::pair<double, double> actual   = util::meanAndStdDev(data);
+
+    BOOST_CHECK_SMALL(expected.first - actual.first, 1e-5);
+    BOOST_CHECK_SMALL(expected.second - actual.second, 1e-5);
+}
+
+/*
+ * Test matrix multiplication
+ */
+BOOST_AUTO_TEST_CASE(test_matrix_multiply)
+{
+    std::vector<std::vector<double>> matrix{std::vector<double>{1, 0, 2, 0},
+                                            std::vector<double>{0, 3, 0, 4},
+                                            std::vector<double>{0, 0, 5, 0},
+                                            std::vector<double>{6, 0, 0, 7}};
+    std::vector<double>              vector{2, 5, 1, 8};
+    std::vector<double>              expectedResult{4, 47, 5, 68};
+    std::vector<double>              result = util::multiply(matrix, vector);
+
+    CHECK_CLOSE_COLLECTIONS(result, expectedResult, 1e-8);
+}
+
+/*
+ * Test cholesky decomposition with non-square matrix
+ */
+BOOST_AUTO_TEST_CASE(test_cholesky_decomp_non_square)
+{
+    std::vector<std::vector<double>> nonSquareMatrix{std::vector<double>{1, 2, 3}, std::vector<double>{4, 5, 6}};
+    std::vector<std::vector<double>> malformedMatrix{
+        std::vector<double>{1, 2, 3}, std::vector<double>{4, 5, 6}, std::vector<double>{7, 8}};
+
+    BOOST_CHECK_THROW(util::choleskyDecomp(nonSquareMatrix), D2K3PiException);
+    BOOST_CHECK_THROW(util::choleskyDecomp(malformedMatrix), D2K3PiException);
+}
+
+/*
+ * Test cholesky decomposition with non-symmetric matrix
+ */
+BOOST_AUTO_TEST_CASE(test_cholesky_decomp_non_symmetric)
+{
+    std::vector<std::vector<double>> asymmetricMatrix{
+        std::vector<double>{1, 2, 3}, std::vector<double>{4, 5, 6}, std::vector<double>{7, 8, 9}};
+
+    BOOST_CHECK_THROW(util::choleskyDecomp(asymmetricMatrix), D2K3PiException);
+}
+
+/*
+ * Test cholesky decomposition
+ */
+BOOST_AUTO_TEST_CASE(test_cholesky_decomp)
+{
+    std::vector<std::vector<double>> matrix{
+        std::vector<double>{4, 12, -16}, std::vector<double>{12, 37, -43}, std::vector<double>{-16, -43, 98}};
+    std::vector<std::vector<double>> expectedLowerTriangular{
+        std::vector<double>{2, 0, 0}, std::vector<double>{6, 1, 0}, std::vector<double>{-8, 5, 3}};
+
+    std::vector<std::vector<double>> cholDecomp = util::choleskyDecomp(matrix);
+
+    for (size_t i = 0; i < matrix.size(); ++i) {
+        CHECK_CLOSE_COLLECTIONS(cholDecomp[i], expectedLowerTriangular[i], 1e-8);
+    }
+}
+
+/*
+ * Test cholesky decomposition with a 4x4 matrix, just in case
+ */
+BOOST_AUTO_TEST_CASE(test_cholesky_decomp_4x4)
+{
+    std::vector<std::vector<double>> matrix{std::vector<double>{18, 22, 54, 42},
+                                            std::vector<double>{22, 70, 86, 62},
+                                            std::vector<double>{54, 86, 174, 134},
+                                            std::vector<double>{42, 62, 134, 106}};
+    std::vector<std::vector<double>> expectedLowerTriangular{std::vector<double>{4.24264, 0, 0, 0},
+                                                             std::vector<double>{5.18545, 6.56591, 0, 0},
+                                                             std::vector<double>{12.72792, 3.04604, 1.64974, 0},
+                                                             std::vector<double>{9.89949, 1.62455, 1.84971, 1.39262}};
+
+    std::vector<std::vector<double>> cholDecomp = util::choleskyDecomp(matrix);
+
+    for (size_t i = 0; i < matrix.size(); ++i) {
+        CHECK_CLOSE_COLLECTIONS(cholDecomp[i], expectedLowerTriangular[i], 1e-3);
+    }
+}
+
+/*
+ * Test that generating correlated gaussians doesnt throw
+ */
+BOOST_AUTO_TEST_CASE(test_correlated_gaussian_no_throw)
+{
+    std::vector<std::vector<double>> covariance{std::vector<double>{1, 0.5}, std::vector<double>{0.5, 1}};
+    std::vector<double>              means{1, 2};
+    std::shared_ptr<std::mt19937>    generator = std::make_shared<std::mt19937>(0);
+
+    BOOST_CHECK_NO_THROW(util::correlatedGaussianNumbers(generator, 1, means, covariance));
+}

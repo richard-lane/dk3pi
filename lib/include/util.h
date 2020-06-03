@@ -1,13 +1,15 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <random>
+
 #include <boost/filesystem.hpp>
 #include <boost/math/quadrature/gauss.hpp>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
 #include "D2K3PiError.h"
 
-#include "TObject.h"
+#include <TObject.h>
 
 /*
  * Struct encapsulating the parameters needed to simulate decays.
@@ -153,6 +155,48 @@ template <typename Func> double gaussLegendreQuad(Func f, const double low, cons
 {
     return boost::math::quadrature::gauss<double, 15>::integrate(f, low, high);
 }
+
+/*
+ * Find the mean and std dev of a vector
+ */
+std::pair<double, double> meanAndStdDev(const std::vector<double> &v);
+
+/*
+ * Covariance matrix between a vector of datasets
+ */
+std::vector<std::vector<double>> covarianceMatrix(const std::vector<std::vector<double>> &data);
+
+/*
+ * Check if a matrix is square
+ */
+bool isSquare(const std::vector<std::vector<double>> &matrix);
+
+/*
+ * Multiply a vector by a square matrix
+ */
+std::vector<double> multiply(const std::vector<std::vector<double>> &matrix, const std::vector<double> &vector);
+
+/*
+ * Return vectors of random numbers from correlated gaussians
+ *
+ * Must provide a pointer to a random number generator
+ *
+ * Returns a vector of vectors of length count
+ */
+std::vector<std::vector<double>> correlatedGaussianNumbers(const std::shared_ptr<std::mt19937> &   gen,
+                                                           const size_t                            count,
+                                                           const std::vector<double> &             means,
+                                                           const std::vector<std::vector<double>> &covarianceMatrix);
+
+/*
+ * Cholesky decomposition of a positive definite symmetric matrix, M = LL^T
+ *
+ * Doesn't check that the input matrix is positive-definite! No idea what will happen if you pass something else into it
+ *
+ * Returns lower triangular matrix L
+ *
+ */
+std::vector<std::vector<double>> choleskyDecomp(const std::vector<std::vector<double>> &matrix);
 
 } // namespace util
 
