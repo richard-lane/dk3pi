@@ -64,6 +64,11 @@ class MinuitFitterBase : public BaseFitter
      */
     std::unique_ptr<ROOT::Minuit2::FunctionMinimum> min = nullptr;
 
+    /*
+     * Pointer to the Minuit FCN used to perform the fit
+     */
+    std::unique_ptr<MyBaseFcn> _fitFcn = nullptr;
+
   protected:
     /*
      * Calls parent constructor
@@ -81,11 +86,6 @@ class MinuitFitterBase : public BaseFitter
     void _setParams(const std::vector<std::string>& names,
                     const std::vector<double>&      values,
                     const std::vector<double>&      errors);
-
-    /*
-     * Pointer to the Minuit FCN used to perform the fit
-     */
-    std::unique_ptr<MyBaseFcn> _fitFcn = nullptr;
 
     /*
      * Parameters that Minuit minimises

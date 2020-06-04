@@ -16,6 +16,8 @@
 #include "TGraph2D.h"
 #include "TH2.h"
 
+#include "Minuit2/MnMinos.h"
+
 #include "testutil.h"
 
 void splitVectorOfPairs(std::vector<std::pair<double, double>>& pairs,
@@ -126,6 +128,15 @@ void test_param_scan(void)
     PhysicalFitter.fixParameters(std::vector<std::string>{"width", "z_im"});
     PhysicalFitter.fit();
     std::cout << "Min chisq: " << PhysicalFitter.fitParams.fitStatistic << std::endl;
+
+    // Minos error analysis
+    size_t sigmas{3};
+    PhysicalFitter._fitFcn->setErrorDef(std::sqrt((double)sigmas * (double)sigmas));
+    ROOT::Minuit2::MnMinos    minos(*(PhysicalFitter._fitFcn), *(PhysicalFitter.min));
+    std::pair<double, double> e0 = minos(0);
+    std::cout << sigmas << "-sigma minos errors: " << std::endl;
+    std::cout << "r: " << PhysicalFitter.min->UserState().Value("r") << " " << e0.first << " " << e0.second
+              << std::endl;
 
     // Perform a chi squared scan r
     size_t                    numPoints = 100;
