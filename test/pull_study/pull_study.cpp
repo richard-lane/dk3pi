@@ -1,3 +1,7 @@
+/*
+ * I think the fitter is currently unbiased in the limit of infinite events
+ */
+
 #include <iostream>
 
 #include "DecaySimulator.h"
@@ -83,7 +87,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
             .r     = 0.055,
             .z_im  = -0.2956,
             .z_re  = 0.7609,
-            .width = 2439.0,
+            .width = width,
         };
         double meanNumDcsEvents =
             PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
@@ -169,5 +173,5 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 
 int main()
 {
-    pull_study(1e6, 100);
+    pull_study(700000, 250);
 }
