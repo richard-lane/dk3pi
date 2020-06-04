@@ -13,6 +13,9 @@
 #include "physics.h"
 #include "util.h"
 
+#include <TH1D.h>
+#include <TMath.h>
+
 #include <boost/progress.hpp>
 
 void plotFit(std::vector<double>&  expectedFitParams,
@@ -52,6 +55,7 @@ std::vector<std::vector<double>> generateXYvals(const std::shared_ptr<std::mt199
 
 void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 {
+    std::cout << TMath::Erf(100) << std::endl;
     // Choose parameters to use when simulating
     double width               = 2439.0;
     double maxTime             = 10 / width;
@@ -75,6 +79,9 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     std::vector<double> rPull(numExperiments, -1);
     std::vector<double> reZPull(numExperiments, -1);
     std::vector<double> chiSquaredVals(numExperiments, -1);
+
+    // Initialise vector of delta chi^2 values to test the r distribution
+    std::vector<double> sqrtDeltaChiSq(numExperiments, -1);
 
     boost::progress_display showProgress(numExperiments);
 
@@ -139,8 +146,17 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
                                                   phaseSpaceParams.z_re,
                                                   phaseSpaceParams.width},
                               std::vector<double>(6, 1));
-        MyFitter.fixParameters(std::vector<std::string>{"width", "z_im"});
+
+        // First perform a fit with fixed r, then store the value of chi squared.
+        MyFitter.fixParameters(std::vector<std::string>{"width", "z_im", "r"});
         MyFitter.fit();
+        double chiSqFixedR = MyFitter.fitParams.fitStatistic;
+        MyFitter.freeParameters(std::vector<std::string>{"r"});
+        MyFitter.fit();
+
+        // Store the distance of our fit chisq from chisq when r was fixed
+        double deltaChiSq = chiSqFixedR - MyFitter.fitParams.fitStatistic;
+        sqrtDeltaChiSq[i] = std::sqrt(std::fabs(deltaChiSq));
 
         std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
         // plotFit(expectedFitParams, MyFitter, maxTime, i);
@@ -169,9 +185,32 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     PullStudyHelpers::plot_parameter_distribution("Re(Z)", reZPull, numExperiments);
 
     PullStudyHelpers::plotHist(chiSquaredVals, 50, "MinuitChiSq");
+
+    // Plot a cumulative histogram of delta chi squared values
+    size_t              nBins{50};
+    double              max{4};
+    std::vector<double> bins(nBins + 1);
+    for (size_t i = 0; i <= nBins; ++i) {
+        bins[i] = i * (max / nBins);
+    }
+
+    TH1* h = new TH1D("rCumulative", "Cumulative distribution of delta chi sq", nBins, bins.data());
+    h->FillN(numExperiments, sqrtDeltaChiSq.data(), nullptr);
+    TH1* hc = h->GetCumulative();
+    hc->SetStats(false);
+
+    TF1* expectedErf = new TF1("erf", "(TMath::Freq(x) - TMath::Freq(0))*2*[0]", 0, max);
+    expectedErf->SetParameter(0, numExperiments);
+
+    const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{hc, expectedErf},
+                                    std::vector<std::string>{"", "CSAME"},
+                                    std::vector<std::string>{"delta Chisq", "expected"},
+                                    "test.png",
+                                    legend);
 }
 
 int main()
 {
-    pull_study(700000, 250);
+    pull_study(500000, 100);
 }
