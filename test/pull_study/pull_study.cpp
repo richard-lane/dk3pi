@@ -30,55 +30,42 @@ void plotFit(std::vector<double>&  expectedFitParams,
     delete trueFit;
 }
 
+/*
+ * Generate a vector of {{x vals}, {y vals}} to use in our experiments
+ */
+std::vector<std::vector<double>> generateXYvals(const std::shared_ptr<std::mt19937>& rndGen,
+                                                const size_t                         numExperiments)
+{
+    std::vector<std::vector<double>> xyCovariance{
+        std::vector<double>{WORLD_AVERAGE_X_ERR * WORLD_AVERAGE_X_ERR,
+                            X_Y_CORRELATION * WORLD_AVERAGE_X_ERR * WORLD_AVERAGE_Y_ERR},
+        std::vector<double>{X_Y_CORRELATION * WORLD_AVERAGE_X_ERR * WORLD_AVERAGE_Y_ERR,
+                            WORLD_AVERAGE_Y_ERR * WORLD_AVERAGE_Y_ERR}};
+
+    return util::correlatedGaussianNumbers(
+        rndGen, numExperiments, std::vector<double>{WORLD_AVERAGE_X, WORLD_AVERAGE_Y}, xyCovariance);
+}
+
 void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 {
     // Choose parameters to use when simulating
-    DecayParams_t phaseSpaceParams = {
-        .x     = WORLD_AVERAGE_X,
-        .y     = WORLD_AVERAGE_Y,
-        .r     = 0.055,
-        .z_im  = -0.2956,
-        .z_re  = 0.7609,
-        .width = 2439.0,
-    };
-    double maxTime             = 10 / phaseSpaceParams.width;
+    double width               = 2439.0;
+    double maxTime             = 10 / width;
     size_t numBins             = 25;
-    double efficiencyTimescale = 1 / phaseSpaceParams.width;
+    double efficiencyTimescale = 1 / width;
 
     // Create RNGs for numbers of decays
-    double meanNumDcsEvents =
-        PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
-    std::mt19937                      rndGen;
-    std::poisson_distribution<size_t> cfDist(meanNumCfEvents);
-    std::poisson_distribution<size_t> dcsDist(meanNumDcsEvents);
+    std::random_device            rd;
+    std::shared_ptr<std::mt19937> rndGen = std::make_shared<std::mt19937>(rd());
 
     // Find exponentially-spaced time bin limits to use
-    std::vector<double> binLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, numBins);
-
     // Make some bins at the start wider (because of the efficiency)
+    std::vector<double> binLimits = util::exponentialBinLimits(maxTime, width, numBins);
     binLimits.erase(binLimits.begin() + 1, binLimits.begin() + 3);
     binLimits.erase(binLimits.begin() + 4);
 
-    // Create a decay simulator
-    auto cfRate  = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
-    auto dcsRate = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
-
-    // Generator and PDF for random numbers
-    std::random_device                     rd;
-    std::shared_ptr<std::mt19937>          _gen = std::make_shared<std::mt19937>(rd());
-    std::uniform_real_distribution<double> uniform;
-
-    auto gen = [&](void) {
-        double x = uniform(*_gen);
-        double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
-        return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
-    };
-    auto genPDF = [&](double x) {
-        return std::exp(-phaseSpaceParams.width * x) * phaseSpaceParams.width /
-               (1 - std::exp(-phaseSpaceParams.width * maxTime));
-    };
-
-    SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), _gen);
+    // Generate X and Y values to be used in the simulations
+    std::vector<std::vector<double>> xyVals = generateXYvals(rndGen, numExperiments);
 
     // Initialise vectors of fit parameter pulls and chi squared
     std::vector<double> rPull(numExperiments, -1);
@@ -88,10 +75,40 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     boost::progress_display showProgress(numExperiments);
 
     for (size_t i = 0; i < numExperiments; ++i) {
+        double        thisX            = xyVals[0][i];
+        double        thisY            = xyVals[1][i];
+        DecayParams_t phaseSpaceParams = {
+            .x     = thisX,
+            .y     = thisY,
+            .r     = 0.055,
+            .z_im  = -0.2956,
+            .z_re  = 0.7609,
+            .width = 2439.0,
+        };
+        double meanNumDcsEvents =
+            PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
+
+        // Generator and PDF for random numbers
+        std::uniform_real_distribution<double> uniform;
+        auto cfRate  = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
+        auto dcsRate = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
+
+        auto gen = [&](void) {
+            double x = uniform(*rndGen);
+            double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
+            return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
+        };
+        auto genPDF = [&](double x) {
+            return std::exp(-phaseSpaceParams.width * x) * phaseSpaceParams.width /
+                   (1 - std::exp(-phaseSpaceParams.width * maxTime));
+        };
+        SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), rndGen);
 
         // Find how many decays to simulate
-        size_t numCfEvents  = cfDist(rndGen);
-        size_t numDcsEvents = dcsDist(rndGen);
+        std::poisson_distribution<size_t> cfDist(meanNumCfEvents);
+        std::poisson_distribution<size_t> dcsDist(meanNumDcsEvents);
+        size_t                            numCfEvents  = cfDist(*rndGen);
+        size_t                            numDcsEvents = dcsDist(*rndGen);
 
         // Simulate them
         MyDecays.findCfDecayTimes(numCfEvents);
@@ -122,7 +139,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         MyFitter.fit();
 
         std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
-        plotFit(expectedFitParams, MyFitter, maxTime, i);
+        // plotFit(expectedFitParams, MyFitter, maxTime, i);
 
         // Store parameter and chi squared
         reZPull[i] = (MyFitter.fitParams.fitParams[4] - phaseSpaceParams.z_re) / MyFitter.fitParams.fitParamErrors[4];
@@ -152,5 +169,5 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 
 int main()
 {
-    pull_study(1e6, 250);
+    pull_study(1e6, 100);
 }
