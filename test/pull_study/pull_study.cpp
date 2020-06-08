@@ -29,6 +29,7 @@ void plotFit(std::vector<double>&  expectedFitParams,
     trueFit->SetParameter(2, expectedFitParams[2]);
     trueFit->SetLineColor(kGray);
     const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
+    MyFitter.plot->SetTitle("Example fit;time/ns;DCS/CF ratio");
     util::saveObjectsToFile<TGraph>(std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get(), trueFit},
                                     std::vector<std::string>{"AP", "SAME", "SAME"},
                                     std::vector<std::string>{"Data", "best fit", "'True' fit"},
@@ -55,7 +56,6 @@ std::vector<std::vector<double>> generateXYvals(const std::shared_ptr<std::mt199
 
 void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 {
-    std::cout << TMath::Erf(100) << std::endl;
     // Choose parameters to use when simulating
     double width               = 2439.0;
     double maxTime             = 10 / width;
@@ -134,7 +134,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         RatioCalculator MyRatios(cfCounts, dcsCounts, binLimits);
         MyRatios.calculateRatios();
 
-        IntegralOptions_t integralOptions(true, phaseSpaceParams.width, binLimits, efficiencyTimescale);
+        IntegralOptions_t integralOptions(true, phaseSpaceParams.width, binLimits, 0.5 * efficiencyTimescale);
         FitData_t         MyFitData(binLimits, MyRatios.ratio, MyRatios.error);
 
         // Fit data
@@ -212,5 +212,5 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 
 int main()
 {
-    pull_study(500000, 100);
+    pull_study(700000, 100);
 }

@@ -69,6 +69,7 @@ void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
 
     TCanvas *canvas = new TCanvas();
     canvas->cd();
+    canvas->SetLeftMargin(0.15); // Magic number means you can actually read axis labels
 
     // Create a legend object; if we're drawing multiple plots on one canvas then we better have a legend to tell them
     // apart

@@ -72,7 +72,7 @@ void test_param_scan(void)
         .z_re  = 0.7609,
         .width = 2439.0,
     };
-    double maxTime     = 0.002;
+    double maxTime     = 0.004;
     size_t numCfEvents = 700000;
     double numDcsEvents =
         PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
@@ -128,6 +128,8 @@ void test_param_scan(void)
     PhysicalFitter.fixParameters(std::vector<std::string>{"width", "z_im"});
     PhysicalFitter.fit();
     std::cout << "Min chisq: " << PhysicalFitter.fitParams.fitStatistic << std::endl;
+    double rSigma = PhysicalFitter.fitParams.fitParamErrors[4];
+    double r0     = PhysicalFitter.fitParams.fitParams[4];
 
     // Minos error analysis
     size_t sigmas{3};
@@ -139,21 +141,38 @@ void test_param_scan(void)
               << std::endl;
 
     // Perform a chi squared scan r
-    size_t                    numPoints = 100;
+    size_t                    numPoints = 400;
     std::pair<double, double> rVals(
-        PhysicalFitter.fitParams.fitParams[2] - 2 * PhysicalFitter.fitParams.fitParamErrors[2],
-        PhysicalFitter.fitParams.fitParams[2] + 2 * PhysicalFitter.fitParams.fitParamErrors[2]);
+        PhysicalFitter.fitParams.fitParams[4] - 3 * PhysicalFitter.fitParams.fitParamErrors[4],
+        PhysicalFitter.fitParams.fitParams[4] + 3 * PhysicalFitter.fitParams.fitParamErrors[4]);
 
     std::vector<std::pair<double, double>> rScan =
-        PhysicalFitter.chiSqParameterScan(2, numPoints, rVals.first, rVals.second);
+        PhysicalFitter.chiSqParameterScan(4, numPoints, rVals.first, rVals.second);
 
     std::vector<double> values{};
     std::vector<double> chiSq{};
     splitVectorOfPairs(rScan, values, chiSq);
+
+    // Subtract minimum chi sq
+    double minChiSq = *std::min_element(chiSq.begin(), chiSq.end());
+    std::transform(chiSq.begin(), chiSq.end(), chiSq.begin(), [&](double x) { return x - minChiSq; });
+
     TGraph* Graph = new TGraph(numPoints, values.data(), chiSq.data());
-    Graph->SetTitle("r Scan;value;chiSq");
-    util::saveObjectToFile(Graph, "rScan.pdf", "AP");
+    Graph->SetTitle("3-sigma Chi2 Scan;Re(Z) value;chiSq");
+
+    // Expected chi squared parabola
+    TF1* expectedChiSq = new TF1("expected", "(x-[0])*(x-[0])/([1]*[1])", r0 - 3 * rSigma, r0 + 3 * rSigma);
+    expectedChiSq->SetParameter(0, r0);
+    expectedChiSq->SetParameter(1, rSigma);
+
+    const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.9, .y2 = 0.7, .header = ""};
+    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{Graph, expectedChiSq},
+                                    std::vector<std::string>{"AP", "CSAME"},
+                                    std::vector<std::string>{"Chisq scan", "expected with symmetric errors"},
+                                    "rezScan.png",
+                                    legend);
     delete Graph;
+    delete expectedChiSq;
 }
 
 void test_2d_scan()
@@ -270,7 +289,7 @@ void test_z_scan()
     };
     double maxTime = 0.002;
 
-    size_t numCfEvents = 1000000;
+    size_t numCfEvents = 1e7;
     double numDcsEvents =
         PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
 
@@ -327,7 +346,7 @@ void test_z_scan()
     PhysFitterConstraint.setFitParams(initialParameterGuess, initialErrorsGuess);
 
     // Perform a 2d chi squared scan on the components of Z
-    size_t numPoints      = 200;
+    size_t numPoints      = 100;
     size_t numTotalPoints = numPoints * numPoints;
     double min            = -1;
     double max            = 1;
