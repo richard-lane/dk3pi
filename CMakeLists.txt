@@ -13,7 +13,8 @@ find_package(ROOT REQUIRED COMPONENTS RIO Net Minuit2)
 include(${ROOT_USE_FILE})
 
 # Boost
-find_package( Boost COMPONENTS system filesystem REQUIRED)
+# Need at least version 1.66.0 for numerical integration
+find_package( Boost 1.66.0 REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Some standard flags
