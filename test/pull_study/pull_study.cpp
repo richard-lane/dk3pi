@@ -1,7 +1,6 @@
 /*
  * I think the fitter is currently unbiased in the limit of infinite events
  */
-
 #include <iostream>
 
 #include "DecaySimulator.h"
@@ -81,7 +80,8 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     std::vector<double> chiSquaredVals(numExperiments, -1);
 
     // Initialise vector of delta chi^2 values to test the r distribution
-    std::vector<double> sqrtDeltaChiSq(numExperiments, -1);
+    std::vector<double> rCoverage(numExperiments, -1);
+    std::vector<double> zCoverage(numExperiments, -1);
 
     boost::progress_display showProgress(numExperiments);
 
@@ -152,13 +152,23 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         MyFitter.fit();
         double chiSqFixedR = MyFitter.fitParams.fitStatistic;
         MyFitter.freeParameters(std::vector<std::string>{"r"});
+
+        // Now perform a fit with fixed Z and store chisq
+        MyFitter.fixParameters(std::vector<std::string>{"z_re"});
+        MyFitter.fit();
+        double chiSqFixedZ = MyFitter.fitParams.fitStatistic;
+        MyFitter.freeParameters(std::vector<std::string>{"z_re"});
+
+        // Finally perform a fit with r and Re(Z) free
         MyFitter.fit();
 
         // Store the distance of our fit chisq from chisq when r was fixed
-        double deltaChiSq = chiSqFixedR - MyFitter.fitParams.fitStatistic;
-        sqrtDeltaChiSq[i] = std::sqrt(std::fabs(deltaChiSq));
+        double deltaChiSqR = chiSqFixedR - MyFitter.fitParams.fitStatistic;
+        rCoverage[i]       = std::sqrt(std::fabs(deltaChiSqR));
+        double deltaChiSqZ = chiSqFixedZ - MyFitter.fitParams.fitStatistic;
+        zCoverage[i]       = std::sqrt(std::fabs(deltaChiSqZ));
 
-        std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
+        // std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
         // plotFit(expectedFitParams, MyFitter, maxTime, i);
 
         // Store parameter and chi squared
@@ -194,19 +204,30 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         bins[i] = i * (max / nBins);
     }
 
-    TH1* h = new TH1D("rCumulative", "Cumulative distribution of delta chi sq", nBins, bins.data());
-    h->FillN(numExperiments, sqrtDeltaChiSq.data(), nullptr);
-    TH1* hc = h->GetCumulative();
-    hc->SetStats(false);
+    TH1* hr = new TH1D("rCumulative", "r coverage", nBins, bins.data());
+    hr->FillN(numExperiments, rCoverage.data(), nullptr);
+    TH1* hrc = hr->GetCumulative();
+    hrc->SetStats(false);
+
+    TH1* hz = new TH1D("zCumulative", "Re(Z) coverage", nBins, bins.data());
+    hz->FillN(numExperiments, zCoverage.data(), nullptr);
+    TH1* hzc = hz->GetCumulative();
+    hzc->SetStats(false);
 
     TF1* expectedErf = new TF1("erf", "(TMath::Freq(x) - TMath::Freq(0))*2*[0]", 0, max);
     expectedErf->SetParameter(0, numExperiments);
 
     const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
-    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{hc, expectedErf},
+    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{hrc, expectedErf},
                                     std::vector<std::string>{"", "CSAME"},
                                     std::vector<std::string>{"delta Chisq", "expected"},
-                                    "test.png",
+                                    "rCoverage.png",
+                                    legend);
+
+    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{hzc, expectedErf},
+                                    std::vector<std::string>{"", "CSAME"},
+                                    std::vector<std::string>{"delta Chisq", "expected"},
+                                    "zCoverage.png",
                                     legend);
 }
 

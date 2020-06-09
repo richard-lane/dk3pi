@@ -4,7 +4,8 @@ project(D2K3Pi VERSION 0.1.0)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# ROOT enforces C++14
+# ROOT enforces at least C++14
+# Something else, possibly Boost, enforces C++17
 set(CMAKE_CXX_STANDARD 17)
 
 # ROOT
