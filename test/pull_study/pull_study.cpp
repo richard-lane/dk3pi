@@ -221,17 +221,17 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     util::saveObjectsToFile<TGraph>(std::vector<TObject*>{hrc, expectedErf},
                                     std::vector<std::string>{"", "CSAME"},
                                     std::vector<std::string>{"delta Chisq", "expected"},
-                                    "rCoverage.png",
+                                    "rCoverage.pdf",
                                     legend);
 
     util::saveObjectsToFile<TGraph>(std::vector<TObject*>{hzc, expectedErf},
                                     std::vector<std::string>{"", "CSAME"},
                                     std::vector<std::string>{"delta Chisq", "expected"},
-                                    "zCoverage.png",
+                                    "zCoverage.pdf",
                                     legend);
 }
 
 int main()
 {
-    pull_study(700000, 100);
+    pull_study(20000000, 10000);
 }
