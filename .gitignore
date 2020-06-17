@@ -41,3 +41,9 @@ build/
 cov/
 *.gcda
 *.gcno
+
+# Log and output files
+*.log
+*.err
+*.out
+
