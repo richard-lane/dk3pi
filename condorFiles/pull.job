@@ -1,0 +1,17 @@
+Executable = ./pull_script.sh
+Universe = vanilla
+
+Output = pull.job.$(cluster).$(process).out
+Error = pull.job.$(cluster).$(process).err
+Log = pull.job.$(cluster).$(process).log
+
+should_transfer_files = Yes
+transfer_input_files = pull-study, /storage/mh19137/lib/boost_1_73_0/stage/lib/libboost_system.so.1.73.0, /storage/mh19137/lib/boost_1_73_0/stage/lib/libboost_filesystem.so.1.73.0
+
+request_cpus = 1
+request_memory = 2
+
+getenv = True
+
+queue 10
+
