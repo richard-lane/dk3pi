@@ -1,16 +1,21 @@
 Executable = ./pull_script.sh
 Universe = vanilla
 
+# Send output and stderr to files in real-time (ish)
 Output = pull.job.$(cluster).$(process).out
 Error = pull.job.$(cluster).$(process).err
 Log = pull.job.$(cluster).$(process).log
+stream_output = True
+stream_error = True
 
+# Hack: the pull study relies on boost shared libraries... so literally bring them in here...
 should_transfer_files = Yes
 transfer_input_files = pull-study, /storage/mh19137/lib/boost_1_73_0/stage/lib/libboost_system.so.1.73.0, /storage/mh19137/lib/boost_1_73_0/stage/lib/libboost_filesystem.so.1.73.0
 
 request_cpus = 1
-request_memory = 2
+request_memory = 8
 
+# Bring in out environment variables, as we need ROOT
 getenv = True
 
 queue 10
