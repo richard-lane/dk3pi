@@ -45,10 +45,8 @@ double PhysicalFitFcn::operator()(const std::vector<double>& parameters) const
                                                            util::expectedParams(params),
                                                            params.width,
                                                            0.0) /
-                           Phys::cfIntegralWithEfficiency(_integralOptions.binLimits[i],
-                                                          _integralOptions.binLimits[i + 1],
-                                                          params.width,
-                                                          0.0);
+                           Phys::cfIntegralWithEfficiency(
+                               _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1], params.width, 0.0);
             chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
         }
     } else {
@@ -179,8 +177,11 @@ void PhysicalFitter::fit()
     MinuitFitterBase::fit();
 
     // Create a best-fit function
-    bestFitFunction = std::make_unique<TF1>(
-        "Best fit function", "[2]*[2] + [2]*([1]*[4] + [0]*[3])*[5]*x + 0.25 * ([0]*[0] + [1]*[1])*[5]*[5]*x*x");
+    // Its range should cover the range of times that our time bins do
+    const double minTime = _fitData.binLimits.front();
+    const double maxTime = _fitData.binLimits.back();
+    bestFitFunction      = std::make_unique<TF1>(
+        "Best fit function", "[2]*[2] + [2]*([1]*[4] + [0]*[3])*[5]*x + 0.25 * ([0]*[0] + [1]*[1])*[5]*[5]*x*x", minTime, maxTime);
     bestFitFunction->SetParameters(fitParams.fitParams.data());
 }
 
