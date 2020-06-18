@@ -20,21 +20,34 @@
 void plotFit(std::vector<double>&  expectedFitParams,
              const PhysicalFitter& MyFitter,
              const double          maxTime,
-             const size_t          i)
+             const size_t          i,
+             const bool            drawTrueFit = true)
 {
-    TF1* trueFit = new TF1("true fit", "[0] +[1]*x+[2]*x*x", 0, maxTime);
-    trueFit->SetParameter(0, expectedFitParams[0]);
-    trueFit->SetParameter(1, expectedFitParams[1]);
-    trueFit->SetParameter(2, expectedFitParams[2]);
-    trueFit->SetLineColor(kGray);
     const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
-    MyFitter.plot->SetTitle("Example fit;time/ns;DCS/CF ratio");
-    util::saveObjectsToFile<TGraph>(std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get(), trueFit},
-                                    std::vector<std::string>{"AP", "SAME", "SAME"},
-                                    std::vector<std::string>{"Data", "best fit", "'True' fit"},
-                                    std::string{"fit" + std::to_string(i) + ".pdf"},
-                                    legend);
-    delete trueFit;
+    MyFitter.plot->SetTitle("Example Fit with Simulated Data;time/ps;DCS/CF ratio");
+
+    if (drawTrueFit) {
+        TF1* trueFit = new TF1("true fit", "[0] +[1]*x+[2]*x*x", 0, maxTime);
+        trueFit->SetParameter(0, expectedFitParams[0]);
+        trueFit->SetParameter(1, expectedFitParams[1]);
+        trueFit->SetParameter(2, expectedFitParams[2]);
+        trueFit->SetLineColor(kGray);
+
+        util::saveObjectsToFile<TGraph>(
+            std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get(), trueFit},
+            std::vector<std::string>{"AP", "SAME", "SAME"},
+            std::vector<std::string>{"Data", "best fit", "'True' fit"},
+            std::string{"fit" + std::to_string(i) + ".pdf"},
+            legend);
+        delete trueFit;
+    } else {
+        util::saveObjectsToFile<TGraph>(
+            std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get()},
+            std::vector<std::string>{"AP", "SAME"},
+            std::vector<std::string>{"Data", "best fit"},
+            std::string{"fit" + std::to_string(i) + ".pdf"},
+            legend);
+    }
 }
 
 /*
