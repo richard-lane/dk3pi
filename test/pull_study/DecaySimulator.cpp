@@ -184,12 +184,29 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
         throw D2K3PiException();
     }
 
-    size_t numBins = timeBinLimits.size() - 1;
-    TH1D * RSHist  = new TH1D("Times", "Right Sign Decay Times;Time/ns;Counts", numBins, timeBinLimits.data());
-    TH1D * WSHist  = new TH1D("Times", "Wrong Sign Decay Times;Time/ns;Counts", numBins, timeBinLimits.data());
+    // Convert decay times to picoseconds
+    std::vector<double> rsTimesPs(RSDecayTimes.size());
+    std::vector<double> wsTimesPs(WSDecayTimes.size());
+    std::vector<double> binLimitsPs(timeBinLimits.size());
+    std::transform(RSDecayTimes.begin(),
+                   RSDecayTimes.end(),
+                   rsTimesPs.begin(),
+                   std::bind(std::multiplies<double>(), std::placeholders::_1, 1000));
+    std::transform(WSDecayTimes.begin(),
+                   WSDecayTimes.end(),
+                   wsTimesPs.begin(),
+                   std::bind(std::multiplies<double>(), std::placeholders::_1, 1000));
+    std::transform(timeBinLimits.begin(),
+                   timeBinLimits.end(),
+                   binLimitsPs.begin(),
+                   std::bind(std::multiplies<double>(), std::placeholders::_1, 1000));
 
-    RSHist->FillN(RSDecayTimes.size(), RSDecayTimes.data(), nullptr);
-    WSHist->FillN(WSDecayTimes.size(), WSDecayTimes.data(), nullptr);
+    size_t numBins = timeBinLimits.size() - 1;
+    TH1D * RSHist  = new TH1D("Times", "Favoured Decay Times;Time/ps;Counts", numBins, binLimitsPs.data());
+    TH1D * WSHist  = new TH1D("Times", "Suppressed Decay Times;Time/ps;Counts", numBins, binLimitsPs.data());
+
+    RSHist->FillN(rsTimesPs.size(), rsTimesPs.data(), nullptr);
+    WSHist->FillN(wsTimesPs.size(), wsTimesPs.data(), nullptr);
     RSHist->SetStats(false);
     WSHist->SetStats(false);
 
