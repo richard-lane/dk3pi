@@ -35,7 +35,7 @@ SimulatedDecays::SimulatedDecays(const std::function<double(void)> &  generateTi
     _dcsRate = dcsRate;
 
     // Check that our generating pdf is normalised correctly
-    if (std::abs(util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) - 1.0) > DBL_EPSILON) {
+    if (std::abs(util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) - 1.0) > 10*DBL_EPSILON) {
         std::cerr << "generating pdf not normalised; integral between " << _minTime << " and " << _maxTime
                   << " evaluates to " << util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) << std::endl;
         throw D2K3PiException();

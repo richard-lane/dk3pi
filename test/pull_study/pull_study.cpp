@@ -56,7 +56,7 @@ std::vector<std::vector<double>> generateXYvals(const std::shared_ptr<std::mt199
 void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 {
     // Choose parameters to use when simulating
-    double width               = 2439.0;
+    double width               = 2.4390;
     double maxTime             = 10 / width;
     size_t numBins             = 25;
     double efficiencyTimescale = 1 / width;
@@ -168,8 +168,8 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         double deltaChiSqZ = chiSqFixedZ - MyFitter.fitParams.fitStatistic;
         zCoverage[i]       = std::sqrt(std::fabs(deltaChiSqZ));
 
-        // std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
-        // plotFit(expectedFitParams, MyFitter, maxTime, i);
+        std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
+        plotFit(expectedFitParams, MyFitter, maxTime, i);
 
         // Store parameter and chi squared
         reZPull[i] = (MyFitter.fitParams.fitParams[4] - phaseSpaceParams.z_re) / MyFitter.fitParams.fitParamErrors[4];
