@@ -190,6 +190,8 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
 
     RSHist->FillN(RSDecayTimes.size(), RSDecayTimes.data(), nullptr);
     WSHist->FillN(WSDecayTimes.size(), WSDecayTimes.data(), nullptr);
+    RSHist->SetStats(false);
+    WSHist->SetStats(false);
 
     util::saveObjectToFile(RSHist, "RSHist.png");
     util::saveObjectToFile(WSHist, "WSHist.png");
