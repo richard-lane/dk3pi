@@ -17,6 +17,11 @@
 
 #include <boost/progress.hpp>
 
+/*
+ * Plot a fit
+ *
+ * This should be two functions
+ */
 void plotFit(std::vector<double>&  expectedFitParams,
              const PhysicalFitter& MyFitter,
              const double          maxTime,
@@ -41,12 +46,11 @@ void plotFit(std::vector<double>&  expectedFitParams,
             legend);
         delete trueFit;
     } else {
-        util::saveObjectsToFile<TGraph>(
-            std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get()},
-            std::vector<std::string>{"AP", "SAME"},
-            std::vector<std::string>{"Data", "best fit"},
-            std::string{"fit" + std::to_string(i) + ".pdf"},
-            legend);
+        util::saveObjectsToFile<TGraph>(std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get()},
+                                        std::vector<std::string>{"AP", "SAME"},
+                                        std::vector<std::string>{"Data", "best fit"},
+                                        std::string{"fit" + std::to_string(i) + ".pdf"},
+                                        legend);
     }
 }
 
