@@ -83,6 +83,8 @@ class SimulatedDecays
 
     /*
      * Plot histograms of the number of decay rates in each time bin
+     *
+     * Labels the time axis in picoseconds
      */
     void plotRates(const std::vector<double> &binLimits);
 

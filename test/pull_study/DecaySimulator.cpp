@@ -35,7 +35,7 @@ SimulatedDecays::SimulatedDecays(const std::function<double(void)> &  generateTi
     _dcsRate = dcsRate;
 
     // Check that our generating pdf is normalised correctly
-    if (std::abs(util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) - 1.0) > 10*DBL_EPSILON) {
+    if (std::abs(util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) - 1.0) > 10 * DBL_EPSILON) {
         std::cerr << "generating pdf not normalised; integral between " << _minTime << " and " << _maxTime
                   << " evaluates to " << util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) << std::endl;
         throw D2K3PiException();
@@ -184,29 +184,12 @@ void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
         throw D2K3PiException();
     }
 
-    // Convert decay times to picoseconds
-    std::vector<double> rsTimesPs(RSDecayTimes.size());
-    std::vector<double> wsTimesPs(WSDecayTimes.size());
-    std::vector<double> binLimitsPs(timeBinLimits.size());
-    std::transform(RSDecayTimes.begin(),
-                   RSDecayTimes.end(),
-                   rsTimesPs.begin(),
-                   std::bind(std::multiplies<double>(), std::placeholders::_1, 1000));
-    std::transform(WSDecayTimes.begin(),
-                   WSDecayTimes.end(),
-                   wsTimesPs.begin(),
-                   std::bind(std::multiplies<double>(), std::placeholders::_1, 1000));
-    std::transform(timeBinLimits.begin(),
-                   timeBinLimits.end(),
-                   binLimitsPs.begin(),
-                   std::bind(std::multiplies<double>(), std::placeholders::_1, 1000));
-
     size_t numBins = timeBinLimits.size() - 1;
-    TH1D * RSHist  = new TH1D("Times", "Favoured Decay Times;Time/ps;Counts", numBins, binLimitsPs.data());
-    TH1D * WSHist  = new TH1D("Times", "Suppressed Decay Times;Time/ps;Counts", numBins, binLimitsPs.data());
+    TH1D * RSHist  = new TH1D("Times", "Favoured Decay Times;Time/ps;Counts", numBins, timeBinLimits.data());
+    TH1D * WSHist  = new TH1D("Times", "Suppressed Decay Times;Time/ps;Counts", numBins, timeBinLimits.data());
 
-    RSHist->FillN(rsTimesPs.size(), rsTimesPs.data(), nullptr);
-    WSHist->FillN(wsTimesPs.size(), wsTimesPs.data(), nullptr);
+    RSHist->FillN(RSDecayTimes.size(), RSDecayTimes.data(), nullptr);
+    WSHist->FillN(WSDecayTimes.size(), WSDecayTimes.data(), nullptr);
     RSHist->SetStats(false);
     WSHist->SetStats(false);
 

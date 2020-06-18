@@ -124,7 +124,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         // Simulate them
         MyDecays.findCfDecayTimes(numCfEvents);
         MyDecays.findDcsDecayTimes(numDcsEvents);
-        // MyDecays.plotRates(binLimits);
+        MyDecays.plotRates(binLimits);
 
         // Time binning
         std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, binLimits);
