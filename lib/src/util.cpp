@@ -79,6 +79,7 @@ void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
                                   legendParams.y2,
                                   legendParams.header.c_str(),
                                   legendParams.options.c_str());
+    legend->SetTextSize(0.03);
 
     for (size_t i = 0; i < numObjects; ++i) {
         T *myObject = (T *)myObjects[i];

@@ -168,8 +168,8 @@ void test_param_scan(void)
     const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.9, .y2 = 0.7, .header = ""};
     util::saveObjectsToFile<TGraph>(std::vector<TObject*>{Graph, expectedChiSq},
                                     std::vector<std::string>{"AP", "CSAME"},
-                                    std::vector<std::string>{"Chisq scan", "expected with symmetric errors"},
-                                    "rezScan.png",
+                                    std::vector<std::string>{"Chisq scan", "symmetric errors"},
+                                    "rezScan.pdf",
                                     legend);
     delete Graph;
     delete expectedChiSq;
