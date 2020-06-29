@@ -27,3 +27,4 @@
 #include "test_pull_study.cpp"
 #include "test_simulator.cpp"
 #include "test_fitter_utils.cpp"
+#include "efficiency/test_amplitude.cpp"

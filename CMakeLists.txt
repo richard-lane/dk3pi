@@ -21,9 +21,12 @@ include_directories(${Boost_INCLUDE_DIRS})
 # Some standard flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat-security -Werror -O3 -g")
 
-# Add our core library
+# Add our fitter library
 # This defines a static library D2K3Pi
 add_subdirectory("${CMAKE_SOURCE_DIR}/lib")
+
+# Add also an efficiency library
+add_subdirectory("${CMAKE_SOURCE_DIR}/efficiency")
 
 # Debug
 set(CMAKE_BUILD_TYPE Debug)
