@@ -35,7 +35,7 @@ struct InvalidBranchesException : public std::exception {
 };
 
 /*
- * Class representing the data stored in a ROOT file for a series of D->k3pi decays
+ * Class representing the data stored in a ROOT file for a series of D->k3pi decays which should really be a function
  *
  */
 class ReadRoot
