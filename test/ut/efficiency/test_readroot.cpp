@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(test_branch_not_found)
     // Unit test probably shouldn't allocate memory but meh
     TFile* cfFile = new TFile((currentDir / rootFile).string().c_str());
 
-    std::vector<std::string> realBranchNames = {"_1_K~", "_2_pi#", "_3_pi#", "_4_pi~"};
+    std::vector<std::string> realBranchNames = {"_1_K#", "_2_pi~", "_3_pi~", "_4_pi#"};
     BOOST_CHECK_NO_THROW(ReadRoot(cfFile, "DalitzEventList", realBranchNames));
 
     std::vector<std::string> fakeBranchNames = {"greg", "bob", "fred", "laura"};
