@@ -7,7 +7,7 @@ include_directories("${CMAKE_SOURCE_DIR}/efficiency/include/")
 
 find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem system)
 
-add_executable(ut.exe ut.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/PullStudyHelpers.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp ${CMAKE_SOURCE_DIR}/efficiency/lib/amplitudes.cpp)
-target_link_libraries(ut.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} dl)
+add_executable(ut.exe ut.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/PullStudyHelpers.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
+target_link_libraries(ut.exe D2K3Pi efficiency ${ROOT_LIBRARIES} ${Boost_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} dl)
 
 add_test(NAME ut COMMAND ut.exe)

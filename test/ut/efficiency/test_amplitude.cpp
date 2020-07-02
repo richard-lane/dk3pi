@@ -17,14 +17,11 @@ BOOST_AUTO_TEST_CASE(test_amplitude_fcn_not_found)
     boost::filesystem::path libraryPath("../../../AmpGenTools/amplitude_models/cf.so");
     boost::filesystem::path library = currentDir / libraryPath;
 
-    std::string             fake_fcn = "NOT_REAL_FUNCTION";
-    std::string             real_fcn = "AMP";
+    std::string fake_fcn = "NOT_REAL_FUNCTION";
+    std::string real_fcn = "AMP";
 
     BOOST_CHECK_NO_THROW(readFromSharedLib(library.string(), real_fcn));
     BOOST_CHECK_THROW(readFromSharedLib(library.string(), fake_fcn), FunctionNotFoundException);
 }
-
-#include <stdio.h>
-#include <vector>
 
 #endif // TEST_AMPLITUDE_CPP

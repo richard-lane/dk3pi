@@ -1,5 +1,6 @@
 add_library(efficiency STATIC
   lib/amplitudes.cpp
+  lib/ReadRoot.cpp
   )
 
 set(CMAKE_BUILD_TYPE Debug)
