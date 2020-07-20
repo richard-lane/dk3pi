@@ -21,6 +21,7 @@
     }
 #endif // CHECK_CLOSE_COLLECTIONS
 
+// I know
 #include "test_util.cpp"
 #include "test_ratio_calculator.cpp"
 #include "test_fitter.cpp"
@@ -29,3 +30,6 @@
 #include "test_fitter_utils.cpp"
 #include "efficiency/test_amplitude.cpp"
 #include "efficiency/test_readroot.cpp"
+#include "efficiency/test_z.cpp"
+#include "efficiency/test_efficiency_util.cpp"
+#include "efficiency/test_flat_phsp.cpp"

@@ -2,6 +2,7 @@
 include_directories("${CMAKE_SOURCE_DIR}/lib/")
 include_directories("${CMAKE_SOURCE_DIR}/src/")
 include_directories("${CMAKE_SOURCE_DIR}/lib/fitter/")
+include_directories("${CMAKE_SOURCE_DIR}/efficiency/include/")
 
 find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem system)
 
@@ -28,3 +29,8 @@ target_link_libraries(test_fitter.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES
 # Pull study generating counts by integrating the expected rates
 add_executable(test_fitter_calculator.exe pull_calculator_and_fitter.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/PullStudyHelpers.cpp testutil.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
 target_link_libraries(test_fitter_calculator.exe D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
+
+# Dalitz plot
+add_executable(dalitz.exe dalitz.cpp)
+target_link_libraries(dalitz.exe efficiency D2K3Pi ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
+target_include_directories(dalitz.exe PUBLIC "${CMAKE_SOURCE_DIR}/lib/include")

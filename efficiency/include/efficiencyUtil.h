@@ -6,7 +6,21 @@
 #ifndef EFFICIENCY_UTIL_H
 #define EFFICIENCY_UTIL_H
 
-#include <boost/filesystem.hpp>
+#include <random>
+
+#define D_MASS_GEV (1.86483)
+#define K_MASS_GEV (0.493677)
+#define PI_MASS_GEV (0.139570)
+
+/*
+ * Bug in TGenPhaseSpace hit
+ */
+struct TGenPhspBug : public std::exception {
+    TGenPhspBug(const std::string& msg) : msg(msg) { ; }
+
+    const char*       what() const throw() { return msg.c_str(); }
+    const std::string msg;
+};
 
 /*
  * Particle decay parameters
@@ -38,5 +52,10 @@ typedef struct dDecayParameters {
      */
     bool kPlus{true};
 } dDecay_t;
+
+/*
+ * Find the invariant mass of a system of particles
+ */
+double invariantMass(const std::vector<kinematicParams_t>& systemKinematics);
 
 #endif // EFFICIENCY_UTIL_H

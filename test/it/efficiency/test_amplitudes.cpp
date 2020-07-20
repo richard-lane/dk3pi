@@ -1,4 +1,5 @@
 #define BOOST_TEST_DYN_LINK
+#include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <TFile.h>

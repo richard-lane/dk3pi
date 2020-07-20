@@ -1,6 +1,9 @@
 add_library(efficiency STATIC
   lib/amplitudes.cpp
   lib/ReadRoot.cpp
+  lib/findZ.cpp
+  lib/flatPhsp.cpp
+  lib/efficiencyUtil.cpp
   )
 
 set(CMAKE_BUILD_TYPE Debug)
