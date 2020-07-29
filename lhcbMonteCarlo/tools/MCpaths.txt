@@ -1,0 +1,4 @@
+Locations of relevant MC data in the bookkeeping
+
+/MC/2016/Beam6500GeV-2016-MagDown-Nu1.6-25ns-Pythia8/Sim09c/Trig0x6138160F/Reco16/Turbo03/Stripping28r1NoPrescalingFlagged/27265000/ALLSTREAMS.DST
+

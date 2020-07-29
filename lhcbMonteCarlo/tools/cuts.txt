@@ -1,0 +1,15 @@
+Cuts
+====
+
+M(D0) cut:
+Force the right D0 mass
+    1840.83 < Dst_ReFit_D0_M < 1888.83 MeV
+
+DeltaM cut:
+Force the right soft pion mass
+    139.3 < Delta_M = Dst_ReFit_M - Dst_ReFit_D0_M < 152 MeV
+
+D0 Impact Parameter cut:
+Put the D0 in the right place
+    D0_IPCHI2_OWNPV < 9
+
