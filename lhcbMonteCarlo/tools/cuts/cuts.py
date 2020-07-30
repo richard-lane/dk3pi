@@ -38,6 +38,24 @@ def d_impact_param_cut(ip_chisq):
     return ip_chisq < 9
 
 
+def perform_cuts(data, branches, cuts):
+    """
+    Perform the specified cuts on a dataset
+
+    Data should be a dict of {branchname: data}
+
+    branches should be an iterable of tuples that the cuts apply to
+
+    e.g. to perform a cut that needs to know about Dstar and D0 mass, call something
+    like perform_cuts(data, [("Dstar_M", "D0_M")], [my_cut_fcn])
+
+    """
+    if len(branches) != len(cuts):
+        raise Exception("Num branches != num cuts provided")
+
+    # Delete data from our datasets according to our cuts
+
+
 def read_root_branches(input_file, decay_tree, branches):
     """
     Read the provided ROOT branches into numpy arrays or something
@@ -46,7 +64,15 @@ def read_root_branches(input_file, decay_tree, branches):
 
     """
     root_file = uproot4.open(input_file)
-    return root_file[decay_tree].arrays(branches, library="np")
+    data = root_file[decay_tree].arrays(branches, library="np")
+
+    # Check that all our branches contain the same amount of data
+    # This is the only way for our dataset to makes sense
+    for key in data:
+        if len(data[key]) != len(data[branches[0]]):
+            raise Exception("data are not all the same length")
+
+    return data
 
 
 def main(args):
@@ -90,8 +116,10 @@ def main(args):
     data = read_root_branches(
         args.inFile, args.decayTree, default_branches + args.branches
     )
+    print(data)
 
     # Perform cuts
+    cuts = [d_mass_cut, delta_m_cut, d_impact_param_cut]
     # Read the data in to a new ROOT file
 
 
