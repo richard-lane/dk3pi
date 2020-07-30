@@ -51,6 +51,10 @@ def main(args):
     # Set of all our branches
     branches = default_branches.union(args.branches)
 
+    # Read the required branches into numpy arrays or something
+    # Perform cuts
+    # Read the data in to a new ROOT file
+
 
 def cli():
     """
