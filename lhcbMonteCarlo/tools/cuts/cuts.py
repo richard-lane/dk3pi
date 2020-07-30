@@ -8,13 +8,21 @@ import argparse
 import uproot4
 
 
+def read_root_branches(input_file, decay_tree, branches):
+    """
+    Read the provided ROOT branches into numpy arrays or something
+
+    Returns a dict of arrays i guess
+
+    """
+    root_file = uproot4.open(input_file)
+    return root_file[decay_tree].arrays(branches, library="np")
+
+
 def main(args):
     # Locate the branches we actually might want
     # It's possible I have the 'wrong' branches here, but I'm looking for kinematic branches + branches I need to make cuts
-    # Read these branches into a new ROOT file
-    # Perform cuts
-    # Write to a new file
-    default_branches = {
+    default_branches = [
         "Dstar_M",
         "D0_IPCHI2_OWNPV",
         "D0_PE",
@@ -33,25 +41,26 @@ def main(args):
         "pi1plus_PZ",
         "pi2plus_PE",
         "pi2plus_PX",
-        "pi2Plus_PY",
-        "pi2Plus_PZ",
+        "pi2plus_PY",
+        "pi2plus_PZ",
         "pi3minus_PE",
         "pi3minus_PX",
         "pi3minus_PY",
         "pi3minus_PZ",
-    }
+    ]
 
-    # If we just want to show the default branches, then print and exit
+    # If we just want to show the default branches, print and exit
     if args.show_default_branches:
         print("Default branches to read:")
         for branch in default_branches:
             print("\t", branch)
         return
 
-    # Set of all our branches
-    branches = default_branches.union(args.branches)
-
     # Read the required branches into numpy arrays or something
+    data = read_root_branches(
+        args.inFile, args.decayTree, default_branches + args.branches
+    )
+
     # Perform cuts
     # Read the data in to a new ROOT file
 
@@ -73,14 +82,19 @@ def cli():
         action="store_true",
         help="Print the list of default branches and exit",
     )
-
-    parser.add_argument("--outFile", help="File to write to, defaults to 'out.root'", default="out.root")
-
+    parser.add_argument(
+        "--outFile", help="File to write to, defaults to 'out.root'", default="out.root"
+    )
     parser.add_argument(
         "--branches",
         help="Additional branches to read. Any arguments provided are appended to the list of default branches",
         nargs="*",
-        default={},
+        default=[],
+    )
+    parser.add_argument(
+        "--decayTree",
+        help="Decay Tree object to read, defaults to TupleDstToD0pi_D0ToKpipipi/DecayTree",
+        default="TupleDstToD0pi_D0ToKpipipi/DecayTree",
     )
 
     return parser.parse_args()
