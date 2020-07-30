@@ -48,6 +48,9 @@ def main(args):
             print("\t", branch)
         return
 
+    # Set of all our branches
+    branches = default_branches.union(args.branches)
+
 
 def cli():
     """
@@ -67,12 +70,13 @@ def cli():
         help="Print the list of default branches and exit",
     )
 
-    parser.add_argument("--outFile", help="File to write to", default="out.root")
+    parser.add_argument("--outFile", help="File to write to, defaults to 'out.root'", default="out.root")
 
     parser.add_argument(
         "--branches",
         help="Additional branches to read. Any arguments provided are appended to the list of default branches",
         nargs="*",
+        default={},
     )
 
     return parser.parse_args()
