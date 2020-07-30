@@ -5,37 +5,41 @@ Implments the cuts in cuts.txt; uses uproot
 
 """
 import argparse
+import numpy as np
 import uproot4
 
 
-def d_mass_cut(d_mass):
+def d_mass_cut(d_masses, i):
     """
     Returns bool for our D mass cut
+    True if d_masses[i] is in the allowed range
 
-    d_mass in MeV
+    d_masses in MeV
 
     """
-    return 1840.83 < d_mass < 1888.83
+    return 1840.83 < d_masses[i] < 1888.83
 
 
-def delta_m_cut(d_star_mass, d_mass):
+def delta_m_cut(d_star_masses, d_masses, i):
     """
     Returns bool for our DeltaM cut
+    True if deltam[i] is in the allowed range
 
     masses in MeV
 
     """
-    return 139.3 < d_star_mass - d_mass < 152
+    return 139.3 < d_star_masses[i] - d_masses[i] < 152
 
 
-def d_impact_param_cut(ip_chisq):
+def d_impact_param_cut(ip_chisqs, i):
     """
     Returns bool for impact parameter cut
+    True if our chisq is below the allowed value
 
     Takes in D0_IPCHI2_OWNPV
 
     """
-    return ip_chisq < 9
+    return ip_chisqs[i] < 9
 
 
 def perform_cuts(data, branches, cuts):
@@ -46,14 +50,45 @@ def perform_cuts(data, branches, cuts):
 
     branches should be an iterable of tuples that the cuts apply to
 
-    e.g. to perform a cut that needs to know about Dstar and D0 mass, call something
-    like perform_cuts(data, [("Dstar_M", "D0_M")], [my_cut_fcn])
+    e.g. to perform a cut that needs to know about Dstar and D0 mass, call something like
+        perform_cuts(data, [("Dstar_M", "D0_M")], [my_cut_fcn])
 
     """
     if len(branches) != len(cuts):
         raise Exception("Num branches != num cuts provided")
 
+    print(f"Performing cuts using variables:")
+    for branch_tuple in branches:
+        print("\t" + f"{branch_tuple}")
+
     # Delete data from our datasets according to our cuts
+    num_datapoints = len(data[branches[0][0]])
+    num_cuts = len(cuts)
+
+    # Unnecessary copy but shouldn't make too much difference
+    branch_data = [
+        [data[branch] for branch in branch_tuple] for branch_tuple in branches
+    ]
+
+    # This isn't optimised
+    # Need to have an ordered list of our indices, as we will want to remove in the order highest->lowest when it comes to actually performing the cuts
+    indices_to_remove = []
+    for i in range(num_datapoints):
+        for cut in range(num_cuts):
+            if i not in indices_to_remove:
+                # Could probably use np.ravel
+                if not cuts[cut](*(branch_data[cut]), i):
+                    indices_to_remove.append(i)
+
+    print(f"Removing {len(indices_to_remove)} events of {num_datapoints}...")
+
+    for i in data:
+        # Iterate through our indices in descending order so we don't accidentally skip any values
+        for index in np.flip(indices_to_remove):
+            # This is likely HUGELY slow, since numpy arrays are immutable and so we copy the entire array after each delete
+            data[i] = np.delete(data[i], index)
+
+    print(f"After cuts: {len(data[branches[0][0]])} data points")
 
 
 def read_root_branches(input_file, decay_tree, branches):
@@ -116,10 +151,12 @@ def main(args):
     data = read_root_branches(
         args.inFile, args.decayTree, default_branches + args.branches
     )
-    print(data)
 
     # Perform cuts
     cuts = [d_mass_cut, delta_m_cut, d_impact_param_cut]
+    branches = [("D0_M",), ("Dstar_M", "D0_M"), ("D0_IPCHI2_OWNPV",)]
+    perform_cuts(data, branches, cuts)
+
     # Read the data in to a new ROOT file
 
 
