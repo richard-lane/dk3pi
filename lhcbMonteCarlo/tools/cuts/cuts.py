@@ -8,6 +8,36 @@ import argparse
 import uproot4
 
 
+def d_mass_cut(d_mass):
+    """
+    Returns bool for our D mass cut
+
+    d_mass in MeV
+
+    """
+    return 1840.83 < d_mass < 1888.83
+
+
+def delta_m_cut(d_star_mass, d_mass):
+    """
+    Returns bool for our DeltaM cut
+
+    masses in MeV
+
+    """
+    return 139.3 < d_star_mass - d_mass < 152
+
+
+def d_impact_param_cut(ip_chisq):
+    """
+    Returns bool for impact parameter cut
+
+    Takes in D0_IPCHI2_OWNPV
+
+    """
+    return ip_chisq < 9
+
+
 def read_root_branches(input_file, decay_tree, branches):
     """
     Read the provided ROOT branches into numpy arrays or something
