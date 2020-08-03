@@ -20,7 +20,7 @@ void dalitzPlot(const std::string&               rootFilePath,
                 const std::vector<std::string>&  branchNames,
                 const std::vector<std::string>&  momentumPostfixes,
                 const std::string&               plotPath,
-                const std::pair<double, double>& axisLimits = std::make_pair<double, double>(500., 1600.))
+                const std::pair<double, double>& axisLimits = std::make_pair<double, double>(500., 1800.))
 {
     // Read the relevant data from the ROOT file
     std::unique_ptr<TFile> tFile(new TFile(rootFilePath.c_str()));
@@ -51,13 +51,7 @@ void dalitzPlot(const std::string&               rootFilePath,
 
 int main()
 {
-    std::string              mcRootFile("../../coolProjectFiles/bigRootFile.root");
-    std::string              mcTreeName          = "TupleDstToD0pi_D0ToKpipipi/DecayTree";
-    std::vector<std::string> mcBranchNames       = {"Kminus", "pi1plus", "pi2plus", "pi3minus"};
-    std::vector<std::string> mcMomentumPostfixes = {"_PX", "_PY", "_PZ", "_PE"};
-
-    dalitzPlot(mcRootFile, mcTreeName, mcBranchNames, mcMomentumPostfixes, "mc.png");
-
+    // AmpGen
     std::string              ampgenRootFile("../../AmpGen/binning/Mixed.root");
     std::string              ampgenTreeName          = "DalitzEventList";
     std::vector<std::string> ampgenBranchNames       = {"_1_K~", "_2_pi#", "_3_pi#", "_4_pi~"};
@@ -68,7 +62,23 @@ int main()
                ampgenBranchNames,
                ampgenMomentumPostfixes,
                "ampgen.png",
-               std::make_pair<double, double>(0.5, 1.6));
+               std::make_pair<double, double>(0.5, 1.8));
+
+    // LHCb Monte Carlo
+    std::string              mcRootFile("../../coolProjectFiles/bigRootFile.root");
+    std::string              mcTreeName          = "TupleDstToD0pi_D0ToKpipipi/DecayTree";
+    std::vector<std::string> mcBranchNames       = {"Kminus", "pi1plus", "pi2plus", "pi3minus"};
+    std::vector<std::string> mcMomentumPostfixes = {"_PX", "_PY", "_PZ", "_PE"};
+
+    dalitzPlot(mcRootFile, mcTreeName, mcBranchNames, mcMomentumPostfixes, "mc.png");
+
+    // Real data?
+    std::string              realRootFile("../../coolProjectFiles/00083875_00000123_1.charm_d02hhhh_dvntuple.root");
+    std::string              realTreeName          = "Hlt2Dstp2D0Pip_D02KpPimPimPip_Tuple/DecayTree";
+    std::vector<std::string> realBranchNames       = {"D0_P0", "D0_P1", "D0_P2", "D0_P3"};
+    std::vector<std::string> realMomentumPostfixes = {"_PX", "_PY", "_PZ", "_PE"};
+
+    dalitzPlot(realRootFile, realTreeName, realBranchNames, realMomentumPostfixes, "real.png");
 
     return 0;
 }
