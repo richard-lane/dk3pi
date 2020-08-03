@@ -6,7 +6,7 @@ Implments the cuts in cuts.txt; uses uproot
 """
 import argparse
 import numpy as np
-import uproot4
+import pandas
 import uproot
 
 
@@ -116,11 +116,12 @@ def read_root_branches(input_file, decay_tree, branches):
     Returns a dict of arrays i guess
 
     """
-    root_file = uproot4.open(input_file)
-    data = root_file[decay_tree].arrays(branches, library="np")
+    root_file = uproot.open(input_file)
+    data = root_file[decay_tree].pandas.df(branches)
 
     # Check that all our branches contain the same amount of data
     # This is the only way for our dataset to makes sense
+    # This might be superfluous now that I'm using pandas
     for key in data:
         if len(data[key]) != len(data[branches[0]]):
             raise Exception("data are not all the same length")
