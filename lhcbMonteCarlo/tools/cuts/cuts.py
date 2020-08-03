@@ -7,6 +7,7 @@ Implments the cuts in cuts.txt; uses uproot
 import argparse
 import numpy as np
 import uproot4
+import uproot
 
 
 def d_mass_cut(d_masses, i):
@@ -40,6 +41,23 @@ def d_impact_param_cut(ip_chisqs, i):
 
     """
     return ip_chisqs[i] < 9
+
+
+def write_root_file(data, filename, tree_name):
+    """
+    Write a python dict of data to a ROOT file
+
+    """
+    # Create a dict of {branchname : type} that we use to declare our tree
+    data_types = {key: type(data[key][0]) for key in data}
+    tree = uproot.newtree(data_types)
+
+    # Declare the ROOT file
+    root_file = uproot.recreate(filename)
+    root_file[tree_name] = tree
+
+    # Fill tree
+    root_file[tree_name].extend(data)
 
 
 def perform_cuts(data, branches, cuts):
@@ -158,6 +176,7 @@ def main(args):
     perform_cuts(data, branches, cuts)
 
     # Read the data in to a new ROOT file
+    write_root_file(data, "tmp.root", "my_tree")
 
 
 def cli():
