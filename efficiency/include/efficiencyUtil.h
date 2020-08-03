@@ -19,7 +19,8 @@ struct TGenPhspBug : public std::exception {
     TGenPhspBug(const std::string& msg) : msg(msg) { ; }
 
     const char*       what() const throw() { return msg.c_str(); }
-    const std::string msg;
+    const std::string msg; // Apparently it's bad to embed a data whose constructor might throw in an exception class...
+                           // but i don't care
 };
 
 /*

@@ -7,9 +7,17 @@
 #include <TFile.h>
 #include <TTree.h>
 
-ReadRoot::ReadRoot(TFile *myTFile, const std::string &treeName, const std::vector<std::string> &branchNames)
-    : _file(myTFile)
+ReadRoot::ReadRoot(TFile *                         myTFile,
+                   const std::string &             treeName,
+                   const std::vector<std::string> &branchNames,
+                   const std::vector<std::string> &momentumPostfixes)
+    : _file(myTFile), _momentumPostfixes(momentumPostfixes)
 {
+    // Check that our ROOT file exists
+    if (!myTFile || myTFile->IsZombie()) {
+        throw InvalidRootFile();
+    }
+
     // Check that we have been given 4 branch names
     if (branchNames.size() != 4) {
         throw InvalidBranchesException(branchNames.size());
@@ -23,6 +31,9 @@ ReadRoot::ReadRoot(TFile *myTFile, const std::string &treeName, const std::vecto
 
     // Allocate memory to our tree (i assume)
     _file->GetObject(treeName.c_str(), _tree);
+    if (!_tree) {
+        throw InvalidTree(treeName);
+    }
     _numEvents = _tree->GetEntries();
 
     // Initialise vector of D->K3pi events to the right length
@@ -70,14 +81,14 @@ ReadRoot::ReadRoot(TFile *myTFile, const std::string &treeName, const std::vecto
 
 void ReadRoot::_setBranchAddresses(const std::string &branchPrefix, std::vector<double> &buffer)
 {
-    // Check that the branch <branchPrefix>_E exists
-    // If it does, we can be reasonably confident that this is the right branch name
-    if (!_tree->GetBranch((branchPrefix + "_E").c_str())) {
-        throw BranchNotFoundException(branchPrefix + "_E");
-    }
+    // This HAS to be 4 as there are only 4 elements in a momentum 4-vector
+    for (size_t i = 0; i < 4; ++i) {
+        // Check that our branch exists
+        if (!_tree->GetBranch((branchPrefix + _momentumPostfixes[i]).c_str())) {
+            throw BranchNotFoundException(branchPrefix + _momentumPostfixes[i]);
+        }
 
-    _tree->SetBranchAddress((branchPrefix + "_Px").c_str(), &buffer[0]);
-    _tree->SetBranchAddress((branchPrefix + "_Py").c_str(), &buffer[1]);
-    _tree->SetBranchAddress((branchPrefix + "_Pz").c_str(), &buffer[2]);
-    _tree->SetBranchAddress((branchPrefix + "_E").c_str(), &buffer[3]);
+        // Make our TBranch point at the right element in the buffer
+        _tree->SetBranchAddress((branchPrefix + _momentumPostfixes[i]).c_str(), &buffer[i]);
+    }
 }
