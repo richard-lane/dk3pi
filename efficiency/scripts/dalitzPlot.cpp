@@ -3,6 +3,7 @@
  *
  */
 #include <iostream>
+#include <utility>
 
 #include <TFile.h>
 #include <TH2D.h>
@@ -11,16 +12,18 @@
 #include "ReadRoot.h"
 #include "util.h"
 
-int main()
+/*
+ * Plot a Dalitz projection of a D->K3pi ROOT file
+ */
+void dalitzPlot(const std::string&               rootFilePath,
+                const std::string&               treeName,
+                const std::vector<std::string>&  branchNames,
+                const std::vector<std::string>&  momentumPostfixes,
+                const std::string&               plotPath,
+                const std::pair<double, double>& axisLimits = std::make_pair<double, double>(500., 1600.))
 {
-    boost::filesystem::path  currentDir = boost::filesystem::path(__FILE__).parent_path();
-    boost::filesystem::path  rootFile("../../coolProjectFiles/bigRootFile.root");
-    std::string              treeName          = "TupleDstToD0pi_D0ToKpipipi/DecayTree";
-    std::vector<std::string> branchNames       = {"Kminus", "pi1plus", "pi2plus", "pi3minus"};
-    std::vector<std::string> momentumPostfixes = {"_PX", "_PY", "_PZ", "_PE"};
-
     // Read the relevant data from the ROOT file
-    std::unique_ptr<TFile> tFile(new TFile(rootFile.string().c_str()));
+    std::unique_ptr<TFile> tFile(new TFile(rootFilePath.c_str()));
     ReadRoot               RootFile(tFile.get(), treeName, branchNames, momentumPostfixes);
 
     // Calculate invariant masses from these events
@@ -35,15 +38,37 @@ int main()
     }
 
     // Plot them on a stupid, annoying, impossible ROOT histogram
-    // Create and fill histograms for these events (Dalitz plots)
     size_t                numBins = 100;
-    double                min     = 500;
-    double                max     = 1800;
-    std::unique_ptr<TH2D> m12m23Hist(new TH2D("m12", "m12 vs m23", numBins, min, max, numBins, min, max));
+    double                min     = axisLimits.first;
+    double                max     = axisLimits.second;
+    std::unique_ptr<TH2D> m12m23Hist(new TH2D(
+        "dalitz", std::string(rootFilePath + " m12 vs m23;m12;m23").c_str(), numBins, min, max, numBins, min, max));
     m12m23Hist->FillN(numEvents, m12.data(), m13.data(), nullptr);
 
     //  Save Dalitz plots to file
-    util::saveObjectToFile(m12m23Hist.get(), "m12m23.png", "COLZ");
+    util::saveObjectToFile(m12m23Hist.get(), plotPath.c_str(), "COLZ");
+}
+
+int main()
+{
+    std::string              mcRootFile("../../coolProjectFiles/bigRootFile.root");
+    std::string              mcTreeName          = "TupleDstToD0pi_D0ToKpipipi/DecayTree";
+    std::vector<std::string> mcBranchNames       = {"Kminus", "pi1plus", "pi2plus", "pi3minus"};
+    std::vector<std::string> mcMomentumPostfixes = {"_PX", "_PY", "_PZ", "_PE"};
+
+    dalitzPlot(mcRootFile, mcTreeName, mcBranchNames, mcMomentumPostfixes, "mc.png");
+
+    std::string              ampgenRootFile("../../AmpGen/binning/Mixed.root");
+    std::string              ampgenTreeName          = "DalitzEventList";
+    std::vector<std::string> ampgenBranchNames       = {"_1_K~", "_2_pi#", "_3_pi#", "_4_pi~"};
+    std::vector<std::string> ampgenMomentumPostfixes = {"_Px", "_Py", "_Pz", "_E"};
+
+    dalitzPlot(ampgenRootFile,
+               ampgenTreeName,
+               ampgenBranchNames,
+               ampgenMomentumPostfixes,
+               "ampgen.png",
+               std::make_pair<double, double>(0.5, 1.6));
 
     return 0;
 }
