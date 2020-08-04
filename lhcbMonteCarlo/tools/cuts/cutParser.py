@@ -9,6 +9,18 @@ Assumes cut functions start cut*
 import argparse
 import importlib
 import inspect
+import uproot
+
+
+def read_root_branches(input_file, decay_tree, branches):
+    """
+    Read the provided ROOT branches into numpy arrays or something
+
+    Returns a dict of arrays i guess
+
+    """
+    root_file = uproot.open(input_file)
+    return root_file[decay_tree].arrays(branches, namedecode="utf-8")
 
 
 def cut_functions(cuts_lib):
@@ -44,7 +56,7 @@ def cli():
         "--outFile", help="File to write to, defaults to 'out.root'", default="out.root"
     )
     parser.add_argument(
-        "--decayTree",
+        "--decay_tree",
         help="Decay Tree object to read, defaults to TupleDstToD0pi_D0ToKpipipi/DecayTree for no reason",
         default="TupleDstToD0pi_D0ToKpipipi/DecayTree",
     )
@@ -54,7 +66,12 @@ def cli():
 
 def main(args):
     cuts_lib = importlib.import_module(args.cuts_module)
-    print(cut_functions(cuts_lib))
+    cut_fcns, cut_args = cut_functions(cuts_lib)
+
+    branches = cuts_lib.BRANCHES
+
+    data = read_root_branches(args.in_file, args.decay_tree, branches)
+    print(len(data["Dstar_M"]))
 
 
 if __name__ == "__main__":

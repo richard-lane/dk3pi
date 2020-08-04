@@ -1,3 +1,31 @@
+BRANCHES = [
+    "Dstar_M",
+    "D0_IPCHI2_OWNPV",
+    "D0_PE",
+    "D0_PX",
+    "D0_PY",
+    "D0_PZ",
+    "D0_M",
+    "D0_TAU",
+    "Kminus_PE",
+    "Kminus_PX",
+    "Kminus_PY",
+    "Kminus_PZ",
+    "pi1plus_PE",
+    "pi1plus_PX",
+    "pi1plus_PY",
+    "pi1plus_PZ",
+    "pi2plus_PE",
+    "pi2plus_PX",
+    "pi2plus_PY",
+    "pi2plus_PZ",
+    "pi3minus_PE",
+    "pi3minus_PX",
+    "pi3minus_PY",
+    "pi3minus_PZ",
+]
+
+
 def cut_d_mass(D0_M):
     """
     Returns bool for our D mass cut
