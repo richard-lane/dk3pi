@@ -3,9 +3,24 @@ Script for reading a module of cuts implemented in python and applying them to a
 
 Needs to import a module from the command line, find what cuts it contains and apply them to our dataset
 
+Assumes cut functions start cut*
+
 """
 import argparse
 import importlib
+
+
+def cut_functions(cuts_lib):
+    """
+    From our cuts module, identify the functions and arguments needed to perform cuts
+
+    Returns a tuple of cut functions and tuple of tuples of their arguments
+
+    """
+
+    # Find the functions in our module that start with 'cut'
+    cut_names = tuple(cut for cut in dir(cuts_lib) if cut.startswith("cut"))
+    pass
 
 
 def cli():
@@ -32,7 +47,8 @@ def cli():
 
 def main(args):
     cuts_lib = importlib.import_module(args.cuts_module)
-    cuts_lib.not_a_cut_function(2)
+    cut_functions(cuts_lib)
+    cuts_lib.uses_helper()
 
 
 if __name__ == "__main__":

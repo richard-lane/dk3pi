@@ -33,3 +33,11 @@ def cut_d_impact_param(D0_IPCHI2_OWNPV):
 
 def not_a_cut_function(f):
     assert False
+
+
+def uses_helper():
+    """
+    Check if this works
+
+    """
+    not_a_cut_function(2)
