@@ -36,7 +36,7 @@ def cut_functions(cuts_lib):
 
     # For these cuts, find the string representation of their arguments
     cut_args = tuple(
-        tuple(inspect.getargspec(getattr(cuts_lib, cut)).args) for cut in cut_names
+        tuple(inspect.getfullargspec(getattr(cuts_lib, cut)).args) for cut in cut_names
     )
 
     return cut_names, cut_args
