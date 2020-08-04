@@ -9,8 +9,27 @@ Assumes cut functions start cut*
 import argparse
 import importlib
 import inspect
-import uproot
 import numpy as np
+import uproot
+
+
+def write_root_file(data, filename, tree_name):
+    """
+    Write a python dict of data to a ROOT file
+
+    """
+    # Create a dict of {branchname : type} that we use to declare our tree
+    data_types = {key: type(data[key][0]) for key in data}
+    tree = uproot.newtree(data_types)
+
+    # Declare the ROOT file
+    print(f"Creating ROOT file '{filename}'")
+    root_file = uproot.recreate(filename)
+    root_file[tree_name] = tree
+
+    # Fill tree
+    print(f"Populating ROOT file with tree '{tree_name}'")
+    root_file[tree_name].extend(data)
 
 
 def perform_cuts(data, cut_branches, cuts):
@@ -95,26 +114,36 @@ def cli():
     parser.add_argument("in_file", help="ROOT file to read")
     parser.add_argument("cuts_module", help="Python module defining cuts")
     parser.add_argument(
-        "--outFile", help="File to write to, defaults to 'out.root'", default="out.root"
+        "--out_file",
+        help="File to write to, defaults to 'out.root'",
+        default="out.root",
     )
     parser.add_argument(
         "--decay_tree",
         help="Decay Tree object to read, defaults to TupleDstToD0pi_D0ToKpipipi/DecayTree for no reason",
         default="TupleDstToD0pi_D0ToKpipipi/DecayTree",
     )
+    parser.add_argument(
+        "--out_tree",
+        help="Tree to write to; Uproot does not currently support subdirectories so this can't be nested",
+        default="myTree",
+    )
 
     return parser.parse_args()
 
 
 def main(args):
+    # Find our cut functions and the arguments they take
     cuts_lib = importlib.import_module(args.cuts_module)
     cut_fcns, cut_args = cut_functions(cuts_lib)
 
+    # At the moment, need to tell the script what branches to write to our output file
     branches = cuts_lib.BRANCHES
-
     data = read_root_branches(args.in_file, args.decay_tree, branches)
 
+    # Perform the cuts and write to our output file
     perform_cuts(data, cut_args, cut_fcns)
+    write_root_file(data, args.out_file, args.out_tree)
 
 
 if __name__ == "__main__":

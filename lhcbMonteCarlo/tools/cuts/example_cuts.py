@@ -1,3 +1,4 @@
+# Tell our script which branches we want to keep
 BRANCHES = [
     "Dstar_M",
     "D0_IPCHI2_OWNPV",
