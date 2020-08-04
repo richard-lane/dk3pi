@@ -5,6 +5,7 @@ Needs to import a module from the command line, find what cuts it contains and a
 
 """
 import argparse
+import importlib
 
 
 def cli():
@@ -30,8 +31,8 @@ def cli():
 
 
 def main(args):
-    print(args.outFile)
-    pass
+    cuts_lib = importlib.import_module(args.cuts_module)
+    cuts_lib.not_a_cut_function(2)
 
 
 if __name__ == "__main__":
