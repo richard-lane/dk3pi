@@ -80,8 +80,14 @@ def read_root_branches(input_file, decay_tree, branches):
     Returns a dict of arrays i guess
 
     """
-    root_file = uproot.open(input_file)
-    return root_file[decay_tree].arrays(branches, namedecode="utf-8")
+    tree = uproot.open(input_file)[decay_tree]
+
+    # If branches not provided then just use all of them
+    read_branches = branches
+    if not branches:
+        read_branches = [branch.decode("utf-8") for branch in tree.allkeys()]
+
+    return tree.arrays(read_branches, namedecode="utf-8")
 
 
 def cut_functions(cuts_lib):
@@ -137,8 +143,12 @@ def main(args):
     cuts_lib = importlib.import_module(args.cuts_module)
     cut_fcns, cut_args = cut_functions(cuts_lib)
 
-    # At the moment, need to tell the script what branches to write to our output file
-    branches = cuts_lib.BRANCHES
+    # If no branch name is provided in the config module, set the branches variable to None
+    # The read function will know to just read all branches
+    try:
+        branches = cuts_lib.BRANCHES
+    except AttributeError:
+        branches = None
     data = read_root_branches(args.in_file, args.decay_tree, branches)
 
     # Perform the cuts and write to our output file
