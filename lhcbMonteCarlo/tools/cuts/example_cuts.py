@@ -26,7 +26,7 @@ BRANCHES = [
 ]
 
 
-# Cuts should start with "cut"
+# Cuts should be functions whose name starts with "cut" and return False if we want to remove the event
 def cut_d_impact_param(D0_IPCHI2_OWNPV):
     return D0_IPCHI2_OWNPV < 9
 
@@ -47,5 +47,5 @@ def d_mass_helper(D0_M):
 
 # Functions can call other functions, in case your cut is complicated
 def cut_d_mass(D0_M):
-    return d_mass_helper(2)
+    return d_mass_helper(D0_M)
 
