@@ -10,6 +10,48 @@ import argparse
 import importlib
 import inspect
 import uproot
+import numpy as np
+
+
+def perform_cuts(data, cut_branches, cuts):
+    """
+    Perform the specified cuts on a dataset
+
+    Data should be a dict of {branchname: data}
+
+    branches should be an iterable of tuples that the cuts apply to
+
+    e.g. to perform a cut that needs to know about Dstar and D0 mass, call something like
+        perform_cuts(data, [("Dstar_M", "D0_M")], [my_cut_fcn])
+
+    """
+    print(f"Performing cuts using:")
+    for branch_tuple, function in zip(cut_branches, cuts):
+        print("\t" + f"{function.__name__}{branch_tuple}")
+
+    # Delete data from our datasets according to our cuts
+    num_datapoints = len(data[cut_branches[0][0]])
+    num_cuts = len(cuts)
+
+    # This isn't optimised
+    # Need to have an ordered list of our indices, as we will want to remove in the order highest->lowest when it comes to actually performing the cuts
+    indices_to_remove = []
+    for i in range(num_datapoints):
+        for cut in range(num_cuts):
+            cut_args = tuple(data[arg][i] for arg in cut_branches[cut])
+            if i not in indices_to_remove:
+                if not cuts[cut](*cut_args):
+                    indices_to_remove.append(i)
+
+    print(f"Removing {len(indices_to_remove)} events of {num_datapoints}...")
+
+    for i in data:
+        # Iterate through our indices in descending order so we don't accidentally skip any values
+        for index in np.flip(indices_to_remove):
+            # This is likely HUGELY slow, since numpy arrays are immutable and so we copy the entire array after each delete probably
+            data[i] = np.delete(data[i], index)
+
+    print(f"After cuts: {len(data[cut_branches[0][0]])} data points")
 
 
 def read_root_branches(input_file, decay_tree, branches):
@@ -32,12 +74,12 @@ def cut_functions(cuts_lib):
     """
 
     # Find the functions in our module that start with 'cut'
-    cut_names = tuple(cut for cut in dir(cuts_lib) if cut.startswith("cut"))
+    cut_names = tuple(
+        getattr(cuts_lib, cut) for cut in dir(cuts_lib) if cut.startswith("cut")
+    )
 
     # For these cuts, find the string representation of their arguments
-    cut_args = tuple(
-        tuple(inspect.getfullargspec(getattr(cuts_lib, cut)).args) for cut in cut_names
-    )
+    cut_args = tuple(tuple(inspect.getfullargspec(cut).args) for cut in cut_names)
 
     return cut_names, cut_args
 
@@ -71,7 +113,8 @@ def main(args):
     branches = cuts_lib.BRANCHES
 
     data = read_root_branches(args.in_file, args.decay_tree, branches)
-    print(len(data["Dstar_M"]))
+
+    perform_cuts(data, cut_args, cut_fcns)
 
 
 if __name__ == "__main__":
