@@ -53,10 +53,12 @@ def write_root_file(data, filename, tree_name):
     tree = uproot.newtree(data_types)
 
     # Declare the ROOT file
+    print(f"Creating ROOT file '{filename}'")
     root_file = uproot.recreate(filename)
     root_file[tree_name] = tree
 
     # Fill tree
+    print(f"Populating ROOT file with tree '{tree_name}'")
     root_file[tree_name].extend(data)
 
 
