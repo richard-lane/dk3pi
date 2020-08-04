@@ -8,6 +8,7 @@ Assumes cut functions start cut*
 """
 import argparse
 import importlib
+import inspect
 
 
 def cut_functions(cuts_lib):
@@ -20,7 +21,13 @@ def cut_functions(cuts_lib):
 
     # Find the functions in our module that start with 'cut'
     cut_names = tuple(cut for cut in dir(cuts_lib) if cut.startswith("cut"))
-    pass
+
+    # For these cuts, find the string representation of their arguments
+    cut_args = tuple(
+        tuple(inspect.getargspec(getattr(cuts_lib, cut)).args) for cut in cut_names
+    )
+
+    return cut_names, cut_args
 
 
 def cli():
@@ -47,8 +54,7 @@ def cli():
 
 def main(args):
     cuts_lib = importlib.import_module(args.cuts_module)
-    cut_functions(cuts_lib)
-    cuts_lib.uses_helper()
+    print(cut_functions(cuts_lib))
 
 
 if __name__ == "__main__":
