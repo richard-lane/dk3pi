@@ -29,3 +29,7 @@ def cut_d_impact_param(D0_IPCHI2_OWNPV):
 
     """
     return D0_IPCHI2_OWNPV < 9
+
+
+def not_a_cut_function(f):
+    assert False
