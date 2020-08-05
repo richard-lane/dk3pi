@@ -33,3 +33,4 @@
 #include "efficiency/test_z.cpp"
 #include "efficiency/test_efficiency_util.cpp"
 #include "efficiency/test_flat_phsp.cpp"
+#include "efficiency/test_toy_study.cpp"

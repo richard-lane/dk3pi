@@ -3,6 +3,7 @@ add_library(efficiency STATIC
   lib/ReadRoot.cpp
   lib/findZ.cpp
   lib/flatPhsp.cpp
+  lib/toyStudy.cpp
   lib/efficiencyUtil.cpp
   )
 

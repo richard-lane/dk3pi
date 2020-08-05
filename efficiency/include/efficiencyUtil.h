@@ -31,6 +31,11 @@ typedef struct kinematicParams {
     double py{0};
     double pz{0};
     double energy{0};
+
+    bool operator==(const struct kinematicParams& rhs) const
+    {
+        return px == rhs.px && py == rhs.py && pz == rhs.pz && energy == rhs.energy;
+    }
 } kinematicParams_t;
 
 /*
@@ -52,6 +57,12 @@ typedef struct dDecayParameters {
      * Defaults to K+
      */
     bool kPlus{true};
+
+    bool operator==(const struct dDecayParameters& rhs) const
+    {
+        return dParams == rhs.dParams && kParams == rhs.kParams && pi1Params == rhs.pi1Params &&
+               pi2Params == rhs.pi2Params && pi3Params == rhs.pi3Params && kPlus == rhs.kPlus;
+    }
 } dDecay_t;
 
 /*
