@@ -87,7 +87,20 @@ def read_root_branches(input_file, decay_tree, branches):
     if not branches:
         read_branches = [branch.decode("utf-8") for branch in tree.allkeys()]
 
-    return tree.arrays(read_branches, namedecode="utf-8")
+    data = tree.arrays(read_branches, namedecode="utf-8")
+
+    # Uproot currently only supports writing using
+    #     int8, float64, float32, int32, int64, bool or int16
+    # i.e. cannot handle unsigned things
+    for key in data:
+        if np.dtype(type(data[key][0])).kind == "u":
+            raise NotImplementedError(
+                f"\nWill be unable to write branch {key} of type {type(data[key][0])}\n"
+                "Writing unsigned integers to file currently unsupported by uproot.\n"
+                "I might add a feature to cast unsigned->signed branches if needed"
+            )
+
+    return data
 
 
 def cut_functions(cuts_lib):
