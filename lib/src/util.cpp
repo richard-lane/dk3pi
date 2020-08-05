@@ -8,10 +8,11 @@
 #include <cmath>
 #include <iostream>
 
-#include "TCanvas.h"
-#include "TGraph.h"
-#include "TGraphErrors.h"
-#include "TLegend.h"
+#include <TCanvas.h>
+#include <TGraph.h>
+#include <TGraphErrors.h>
+#include <TH1D.h>
+#include <TLegend.h>
 
 #include "D2K3PiError.h"
 #include "util.h"
@@ -92,6 +93,19 @@ void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
     canvas->SaveAs(path.c_str());
     delete legend;
     delete canvas;
+}
+
+void saveHistogram(const std::vector<double> &vector,
+                   const std::string &        path,
+                   const std::string &        drawOptions,
+                   const size_t               nBins)
+{
+    double min = 0.9 * *std::min_element(vector.begin(), vector.end());
+    double max = 1.1 * *std::max_element(vector.begin(), vector.end());
+
+    std::unique_ptr<TH1> hist(new TH1D(path.c_str(), path.c_str(), nBins, min, max));
+    hist->FillN(vector.size(), vector.data(), nullptr);
+    saveObjectToFile(hist.get(), path, drawOptions);
 }
 
 std::vector<size_t> binVector(const std::vector<double> &myVector, const std::vector<double> &binLimits)

@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <memory>
 #include <random>
 
 #include <boost/filesystem.hpp>
@@ -86,6 +87,16 @@ void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
                        const std::vector<std::string> &legendLabel,
                        const std::string &             path,
                        const LegendParams_t &          legendParams);
+
+/*
+ * Plot a vector as a histogram
+ *
+ * This won't make a production-quality plot but is useful for checking stuff
+ */
+void saveHistogram(const std::vector<double> &vector,
+                   const std::string &        path,
+                   const std::string &        drawOptions = "",
+                   const size_t               nBins       = 100);
 
 /*
  * Find how many points of myVector belong in each bin defined by binLimits
