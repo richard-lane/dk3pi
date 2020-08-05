@@ -50,3 +50,6 @@ cov/
 # Weird LHCb files
 lhcbMonteCarlo/tools/DaVinciDev_v45r1/
 
+# Python
+*__pycache__/
+
