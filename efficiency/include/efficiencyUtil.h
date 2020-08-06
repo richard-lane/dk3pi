@@ -70,4 +70,9 @@ typedef struct dDecayParameters {
  */
 double invariantMass(const std::vector<kinematicParams_t>& systemKinematics);
 
+/*
+ * Convert an event to a vector of invariant masses (m12, m23, m34, m123, m234)
+ */
+std::vector<double> event2invariantMasses(const dDecay_t& event);
+
 #endif // EFFICIENCY_UTIL_H

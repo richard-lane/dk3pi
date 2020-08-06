@@ -19,11 +19,6 @@ template <typename T> struct PhspBins {
 };
 
 /*
- * Convert an event to a vector of invariant masses (m12, m23, m34, m123, m234)
- */
-std::vector<double> event2invariantMasses(const dDecay_t& event);
-
-/*
  * Class for estimating the phase space dependent detection efficiency of a process given truth- and detector-level
  * events
  */
