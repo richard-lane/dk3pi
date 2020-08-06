@@ -38,6 +38,15 @@ class Efficiency
     std::vector<dDecay_t> _detectedEvents;
     std::vector<dDecay_t> _generatedEvents;
     PhspBins<double>      _bins;
+
+    // It might be better to have 10 vectors of m12 values etc.
+    std::vector<std::vector<double>> _detectedInvMasses;
+    std::vector<std::vector<double>> _generatedInvMasses;
+
+    /*
+     * Find the invariant masses of each event
+     */
+    void _findInvariantMasses(void);
 };
 
 #endif // EFFICIENCY_H
