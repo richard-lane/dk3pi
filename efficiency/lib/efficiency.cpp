@@ -11,17 +11,14 @@ Efficiency::Efficiency(const std::vector<dDecay_t>&            detectedEvents,
     _findInvariantMasses();
 }
 
-double Efficiency::value(const dDecay_t& event) const
+double Efficiency::value(const std::vector<double>& invMasses) const
 {
-    return event.dParams.energy;
-    // Find the event's invariant masses
-    std::vector<double> invariantMasses = event2invariantMasses(event);
 
     // Find the m12, m23, m34, m123, m234 bin edges that are relevant for this event
     std::vector<std::pair<double, double>> eventBinEdges(5);
-    for (size_t i = 0; i < invariantMasses.size(); ++i) {
+    for (size_t i = 0; i < invMasses.size(); ++i) {
         // Find what bin the event belongs in by binning a single event and finding where it ends up
-        std::vector<size_t> binLocation    = util::binVector(std::vector<double>{invariantMasses}, _bins[i]);
+        std::vector<size_t> binLocation    = util::binVector(std::vector<double>{invMasses}, _bins[i]);
         auto                lowBinIterator = std::find(binLocation.begin(), binLocation.end(), 1);
 
         eventBinEdges[i].first  = *lowBinIterator;

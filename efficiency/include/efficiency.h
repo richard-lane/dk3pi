@@ -30,9 +30,9 @@ class Efficiency
                         const std::vector<std::vector<double>>& bins);
 
     /*
-     * Return the value of the efficiency function at the phase space point described by an event
+     * Return the value of the efficiency function at a phase space point (m12, m23, m34, m123, m234)
      */
-    double value(const dDecay_t& event) const;
+    double value(const std::vector<double>& invMasses) const;
 
   private:
     std::vector<dDecay_t>            _detectedEvents;
