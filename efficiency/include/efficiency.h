@@ -25,9 +25,9 @@ template <typename T> struct PhspBins {
 class Efficiency
 {
   public:
-    explicit Efficiency(const std::vector<dDecay_t>& detectedEvents,
-                        const std::vector<dDecay_t>& generatedEvents,
-                        const PhspBins<double>&      bins);
+    explicit Efficiency(const std::vector<dDecay_t>&            detectedEvents,
+                        const std::vector<dDecay_t>&            generatedEvents,
+                        const std::vector<std::vector<double>>& bins);
 
     /*
      * Return the value of the efficiency function at the phase space point described by an event
@@ -35,9 +35,9 @@ class Efficiency
     double value(const dDecay_t& event) const;
 
   private:
-    std::vector<dDecay_t> _detectedEvents;
-    std::vector<dDecay_t> _generatedEvents;
-    PhspBins<double>      _bins;
+    std::vector<dDecay_t>            _detectedEvents;
+    std::vector<dDecay_t>            _generatedEvents;
+    std::vector<std::vector<double>> _bins;
 
     // It might be better to have 10 vectors of m12 values etc.
     std::vector<std::vector<double>> _detectedInvMasses;

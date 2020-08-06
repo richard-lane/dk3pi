@@ -1,9 +1,10 @@
 #include "efficiency.h"
 #include "efficiencyUtil.h"
+#include "util.h"
 
-Efficiency::Efficiency(const std::vector<dDecay_t>& detectedEvents,
-                       const std::vector<dDecay_t>& generatedEvents,
-                       const PhspBins<double>&      bins)
+Efficiency::Efficiency(const std::vector<dDecay_t>&            detectedEvents,
+                       const std::vector<dDecay_t>&            generatedEvents,
+                       const std::vector<std::vector<double>>& bins)
     : _detectedEvents(detectedEvents), _generatedEvents(generatedEvents), _bins(bins)
 {
     // Find the invariant masses of our events
@@ -13,15 +14,51 @@ Efficiency::Efficiency(const std::vector<dDecay_t>& detectedEvents,
 double Efficiency::value(const dDecay_t& event) const
 {
     return event.dParams.energy;
-    // Find the event's invariant mass
+    // Find the event's invariant masses
+    std::vector<double> invariantMasses = event2invariantMasses(event);
 
-    // Find the m12, m23, m34 bin edges that are relevant for this event
+    // Find the m12, m23, m34, m123, m234 bin edges that are relevant for this event
+    std::vector<std::pair<double, double>> eventBinEdges(5);
+    for (size_t i = 0; i < invariantMasses.size(); ++i) {
+        // Find what bin the event belongs in by binning a single event and finding where it ends up
+        std::vector<size_t> binLocation    = util::binVector(std::vector<double>{invariantMasses}, _bins[i]);
+        auto                lowBinIterator = std::find(binLocation.begin(), binLocation.end(), 1);
+
+        eventBinEdges[i].first  = *lowBinIterator;
+        eventBinEdges[i].second = *(lowBinIterator + 1);
+    }
 
     // Find how many generated events fall within this bin
+    size_t numGenEventsInBin{0};
+    for (auto genEvent : _generatedEvents) {
+        std::vector<double> genInvMasses = event2invariantMasses(genEvent);
+        for (size_t i = 0; i < genInvMasses.size(); ++i) {
+            if (genInvMasses[i] < eventBinEdges[i].first || genInvMasses[i] > eventBinEdges[i].second) {
+                break; // I don't like this
+            }
+            numGenEventsInBin++;
+        }
+    }
+
+    // If 0 generated events, return 0
+    if (numGenEventsInBin == 0) {
+        return 0;
+    }
 
     // Find how many detected events fall within this bin
+    size_t numDetectedEventsInBin{0};
+    for (auto detectedEvent : _detectedEvents) {
+        std::vector<double> detectedInvMasses = event2invariantMasses(detectedEvent);
+        for (size_t i = 0; i < detectedInvMasses.size(); ++i) {
+            if (detectedInvMasses[i] < eventBinEdges[i].first || detectedInvMasses[i] > eventBinEdges[i].second) {
+                break; // I don't like this
+            }
+            numDetectedEventsInBin++;
+        }
+    }
 
     // return detected/generated
+    return (double)numDetectedEventsInBin / (double)numGenEventsInBin;
 }
 
 void Efficiency::_findInvariantMasses(void)
