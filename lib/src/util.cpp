@@ -108,43 +108,34 @@ void saveHistogram(const std::vector<double> &vector,
     saveObjectToFile(hist.get(), path, drawOptions);
 }
 
+size_t findBinIndex(const std::vector<double> &binLimits, const double value)
+{
+    // Check that the value fits in the bin range
+    double lowBin  = binLimits[0];
+    double highBin = binLimits.back();
+    if (value < lowBin || value > highBin) {
+        std::cerr << "bin limits from " << lowBin << " to " << highBin << " do not cover range of data from " << lowBin
+                  << " to " << highBin << std::endl;
+        throw D2K3PiException();
+    }
+    size_t currentBin = 1;
+    while (value > binLimits[currentBin]) {
+        ++currentBin;
+    }
+
+    return currentBin - 1;
+}
+
 std::vector<size_t> binVector(const std::vector<double> &myVector, const std::vector<double> &binLimits)
 {
     size_t              numBins = binLimits.size() - 1;
     std::vector<size_t> numPerBin(numBins);
 
-    // First sort our vector which should make things easier
-    std::vector<double> sortedVector = myVector;
-    std::sort(sortedVector.begin(), sortedVector.end());
-
-    // Check that our binLimits cover the right range
-    double firstPoint = sortedVector[0];
-    double lastPoint  = sortedVector.back();
-    double lowBin     = binLimits[0];
-    double highBin    = binLimits.back();
-
-    if (firstPoint < lowBin || lastPoint > highBin) {
-        std::cerr << "bin limits from " << lowBin << " to " << highBin << " do not cover range of data from "
-                  << firstPoint << " to " << lastPoint << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Iterate over the vector
-    size_t currentBin = 1;
-    for (auto it = sortedVector.begin(); it != sortedVector.end(); ++it) {
-        // If this value is more than the current bin limit, we want to put subsequent points in a higher bin.
-        while (*it > binLimits[currentBin]) {
-            ++currentBin;
-
-            // This error might never get hit but I can't be bothered to think about it right now
-            if (currentBin > numBins) {
-                std::cerr << "Attempted to insert points into a bin that doesn't exist." << std::endl;
-                throw D2K3PiException();
-            }
-        }
-
-        // currentBin starts at 1 but vector indexing starts at 0.
-        ++numPerBin[currentBin - 1];
+    // Iterate over the vector, placing each point into a bin and incrementing that bin's value
+    // This did something cleverer before where I sorted the vector and binned the sorted vector in order, but maybe
+    // this is nicer
+    for (auto it = myVector.begin(); it != myVector.end(); ++it) {
+        ++numPerBin[findBinIndex(binLimits, *it)];
     }
 
     return numPerBin;

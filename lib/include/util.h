@@ -99,6 +99,13 @@ void saveHistogram(const std::vector<double> &vector,
                    const size_t               nBins       = 100);
 
 /*
+ * Find which bin a number belongs in
+ *
+ * 0 for first bin
+ */
+size_t findBinIndex(const std::vector<double> &binLimits, const double value);
+
+/*
  * Find how many points of myVector belong in each bin defined by binLimits
  *
  */
