@@ -40,36 +40,60 @@ void dalitzPlot(const std::vector<dDecay_t>&     events,
     util::saveObjectToFile(m12m13Hist.get(), path.c_str(), "COLZ");
 }
 
-void histograms(const std::vector<dDecay_t>      events,
+void histograms(const std::vector<dDecay_t>&     allEvents,
+                const std::vector<dDecay_t>&     detectedEvents,
                 const std::pair<double, double>& axisLimits,
                 const std::string&               title,
                 const std::string&               path)
 {
-    size_t              numEvents = events.size();
-    std::vector<double> m12(numEvents); // m(Kpi1)
-    std::vector<double> m13(numEvents); // m(Kpi2)
-    for (size_t i = 0; i < numEvents; ++i) {
-        m12[i] = invariantMass(std::vector<kinematicParams_t>{events[i].kParams, events[i].pi1Params});
-        m13[i] = invariantMass(std::vector<kinematicParams_t>{events[i].kParams, events[i].pi2Params});
+    size_t              nAllEvents = allEvents.size();
+    std::vector<double> allM12(nAllEvents); // m(Kpi1)
+    std::vector<double> allM13(nAllEvents); // m(Kpi2)
+    for (size_t i = 0; i < nAllEvents; ++i) {
+        allM12[i] = invariantMass(std::vector<kinematicParams_t>{allEvents[i].kParams, allEvents[i].pi1Params});
+        allM13[i] = invariantMass(std::vector<kinematicParams_t>{allEvents[i].kParams, allEvents[i].pi2Params});
+    }
+
+    size_t              nDetEvents = detectedEvents.size();
+    std::vector<double> detM12(nAllEvents); // m(Kpi1)
+    std::vector<double> detM13(nAllEvents); // m(Kpi2)
+    for (size_t i = 0; i < nAllEvents; ++i) {
+        detM12[i] =
+            invariantMass(std::vector<kinematicParams_t>{detectedEvents[i].kParams, detectedEvents[i].pi1Params});
+        detM13[i] =
+            invariantMass(std::vector<kinematicParams_t>{detectedEvents[i].kParams, detectedEvents[i].pi2Params});
     }
 
     size_t                numBins = 100;
-    std::unique_ptr<TH1D> m12Hist(
+    std::unique_ptr<TH1D> allM12Hist(
         new TH1D("m12", (title + " m12").c_str(), numBins, axisLimits.first, axisLimits.second));
-    std::unique_ptr<TH1D> m13Hist(
+    std::unique_ptr<TH1D> allM13Hist(
         new TH1D("m23", (title + " m13").c_str(), numBins, axisLimits.first, axisLimits.second));
 
-    m12Hist->FillN(numEvents, m12.data(), nullptr);
-    m13Hist->FillN(numEvents, m13.data(), nullptr);
+    std::unique_ptr<TH1D> detM12Hist(
+        new TH1D("detm12", (title + " m12").c_str(), numBins, axisLimits.first, axisLimits.second));
+    std::unique_ptr<TH1D> detM13Hist(
+        new TH1D("detm23", (title + " m13").c_str(), numBins, axisLimits.first, axisLimits.second));
+
+    allM12Hist->FillN(nAllEvents, allM12.data(), nullptr);
+    allM13Hist->FillN(nAllEvents, allM13.data(), nullptr);
+    detM12Hist->FillN(nDetEvents, detM12.data(), nullptr);
+    detM13Hist->FillN(nDetEvents, detM13.data(), nullptr);
 
     std::unique_ptr<TCanvas> c(new TCanvas());
-    c->Divide(1, 2);
-    c->cd(1);
-    m12Hist->Draw();
-    c->cd(2);
-    m13Hist->Draw();
+    c->cd();
+    allM12Hist->Draw();
+    detM12Hist->Draw("SAME");
+    c->SaveAs((std::string("m12_") + path).c_str());
 
-    c->SaveAs(path.c_str());
+    std::unique_ptr<TCanvas> c2(new TCanvas());
+    c2->cd();
+    allM13Hist->Draw();
+    detM13Hist->Draw("SAME");
+    c2->SaveAs((std::string("m13_") + path).c_str());
+
+    allM13Hist->Draw();
+    detM13Hist->Draw("SAME");
 }
 
 int main()
@@ -85,7 +109,6 @@ int main()
 
     std::pair<double, double> axisLimits = std::make_pair(0.5, 1.8);
     dalitzPlot(RootData.events, axisLimits, "All events", "ampgen.png");
-    histograms(RootData.events, axisLimits, "All events", "ampgenHists.png");
 
     // Create a lambda fcn that will reject all events with m12 below some value that i can read off the Dalitz plot
     // when it comes to it
@@ -94,17 +117,18 @@ int main()
         if (invariantMass(std::vector<kinematicParams_t>{event.kParams, event.pi1Params}) < 1) {
             return 1.;
         }
-        return 0.5;
+        return 0.;
     };
 
     // Run the rejection thing on the AmpGen data
-    std::random_device rd;
-    std::mt19937       generator(rd());
-    applyEfficiency(&generator, detectionChance, RootData.events);
+    std::random_device    rd;
+    std::mt19937          generator(rd());
+    std::vector<dDecay_t> detectedEvents = RootData.events;
+    applyEfficiency(&generator, detectionChance, detectedEvents);
 
     // Plot Daliz plot and histograms again
-    dalitzPlot(RootData.events, axisLimits, "Events with efficiency", "eff.png");
-    histograms(RootData.events, axisLimits, "Events with efficiency", "effAmpgen.png");
+    dalitzPlot(detectedEvents, axisLimits, "Events with efficiency", "eff.png");
+    histograms(RootData.events, detectedEvents, axisLimits, "Events with efficiency", "effAmpgen.png");
 
     return 0;
 }

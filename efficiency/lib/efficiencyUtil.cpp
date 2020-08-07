@@ -18,3 +18,13 @@ double invariantMass(const std::vector<kinematicParams_t>& systemKinematics)
 
     return std::sqrt(massSquared);
 }
+
+std::vector<double> event2invariantMasses(const dDecay_t& event)
+{
+    return std::vector<double>{
+        invariantMass(std::vector<kinematicParams_t>{event.kParams, event.pi1Params}),
+        invariantMass(std::vector<kinematicParams_t>{event.pi1Params, event.pi2Params}),
+        invariantMass(std::vector<kinematicParams_t>{event.pi2Params, event.pi3Params}),
+        invariantMass(std::vector<kinematicParams_t>{event.kParams, event.pi1Params, event.pi2Params}),
+        invariantMass(std::vector<kinematicParams_t>{event.pi1Params, event.pi2Params, event.pi3Params})};
+}
