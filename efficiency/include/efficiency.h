@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <TH2D.h>
+
 #include "efficiencyUtil.h"
 
 /*
@@ -48,5 +50,24 @@ class Efficiency
      */
     void _findInvariantMasses(void);
 };
+
+/*
+ * Work out the entropy associated with a histogram
+ *
+ * entropy = Sum(-P logP) for probability of bin contents P
+ *
+ * Uses log base e, so entropy is returned in natural units
+ */
+double entropy(const TH1D* const hist);
+
+/*
+ * Calculate the mutual information shared by two labellings of the same data
+ *
+ * i.e. bin a histogram in 2d according to the variables (X1, X2) and pass it to this function to find the mutual
+ * information between X1 and X2
+ *
+ * Takes a pointer because thats what ROOT likes to do
+ */
+double mutual_info(const TH2D* const histogram2d);
 
 #endif // EFFICIENCY_H
