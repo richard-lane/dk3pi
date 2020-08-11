@@ -5,32 +5,43 @@
 #include <vector>
 
 /*
- * Represent an edge by its weight and the node that it connects to
+ * Represent an edge by its weight and the nodes that it connects
  *
  * Zero-indexed node numbering
- *
- * This class might have way more information in it than we need
  */
 class Edge
 {
   public:
-    explicit Edge(const size_t node, const double weight);
+    explicit Edge(const size_t fromNode, const size_t toNode, const double weight)
+        : _weight(weight), _fromNode(fromNode), _toNode(toNode){};
 
-    bool operator==(const Edge& other) const;
-    bool operator!=(const Edge& other) const;
-    bool operator<(const Edge& other) const;
-    bool operator>(const Edge& other) const;
+    /*
+     * Comparisons only care about weight
+     */
+    inline bool operator<(const Edge& other) const { return _weight < other._weight; };
+    inline bool operator>(const Edge& other) const { return !(*this < other); };
+
+    /*
+     * Equality cares about weight + nodes
+     */
+    inline bool operator==(const Edge& other) const
+    {
+        return _weight == other._weight && _fromNode == other.from() && _toNode == other.to();
+    };
+    inline bool operator!=(const Edge& other) const { return !(*this == other); };
 
     double getWeight() const { return _weight; };
-    double node() const { return _node; };
+    double from() const { return _fromNode; };
+    double to() const { return _toNode; };
 
   private:
-    const double _weight{0.0};
-    const size_t _node{0};
+    double _weight{0.0};
+    size_t _fromNode{0};
+    size_t _toNode{0};
 };
 
 /*
- * Represent a graph by an adjacency list that tracks which nodes are connected to which others
+ * Represent an undirected graph by an adjacency list that tracks which nodes are connected to which others
  */
 class Graph
 {
@@ -47,7 +58,7 @@ class Graph
     /*
      * Return the adjacency list representation of the minimum spanning tree of this graph
      */
-    std::vector<std::list<Edge>> getMST() const;
+    std::vector<std::list<Edge>> getMaxSpanningTree() const;
 
     std::vector<std::list<Edge>> getAdjacencyList() const { return _adjacencyList; };
 
@@ -61,13 +72,12 @@ class Graph
      *     {{}, {Edge(3, w13)}, {}, {Edge(1, w13), {}, {}, {}...}}
      */
     std::vector<std::list<Edge>> _adjacencyList{};
-
-    /*
-     * Check whether adding an edge between two nodes would create a cycle in our graph
-     *
-     */
-    bool _makesCycle(const size_t node1, const size_t node2) const;
 };
+
+/*
+ * Check whether adding an edge between two nodes would create a cycle in our graph
+ */
+bool makesCycle(const size_t node1, const size_t node2, const std::vector<std::list<Edge>>& adjacencyList);
 
 /*
  * Search a graph depth-first for cycles
@@ -82,6 +92,8 @@ class Graph
  * Will not detect cycles that are not connected to the node initially passed in
  *
  * Also is a recursive function so could cause a stack overflow if the graph is huge
+ *
+ * Only tested on an adirectional graph so it might not work for directed graphs
  */
 bool containsCycle(const std::vector<std::list<Edge>>& adjacencyList,
                    const size_t                        node,
