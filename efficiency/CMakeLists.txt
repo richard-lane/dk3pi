@@ -6,6 +6,7 @@ add_library(efficiency STATIC
   lib/flatPhsp.cpp
   lib/toyStudy.cpp
   lib/efficiency.cpp
+  lib/graphTheory.cpp
   lib/efficiencyUtil.cpp
   )
 

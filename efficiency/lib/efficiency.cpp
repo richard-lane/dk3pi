@@ -71,3 +71,52 @@ void Efficiency::_findInvariantMasses(void)
         _generatedInvMasses[i] = event2invariantMasses(_generatedEvents[i]);
     }
 }
+
+double entropy(const TH1D* const hist)
+{
+    size_t totalEntries = hist->GetEntries();
+    double ent{0.0}; // entropy
+
+    for (size_t bin = 1; bin <= (size_t)hist->GetNbinsX(); ++bin) { // ROOT bin indexing starts at 1
+        double prob = (double)hist->GetBinContent(bin) / totalEntries;
+        ent -= prob * std::log(prob);
+    }
+    return ent;
+}
+
+double mutual_info(const TH2D* const histogram2d)
+{
+    double info{0.0};
+
+    // A better implementation probably wouldn't construct an entire TH1 just to find the sum along an axis
+    TH1D* xHist = histogram2d->ProjectionX();
+    TH1D* yHist = histogram2d->ProjectionY();
+
+    size_t numBinsX = xHist->GetNbinsX();
+    size_t numBinsY = yHist->GetNbinsX();
+
+    size_t numEvents = xHist->GetEntries(); // For some reason histogram2d->GetEntries() doesn't give the right number
+                                            // of events so just do this
+    for (size_t xBin = 1; xBin <= numBinsX; ++xBin) {
+        for (size_t yBin = 1; yBin <= numBinsY; ++yBin) {
+            size_t binContent = histogram2d->GetBinContent(xBin, yBin);
+            if (binContent == 0) {
+                // I don't like breaking the control flow here but i'm tired and can't immediately think of something
+                // better. maybe an if/else
+                continue;
+            }
+
+            size_t xBinContent = xHist->GetBinContent(xBin);
+            size_t yBinContent = yHist->GetBinContent(yBin);
+            // These casts aren't all necessary
+            double thingInBrackets =
+                (double)numEvents * (double)binContent / ((double)xBinContent * (double)yBinContent);
+            info += ((double)binContent / (double)numEvents) * std::abs(std::log(thingInBrackets));
+        }
+    }
+
+    // Normalise our mutual information
+    double normalisation = 2 / (entropy(xHist) + entropy(yHist));
+
+    return normalisation * info;
+}
