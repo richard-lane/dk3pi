@@ -121,31 +121,82 @@ class EfficiencyBinning
  * Class for estimating the phase space dependent detection efficiency of a process given truth- and detector-level
  * events
  */
-class Efficiency
+class ChowLiuEfficiency
 {
   public:
-    explicit Efficiency(const std::vector<dDecay_t>&            detectedEvents,
-                        const std::vector<dDecay_t>&            generatedEvents,
-                        const std::vector<std::vector<double>>& bins);
+    explicit ChowLiuEfficiency(const PhspBins& bins);
 
     /*
-     * Return the value of the efficiency function at a phase space point (m12, m23, m34, m123, m234)
+     * Return the value of the efficiency function at a phase space point
      */
-    double value(const std::vector<double>& invMasses) const;
+    double value(const PhspPoint& point) const;
+
+    /*
+     * Add a monte carlo event
+     */
+    void addMCEvent(const PhspPoint& point);
+
+    /*
+     * Add a generated "truth-level" event
+     */
+    void addGeneratedEvent(const PhspPoint& point);
+
+    /*
+     * Add a collection of MC events
+     */
+    template <typename ContainerType> void addMCEvents(const ContainerType& points)
+    {
+        for (auto point : points) {
+            addMCEvent(point);
+        }
+    }
+
+    /*
+     * Add a collection of truth level events
+     */
+    template <typename ContainerType> void addGeneratedEvents(const ContainerType& points)
+    {
+        for (auto point : points) {
+            addGeneratedEvent(point);
+        }
+    }
+
+    /*
+     * Work out the efficiency projections in 1/2d from our MC and truth-level datasets, find the best approximation to
+     * the efficiency function in 5d, and set up all the bits so that this->value() works
+     */
+    void efficiencyParametrisation(void);
 
   private:
-    std::vector<dDecay_t>            _detectedEvents;
-    std::vector<dDecay_t>            _generatedEvents;
-    std::vector<std::vector<double>> _bins;
-
-    // It might be better to have 10 vectors of m12 values etc.
-    std::vector<std::vector<double>> _detectedInvMasses;
-    std::vector<std::vector<double>> _generatedInvMasses;
+    EfficiencyBinning _detectedEvents;
+    EfficiencyBinning _generatedEvents;
+    PhspBins          _bins;
 
     /*
-     * Find the invariant masses of each event
+     * Flag tracking whether our efficiency parametrisation has been made yet
      */
-    void _findInvariantMasses(void);
+    bool _approximationMade{false};
+
+    /*
+     * The 1d histogram we use in our efficiency approximation
+     */
+    std::unique_ptr<TH1D> _hist1d = nullptr;
+
+    /*
+     * Which variable our 1d histogram is in
+     */
+    size_t _1dHistVar{0};
+
+    /*
+     * The 2d histograms we'll use in our efficiency approximation
+     */
+    std::vector<std::unique_ptr<TH2D>> _hists2d{};
+
+    /*
+     * Which variables our 2d histograms are in
+     * e.g. if we are parametrising as e(0|1)e(2|1)e(3|2), this should be {(0, 1), (2, 1), (3, 2)}
+     */
+    std::vector<std::pair<size_t, size_t>> _2dHistVars{0};
 };
 
 /*
