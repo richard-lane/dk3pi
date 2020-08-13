@@ -115,3 +115,39 @@ bool isSpanning(const std::vector<std::list<Edge>>& adjacencyList)
     }
     return std::all_of(discoveredNodes.begin(), discoveredNodes.end(), [](const bool x) { return x; });
 }
+
+std::vector<std::list<Edge>> inTree(const size_t root, const std::vector<std::list<Edge>>& treeAdjacencyList)
+{
+    size_t            order{treeAdjacencyList.size()};
+    std::vector<bool> discovered(order, false);
+    if (containsCycle(treeAdjacencyList, root, discovered)) {
+        throw CyclicGraph();
+    }
+
+    if (!isSpanning(treeAdjacencyList)) {
+        throw NotSpanning();
+    }
+
+    // Reset our vector of discovered nodes to false, except the one we start at
+    std::fill(discovered.begin(), discovered.end(), false);
+    discovered[root] = true;
+
+    std::vector<std::list<Edge>> directedTree(order);
+
+    // Iterate until we've found all our vertices
+    while (!std::all_of(discovered.begin(), discovered.end(), [](bool v) { return v; })) {
+
+        // Iterate over our vertices
+        for (size_t i = 0; i < order; ++i) {
+            for (Edge edge : treeAdjacencyList[i]) {
+                if (!discovered[i] && discovered[edge.to()]) {
+                    // Draw an edge from this vertex to the discovered vertex
+                    directedTree[i].push_back(edge);
+                    discovered[edge.from()] = true;
+                }
+            }
+        }
+    }
+
+    return directedTree;
+}

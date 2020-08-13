@@ -4,6 +4,14 @@
 #include <list>
 #include <vector>
 
+struct CyclicGraph : public std::exception {
+    const char* what() const throw() { return "Graph contains a cycle"; }
+};
+
+struct NotSpanning: public std::exception {
+    const char* what() const throw() { return "Graph not spanning"; }
+};
+
 /*
  * Represent an edge by its weight and the nodes that it connects
  *
@@ -94,11 +102,13 @@ bool makesCycle(const size_t node1, const size_t node2, const std::vector<std::l
  * Also is a recursive function so could cause a stack overflow if the graph is huge
  *
  * Only tested on an adirectional graph so it might not work for directed graphs
+ *
+ * Parent is arbitrary if starting a new search
  */
 bool containsCycle(const std::vector<std::list<Edge>>& adjacencyList,
                    const size_t                        node,
                    std::vector<bool>&                  discovered,
-                   const size_t                        parent);
+                   const size_t                        parent = -1);
 
 /*
  * Check whether the adjacency list representation of a graph is spanning
@@ -106,5 +116,10 @@ bool containsCycle(const std::vector<std::list<Edge>>& adjacencyList,
  * I was tired when i wrote this so it's slow and likely buggy
  */
 bool isSpanning(const std::vector<std::list<Edge>>& adjacencyList);
+
+/*
+ * Take a tree and find it's in-tree representation
+ */
+std::vector<std::list<Edge>> inTree(const size_t root, const std::vector<std::list<Edge>>& treeAdjacencyList);
 
 #endif // GRAPHTHEORY_H

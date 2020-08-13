@@ -114,4 +114,35 @@ BOOST_AUTO_TEST_CASE(test_kruskal)
     BOOST_CHECK(graph.getMaxSpanningTree() == expectedMaxSpanningTree);
 }
 
+/*
+ * Test that we correctly find an inTree
+ */
+BOOST_AUTO_TEST_CASE(test_intree)
+{
+    const double                       wt{1.0};
+    const std::vector<std::list<Edge>> tree = {{Edge(0, 1, wt)},
+                                               {Edge(1, 0, wt), Edge(1, 2, wt)},
+                                               {Edge(2, 1, wt), Edge(2, 3, wt), Edge(2, 4, wt)},
+                                               {Edge(3, 2, wt), Edge(3, 5, wt)},
+                                               {Edge(4, 2, wt), Edge(4, 6, wt)},
+                                               {Edge(5, 3, wt)},
+                                               {Edge(6, 4, wt)}};
+
+    const std::vector<std::list<Edge>> expectedInTree = {
+        {Edge(0, 1, wt)}, {}, {Edge(2, 1, wt)}, {Edge(3, 2, wt)}, {Edge(4, 2, wt)}, {Edge(5, 3, wt)}, {Edge(6, 4, wt)}};
+
+    BOOST_CHECK(inTree(1, tree) == expectedInTree);
+}
+
+/*
+ * Test that the intree alg correctly identifies a cyclic graph
+ */
+BOOST_AUTO_TEST_CASE(test_intree_cyclic)
+{
+    const double                       wt{1.0};
+    const std::vector<std::list<Edge>> yesCycle = {{Edge(0, 1, wt)}, {Edge(1, 2, wt)}, {Edge(2, 0, wt)}};
+
+    BOOST_CHECK_THROW(inTree(0, yesCycle), CyclicGraph);
+}
+
 #endif // TEST_GRAPH_THEORY
