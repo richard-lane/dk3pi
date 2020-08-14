@@ -58,10 +58,10 @@ BOOST_AUTO_TEST_CASE(test_index_conversion_error)
 BOOST_AUTO_TEST_CASE(test_efficiency_binning)
 {
     std::vector<double> bin{0.5, 1.5, 2.5, 3.5, 4.5, 5.5};
-    PhspBins            bins{bin, bin, bin, bin, bin};
+    PhspBins            bins{bin, bin, bin, bin, bin, bin};
 
-    PhspPoint              point1{1, 2, 3, 4, 5};
-    PhspPoint              point2{5, 4, 3, 2, 1};
+    PhspPoint              point1{1, 2, 3, 4, 5, 6};
+    PhspPoint              point2{5, 4, 3, 2, 1, 6};
     std::vector<PhspPoint> points{point1, point2};
 
     EfficiencyBinning binning(bins, points);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(test_efficiency_binning)
     BOOST_CHECK_CLOSE(hist0.GetBinContent(1), 1, 1e-7);
 
     // Expect to have 1 point in the p0p1 hist at (0, 1), one at (4, 3) and none in (2, 2)
-    TH2D hist01 = binning.get2dhistogram(0, 1);
+    TH2D hist01 = binning.get2dhistogram(1, 0);
     BOOST_CHECK_CLOSE(hist01.GetBinContent(1, 2), 1, 1e-7);
     BOOST_CHECK_CLOSE(hist01.GetBinContent(5, 4), 1, 1e-7);
     BOOST_CHECK_CLOSE(hist01.GetBinContent(2, 2), 0, 1e-7);

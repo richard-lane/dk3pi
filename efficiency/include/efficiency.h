@@ -14,12 +14,16 @@
 /*
  * Bins that we will use for our efficiency parametrisation
  */
-typedef std::array<std::vector<double>, 5> PhspBins;
+typedef std::vector<std::vector<double>> PhspBins;
 
 /*
- * Parametrise a phase space point by its 5d coordinates (p0, p1, p2, p3, p4)
+ * Parametrise a phase space point by its coordinates (p0, p1, p2, p3, p4)
  */
-typedef std::array<double, 5> PhspPoint;
+typedef std::vector<double> PhspPoint;
+
+struct InvalidDimension : public std::exception {
+    const char* what() const throw() { return "Dimension of point does not match dimension of phase space"; }
+};
 
 struct HistogramNotFound : public std::exception {
     const char* what() const throw() { return "No Histogram exists at the specified index"; }
@@ -50,6 +54,11 @@ class EfficiencyBinning
     EfficiencyBinning(const PhspBins& bins, const PhspPoint& point);
 
     /*
+     * Bin a point
+     */
+    void binPoint(const PhspPoint& point);
+
+    /*
      * Initialise our bins and put several points in them
      */
     template <typename ContainerType>
@@ -63,19 +72,14 @@ class EfficiencyBinning
      *
      * Indexed as {0:p0, 1:p1, ... }
      */
-    const TH1D get1dhistogram(const unsigned short i) const;
+    const TH1D get1dhistogram(const size_t i) const;
 
     /*
      * Get the 2d histogram relating the i and j'th parameters
      *
      * i must not equal j
      */
-    const TH2D get2dhistogram(const unsigned short i, const unsigned short j) const;
-
-    /*
-     * Bin a point
-     */
-    void binPoint(const PhspPoint& point);
+    const TH2D get2dhistogram(const size_t i, const size_t j) const;
 
     /*
      * Bin a collection of points
@@ -90,31 +94,36 @@ class EfficiencyBinning
     }
 
   private:
-    // Hard-coded array-lengths here are probably fine since my analysis only cares about 5d efficiencies...
+    /*
+     * Number of dimensions of our phsp
+     */
+    size_t _dimensionality{0};
+
     /*
      * Histograms representing {p0, p1, p2, p3, p4}
      */
-    std::array<std::unique_ptr<TH1D>, 5> _1dhistograms{};
+    std::vector<std::unique_ptr<TH1D>> _1dhistograms{};
 
     /*
      * Histograms representing {p0vp1, p0vp2, p0vp3, p0vp4, p1vp2, p1vp3 ...}
+     * Indexed in a weird order; histogram (pi vs pj) found at _2dhistograms[_indexConversion(i, j)]
      */
-    std::array<std::unique_ptr<TH2D>, 10> _2dhistograms{};
+    std::vector<std::unique_ptr<TH2D>> _2dhistograms{};
 
     /*
-     * Number of bins along each of our {p0, p1, p2, p3, p4} axes
+     * Number of bins along each of our {p0, p1, p2, ...} axes
      */
-    std::array<size_t, 5> _numBins{};
+    std::vector<size_t> _numBins{};
 
     /*
-     * Array of 5 vectors of bins to use
+     * Bins that we're using
      */
     PhspBins _bins{};
 
     /*
-     * Convert an (i, j) index pair to an index between 0 and 9 for our 2d histogram array
+     * Convert an (i, j) index pair to an index for our 2d histogram array
      */
-    unsigned short _indexConversion(const unsigned short i, const unsigned short j) const;
+    size_t _indexConversion(const size_t i, const size_t j) const;
 };
 
 /*

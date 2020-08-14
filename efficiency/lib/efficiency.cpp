@@ -5,10 +5,14 @@
 #include "efficiencyUtil.h"
 #include "util.h"
 
-EfficiencyBinning::EfficiencyBinning(const PhspBins& bins) : _bins(bins)
+EfficiencyBinning::EfficiencyBinning(const PhspBins& bins) : _dimensionality(bins.size()), _bins(bins)
 {
-    // Need to set the numbers of bins first
-    for (size_t i = 0; i < _bins.size(); ++i) {
+    _1dhistograms = std::vector<std::unique_ptr<TH1D>>(_dimensionality);
+    _2dhistograms = std::vector<std::unique_ptr<TH2D>>(_dimensionality * (_dimensionality - 1) / 2);
+    _numBins      = std::vector<size_t>(_dimensionality);
+
+    // Need to set the numbers of bins before creating histograms
+    for (size_t i = 0; i < _dimensionality; ++i) {
         _numBins[i] = _bins[i].size() - 1;
     }
 
@@ -31,6 +35,10 @@ EfficiencyBinning::EfficiencyBinning(const PhspBins& bins, const PhspPoint& poin
 
 void EfficiencyBinning::binPoint(const PhspPoint& point)
 {
+    if (point.size() != _dimensionality) {
+        throw InvalidDimension();
+    }
+
     for (size_t i = 0; i < _bins.size(); ++i) {
         _1dhistograms[i]->Fill(point[i]);
 
@@ -40,20 +48,21 @@ void EfficiencyBinning::binPoint(const PhspPoint& point)
     }
 }
 
-const TH1D EfficiencyBinning::get1dhistogram(const unsigned short i) const
+const TH1D EfficiencyBinning::get1dhistogram(const size_t i) const
 {
-    if (i > 4) {
+    if (i > _dimensionality - 1) {
         throw HistogramNotFound();
     }
     return *_1dhistograms[i];
 }
 
-const TH2D EfficiencyBinning::get2dhistogram(const unsigned short i, const unsigned short j) const
+const TH2D EfficiencyBinning::get2dhistogram(const size_t i, const size_t j) const
 {
+    // Convert our pair of indices to the right 1d array index that we're using for storing our 2d histograms
     return *_2dhistograms[_indexConversion(i, j)];
 }
 
-unsigned short EfficiencyBinning::_indexConversion(const unsigned short i, const unsigned short j) const
+size_t EfficiencyBinning::_indexConversion(const size_t i, const size_t j) const
 {
     if (i == j) {
         std::cerr << "No 2d histogram of the a variable against itself exists" << std::endl;
@@ -61,16 +70,17 @@ unsigned short EfficiencyBinning::_indexConversion(const unsigned short i, const
     }
 
     // convert i, j -> smaller, larger
-    unsigned short smaller = i < j ? i : j;
-    unsigned short larger  = i > j ? i : j;
+    size_t smaller = i < j ? i : j;
+    size_t larger  = i > j ? i : j;
 
-    if (larger > 4) {
+    if (larger > _dimensionality - 1) {
         throw HistogramNotFound();
     }
 
     // We store our 2d histograms in a 1d array
-    // The array looks like {i,j} = {04, 03, 02, 01, 14, 13, 12, 11, 24, 23, 34}
-    return (9 * smaller - smaller * smaller) / 2 + 4 - larger;
+    // The array looks like {i,j} = {01, 02, 03 ..., 12, 13, 14... 23, 24 ...... (d-2)(d-1)}
+    return (_dimensionality * (_dimensionality - 1) / 2) -
+           (_dimensionality - smaller) * (_dimensionality - smaller - 1) / 2 + larger - smaller - 1;
 }
 
 double entropy(const TH1D* const hist)
