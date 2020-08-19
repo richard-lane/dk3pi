@@ -13,6 +13,23 @@
 #include "util.h"
 
 /*
+ * Test 1d hist entropy
+ */
+BOOST_AUTO_TEST_CASE(test_entropy)
+{
+    std::unique_ptr<TH1D> hist = std::make_unique<TH1D>("tmp", "tmp", 5, 0., 5.);
+    hist->SetBinContent(1, 0);
+    hist->SetBinContent(2, 1);
+    hist->SetBinContent(3, 2);
+    hist->SetBinContent(4, 2);
+    hist->SetBinContent(5, 5);
+
+    double expectedEntropy = 1.220607265;
+
+    BOOST_CHECK_CLOSE(entropy(hist.get()), expectedEntropy, 1e-7);
+}
+
+/*
  * Test we can retrieve the right 2d histogram
  */
 BOOST_AUTO_TEST_CASE(test_2d_hist)
@@ -24,7 +41,7 @@ BOOST_AUTO_TEST_CASE(test_2d_hist)
     PhspPoint              point2{5, 4, 3, 2, 1};
     std::vector<PhspPoint> points{point1, point2};
 
-    EfficiencyBinning binning(bins, points);
+    EfficiencyBinning binning(bins, points, "test");
 
     // Check our histograms are the same by comparing their names
     // C-style str comparison => they're the same if strcmp returns 0
@@ -43,7 +60,7 @@ BOOST_AUTO_TEST_CASE(test_index_conversion_error)
     PhspPoint              point2{5, 4, 3, 2, 1};
     std::vector<PhspPoint> points{point1, point2};
 
-    EfficiencyBinning binning(bins, points);
+    EfficiencyBinning binning(bins, points, "test");
 
     BOOST_CHECK_NO_THROW(binning.get1dhistogram(2));
     BOOST_CHECK_THROW(binning.get1dhistogram(5), HistogramNotFound);
@@ -64,12 +81,12 @@ BOOST_AUTO_TEST_CASE(test_efficiency_binning)
     PhspPoint              point2{5, 4, 3, 2, 1, 6};
     std::vector<PhspPoint> points{point1, point2};
 
-    EfficiencyBinning binning(bins, points);
+    EfficiencyBinning binning(bins, points, "test");
 
     // Expect to have bins like (0, 0, 2, 0, 0) for the p3 bin
     // And (1, 0, 0, 0, 1) for the p0 bin
-    // Root bin indexing starts at 1, obviously
     TH1D hist2 = binning.get1dhistogram(2);
+    // Root bin indexing starts at 1, obviously
     BOOST_CHECK_CLOSE(hist2.GetBinContent(1), 0, 1e-7);
     BOOST_CHECK_CLOSE(hist2.GetBinContent(3), 2, 1e-7);
 
@@ -85,12 +102,64 @@ BOOST_AUTO_TEST_CASE(test_efficiency_binning)
 }
 
 /*
+ * Test taking the ratio between 2 efficiency binning objects doesn't affect the original objects and returns the right
+ * ratio
+ */
+BOOST_AUTO_TEST_CASE(test_efficiency_binning_ratio)
+{
+    std::vector<double> bin{0.5, 1.5, 2.5, 3.5};
+    PhspBins            bins{bin, bin, bin};
+
+    PhspPoint              point1{1, 1, 1};
+    PhspPoint              point2{3, 3, 3};
+    std::vector<PhspPoint> hist1Pts{point1, point1, point1, point2};
+    std::vector<PhspPoint> hist2Pts{point1, point1, point2, point2, point2};
+
+    EfficiencyBinning numerator(bins, hist1Pts, "num");
+    EfficiencyBinning denominator(bins, hist2Pts, "denom");
+
+    EfficiencyBinning ratio = numerator / denominator;
+
+    // Expect ratio of points in 1st 1d hist to be (1.5, 0/0, 1/3)
+    TH1D ratioHist1d = ratio.get1dhistogram(0);
+    BOOST_CHECK_CLOSE(ratioHist1d.GetBinContent(1), 1.5, 1e-7);
+    BOOST_CHECK_CLOSE(ratioHist1d.GetBinContent(2), 0, 1e-7);
+    BOOST_CHECK_CLOSE(ratioHist1d.GetBinContent(3), 1 / 3., 1e-7);
+
+    // Expect ratio of points in 2nd 1d hist to be:
+    std::array<std::array<double, 3>, 3> expected    = {{{1.5, 0, 0}, {0., 0., 0.}, {0, 0, 1. / 3}}};
+    TH2D                                 ratioHist2d = ratio.get2dhistogram(1, 0);
+    for (size_t i = 0; i < 3; ++i) {
+        for (size_t j = 0; j < 3; ++j) {
+            BOOST_CHECK_CLOSE(ratioHist2d.GetBinContent(i + 1, j + 1), expected[i][j], 1e-7);
+        }
+    }
+
+    // Check that the numerator and denominator are unaffected
+    TH1D numHist = numerator.get1dhistogram(0);
+    BOOST_CHECK_CLOSE(numHist.GetBinContent(1), 3, 1e-7);
+    BOOST_CHECK_CLOSE(numHist.GetBinContent(2), 0, 1e-7);
+    BOOST_CHECK_CLOSE(numHist.GetBinContent(3), 1, 1e-7);
+
+    TH1D denomHist = denominator.get1dhistogram(0);
+    BOOST_CHECK_CLOSE(denomHist.GetBinContent(1), 2, 1e-7);
+    BOOST_CHECK_CLOSE(denomHist.GetBinContent(2), 0, 1e-7);
+    BOOST_CHECK_CLOSE(denomHist.GetBinContent(3), 3, 1e-7);
+
+    TH2D numerator2dHist = numerator.get2dhistogram(0, 1);
+    expected             = {{{3, 0, 0}, {0., 0., 0.}, {0, 0, 1}}};
+    for (size_t i = 0; i < 3; ++i) {
+        for (size_t j = 0; j < 3; ++j) {
+            BOOST_CHECK_CLOSE(numerator2dHist.GetBinContent(i + 1, j + 1), expected[i][j], 1e-7);
+        }
+    }
+}
+
+/*
  * Test mutual info calculation
  */
 BOOST_AUTO_TEST_CASE(test_mutual_info)
 {
-    // Create a 2D histogram of a dataset where the binning variables contain no mutual information
-
     // Create a 2D histogram of a dataset with a known, nonzero mutual information
     std::vector<std::vector<size_t>> values = {std::vector<size_t>{4, 2, 1, 1},
                                                std::vector<size_t>{2, 3, 1, 1},
@@ -127,6 +196,25 @@ BOOST_AUTO_TEST_CASE(test_mutual_info)
         }
     }
     BOOST_CHECK_CLOSE(mutual_info(hist2d.get()), 0, 1e-7);
+}
+
+/*
+ * Test swapping histogram axes
+ */
+BOOST_AUTO_TEST_CASE(test_swap_2d_hist)
+{
+    TH2D originalHist = TH2D("title", "name", 2, 0, 1, 2, 0, 1);
+    originalHist.SetBinContent(1, 1, 1);
+    originalHist.SetBinContent(1, 2, 2);
+    originalHist.SetBinContent(2, 1, 3);
+    originalHist.SetBinContent(2, 2, 4);
+
+    TH2D swappedHist = swapAxes(originalHist);
+
+    BOOST_CHECK_CLOSE(swappedHist.GetBinContent(1, 1), 1, 1e-7);
+    BOOST_CHECK_CLOSE(swappedHist.GetBinContent(1, 2), 3, 1e-7);
+    BOOST_CHECK_CLOSE(swappedHist.GetBinContent(2, 1), 2, 1e-7);
+    BOOST_CHECK_CLOSE(swappedHist.GetBinContent(2, 2), 4, 1e-7);
 }
 
 #endif // TEST_EFFICIENCY_CPP

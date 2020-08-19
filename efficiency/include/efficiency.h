@@ -9,6 +9,7 @@
 #include <TH2D.h>
 
 #include "efficiencyUtil.h"
+#include "graphTheory.h"
 #include "util.h"
 
 /*
@@ -29,6 +30,10 @@ struct HistogramNotFound : public std::exception {
     const char* what() const throw() { return "No Histogram exists at the specified index"; }
 };
 
+struct DivisionFailed : public std::exception {
+    const char* what() const throw() { return "For ROOT reasons, division failed"; }
+};
+
 /*
  * Class for binning phase space points in 5 1d histograms
  * Bin edges and phase space points should be of type T
@@ -45,13 +50,16 @@ class EfficiencyBinning
      * Initialise our bins but don't put anything in them yet
      *
      * Each vector of bin limits should contain the low edge of each bin, plus the high edge of the last bin
+     *
+     * Pass in a name to label this object, because two histograms existing with the same name causes ROOT issues
+     * possibly
      */
-    explicit EfficiencyBinning(const PhspBins& bins);
+    explicit EfficiencyBinning(const PhspBins& bins, const std::string& name);
 
     /*
      * Initialise our bins and put a single point in them
      */
-    EfficiencyBinning(const PhspBins& bins, const PhspPoint& point);
+    EfficiencyBinning(const PhspBins& bins, const PhspPoint& point, const std::string& name);
 
     /*
      * Bin a point
@@ -62,7 +70,8 @@ class EfficiencyBinning
      * Initialise our bins and put several points in them
      */
     template <typename ContainerType>
-    EfficiencyBinning(const PhspBins& bins, const ContainerType& points) : EfficiencyBinning(bins)
+    EfficiencyBinning(const PhspBins& bins, const ContainerType& points, const std::string& name)
+        : EfficiencyBinning(bins, name)
     {
         binPoints(points);
     }
@@ -80,6 +89,17 @@ class EfficiencyBinning
      * i must not equal j
      */
     const TH2D get2dhistogram(const size_t i, const size_t j) const;
+
+    size_t getDimensionality(void) const { return _dimensionality; };
+
+    const std::string getName(void) const { return _name; };
+
+    /*
+     * Take the ratio of two EfficiencyBinning instances
+     *
+     * Quite hacky and weird; uses the underlying histograms directly then sets them
+     */
+    friend const EfficiencyBinning operator/(const EfficiencyBinning& numerator, const EfficiencyBinning& denominator);
 
     /*
      * Bin a collection of points
@@ -121,19 +141,64 @@ class EfficiencyBinning
     PhspBins _bins{};
 
     /*
+     * Something to label this object with
+     */
+    std::string _name;
+
+    /*
      * Convert an (i, j) index pair to an index for our 2d histogram array
      */
     size_t _indexConversion(const size_t i, const size_t j) const;
 };
 
 /*
+ * Ratio of two projections
+ */
+const EfficiencyBinning operator/(const EfficiencyBinning& numerator, const EfficiencyBinning& denominator);
+
+struct BinMismatch : public std::exception {
+    const char* what() const throw() { return "Numerator and denominator bins do not match"; }
+};
+
+struct ApproximationNotYetMade : public std::exception {
+    const char* what() const throw()
+    {
+        return "Cannot retrieve efficiency value; first call this->efficiencyParametrisation";
+    }
+};
+
+struct BadEfficiency : public std::exception {
+    BadEfficiency(const double value, const PhspPoint& point)
+    {
+        _msg = "Efficiency value " + std::to_string(value) + " returned at point (";
+        for (auto coord : point) {
+            _msg += std::to_string(coord) + ", ";
+        }
+        // Remove the unnecessary ", " from the end of the last coord
+        _msg.erase(_msg.length() - 2);
+        _msg += ")";
+    }
+    const char* what() const throw() { return _msg.c_str(); }
+
+  private:
+    std::string _msg; // Probably bad since constructing a string could throw. but idc
+};
+
+/*
  * Class for estimating the phase space dependent detection efficiency of a process given truth- and detector-level
  * events
+ *
+ * Give it a load of truth- and detector-level events, call efficiencyParametrisation() once all the data is added and
+ * then call value() to find the value of the efficiency at a phase space point (or rather, the value of the efficiency
+ * in the bin where that phsp point lives)
  */
 class ChowLiuEfficiency
 {
   public:
-    explicit ChowLiuEfficiency(const PhspBins& bins);
+    /*
+     * Tell us the bins we're using and the root node to use for the approximation
+     */
+    explicit ChowLiuEfficiency(const PhspBins& bins, const size_t root = 0);
 
     /*
      * Return the value of the efficiency function at a phase space point
@@ -177,9 +242,19 @@ class ChowLiuEfficiency
     void efficiencyParametrisation(void);
 
   private:
-    EfficiencyBinning _detectedEvents;
-    EfficiencyBinning _generatedEvents;
-    PhspBins          _bins;
+    PhspBins                           _bins;
+    std::unique_ptr<EfficiencyBinning> _detectedEvents  = nullptr;
+    std::unique_ptr<EfficiencyBinning> _generatedEvents = nullptr;
+
+    /*
+     * The ratio _detectedEvents / _generatedEvents; i.e. the efficiency projections
+     */
+    EfficiencyBinning _ratio = EfficiencyBinning(_bins, "none");
+
+    /*
+     * The node to use as root of our approximation
+     */
+    size_t _root{0};
 
     /*
      * Flag tracking whether our efficiency parametrisation has been made yet
@@ -187,17 +262,28 @@ class ChowLiuEfficiency
     bool _approximationMade{false};
 
     /*
-     * The 1d histogram we use in our efficiency approximation
+     * Dimensionality of the probability distribution we are approximating
      */
-    std::unique_ptr<TH1D> _hist1d = nullptr;
+    size_t _dimensionality{0};
 
     /*
-     * Which variable our 1d histogram is in
+     * Graph object used to calculate which variables we want to keep
      */
-    size_t _1dHistVar{0};
+    std::unique_ptr<Graph> _graph = nullptr;
+
+    /*
+     * Adjacency list representation of the (directed) graph used to calculate which pairs of variables to keep
+     */
+    std::vector<std::list<Edge>> _directedTree;
+
+    /*
+     * The 1d histograms we use in our efficiency approximation
+     */
+    std::vector<std::unique_ptr<TH1D>> _hists1d{};
 
     /*
      * The 2d histograms we'll use in our efficiency approximation
+     * Should be a histogram of i vs j if we need a term like p(i|j)
      */
     std::vector<std::unique_ptr<TH2D>> _hists2d{};
 
@@ -226,5 +312,10 @@ double entropy(const TH1D* const hist);
  * Takes a pointer because thats what ROOT likes to do
  */
 double mutual_info(const TH2D* const histogram2d);
+
+/*
+ * Take a 2d histogram and swap x<->y axes
+ */
+TH2D swapAxes(const TH2D& other);
 
 #endif // EFFICIENCY_H

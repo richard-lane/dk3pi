@@ -5,7 +5,8 @@
 #include "efficiencyUtil.h"
 #include "util.h"
 
-EfficiencyBinning::EfficiencyBinning(const PhspBins& bins) : _dimensionality(bins.size()), _bins(bins)
+EfficiencyBinning::EfficiencyBinning(const PhspBins& bins, const std::string& name)
+    : _dimensionality(bins.size()), _bins(bins), _name(name)
 {
     _1dhistograms = std::vector<std::unique_ptr<TH1D>>(_dimensionality);
     _2dhistograms = std::vector<std::unique_ptr<TH2D>>(_dimensionality * (_dimensionality - 1) / 2);
@@ -17,18 +18,19 @@ EfficiencyBinning::EfficiencyBinning(const PhspBins& bins) : _dimensionality(bin
     }
 
     for (size_t i = 0; i < _bins.size(); ++i) {
-        std::string title1d = "1dhist" + std::to_string(i);
+        std::string title1d = name + "1dhist" + std::to_string(i);
         _1dhistograms[i]    = std::make_unique<TH1D>(title1d.c_str(), title1d.c_str(), _numBins[i], _bins[i].data());
 
         for (size_t j = _bins.size() - 1; j > i; --j) {
-            std::string title2d                   = "2dhist(" + std::to_string(i) + "," + std::to_string(j) + ")";
+            std::string title2d = name + "2dhist(" + std::to_string(i) + "," + std::to_string(j) + ")";
             _2dhistograms[_indexConversion(i, j)] = std::make_unique<TH2D>(
                 title2d.c_str(), title2d.c_str(), _numBins[i], _bins[i].data(), _numBins[j], _bins[j].data());
         }
     }
 }
 
-EfficiencyBinning::EfficiencyBinning(const PhspBins& bins, const PhspPoint& point) : EfficiencyBinning(bins)
+EfficiencyBinning::EfficiencyBinning(const PhspBins& bins, const PhspPoint& point, const std::string& name)
+    : EfficiencyBinning(bins, name)
 {
     binPoint(point);
 }
@@ -48,6 +50,39 @@ void EfficiencyBinning::binPoint(const PhspPoint& point)
     }
 }
 
+const EfficiencyBinning operator/(const EfficiencyBinning& numerator, const EfficiencyBinning& denominator)
+{
+    const PhspBins bins = numerator._bins;
+    if (bins != denominator._bins) {
+        throw BinMismatch();
+    }
+    std::string name = "ratio_" + numerator.getName() + "_" + denominator.getName();
+
+    EfficiencyBinning result(bins, name);
+    size_t            dimensionality = numerator.getDimensionality();
+
+    for (size_t i = 0; i < dimensionality; ++i) {
+        result._1dhistograms[i] = std::make_unique<TH1D>(numerator.get1dhistogram(i));
+        TH1D denominator1dHist  = denominator.get1dhistogram(i);
+        bool success            = result._1dhistograms[i]->Divide(&denominator1dHist);
+        if (!success) {
+            throw DivisionFailed();
+        }
+
+        for (size_t j = i + 1; j < dimensionality; ++j) {
+            size_t index                = result._indexConversion(i, j);
+            result._2dhistograms[index] = std::make_unique<TH2D>(numerator.get2dhistogram(i, j));
+            TH2D denominator2dHist      = denominator.get2dhistogram(i, j);
+            success                     = result._2dhistograms[index]->Divide(&denominator2dHist);
+            if (!success) {
+                throw DivisionFailed();
+            }
+        }
+    }
+
+    return result;
+}
+
 const TH1D EfficiencyBinning::get1dhistogram(const size_t i) const
 {
     if (i > _dimensionality - 1) {
@@ -65,7 +100,7 @@ const TH2D EfficiencyBinning::get2dhistogram(const size_t i, const size_t j) con
 size_t EfficiencyBinning::_indexConversion(const size_t i, const size_t j) const
 {
     if (i == j) {
-        std::cerr << "No 2d histogram of the a variable against itself exists" << std::endl;
+        std::cerr << "No 2d histogram of a variable against itself exists" << std::endl;
         throw HistogramNotFound();
     }
 
@@ -83,14 +118,106 @@ size_t EfficiencyBinning::_indexConversion(const size_t i, const size_t j) const
            (_dimensionality - smaller) * (_dimensionality - smaller - 1) / 2 + larger - smaller - 1;
 }
 
+ChowLiuEfficiency::ChowLiuEfficiency(const PhspBins& bins, const size_t root)
+    : _bins(bins), _root(root), _dimensionality(_bins.size())
+{
+    // Initialise the classes used to hold our data
+    _detectedEvents  = std::make_unique<EfficiencyBinning>(EfficiencyBinning(_bins, "detected"));
+    _generatedEvents = std::make_unique<EfficiencyBinning>(EfficiencyBinning(_bins, "generated"));
+
+    // Initialise the graph that we'll use to work out the best approximation
+    _graph = std::make_unique<Graph>(_dimensionality);
+}
+
+void ChowLiuEfficiency::addMCEvent(const PhspPoint& point)
+{
+    _detectedEvents->binPoint(point);
+}
+
+void ChowLiuEfficiency::addGeneratedEvent(const PhspPoint& point)
+{
+    _generatedEvents->binPoint(point);
+}
+
+void ChowLiuEfficiency::efficiencyParametrisation(void)
+{
+    // Find the histograms for detected/generated events
+    _ratio = EfficiencyBinning(*_detectedEvents / *_generatedEvents);
+
+    // Find the mutual information for each edge, add it to the graph
+    for (size_t outNode = 0; outNode < _dimensionality; ++outNode) {
+        for (size_t inNode = outNode + 1; inNode < _dimensionality; ++inNode) {
+            TH2D   hist   = _ratio.get2dhistogram(inNode, outNode);
+            double weight = mutual_info(&hist);
+            _graph->addEdge(outNode, inNode, weight);
+        }
+    }
+
+    // Find the directed MST and store it
+    _directedTree = inTree(_root, _graph->getMaxSpanningTree());
+
+    // Find what variables our histograms are in
+    for (auto edges : _directedTree) {
+        for (Edge edge : edges) {
+            _2dHistVars.push_back(std::make_pair(edge.from(), edge.to()));
+        }
+    }
+
+    // Populate our histograms
+    for (size_t i = 0; i < _dimensionality; ++i) {
+        _hists1d.push_back(std::make_unique<TH1D>(_ratio.get1dhistogram(i)));
+    }
+
+    for (auto pair : _2dHistVars) {
+        // The EfficiencyBinning class only stores 2d histograms (i, j) for i<j
+        // We may need to swap the axes of our histogram if we want (j, i) for our parametrisation
+        TH2D hist = pair.first > pair.second ? swapAxes(_ratio.get2dhistogram(pair.first, pair.second))
+                                             : _ratio.get2dhistogram(pair.first, pair.second);
+        _hists2d.push_back(std::make_unique<TH2D>(hist));
+    }
+
+    _approximationMade = true;
+}
+
+double ChowLiuEfficiency::value(const PhspPoint& point) const
+{
+    if (!_approximationMade) {
+        throw ApproximationNotYetMade();
+    }
+    // Set the value to the 1d prob
+    double prob1d = _hists1d[_root]->GetBinContent(_hists1d[_root]->FindBin(point[_root]));
+    double prob{prob1d};
+
+    // Iterate over 2d histograms (there are d-1 of them), finding the conditional probabilities
+    for (size_t i = 0; i < _dimensionality - 1; ++i) {
+        // The 2d histograms we stored are (x, y) for p(x|y)
+        // Conditional efficiency is e(x & y)/e(y)
+        size_t xBin          = _hists2d[i]->GetXaxis()->FindBin(point[_2dHistVars[i].first]);
+        size_t yBin          = _hists2d[i]->GetYaxis()->FindBin(point[_2dHistVars[i].second]);
+        double normalisation = _hists1d[_2dHistVars[i].second]->GetBinContent(
+            _hists1d[_2dHistVars[i].second]->FindBin(point[_2dHistVars[i].second]));
+        prob *= _hists2d[i]->GetBinContent(xBin, yBin) / normalisation;
+    }
+
+    // Just make a cursory check that things are sensible
+    if (!std::isfinite(prob)){
+        throw BadEfficiency(prob, point);
+    }
+
+    return prob;
+}
+
 double entropy(const TH1D* const hist)
 {
-    size_t totalEntries = hist->GetEntries();
+    size_t totalEntries = hist->Integral();
     double ent{0.0}; // entropy
 
     for (size_t bin = 1; bin <= (size_t)hist->GetNbinsX(); ++bin) { // ROOT bin indexing starts at 1
-        double prob = (double)hist->GetBinContent(bin) / totalEntries;
-        ent -= prob * std::log(prob);
+        double binContent = hist->GetBinContent(bin);
+        if (binContent > FLT_EPSILON) {
+            double prob = binContent / totalEntries;
+            ent -= prob * std::log(prob);
+        }
     }
     return ent;
 }
@@ -106,8 +233,7 @@ double mutual_info(const TH2D* const histogram2d)
     size_t numBinsX = xHist->GetNbinsX();
     size_t numBinsY = yHist->GetNbinsX();
 
-    size_t numEvents = xHist->GetEntries(); // For some reason histogram2d->GetEntries() doesn't give the right
-                                            // number of events so just do this
+    size_t numEvents = xHist->Integral();
     for (size_t xBin = 1; xBin <= numBinsX; ++xBin) {
         for (size_t yBin = 1; yBin <= numBinsY; ++yBin) {
             size_t binContent = histogram2d->GetBinContent(xBin, yBin);
@@ -130,4 +256,24 @@ double mutual_info(const TH2D* const histogram2d)
     double normalisation = 2 / (entropy(xHist) + entropy(yHist));
 
     return normalisation * info;
+}
+
+TH2D swapAxes(const TH2D& other)
+{
+    size_t nBinsX = other.GetNbinsX();
+    size_t nBinsY = other.GetNbinsY();
+
+    const double*     xBins = other.GetXaxis()->GetXbins()->GetArray();
+    const double*     yBins = other.GetYaxis()->GetXbins()->GetArray();
+    std::string       oldName(other.GetName());
+    const std::string name("swap_" + oldName);
+
+    TH2D swappedHist = TH2D(name.c_str(), name.c_str(), nBinsY, yBins, nBinsX, xBins);
+
+    for (size_t i = 1; i <= nBinsX; ++i) {
+        for (size_t j = 1; j <= nBinsY; ++j) {
+            swappedHist.SetBinContent(i, j, other.GetBinContent(j, i));
+        }
+    }
+    return swappedHist;
 }
