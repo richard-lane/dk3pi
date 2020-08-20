@@ -198,15 +198,21 @@ int main()
     std::random_device rd;
     std::mt19937       generator(rd());
 
-    // Let's say that the efficiencies look like things
-    auto detectionChance = [&](const dDecay_t& event) {
+    // An efficiency with no correlations that gets recovered nicely
+    auto niceEfficiency = [](const dDecay_t& event) { return invariantMass({event.kParams, event.pi1Params}) / 2; };
+
+    // A less-nice efficiency that doesn't get recovered as nicely
+    auto awkwardEfficiency = [&](const dDecay_t& event) {
         std::vector<double> params = parametrisation(event);
         double              e{1};
-        for (size_t i = 0; i < params.size(); ++i) {
-            e *= (2 * (i % 2) - 1) * 0.5 * params[i];
+        for (int i = 0; i < 3; ++i) {
+            e *= params[i] / 2;
         }
-        return e;
+        return 5 * e;
     };
+    // Cast them both to void so we can get away with only using one
+    (void)niceEfficiency;
+    (void)awkwardEfficiency;
 
     // Create a thing for doing our efficiency correction
     size_t                    numBins    = 100;
@@ -225,7 +231,7 @@ int main()
     // Run the rejection thing on the AmpGen data
     std::vector<dDecay_t> detectedEvents = RootData.events;
     std::cout << "Run rejection thing on the AmpGen data..." << std::flush;
-    applyEfficiency(&generator, detectionChance, detectedEvents);
+    applyEfficiency(&generator, awkwardEfficiency, detectedEvents);
     std::cout << "done" << std::endl;
 
     // Add the events of both type
