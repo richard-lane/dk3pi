@@ -201,8 +201,11 @@ int main()
     // Let's say that the efficiencies look like things
     auto detectionChance = [&](const dDecay_t& event) {
         std::vector<double> params = parametrisation(event);
-        return 0.5;
-        return params[0] / 2 + params[1] / 4;
+        double              e{1};
+        for (size_t i = 0; i < params.size(); ++i) {
+            e *= (2 * (i % 2) - 1) * 0.5 * params[i];
+        }
+        return e;
     };
 
     // Create a thing for doing our efficiency correction

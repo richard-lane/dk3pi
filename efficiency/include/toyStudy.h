@@ -8,13 +8,16 @@
 #include "efficiencyUtil.h"
 
 struct EventDetectionProbNotNormalised : public std::exception {
-    EventDetectionProbNotNormalised(const double prob) : prob(prob) { ; }
-
-    const char* what() const throw()
+    EventDetectionProbNotNormalised(const double prob)
+        : _msg("Probability " + std::to_string(prob) + " not between 0 and 1")
     {
-        return std::string("Probability " + std::to_string(prob) + " not between 0 and 1").c_str();
+        ;
     }
-    const double prob;
+
+    const char* what() const throw() { return _msg.c_str(); }
+
+  private:
+    const std::string _msg;
 };
 
 /*
