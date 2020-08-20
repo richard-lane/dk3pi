@@ -199,10 +199,15 @@ int main()
     std::mt19937       generator(rd());
 
     // An efficiency with no correlations that gets recovered nicely
+    auto simpleEfficiency = [](const dDecay_t& event) {
+        (void)event;
+        return 0.5;
+    };
+
     auto niceEfficiency = [](const dDecay_t& event) { return invariantMass({event.kParams, event.pi1Params}) / 2; };
 
     // A less-nice efficiency that doesn't get recovered as nicely
-    auto awkwardEfficiency = [&](const dDecay_t& event) {
+    auto awkwardEfficiency = [](const dDecay_t& event) {
         std::vector<double> params = parametrisation(event);
         double              e{1};
         for (int i = 0; i < 3; ++i) {
@@ -211,6 +216,7 @@ int main()
         return 5 * e;
     };
     // Cast them both to void so we can get away with only using one
+    (void)simpleEfficiency;
     (void)niceEfficiency;
     (void)awkwardEfficiency;
 
@@ -231,7 +237,7 @@ int main()
     // Run the rejection thing on the AmpGen data
     std::vector<dDecay_t> detectedEvents = RootData.events;
     std::cout << "Run rejection thing on the AmpGen data..." << std::flush;
-    applyEfficiency(&generator, awkwardEfficiency, detectedEvents);
+    applyEfficiency(&generator, simpleEfficiency, detectedEvents);
     std::cout << "done" << std::endl;
 
     // Add the events of both type
