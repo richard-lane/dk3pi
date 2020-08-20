@@ -64,11 +64,9 @@ BOOST_AUTO_TEST_CASE(test_find_cycles)
                                                    {Edge(3, 1, wt)},
                                                    {Edge(4, 1, wt), Edge(4, 2, wt)}};
 
-    std::vector<bool> discovered(5, false);
-    BOOST_CHECK(!containsCycle(noCycle, 0, discovered, -1));
+    BOOST_CHECK(!containsCycle(noCycle, 0));
 
-    discovered = std::vector<bool>(5, false);
-    BOOST_CHECK(containsCycle(yesCycle, 0, discovered, -1));
+    BOOST_CHECK(containsCycle(yesCycle, 0));
 }
 
 /*

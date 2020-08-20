@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <functional>
+#include <stack>
 
 #include "graphTheory.h"
 
@@ -52,40 +53,44 @@ bool makesCycle(const size_t node1, const size_t node2, const std::vector<std::l
     adjList[node1].push_back(Edge(node1, node2, 1));
     adjList[node2].push_back(Edge(node2, node1, 1));
 
-    // Perform a Depth first search on the graph for any cycles
-    // Start the search at the one of the new nodes, since we know that if a cycle has been newly formed it must contain
+    // Start the search at one of the new nodes as we know that if a new cycle is introduced, it will be connected to
     // this node
-    const size_t      numNodes{adjList.size()};
-    std::vector<bool> discovered(numNodes, false);
-    return containsCycle(adjList, node1, discovered, node2);
+    return containsCycle(adjList, node1);
 }
 
-bool containsCycle(const std::vector<std::list<Edge>>& adjacencyList,
-                   const size_t                        node,
-                   std::vector<bool>&                  discovered,
-                   const size_t                        parent)
+bool containsCycle(const std::vector<std::list<Edge>>& adjacencyList, const size_t start)
 {
     // Could do a short circuit-test here; if there are more edges than nodes, then there is definitely a cycle
 
-    // Mark this node as discovered
-    discovered[node] = true;
+    size_t                                numNodes = adjacencyList.size();
+    std::vector<bool>                     visited(numNodes, false);
+    std::stack<std::pair<size_t, size_t>> stack; // Stack tracking a vertex + its parent
 
-    // Look at each node connected to the one passed in to this function
-    for (Edge edge : adjacencyList[node]) {
+    // Iterate over all our nodes
+    // First node does not have a parent so assign something ridiculously big
+    visited[start] = true;
+    stack.push(std::make_pair(start, -1));
+    while (!stack.empty()) {
+        // find the node at the top of the stack + remove it
+        size_t lastNode = stack.top().first;
+        size_t parent   = stack.top().second;
+        stack.pop();
 
-        // If this node has not been discovered yet, start the depth-first search again on this node
-        if (!discovered[edge.to()]) {
-            if (containsCycle(adjacencyList, edge.to(), discovered, node)) {
-                return true;
+        // Iterate over all edges attached to the node
+        for (const Edge& edge : adjacencyList[lastNode]) {
+
+            // If this edge attaches to a non visited node, add it to the stack
+            if (!visited[edge.to()]) {
+                stack.push(std::make_pair(edge.to(), lastNode));
+                visited[edge.to()] = true;
             }
 
-            // If this node has been discovered and is not our node's parent, we have a cycle
-        } else if (edge.to() != parent) {
-            return true;
+            // Otherwise if the edge attaches to a node that is not the parent, we have a cycle
+            else if (edge.to() != parent) {
+                return true;
+            }
         }
     }
-
-    // No back-edges found
     return false;
 }
 
@@ -118,9 +123,8 @@ bool isSpanning(const std::vector<std::list<Edge>>& adjacencyList)
 
 std::vector<std::list<Edge>> inTree(const size_t root, const std::vector<std::list<Edge>>& treeAdjacencyList)
 {
-    size_t            order{treeAdjacencyList.size()};
-    std::vector<bool> discovered(order, false);
-    if (containsCycle(treeAdjacencyList, root, discovered)) {
+    size_t order{treeAdjacencyList.size()};
+    if (containsCycle(treeAdjacencyList, root)) {
         throw CyclicGraph();
     }
 
@@ -128,8 +132,8 @@ std::vector<std::list<Edge>> inTree(const size_t root, const std::vector<std::li
         throw NotSpanning();
     }
 
-    // Reset our vector of discovered nodes to false, except the one we start at
-    std::fill(discovered.begin(), discovered.end(), false);
+    // Set our vector of discovered nodes to false, except the one we start at
+    std::vector<bool> discovered(order, false);
     discovered[root] = true;
 
     std::vector<std::list<Edge>> directedTree(order);

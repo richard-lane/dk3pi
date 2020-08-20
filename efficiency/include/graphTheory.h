@@ -8,7 +8,7 @@ struct CyclicGraph : public std::exception {
     const char* what() const throw() { return "Graph contains a cycle"; }
 };
 
-struct NotSpanning: public std::exception {
+struct NotSpanning : public std::exception {
     const char* what() const throw() { return "Graph not spanning"; }
 };
 
@@ -64,7 +64,9 @@ class Graph
     void addEdge(const size_t node1, const size_t node2, const double weight);
 
     /*
-     * Return the adjacency list representation of the minimum spanning tree of this graph
+     * Return the adjacency list representation of the maximum spanning tree of this graph
+     *
+     * Returns an adjacency list representing an undirected tree
      */
     std::vector<std::list<Edge>> getMaxSpanningTree() const;
 
@@ -90,25 +92,12 @@ bool makesCycle(const size_t node1, const size_t node2, const std::vector<std::l
 /*
  * Search a graph depth-first for cycles
  *
- * Must provide a representation of the graph as an adjacency list, the node to start the search from, a std::vector
- * representing whether this node has been visited before and the index of the node's parent.
+ * Provide a representation of the graph as an adjacency list
  *
- * To start a new search, discovered should be a vector of "false"
+ * Will not detect cycles if we start at a disconnected node
  *
- * Starts at the provided node and searches each node connected to this one in order recursively
- *
- * Will not detect cycles that are not connected to the node initially passed in
- *
- * Also is a recursive function so could cause a stack overflow if the graph is huge
- *
- * Only tested on an adirectional graph so it might not work for directed graphs
- *
- * Parent is arbitrary if starting a new search
  */
-bool containsCycle(const std::vector<std::list<Edge>>& adjacencyList,
-                   const size_t                        node,
-                   std::vector<bool>&                  discovered,
-                   const size_t                        parent = -1);
+bool containsCycle(const std::vector<std::list<Edge>>& adjacencyList, const size_t start);
 
 /*
  * Check whether the adjacency list representation of a graph is spanning

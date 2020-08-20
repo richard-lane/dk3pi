@@ -93,9 +93,10 @@ void correctionPlot(const size_t                 param,
     canvasPtr->SaveAs(path.c_str());
 
     // If you want to visualise the actual efficiency
-    // TH1D tmp = *detected;
-    // tmp.Divide(truth.get());
-    // util::saveObjectToFile(&tmp, ("efficiency_" + path).c_str());
+    TH1D tmp = *detected;
+    tmp.SetTitle(("Efficiency" + path).c_str());
+    tmp.Divide(truth.get());
+    util::saveObjectToFile(&tmp, ("efficiency_" + path).c_str());
 }
 
 void dalitzPlot(const std::vector<dDecay_t>&     events,
@@ -200,6 +201,7 @@ int main()
     // Let's say that the efficiencies look like things
     auto detectionChance = [&](const dDecay_t& event) {
         std::vector<double> params = parametrisation(event);
+        return 0.5;
         return params[0] / 2 + params[1] / 4;
     };
 
