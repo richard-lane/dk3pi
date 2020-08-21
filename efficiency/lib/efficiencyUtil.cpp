@@ -28,3 +28,21 @@ std::vector<double> event2invariantMasses(const dDecay_t& event)
         invariantMass(std::vector<kinematicParams_t>{event.kParams, event.pi1Params, event.pi2Params}),
         invariantMass(std::vector<kinematicParams_t>{event.pi1Params, event.pi2Params, event.pi3Params})};
 }
+
+double pT(const std::vector<kinematicParams_t>& particles)
+{
+    // Add all the px and py's together for our particles and find the pT of this combination
+    kinematicParams_t aggregate;
+    for (const kinematicParams_t& particle : particles) {
+        aggregate.px += particle.px;
+        aggregate.py += particle.py;
+    }
+    return pT(aggregate);
+}
+
+double pT(const dDecay_t& dDecay)
+{
+    const std::vector<kinematicParams_t> particles{
+        dDecay.kParams, dDecay.pi1Params, dDecay.pi2Params, dDecay.pi3Params};
+    return pT(particles);
+}

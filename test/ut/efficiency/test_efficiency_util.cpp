@@ -46,4 +46,18 @@ BOOST_AUTO_TEST_CASE(test_event_to_phsp)
     }
 }
 
+/*
+ * Test pT
+ */
+BOOST_AUTO_TEST_CASE(test_pt)
+{
+    kinematicParams_t particle1{.px = 0, .py = 1, .pz = 3, .energy = 10};
+    kinematicParams_t particle2{.px = 2, .py = 3, .pz = 3, .energy = 10};
+    double            expectedPT = std::sqrt(20);
+
+    std::vector<kinematicParams_t> particles{particle1, particle2};
+
+    BOOST_CHECK_CLOSE(expectedPT, pT(particles), 1e-7);
+}
+
 #endif // TEST_EFFICIENCY_UTIL_CPP

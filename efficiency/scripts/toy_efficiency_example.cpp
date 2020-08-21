@@ -215,10 +215,15 @@ int main()
         }
         return 5 * e;
     };
-    // Cast them both to void so we can get away with only using one
+
+    // An efficiency on the total pT of the k
+    auto pTEfficiency = [](const dDecay_t& event) { return std::sqrt(pT(event.kParams)); };
+
+    // Cast them to void so we can get away with only using one
     (void)simpleEfficiency;
     (void)niceEfficiency;
     (void)awkwardEfficiency;
+    (void)pTEfficiency;
 
     // Create a thing for doing our efficiency correction
     size_t                    numBins    = 100;
@@ -237,7 +242,7 @@ int main()
     // Run the rejection thing on the AmpGen data
     std::vector<dDecay_t> detectedEvents = RootData.events;
     std::cout << "Run rejection thing on the AmpGen data..." << std::flush;
-    applyEfficiency(&generator, simpleEfficiency, detectedEvents);
+    applyEfficiency(&generator, pTEfficiency, detectedEvents);
     std::cout << "done" << std::endl;
 
     // Add the events of both type

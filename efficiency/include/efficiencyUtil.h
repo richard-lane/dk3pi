@@ -75,4 +75,22 @@ double invariantMass(const std::vector<kinematicParams_t>& systemKinematics);
  */
 std::vector<double> event2invariantMasses(const dDecay_t& event);
 
+/*
+ * Transverse momemtum of a kinematicParams_t
+ */
+inline double pT(const kinematicParams_t& particle)
+{
+    return std::sqrt(particle.px * particle.px + particle.py * particle.py);
+}
+
+/*
+ * Transverse momentum of a collection of kinematicParams_t
+ */
+double pT(const std::vector<kinematicParams_t>& particles);
+
+/*
+ * Transverse momentum of D decay products
+ */
+double pT(const dDecay_t& dDecay);
+
 #endif // EFFICIENCY_UTIL_H
