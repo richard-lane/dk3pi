@@ -139,6 +139,41 @@ void correctionPlot(const size_t                 param,
     util::saveObjectToFile(&tmp, ("efficiency_" + path).c_str());
 }
 
+double simpleEfficiency(const dDecay_t& event)
+{
+    (void)event;
+    return 0.5;
+}
+
+/*
+ * A nice efficiency that gets recovered well
+ */
+double niceEfficiency(const dDecay_t& event)
+{
+    return invariantMass({event.kParams, event.pi1Params}) / 2;
+}
+
+/*
+ * A less-nice efficiency that doesn't get recovered as nicely
+ */
+double awkwardEfficiency(const dDecay_t& event)
+{
+    std::vector<double> params = parametrisation(event);
+    double              e{1};
+    for (int i = 0; i < 3; ++i) {
+        e *= params[i] / 2;
+    }
+    return 5 * e;
+}
+
+/*
+ * An efficiency on the total pT of the k
+ */
+double pTEfficiency(const dDecay_t& event)
+{
+    return std::sqrt(pT(event.kParams));
+}
+
 int main()
 {
     // Read in an AmpGen file
@@ -152,38 +187,6 @@ int main()
     ReadRoot RootData(tFile.get(), ampgenTreeName, ampgenBranchNames, ampgenMomentumPostfixes);
     std::cout << "done" << std::endl;
 
-    // Create a lambda fcn that will reject all events with m12 below some value that i can read off the Dalitz plot
-    // when it comes to it
-    std::random_device rd;
-    std::mt19937       generator(rd());
-
-    // An efficiency with no correlations that gets recovered nicely
-    auto simpleEfficiency = [](const dDecay_t& event) {
-        (void)event;
-        return 0.5;
-    };
-
-    auto niceEfficiency = [](const dDecay_t& event) { return invariantMass({event.kParams, event.pi1Params}) / 2; };
-
-    // A less-nice efficiency that doesn't get recovered as nicely
-    auto awkwardEfficiency = [](const dDecay_t& event) {
-        std::vector<double> params = parametrisation(event);
-        double              e{1};
-        for (int i = 0; i < 3; ++i) {
-            e *= params[i] / 2;
-        }
-        return 5 * e;
-    };
-
-    // An efficiency on the total pT of the k
-    auto pTEfficiency = [](const dDecay_t& event) { return std::sqrt(pT(event.kParams)); };
-
-    // Cast them to void so we can get away with only using one
-    (void)simpleEfficiency;
-    (void)niceEfficiency;
-    (void)awkwardEfficiency;
-    (void)pTEfficiency;
-
     // Create a thing for doing our efficiency correction
     size_t                    numBins    = 100;
     std::pair<double, double> axisLimits = std::make_pair(0., 2.);
@@ -196,8 +199,10 @@ int main()
     ChowLiuEfficiency EfficiencyCorrection(Bins);
 
     // Run the rejection thing on the AmpGen data
+    std::cout << "Run rejection on the AmpGen data..." << std::flush;
     std::vector<dDecay_t> detectedEvents = RootData.events;
-    std::cout << "Run rejection thing on the AmpGen data..." << std::flush;
+    std::random_device    rd;
+    std::mt19937          generator(rd());
     applyEfficiency(&generator, pTEfficiency, detectedEvents);
     std::cout << "done" << std::endl;
 
