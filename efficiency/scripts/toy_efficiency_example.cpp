@@ -176,8 +176,7 @@ double pTEfficiency(const dDecay_t& event)
 
 int main()
 {
-    // Read in an AmpGen file
-    // AmpGen
+    // Read in data from a ROOT file that I generated with AmpGen to get out mock "truth-level" data
     std::string              ampgenRootFile("../../AmpGen/binning/Mixed.root");
     std::string              ampgenTreeName          = "DalitzEventList";
     std::vector<std::string> ampgenBranchNames       = {"_1_K~", "_2_pi#", "_3_pi#", "_4_pi~"};
@@ -187,24 +186,32 @@ int main()
     ReadRoot RootData(tFile.get(), ampgenTreeName, ampgenBranchNames, ampgenMomentumPostfixes);
     std::cout << "done" << std::endl;
 
-    // Create a thing for doing our efficiency correction
-    size_t                    numBins    = 100;
-    std::pair<double, double> axisLimits = std::make_pair(0., 2.);
-    std::vector<double>       binLimits(numBins);
-    for (size_t i = 0; i <= numBins; ++i) {
-        binLimits[i] = axisLimits.first + (axisLimits.second - axisLimits.first) * i / (numBins);
-    }
-
-    PhspBins          Bins(5, binLimits);
-    ChowLiuEfficiency EfficiencyCorrection(Bins);
-
-    // Run the rejection thing on the AmpGen data
+    // Run the rejection thing on the AmpGen data to get our mock "MC-level" data
     std::cout << "Run rejection on the AmpGen data..." << std::flush;
     std::vector<dDecay_t> detectedEvents = RootData.events;
     std::random_device    rd;
     std::mt19937          generator(rd());
     applyEfficiency(&generator, pTEfficiency, detectedEvents);
     std::cout << "done" << std::endl;
+
+    // Decide which bin limits to use
+    std::cout << "Creating bins..." << std::flush;
+    size_t                                   numBins    = 100;
+    std::array<std::pair<double, double>, 5> axisLimits = {std::make_pair(0.2, 1.8),
+                                                           std::make_pair(0.2, 1.8),
+                                                           std::make_pair(0.2, 1.8),
+                                                           std::make_pair(0.2, 1.8),
+                                                           std::make_pair(0.2, 1.8)};
+    PhspBins                                 Bins(5, std::vector<double>(numBins + 1));
+    for (size_t i = 0; i < Bins.size(); ++i) {
+        for (size_t j = 0; j <= numBins; ++j) {
+            Bins[i][j] = axisLimits[i].first + (axisLimits[i].second - axisLimits[i].first) * j / (numBins);
+        }
+    }
+    std::cout << "done" << std::endl;
+
+    // Create the object used for making the efficiency parametrisation
+    ChowLiuEfficiency EfficiencyCorrection(Bins);
 
     // Add the events of both type
     std::cout << "Add truth events..." << std::flush;
@@ -223,11 +230,11 @@ int main()
     EfficiencyCorrection.efficiencyParametrisation();
     std::cout << "done" << std::endl;
 
-    correctionPlot(0, binLimits, RootData.events, detectedEvents, EfficiencyCorrection, "m12corr.png");
-    correctionPlot(1, binLimits, RootData.events, detectedEvents, EfficiencyCorrection, "m23corr.png");
-    correctionPlot(2, binLimits, RootData.events, detectedEvents, EfficiencyCorrection, "m34corr.png");
-    correctionPlot(3, binLimits, RootData.events, detectedEvents, EfficiencyCorrection, "m123corr.png");
-    correctionPlot(4, binLimits, RootData.events, detectedEvents, EfficiencyCorrection, "m234corr.png");
+    correctionPlot(0, Bins[0], RootData.events, detectedEvents, EfficiencyCorrection, "m12corr.png");
+    correctionPlot(1, Bins[1], RootData.events, detectedEvents, EfficiencyCorrection, "m23corr.png");
+    correctionPlot(2, Bins[2], RootData.events, detectedEvents, EfficiencyCorrection, "m34corr.png");
+    correctionPlot(3, Bins[3], RootData.events, detectedEvents, EfficiencyCorrection, "m123corr.png");
+    correctionPlot(4, Bins[4], RootData.events, detectedEvents, EfficiencyCorrection, "m234corr.png");
 
     return 0;
 }
