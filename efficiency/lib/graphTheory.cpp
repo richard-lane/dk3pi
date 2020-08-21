@@ -32,9 +32,12 @@ std::vector<std::list<Edge>> Graph::getMaxSpanningTree() const
     std::sort(edges.begin(), edges.end(), std::greater<Edge>());
 
     std::vector<std::list<Edge>> mst(_numNodes);
-    for (Edge edge : edges) {
-        if (!makesCycle(edge.from(), edge.to(), mst)) {
-            mst[edge.from()].push_back(edge);
+    // edges will be an array of edges in order of weight- these will be e.g. {(0, 1), (1, 0), (2, 3), (3, 2)}
+    // save a bit of time by iterating over pairs
+    for (size_t i = 0; i < edges.size(); i += 2) {
+        if (!makesCycle(edges[i].from(), edges[i].to(), mst)) {
+            mst[edges[i].from()].push_back(edges[i]);
+            mst[edges[i].to()].push_back(edges[i + 1]);
         }
         if (isSpanning(mst)) {
             break; // don't like it

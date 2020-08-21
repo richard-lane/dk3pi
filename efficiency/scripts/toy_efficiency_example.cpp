@@ -191,17 +191,17 @@ int main()
     std::vector<dDecay_t> detectedEvents = RootData.events;
     std::random_device    rd;
     std::mt19937          generator(rd());
-    applyEfficiency(&generator, pTEfficiency, detectedEvents);
+    applyEfficiency(&generator, niceEfficiency, detectedEvents);
     std::cout << "done" << std::endl;
 
     // Decide which bin limits to use
     std::cout << "Creating bins..." << std::flush;
     size_t                                   numBins    = 100;
-    std::array<std::pair<double, double>, 5> axisLimits = {std::make_pair(0.2, 1.8),
-                                                           std::make_pair(0.2, 1.8),
-                                                           std::make_pair(0.2, 1.8),
-                                                           std::make_pair(0.2, 1.8),
-                                                           std::make_pair(0.2, 1.8)};
+    std::array<std::pair<double, double>, 5> axisLimits = {std::make_pair(0.4, 1.6),
+                                                           std::make_pair(0.2, 1.4),
+                                                           std::make_pair(0.2, 1.4),
+                                                           std::make_pair(0.8, 1.8),
+                                                           std::make_pair(0.4, 1.8)};
     PhspBins                                 Bins(5, std::vector<double>(numBins + 1));
     for (size_t i = 0; i < Bins.size(); ++i) {
         for (size_t j = 0; j <= numBins; ++j) {
