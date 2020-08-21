@@ -174,6 +174,27 @@ double pTEfficiency(const dDecay_t& event)
     return std::sqrt(pT(event.kParams));
 }
 
+PhspBins findBins(void)
+{
+    std::cout << "Creating bins..." << std::flush;
+    std::array<size_t, 5>                    numBins    = {100, 100, 100, 100, 100};
+    std::array<std::pair<double, double>, 5> axisLimits = {std::make_pair(0.4, 1.6),
+                                                           std::make_pair(0.2, 1.4),
+                                                           std::make_pair(0.2, 1.4),
+                                                           std::make_pair(0.8, 1.8),
+                                                           std::make_pair(0.4, 1.8)};
+    PhspBins                                 Bins(5);
+    for (size_t i = 0; i < Bins.size(); ++i) {
+        Bins[i] = std::vector<double>(numBins[i]);
+        for (size_t j = 0; j <= numBins[i]; ++j) {
+            Bins[i][j] = axisLimits[i].first + (axisLimits[i].second - axisLimits[i].first) * j / (numBins[i]);
+        }
+    }
+    std::cout << "done" << std::endl;
+
+    return Bins;
+}
+
 int main()
 {
     // Read in data from a ROOT file that I generated with AmpGen to get out mock "truth-level" data
@@ -194,21 +215,7 @@ int main()
     applyEfficiency(&generator, niceEfficiency, detectedEvents);
     std::cout << "done" << std::endl;
 
-    // Decide which bin limits to use
-    std::cout << "Creating bins..." << std::flush;
-    size_t                                   numBins    = 100;
-    std::array<std::pair<double, double>, 5> axisLimits = {std::make_pair(0.4, 1.6),
-                                                           std::make_pair(0.2, 1.4),
-                                                           std::make_pair(0.2, 1.4),
-                                                           std::make_pair(0.8, 1.8),
-                                                           std::make_pair(0.4, 1.8)};
-    PhspBins                                 Bins(5, std::vector<double>(numBins + 1));
-    for (size_t i = 0; i < Bins.size(); ++i) {
-        for (size_t j = 0; j <= numBins; ++j) {
-            Bins[i][j] = axisLimits[i].first + (axisLimits[i].second - axisLimits[i].first) * j / (numBins);
-        }
-    }
-    std::cout << "done" << std::endl;
+    PhspBins Bins = findBins();
 
     // Create the object used for making the efficiency parametrisation
     ChowLiuEfficiency EfficiencyCorrection(Bins);
