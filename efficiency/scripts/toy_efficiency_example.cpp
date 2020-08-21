@@ -14,8 +14,48 @@
 #include "ReadRoot.h"
 #include "efficiency.h"
 #include "efficiencyUtil.h"
-#include "toyStudy.h"
 #include "util.h"
+
+struct EventDetectionProbNotNormalised : public std::exception {
+    EventDetectionProbNotNormalised(const double prob)
+        : _msg("Probability " + std::to_string(prob) + " not between 0 and 1")
+    {
+        ;
+    }
+
+    const char* what() const throw() { return _msg.c_str(); }
+
+  private:
+    const std::string _msg;
+};
+
+/*
+ * Provide a random number generator, a vector of D decay events and a function that provides an event's detection
+ * probability
+ *
+ * The probability of detecting an event should be a number between 0 and 1
+ *
+ * Removes the undetected events from the vector in-place.
+ */
+void applyEfficiency(std::mt19937* const                    generator,
+                     const std::function<double(dDecay_t)>& eventDetectionProb,
+                     std::vector<dDecay_t>&                 events)
+{
+    std::uniform_real_distribution<double> uniformDistribution(0.0, 1.0);
+
+    // Lambda that we'll use to decide whether to remove our event
+    auto removeEvent = [&](const dDecay_t& event) {
+        double detectionProb = eventDetectionProb(event);
+        if (detectionProb < 0 || detectionProb > 1) {
+            throw EventDetectionProbNotNormalised(detectionProb);
+        }
+        return uniformDistribution(*generator) > detectionProb;
+    };
+
+    // Move the items to remove to the end of the vector and erase them
+    auto it = std::remove_if(events.begin(), events.end(), removeEvent);
+    events.erase(it, events.end());
+}
 
 PhspPoint parametrisation(const dDecay_t& decay)
 {
