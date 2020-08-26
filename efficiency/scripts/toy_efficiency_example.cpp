@@ -83,10 +83,7 @@ void correctionPlot(const size_t                 param,
                     const std::string&           path)
 {
     // On the same canvas, draw histograms of the truth events, the measured events + the reweighted measured events
-    std::string              title     = "Example Projection: " + path;
-    std::unique_ptr<TCanvas> canvasPtr = std::make_unique<TCanvas>();
-    canvasPtr->cd();
-    canvasPtr->SetLeftMargin(0.15);
+    std::string title = "Example Projection: " + path;
 
     std::unique_ptr<TH1D> truth =
         std::make_unique<TH1D>("truth", title.c_str(), binLimits.size() - 1, binLimits.data());
@@ -102,33 +99,41 @@ void correctionPlot(const size_t                 param,
     }
     std::cout << "done" << std::endl;
 
-    // Detected histogram is also easy to fill
+    // Detected histogram is easy to fill
     // Corrected histogram is filled with weights 1/efficiency for each point
     std::cout << "Calculate + fill corrected + detected histograms..." << std::flush;
     for (auto detectedEvent : detectedEvents) {
         detected->Fill(parametrisation(detectedEvent)[param]);
+        double x      = EfficiencyCorrection.value(parametrisation(detectedEvent));
         double weight = 1 / EfficiencyCorrection.value(parametrisation(detectedEvent));
+        if (!std::isfinite(weight)) {
+            std::cerr << "aaa this histogram is going to break" << std::endl;
+        }
         corrected->Fill(parametrisation(detectedEvent)[param], weight);
     }
     std::cout << "done" << std::endl;
 
-    truth->SetLineColor(kGreen);
+    std::unique_ptr<TCanvas> canvasPtr = std::make_unique<TCanvas>();
+    canvasPtr->cd();
+
     corrected->SetLineColor(kBlue);
+    truth->SetLineColor(kGreen);
     detected->SetLineColor(kRed);
+
+    corrected->SetStats(false);
+    truth->SetStats(false);
+    detected->SetStats(false);
 
     // Legend
     std::unique_ptr<TLegend> legendPtr = std::make_unique<TLegend>(0.15, 0.25);
     legendPtr->SetTextSize(0.03);
-
-    legendPtr->AddEntry(truth.get(), "Truth", "l");
-    truth->Draw("SAME");
-
     legendPtr->AddEntry(corrected.get(), "Corrected", "l");
-    corrected->Draw("SAME");
-
+    legendPtr->AddEntry(truth.get(), "Truth", "l");
     legendPtr->AddEntry(detected.get(), "Detected", "l");
-    detected->Draw("SAME");
 
+    corrected->Draw("SAME");
+    truth->Draw("SAME");
+    detected->Draw("SAME");
     legendPtr->Draw();
     canvasPtr->SaveAs(path.c_str());
 
@@ -185,7 +190,7 @@ PhspBins findBins(void)
                                                            std::make_pair(0.4, 1.8)};
     PhspBins                                 Bins(5);
     for (size_t i = 0; i < Bins.size(); ++i) {
-        Bins[i] = std::vector<double>(numBins[i]);
+        Bins[i] = std::vector<double>(numBins[i] + 1);
         for (size_t j = 0; j <= numBins[i]; ++j) {
             Bins[i][j] = axisLimits[i].first + (axisLimits[i].second - axisLimits[i].first) * j / (numBins[i]);
         }

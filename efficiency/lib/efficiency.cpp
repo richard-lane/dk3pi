@@ -5,7 +5,7 @@
 #include "efficiencyUtil.h"
 #include "util.h"
 
-EfficiencyBinning::EfficiencyBinning(const PhspBins& bins, const std::string& name)
+HistogramProjections::HistogramProjections(const PhspBins& bins, const std::string& name)
     : _dimensionality(bins.size()), _bins(bins), _name(name)
 {
     _1dhistograms = std::vector<std::unique_ptr<TH1D>>(_dimensionality);
@@ -29,13 +29,13 @@ EfficiencyBinning::EfficiencyBinning(const PhspBins& bins, const std::string& na
     }
 }
 
-EfficiencyBinning::EfficiencyBinning(const PhspBins& bins, const PhspPoint& point, const std::string& name)
-    : EfficiencyBinning(bins, name)
+HistogramProjections::HistogramProjections(const PhspBins& bins, const PhspPoint& point, const std::string& name)
+    : HistogramProjections(bins, name)
 {
     binPoint(point);
 }
 
-void EfficiencyBinning::binPoint(const PhspPoint& point)
+void HistogramProjections::binPoint(const PhspPoint& point)
 {
     if (point.size() != _dimensionality) {
         throw InvalidDimension();
@@ -50,7 +50,7 @@ void EfficiencyBinning::binPoint(const PhspPoint& point)
     }
 }
 
-const EfficiencyBinning operator/(const EfficiencyBinning& numerator, const EfficiencyBinning& denominator)
+const HistogramProjections operator/(const HistogramProjections& numerator, const HistogramProjections& denominator)
 {
     const PhspBins bins = numerator._bins;
     if (bins != denominator._bins) {
@@ -58,8 +58,8 @@ const EfficiencyBinning operator/(const EfficiencyBinning& numerator, const Effi
     }
     std::string name = "ratio_" + numerator.getName() + "_" + denominator.getName();
 
-    EfficiencyBinning result(bins, name);
-    size_t            dimensionality = numerator.getDimensionality();
+    HistogramProjections result(bins, name);
+    size_t               dimensionality = numerator.getDimensionality();
 
     for (size_t i = 0; i < dimensionality; ++i) {
         result._1dhistograms[i] = std::make_unique<TH1D>(numerator.get1dhistogram(i));
@@ -83,7 +83,7 @@ const EfficiencyBinning operator/(const EfficiencyBinning& numerator, const Effi
     return result;
 }
 
-const TH1D EfficiencyBinning::get1dhistogram(const size_t i) const
+const TH1D HistogramProjections::get1dhistogram(const size_t i) const
 {
     if (i > _dimensionality - 1) {
         throw HistogramNotFound();
@@ -91,13 +91,13 @@ const TH1D EfficiencyBinning::get1dhistogram(const size_t i) const
     return *_1dhistograms[i];
 }
 
-const TH2D EfficiencyBinning::get2dhistogram(const size_t i, const size_t j) const
+const TH2D HistogramProjections::get2dhistogram(const size_t i, const size_t j) const
 {
     // Convert our pair of indices to the right 1d array index that we're using for storing our 2d histograms
     return *_2dhistograms[_indexConversion(i, j)];
 }
 
-size_t EfficiencyBinning::_indexConversion(const size_t i, const size_t j) const
+size_t HistogramProjections::_indexConversion(const size_t i, const size_t j) const
 {
     if (i == j) {
         std::cerr << "No 2d histogram of a variable against itself exists" << std::endl;
@@ -122,8 +122,8 @@ ChowLiuEfficiency::ChowLiuEfficiency(const PhspBins& bins, const size_t root)
     : _bins(bins), _root(root), _dimensionality(_bins.size())
 {
     // Initialise the classes used to hold our data
-    _detectedEvents  = std::make_unique<EfficiencyBinning>(EfficiencyBinning(_bins, "detected"));
-    _generatedEvents = std::make_unique<EfficiencyBinning>(EfficiencyBinning(_bins, "generated"));
+    _detectedEvents  = std::make_unique<HistogramProjections>(HistogramProjections(_bins, "detected"));
+    _generatedEvents = std::make_unique<HistogramProjections>(HistogramProjections(_bins, "generated"));
 
     // Initialise the graph that we'll use to work out the best approximation
     _graph = std::make_unique<Graph>(_dimensionality);
@@ -142,7 +142,7 @@ void ChowLiuEfficiency::addGeneratedEvent(const PhspPoint& point)
 void ChowLiuEfficiency::efficiencyParametrisation(void)
 {
     // Find the histograms for detected/generated events
-    _ratio = EfficiencyBinning(*_detectedEvents / *_generatedEvents);
+    _ratio = HistogramProjections(*_detectedEvents / *_generatedEvents);
 
     // Find the mutual information for each edge, add it to the graph
     for (size_t outNode = 0; outNode < _dimensionality; ++outNode) {
@@ -169,7 +169,7 @@ void ChowLiuEfficiency::efficiencyParametrisation(void)
     }
 
     for (auto pair : _2dHistVars) {
-        // The EfficiencyBinning class only stores 2d histograms (i, j) for i<j
+        // The HistogramProjections class only stores 2d histograms (i, j) for i<j
         // We may need to swap the axes of our histogram if we want (j, i) for our parametrisation
         TH2D hist = pair.first > pair.second ? swapAxes(_ratio.get2dhistogram(pair.first, pair.second))
                                              : _ratio.get2dhistogram(pair.first, pair.second);
@@ -192,15 +192,23 @@ double ChowLiuEfficiency::value(const PhspPoint& point) const
     for (size_t i = 0; i < _dimensionality - 1; ++i) {
         // The 2d histograms we stored are (x, y) for p(x|y)
         // Conditional efficiency is e(x & y)/e(y)
-        size_t xBin          = _hists2d[i]->GetXaxis()->FindBin(point[_2dHistVars[i].first]);
-        size_t yBin          = _hists2d[i]->GetYaxis()->FindBin(point[_2dHistVars[i].second]);
-        double normalisation = _hists1d[_2dHistVars[i].second]->GetBinContent(
+
+        // The x and y bins our point is in on our 2d histogram
+        size_t xBin = _hists2d[i]->GetXaxis()->FindBin(point[_2dHistVars[i].first]);
+        size_t yBin = _hists2d[i]->GetYaxis()->FindBin(point[_2dHistVars[i].second]);
+
+        // Event detection prob for x&y
+        double pXAndY = _hists2d[i]->GetBinContent(xBin, yBin);
+
+        // Event detection prob for y
+        double pY = _hists1d[_2dHistVars[i].second]->GetBinContent(
             _hists1d[_2dHistVars[i].second]->FindBin(point[_2dHistVars[i].second]));
-        prob *= _hists2d[i]->GetBinContent(xBin, yBin) / normalisation;
+
+        prob *= pXAndY / pY;
     }
 
     // Just make a cursory check that things are sensible
-    if (!std::isfinite(prob)){
+    if (prob > 1 || prob <= 0.0) {
         throw BadEfficiency(prob, point);
     }
 

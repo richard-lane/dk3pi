@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(test_2d_hist)
     PhspPoint              point2{5, 4, 3, 2, 1};
     std::vector<PhspPoint> points{point1, point2};
 
-    EfficiencyBinning binning(bins, points, "test");
+    HistogramProjections binning(bins, points, "test");
 
     // Check our histograms are the same by comparing their names
     // C-style str comparison => they're the same if strcmp returns 0
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(test_index_conversion_error)
     PhspPoint              point2{5, 4, 3, 2, 1};
     std::vector<PhspPoint> points{point1, point2};
 
-    EfficiencyBinning binning(bins, points, "test");
+    HistogramProjections binning(bins, points, "test");
 
     BOOST_CHECK_NO_THROW(binning.get1dhistogram(2));
     BOOST_CHECK_THROW(binning.get1dhistogram(5), HistogramNotFound);
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(test_index_conversion_error)
 }
 
 /*
- * Test items get binned right by EfficiencyBinning ctor (and hence the public functions)
+ * Test items get binned right by HistogramProjections ctor (and hence the public functions)
  */
 BOOST_AUTO_TEST_CASE(test_efficiency_binning)
 {
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(test_efficiency_binning)
     PhspPoint              point2{5, 4, 3, 2, 1, 6};
     std::vector<PhspPoint> points{point1, point2};
 
-    EfficiencyBinning binning(bins, points, "test");
+    HistogramProjections binning(bins, points, "test");
 
     // Expect to have bins like (0, 0, 2, 0, 0) for the p3 bin
     // And (1, 0, 0, 0, 1) for the p0 bin
@@ -115,10 +115,10 @@ BOOST_AUTO_TEST_CASE(test_efficiency_binning_ratio)
     std::vector<PhspPoint> hist1Pts{point1, point1, point1, point2};
     std::vector<PhspPoint> hist2Pts{point1, point1, point2, point2, point2};
 
-    EfficiencyBinning numerator(bins, hist1Pts, "num");
-    EfficiencyBinning denominator(bins, hist2Pts, "denom");
+    HistogramProjections numerator(bins, hist1Pts, "num");
+    HistogramProjections denominator(bins, hist2Pts, "denom");
 
-    EfficiencyBinning ratio = numerator / denominator;
+    HistogramProjections ratio = numerator / denominator;
 
     // Expect ratio of points in 1st 1d hist to be (1.5, 0/0, 1/3)
     TH1D ratioHist1d = ratio.get1dhistogram(0);

@@ -35,15 +35,10 @@ struct DivisionFailed : public std::exception {
 };
 
 /*
- * Class for binning phase space points in 5 1d histograms
- * Bin edges and phase space points should be of type T
- *
- * They'll probably all be doubles but templates are just more fun, aren't they
- *
- * Must provide PhspBins to the ctor
+ * Class for binning points in multiple 1- and 2-d histograms
  *
  */
-class EfficiencyBinning
+class HistogramProjections
 {
   public:
     /*
@@ -54,12 +49,12 @@ class EfficiencyBinning
      * Pass in a name to label this object, because two histograms existing with the same name causes ROOT issues
      * possibly
      */
-    explicit EfficiencyBinning(const PhspBins& bins, const std::string& name);
+    explicit HistogramProjections(const PhspBins& bins, const std::string& name);
 
     /*
      * Initialise our bins and put a single point in them
      */
-    EfficiencyBinning(const PhspBins& bins, const PhspPoint& point, const std::string& name);
+    HistogramProjections(const PhspBins& bins, const PhspPoint& point, const std::string& name);
 
     /*
      * Bin a point
@@ -70,8 +65,8 @@ class EfficiencyBinning
      * Initialise our bins and put several points in them
      */
     template <typename ContainerType>
-    EfficiencyBinning(const PhspBins& bins, const ContainerType& points, const std::string& name)
-        : EfficiencyBinning(bins, name)
+    HistogramProjections(const PhspBins& bins, const ContainerType& points, const std::string& name)
+        : HistogramProjections(bins, name)
     {
         binPoints(points);
     }
@@ -99,7 +94,8 @@ class EfficiencyBinning
      *
      * Quite hacky and weird; uses the underlying histograms directly then sets them
      */
-    friend const EfficiencyBinning operator/(const EfficiencyBinning& numerator, const EfficiencyBinning& denominator);
+    friend const HistogramProjections operator/(const HistogramProjections& numerator,
+                                                const HistogramProjections& denominator);
 
     /*
      * Bin a collection of points
@@ -120,13 +116,14 @@ class EfficiencyBinning
     size_t _dimensionality{0};
 
     /*
-     * Histograms representing {p0, p1, p2, p3, p4}
+     * 1d Histograms
      */
     std::vector<std::unique_ptr<TH1D>> _1dhistograms{};
 
     /*
      * Histograms representing {p0vp1, p0vp2, p0vp3, p0vp4, p1vp2, p1vp3 ...}
-     * Indexed in a weird order; histogram (pi vs pj) found at _2dhistograms[_indexConversion(i, j)]
+     *
+     * Indexed according to _indexConversion(i, j); (pi vs pj) found at _indexConversion(i, j)
      */
     std::vector<std::unique_ptr<TH2D>> _2dhistograms{};
 
@@ -146,7 +143,7 @@ class EfficiencyBinning
     std::string _name;
 
     /*
-     * Convert an (i, j) index pair to an index for our 2d histogram array
+     * Convert an (i, j) index pair to an index for our array of 2d histograms
      */
     size_t _indexConversion(const size_t i, const size_t j) const;
 };
@@ -154,7 +151,7 @@ class EfficiencyBinning
 /*
  * Ratio of two projections
  */
-const EfficiencyBinning operator/(const EfficiencyBinning& numerator, const EfficiencyBinning& denominator);
+const HistogramProjections operator/(const HistogramProjections& numerator, const HistogramProjections& denominator);
 
 struct BinMismatch : public std::exception {
     const char* what() const throw() { return "Numerator and denominator bins do not match"; }
@@ -242,14 +239,14 @@ class ChowLiuEfficiency
     void efficiencyParametrisation(void);
 
   private:
-    PhspBins                           _bins;
-    std::unique_ptr<EfficiencyBinning> _detectedEvents  = nullptr;
-    std::unique_ptr<EfficiencyBinning> _generatedEvents = nullptr;
+    PhspBins                              _bins;
+    std::unique_ptr<HistogramProjections> _detectedEvents  = nullptr;
+    std::unique_ptr<HistogramProjections> _generatedEvents = nullptr;
 
     /*
      * The ratio _detectedEvents / _generatedEvents; i.e. the efficiency projections
      */
-    EfficiencyBinning _ratio = EfficiencyBinning(_bins, "none");
+    HistogramProjections _ratio = HistogramProjections(_bins, "none");
 
     /*
      * The node to use as root of our approximation
