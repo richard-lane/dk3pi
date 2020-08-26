@@ -13,6 +13,16 @@
 #define PI_MASS_GEV (0.139570)
 
 /*
+ * Bins that we will use for our efficiency parametrisation
+ */
+typedef std::vector<std::vector<double>> PhspBins;
+
+/*
+ * Parametrise a phase space point by its coordinates (p0, p1, p2, p3, p4)
+ */
+typedef std::vector<double> PhspPoint;
+
+/*
  * Bug in TGenPhaseSpace hit
  */
 struct TGenPhspBug : public std::exception {

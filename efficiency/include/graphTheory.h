@@ -1,6 +1,7 @@
 #ifndef GRAPHTHEORY_H
 #define GRAPHTHEORY_H
 
+#include <cassert>
 #include <list>
 #include <vector>
 
@@ -25,8 +26,34 @@ class Edge
 
     /*
      * Comparisons only care about weight
+     *
+     * If the weights are equal, sort in order of highest node index
+     * If the highest nodes are the same, sort in order of lowest node index
+     *
+     * If the weight, highest node and lowest node are the same... panic
+     *
+     * This isn't tested, but it should be
      */
-    inline bool operator<(const Edge& other) const { return _weight < other._weight; };
+    inline bool operator<(const Edge& other) const
+    {
+        assert(other != *this);
+
+        if (_weight == other.getWeight()) {
+            // Weights are equal...
+            size_t thisNode  = _toNode > _fromNode ? _toNode : _fromNode;
+            size_t otherNode = other.to() > other.from() ? other.to() : other.from();
+
+            if (thisNode == otherNode) {
+                // Weights are equal AND both these edges connect
+                thisNode  = _toNode < _fromNode ? _toNode : _fromNode;
+                otherNode = other.to() < other.from() ? other.to() : other.from();
+                return thisNode < otherNode;
+            }
+            return thisNode < otherNode;
+        }
+
+        return _weight < other._weight;
+    };
     inline bool operator>(const Edge& other) const { return !(*this < other); };
 
     /*

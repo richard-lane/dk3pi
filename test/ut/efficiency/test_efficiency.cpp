@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(test_entropy)
 
     double expectedEntropy = 1.220607265;
 
-    BOOST_CHECK_CLOSE(entropy(hist.get()), expectedEntropy, 1e-7);
+    BOOST_CHECK_CLOSE(ChowLiu::entropy(hist.get()), expectedEntropy, 1e-7);
 }
 
 /*
@@ -41,7 +41,8 @@ BOOST_AUTO_TEST_CASE(test_2d_hist)
     PhspPoint              point2{5, 4, 3, 2, 1};
     std::vector<PhspPoint> points{point1, point2};
 
-    HistogramProjections binning(bins, points, "test");
+    ChowLiu::HistogramProjections binning(bins, "test");
+    binning.binPoints(points);
 
     // Check our histograms are the same by comparing their names
     // C-style str comparison => they're the same if strcmp returns 0
@@ -60,17 +61,18 @@ BOOST_AUTO_TEST_CASE(test_index_conversion_error)
     PhspPoint              point2{5, 4, 3, 2, 1};
     std::vector<PhspPoint> points{point1, point2};
 
-    HistogramProjections binning(bins, points, "test");
+    ChowLiu::HistogramProjections binning(bins, "test");
+    binning.binPoints(points);
 
     BOOST_CHECK_NO_THROW(binning.get1dhistogram(2));
-    BOOST_CHECK_THROW(binning.get1dhistogram(5), HistogramNotFound);
+    BOOST_CHECK_THROW(binning.get1dhistogram(5), ChowLiu::HistogramNotFound);
 
     BOOST_CHECK_NO_THROW(binning.get2dhistogram(1, 2));
-    BOOST_CHECK_THROW(binning.get2dhistogram(2, 2), HistogramNotFound);
+    BOOST_CHECK_THROW(binning.get2dhistogram(2, 2), ChowLiu::HistogramNotFound);
 }
 
 /*
- * Test items get binned right by HistogramProjections ctor (and hence the public functions)
+ * Test items get binned right
  */
 BOOST_AUTO_TEST_CASE(test_efficiency_binning)
 {
@@ -81,7 +83,8 @@ BOOST_AUTO_TEST_CASE(test_efficiency_binning)
     PhspPoint              point2{5, 4, 3, 2, 1, 6};
     std::vector<PhspPoint> points{point1, point2};
 
-    HistogramProjections binning(bins, points, "test");
+    ChowLiu::HistogramProjections binning(bins, "test");
+    binning.binPoints(points);
 
     // Expect to have bins like (0, 0, 2, 0, 0) for the p3 bin
     // And (1, 0, 0, 0, 1) for the p0 bin
@@ -115,10 +118,12 @@ BOOST_AUTO_TEST_CASE(test_efficiency_binning_ratio)
     std::vector<PhspPoint> hist1Pts{point1, point1, point1, point2};
     std::vector<PhspPoint> hist2Pts{point1, point1, point2, point2, point2};
 
-    HistogramProjections numerator(bins, hist1Pts, "num");
-    HistogramProjections denominator(bins, hist2Pts, "denom");
+    ChowLiu::HistogramProjections numerator(bins, "num");
+    ChowLiu::HistogramProjections denominator(bins, "denom");
+    numerator.binPoints(hist1Pts);
+    denominator.binPoints(hist2Pts);
 
-    HistogramProjections ratio = numerator / denominator;
+    ChowLiu::HistogramProjections ratio = numerator / denominator;
 
     // Expect ratio of points in 1st 1d hist to be (1.5, 0/0, 1/3)
     TH1D ratioHist1d = ratio.get1dhistogram(0);
@@ -171,7 +176,7 @@ BOOST_AUTO_TEST_CASE(test_mutual_info)
             hist2d->SetBinContent(i, j, values[i - 1][j - 1]);
         }
     }
-    BOOST_CHECK_CLOSE(mutual_info(hist2d.get()), 0.32111859787111086, 1e-7);
+    BOOST_CHECK_CLOSE(ChowLiu::mutual_info(hist2d.get()), 0.32111859787111086, 1e-7);
 
     // Create a hist with perfect mutual information
     std::vector<std::vector<size_t>> values_i1 = {std::vector<size_t>{10, 0, 0, 0},
@@ -183,7 +188,7 @@ BOOST_AUTO_TEST_CASE(test_mutual_info)
             hist2d->SetBinContent(i, j, values_i1[i - 1][j - 1]);
         }
     }
-    BOOST_CHECK_CLOSE(mutual_info(hist2d.get()), 1, 1e-7);
+    BOOST_CHECK_CLOSE(ChowLiu::mutual_info(hist2d.get()), 1, 1e-7);
 
     // Create a hist with 0 mutual information
     std::vector<std::vector<size_t>> values_i0 = {std::vector<size_t>{1, 1, 1, 1},
@@ -195,7 +200,7 @@ BOOST_AUTO_TEST_CASE(test_mutual_info)
             hist2d->SetBinContent(i, j, values_i0[i - 1][j - 1]);
         }
     }
-    BOOST_CHECK_CLOSE(mutual_info(hist2d.get()), 0, 1e-7);
+    BOOST_CHECK_CLOSE(ChowLiu::mutual_info(hist2d.get()), 0, 1e-7);
 }
 
 /*
@@ -209,7 +214,7 @@ BOOST_AUTO_TEST_CASE(test_swap_2d_hist)
     originalHist.SetBinContent(2, 1, 3);
     originalHist.SetBinContent(2, 2, 4);
 
-    TH2D swappedHist = swapAxes(originalHist);
+    TH2D swappedHist = ChowLiu::swapAxes(originalHist);
 
     BOOST_CHECK_CLOSE(swappedHist.GetBinContent(1, 1), 1, 1e-7);
     BOOST_CHECK_CLOSE(swappedHist.GetBinContent(1, 2), 3, 1e-7);

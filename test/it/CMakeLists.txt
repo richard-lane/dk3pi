@@ -13,7 +13,8 @@ add_executable(it.exe
                test_ratio_calculator.cpp
                test_simulator.cpp
                efficiency/test_amplitudes.cpp
-               efficiency/flat_phase_space.cpp
+               # efficiency/flat_phase_space.cpp
+               efficiency/test_chow_liu.cpp
                ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
 
 target_link_libraries(it.exe D2K3Pi efficiency ${ROOT_LIBRARIES} ${Boost_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} dl)

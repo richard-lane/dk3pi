@@ -5,125 +5,13 @@
 #include "efficiencyUtil.h"
 #include "util.h"
 
-HistogramProjections::HistogramProjections(const PhspBins& bins, const std::string& name)
-    : _dimensionality(bins.size()), _bins(bins), _name(name)
-{
-    _1dhistograms = std::vector<std::unique_ptr<TH1D>>(_dimensionality);
-    _2dhistograms = std::vector<std::unique_ptr<TH2D>>(_dimensionality * (_dimensionality - 1) / 2);
-    _numBins      = std::vector<size_t>(_dimensionality);
-
-    // Need to set the numbers of bins before creating histograms
-    for (size_t i = 0; i < _dimensionality; ++i) {
-        _numBins[i] = _bins[i].size() - 1;
-    }
-
-    for (size_t i = 0; i < _bins.size(); ++i) {
-        std::string title1d = name + "1dhist" + std::to_string(i);
-        _1dhistograms[i]    = std::make_unique<TH1D>(title1d.c_str(), title1d.c_str(), _numBins[i], _bins[i].data());
-
-        for (size_t j = _bins.size() - 1; j > i; --j) {
-            std::string title2d = name + "2dhist(" + std::to_string(i) + "," + std::to_string(j) + ")";
-            _2dhistograms[_indexConversion(i, j)] = std::make_unique<TH2D>(
-                title2d.c_str(), title2d.c_str(), _numBins[i], _bins[i].data(), _numBins[j], _bins[j].data());
-        }
-    }
-}
-
-HistogramProjections::HistogramProjections(const PhspBins& bins, const PhspPoint& point, const std::string& name)
-    : HistogramProjections(bins, name)
-{
-    binPoint(point);
-}
-
-void HistogramProjections::binPoint(const PhspPoint& point)
-{
-    if (point.size() != _dimensionality) {
-        throw InvalidDimension();
-    }
-
-    for (size_t i = 0; i < _bins.size(); ++i) {
-        _1dhistograms[i]->Fill(point[i]);
-
-        for (size_t j = _bins.size() - 1; j > i; --j) {
-            _2dhistograms[_indexConversion(i, j)]->Fill(point[i], point[j]);
-        }
-    }
-}
-
-const HistogramProjections operator/(const HistogramProjections& numerator, const HistogramProjections& denominator)
-{
-    const PhspBins bins = numerator._bins;
-    if (bins != denominator._bins) {
-        throw BinMismatch();
-    }
-    std::string name = "ratio_" + numerator.getName() + "_" + denominator.getName();
-
-    HistogramProjections result(bins, name);
-    size_t               dimensionality = numerator.getDimensionality();
-
-    for (size_t i = 0; i < dimensionality; ++i) {
-        result._1dhistograms[i] = std::make_unique<TH1D>(numerator.get1dhistogram(i));
-        TH1D denominator1dHist  = denominator.get1dhistogram(i);
-        bool success            = result._1dhistograms[i]->Divide(&denominator1dHist);
-        if (!success) {
-            throw DivisionFailed();
-        }
-
-        for (size_t j = i + 1; j < dimensionality; ++j) {
-            size_t index                = result._indexConversion(i, j);
-            result._2dhistograms[index] = std::make_unique<TH2D>(numerator.get2dhistogram(i, j));
-            TH2D denominator2dHist      = denominator.get2dhistogram(i, j);
-            success                     = result._2dhistograms[index]->Divide(&denominator2dHist);
-            if (!success) {
-                throw DivisionFailed();
-            }
-        }
-    }
-
-    return result;
-}
-
-const TH1D HistogramProjections::get1dhistogram(const size_t i) const
-{
-    if (i > _dimensionality - 1) {
-        throw HistogramNotFound();
-    }
-    return *_1dhistograms[i];
-}
-
-const TH2D HistogramProjections::get2dhistogram(const size_t i, const size_t j) const
-{
-    // Convert our pair of indices to the right 1d array index that we're using for storing our 2d histograms
-    return *_2dhistograms[_indexConversion(i, j)];
-}
-
-size_t HistogramProjections::_indexConversion(const size_t i, const size_t j) const
-{
-    if (i == j) {
-        std::cerr << "No 2d histogram of a variable against itself exists" << std::endl;
-        throw HistogramNotFound();
-    }
-
-    // convert i, j -> smaller, larger
-    size_t smaller = i < j ? i : j;
-    size_t larger  = i > j ? i : j;
-
-    if (larger > _dimensionality - 1) {
-        throw HistogramNotFound();
-    }
-
-    // We store our 2d histograms in a 1d array
-    // The array looks like {i,j} = {01, 02, 03 ..., 12, 13, 14... 23, 24 ...... (d-2)(d-1)}
-    return (_dimensionality * (_dimensionality - 1) / 2) -
-           (_dimensionality - smaller) * (_dimensionality - smaller - 1) / 2 + larger - smaller - 1;
-}
-
 ChowLiuEfficiency::ChowLiuEfficiency(const PhspBins& bins, const size_t root)
     : _bins(bins), _root(root), _dimensionality(_bins.size())
 {
     // Initialise the classes used to hold our data
-    _detectedEvents  = std::make_unique<HistogramProjections>(HistogramProjections(_bins, "detected"));
-    _generatedEvents = std::make_unique<HistogramProjections>(HistogramProjections(_bins, "generated"));
+    _detectedEvents = std::make_unique<ChowLiu::HistogramProjections>(ChowLiu::HistogramProjections(_bins, "detected"));
+    _generatedEvents =
+        std::make_unique<ChowLiu::HistogramProjections>(ChowLiu::HistogramProjections(_bins, "generated"));
 
     // Initialise the graph that we'll use to work out the best approximation
     _graph = std::make_unique<Graph>(_dimensionality);
@@ -142,13 +30,13 @@ void ChowLiuEfficiency::addGeneratedEvent(const PhspPoint& point)
 void ChowLiuEfficiency::efficiencyParametrisation(void)
 {
     // Find the histograms for detected/generated events
-    _ratio = HistogramProjections(*_detectedEvents / *_generatedEvents);
+    _ratio = ChowLiu::HistogramProjections(*_detectedEvents / *_generatedEvents);
 
     // Find the mutual information for each edge, add it to the graph
     for (size_t outNode = 0; outNode < _dimensionality; ++outNode) {
         for (size_t inNode = outNode + 1; inNode < _dimensionality; ++inNode) {
             TH2D   hist   = _ratio.get2dhistogram(inNode, outNode);
-            double weight = mutual_info(&hist);
+            double weight = ChowLiu::mutual_info(&hist);
             _graph->addEdge(outNode, inNode, weight);
         }
     }
@@ -171,7 +59,7 @@ void ChowLiuEfficiency::efficiencyParametrisation(void)
     for (auto pair : _2dHistVars) {
         // The HistogramProjections class only stores 2d histograms (i, j) for i<j
         // We may need to swap the axes of our histogram if we want (j, i) for our parametrisation
-        TH2D hist = pair.first > pair.second ? swapAxes(_ratio.get2dhistogram(pair.first, pair.second))
+        TH2D hist = pair.first > pair.second ? ChowLiu::swapAxes(_ratio.get2dhistogram(pair.first, pair.second))
                                              : _ratio.get2dhistogram(pair.first, pair.second);
         _hists2d.push_back(std::make_unique<TH2D>(hist));
     }
@@ -182,7 +70,7 @@ void ChowLiuEfficiency::efficiencyParametrisation(void)
 double ChowLiuEfficiency::value(const PhspPoint& point) const
 {
     if (!_approximationMade) {
-        throw ApproximationNotYetMade();
+        throw ChowLiu::ApproximationNotYetMade();
     }
     // Set the value to the 1d prob
     double prob1d = _hists1d[_root]->GetBinContent(_hists1d[_root]->FindBin(point[_root]));
@@ -209,79 +97,8 @@ double ChowLiuEfficiency::value(const PhspPoint& point) const
 
     // Just make a cursory check that things are sensible
     if (prob > 1 || prob <= 0.0) {
-        throw BadEfficiency(prob, point);
+        throw ChowLiu::BadEfficiency(prob, point);
     }
 
     return prob;
-}
-
-double entropy(const TH1D* const hist)
-{
-    size_t totalEntries = hist->Integral();
-    double ent{0.0}; // entropy
-
-    for (size_t bin = 1; bin <= (size_t)hist->GetNbinsX(); ++bin) { // ROOT bin indexing starts at 1
-        double binContent = hist->GetBinContent(bin);
-        if (binContent > FLT_EPSILON) {
-            double prob = binContent / totalEntries;
-            ent -= prob * std::log(prob);
-        }
-    }
-    return ent;
-}
-
-double mutual_info(const TH2D* const histogram2d)
-{
-    double info{0.0};
-
-    // A better implementation probably wouldn't construct an entire TH1 just to find the sum along an axis
-    TH1D* xHist = histogram2d->ProjectionX();
-    TH1D* yHist = histogram2d->ProjectionY();
-
-    size_t numBinsX = xHist->GetNbinsX();
-    size_t numBinsY = yHist->GetNbinsX();
-
-    size_t numEvents = xHist->Integral();
-    for (size_t xBin = 1; xBin <= numBinsX; ++xBin) {
-        for (size_t yBin = 1; yBin <= numBinsY; ++yBin) {
-            size_t binContent = histogram2d->GetBinContent(xBin, yBin);
-            if (binContent == 0) {
-                // I don't like breaking the control flow here but i'm tired and can't immediately think of
-                // something better. maybe an if/else
-                continue;
-            }
-
-            size_t xBinContent = xHist->GetBinContent(xBin);
-            size_t yBinContent = yHist->GetBinContent(yBin);
-            // These casts aren't all necessary
-            double thingInBrackets =
-                (double)numEvents * (double)binContent / ((double)xBinContent * (double)yBinContent);
-            info += ((double)binContent / (double)numEvents) * std::abs(std::log(thingInBrackets));
-        }
-    }
-
-    // Normalise our mutual information
-    double normalisation = 2 / (entropy(xHist) + entropy(yHist));
-
-    return normalisation * info;
-}
-
-TH2D swapAxes(const TH2D& other)
-{
-    size_t nBinsX = other.GetNbinsX();
-    size_t nBinsY = other.GetNbinsY();
-
-    const double*     xBins = other.GetXaxis()->GetXbins()->GetArray();
-    const double*     yBins = other.GetYaxis()->GetXbins()->GetArray();
-    std::string       oldName(other.GetName());
-    const std::string name("swap_" + oldName);
-
-    TH2D swappedHist = TH2D(name.c_str(), name.c_str(), nBinsY, yBins, nBinsX, xBins);
-
-    for (size_t i = 1; i <= nBinsX; ++i) {
-        for (size_t j = 1; j <= nBinsY; ++j) {
-            swappedHist.SetBinContent(i, j, other.GetBinContent(j, i));
-        }
-    }
-    return swappedHist;
 }

@@ -104,7 +104,6 @@ void correctionPlot(const size_t                 param,
     std::cout << "Calculate + fill corrected + detected histograms..." << std::flush;
     for (auto detectedEvent : detectedEvents) {
         detected->Fill(parametrisation(detectedEvent)[param]);
-        double x      = EfficiencyCorrection.value(parametrisation(detectedEvent));
         double weight = 1 / EfficiencyCorrection.value(parametrisation(detectedEvent));
         if (!std::isfinite(weight)) {
             std::cerr << "aaa this histogram is going to break" << std::endl;

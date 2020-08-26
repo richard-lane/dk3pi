@@ -34,6 +34,7 @@ std::vector<std::list<Edge>> Graph::getMaxSpanningTree() const
     std::vector<std::list<Edge>> mst(_numNodes);
     // edges will be an array of edges in order of weight- these will be e.g. {(0, 1), (1, 0), (2, 3), (3, 2)}
     // save a bit of time by iterating over pairs
+    // This still works if we have equal edge weights because of the way that edge comparison is defined
     for (size_t i = 0; i < edges.size(); i += 2) {
         if (!makesCycle(edges[i].from(), edges[i].to(), mst)) {
             mst[edges[i].from()].push_back(edges[i]);
