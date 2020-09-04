@@ -68,14 +68,6 @@ class HistogramProjections
     size_t getNumPoints(void) const { return _numPoints; };
 
     /*
-     * Take the ratio of two EfficiencyBinning instances
-     *
-     * Quite hacky and weird; uses the underlying histograms directly then sets them
-     */
-    friend const HistogramProjections operator/(const HistogramProjections& numerator,
-                                                const HistogramProjections& denominator);
-
-    /*
      * Bin a collection of points
      */
     template <typename ContainerType> void binPoints(const ContainerType& points)
@@ -87,12 +79,23 @@ class HistogramProjections
         }
     }
 
-  private:
+  protected:
     /*
      * Number of dimensions of our phsp
      */
     size_t _dimensionality{0};
 
+    /*
+     * Number of bins along each of our {p0, p1, p2, ...} axes
+     */
+    std::vector<size_t> _numBins{};
+
+    /*
+     * Bins that we're using
+     */
+    PhspBins _bins{};
+
+  private:
     /*
      * 1d Histograms
      */
@@ -104,16 +107,6 @@ class HistogramProjections
      * Indexed according to _indexConversion(i, j); (pi vs pj) found at _indexConversion(i, j)
      */
     std::vector<std::unique_ptr<TH2D>> _2dhistograms{};
-
-    /*
-     * Number of bins along each of our {p0, p1, p2, ...} axes
-     */
-    std::vector<size_t> _numBins{};
-
-    /*
-     * Bins that we're using
-     */
-    PhspBins _bins{};
 
     /*
      * Something to label this object with
@@ -147,10 +140,10 @@ struct ApproximationNotYetMade : public std::exception {
     }
 };
 
-struct BadEfficiency : public std::exception {
-    BadEfficiency(const double value, const PhspPoint& point)
+struct BadProbability : public std::exception {
+    BadProbability(const double value, const PhspPoint& point)
     {
-        _msg = "Efficiency value " + std::to_string(value) + " returned at point (";
+        _msg = "Probability " + std::to_string(value) + " returned at point (";
         for (auto coord : point) {
             _msg += std::to_string(coord) + ", ";
         }

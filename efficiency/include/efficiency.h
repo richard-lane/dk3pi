@@ -64,20 +64,15 @@ class ChowLiuEfficiency
     }
 
     /*
-     * Work out the efficiency projections in 1/2d from our MC and truth-level datasets, find the best approximation to
-     * the efficiency function in 5d, and set up all the bits so that this->value() works
+     * Find the Chow-Liu approximations to the probability of finding a detected/generated event at a phase space point
+     *
+     * Then use these to calculate the efficiency approximation
      */
     void efficiencyParametrisation(void);
 
   private:
-    PhspBins                                       _bins;
-    std::unique_ptr<ChowLiu::HistogramProjections> _detectedEvents  = nullptr;
-    std::unique_ptr<ChowLiu::HistogramProjections> _generatedEvents = nullptr;
-
-    /*
-     * The ratio _detectedEvents / _generatedEvents; i.e. the efficiency projections
-     */
-    ChowLiu::HistogramProjections _ratio = ChowLiu::HistogramProjections(_bins, "none");
+    ChowLiu::Approximation _detectedEvents;
+    ChowLiu::Approximation _generatedEvents;
 
     /*
      * The node to use as root of our approximation
@@ -90,19 +85,9 @@ class ChowLiuEfficiency
     bool _approximationMade{false};
 
     /*
-     * Dimensionality of the probability distribution we are approximating
+     * Phase-space averaged efficiency
      */
-    size_t _dimensionality{0};
-
-    /*
-     * Graph object used to calculate which variables we want to keep
-     */
-    std::unique_ptr<Graph> _graph = nullptr;
-
-    /*
-     * Adjacency list representation of the (directed) graph used to calculate which pairs of variables to keep
-     */
-    std::vector<std::list<Edge>> _directedTree;
+    double _avgEfficiency{0.0};
 
     /*
      * The 1d histograms we use in our efficiency approximation

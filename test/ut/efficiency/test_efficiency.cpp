@@ -105,62 +105,6 @@ BOOST_AUTO_TEST_CASE(test_efficiency_binning)
 }
 
 /*
- * Test taking the ratio between 2 efficiency binning objects doesn't affect the original objects and returns the right
- * ratio
- */
-BOOST_AUTO_TEST_CASE(test_efficiency_binning_ratio)
-{
-    std::vector<double> bin{0.5, 1.5, 2.5, 3.5};
-    PhspBins            bins{bin, bin, bin};
-
-    PhspPoint              point1{1, 1, 1};
-    PhspPoint              point2{3, 3, 3};
-    std::vector<PhspPoint> hist1Pts{point1, point1, point1, point2};
-    std::vector<PhspPoint> hist2Pts{point1, point1, point2, point2, point2};
-
-    ChowLiu::HistogramProjections numerator(bins, "num");
-    ChowLiu::HistogramProjections denominator(bins, "denom");
-    numerator.binPoints(hist1Pts);
-    denominator.binPoints(hist2Pts);
-
-    ChowLiu::HistogramProjections ratio = numerator / denominator;
-
-    // Expect ratio of points in 1st 1d hist to be (1.5, 0/0, 1/3)
-    TH1D ratioHist1d = ratio.get1dhistogram(0);
-    BOOST_CHECK_CLOSE(ratioHist1d.GetBinContent(1), 1.5, 1e-7);
-    BOOST_CHECK_CLOSE(ratioHist1d.GetBinContent(2), 0, 1e-7);
-    BOOST_CHECK_CLOSE(ratioHist1d.GetBinContent(3), 1 / 3., 1e-7);
-
-    // Expect ratio of points in 2nd 1d hist to be:
-    std::array<std::array<double, 3>, 3> expected    = {{{1.5, 0, 0}, {0., 0., 0.}, {0, 0, 1. / 3}}};
-    TH2D                                 ratioHist2d = ratio.get2dhistogram(1, 0);
-    for (size_t i = 0; i < 3; ++i) {
-        for (size_t j = 0; j < 3; ++j) {
-            BOOST_CHECK_CLOSE(ratioHist2d.GetBinContent(i + 1, j + 1), expected[i][j], 1e-7);
-        }
-    }
-
-    // Check that the numerator and denominator are unaffected
-    TH1D numHist = numerator.get1dhistogram(0);
-    BOOST_CHECK_CLOSE(numHist.GetBinContent(1), 3, 1e-7);
-    BOOST_CHECK_CLOSE(numHist.GetBinContent(2), 0, 1e-7);
-    BOOST_CHECK_CLOSE(numHist.GetBinContent(3), 1, 1e-7);
-
-    TH1D denomHist = denominator.get1dhistogram(0);
-    BOOST_CHECK_CLOSE(denomHist.GetBinContent(1), 2, 1e-7);
-    BOOST_CHECK_CLOSE(denomHist.GetBinContent(2), 0, 1e-7);
-    BOOST_CHECK_CLOSE(denomHist.GetBinContent(3), 3, 1e-7);
-
-    TH2D numerator2dHist = numerator.get2dhistogram(0, 1);
-    expected             = {{{3, 0, 0}, {0., 0., 0.}, {0, 0, 1}}};
-    for (size_t i = 0; i < 3; ++i) {
-        for (size_t j = 0; j < 3; ++j) {
-            BOOST_CHECK_CLOSE(numerator2dHist.GetBinContent(i + 1, j + 1), expected[i][j], 1e-7);
-        }
-    }
-}
-
-/*
  * Test mutual info calculation
  */
 BOOST_AUTO_TEST_CASE(test_mutual_info)

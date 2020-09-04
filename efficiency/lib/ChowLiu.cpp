@@ -20,10 +20,12 @@ HistogramProjections::HistogramProjections(const PhspBins& bins, const std::stri
         _numBins[i] = _bins[i].size() - 1;
     }
 
-    for (size_t i = 0; i < _bins.size(); ++i) {
+    for (size_t i = 0; i < _dimensionality; ++i) {
         std::string title1d = name + "1dhist" + std::to_string(i);
         _1dhistograms[i]    = std::make_unique<TH1D>(title1d.c_str(), title1d.c_str(), _numBins[i], _bins[i].data());
 
+        // 2d histograms exist between variables (i, j) where j > i
+        // Store these in a 1d array, _2dhistograms
         for (size_t j = _bins.size() - 1; j > i; --j) {
             std::string title2d = name + "2dhist(" + std::to_string(i) + "," + std::to_string(j) + ")";
             _2dhistograms[_indexConversion(i, j)] = std::make_unique<TH2D>(
@@ -41,6 +43,7 @@ void HistogramProjections::binPoint(const PhspPoint& point)
     for (size_t i = 0; i < _bins.size(); ++i) {
         _1dhistograms[i]->Fill(point[i]);
 
+        // 2d histograms exist between variables (i, j) where j > i
         for (size_t j = _bins.size() - 1; j > i; --j) {
             _2dhistograms[_indexConversion(i, j)]->Fill(point[i], point[j]);
         }
@@ -49,42 +52,9 @@ void HistogramProjections::binPoint(const PhspPoint& point)
     _numPoints++;
 }
 
-const HistogramProjections operator/(const HistogramProjections& numerator, const HistogramProjections& denominator)
-{
-    const PhspBins bins = numerator._bins;
-    if (bins != denominator._bins) {
-        throw BinMismatch();
-    }
-    std::string name = "ratio_" + numerator.getName() + "_" + denominator.getName();
-
-    HistogramProjections result(bins, name);
-    size_t               dimensionality = numerator.getDimensionality();
-
-    for (size_t i = 0; i < dimensionality; ++i) {
-        result._1dhistograms[i] = std::make_unique<TH1D>(numerator.get1dhistogram(i));
-        TH1D denominator1dHist  = denominator.get1dhistogram(i);
-        bool success            = result._1dhistograms[i]->Divide(&denominator1dHist);
-        if (!success) {
-            throw DivisionFailed();
-        }
-
-        for (size_t j = i + 1; j < dimensionality; ++j) {
-            size_t index                = result._indexConversion(i, j);
-            result._2dhistograms[index] = std::make_unique<TH2D>(numerator.get2dhistogram(i, j));
-            TH2D denominator2dHist      = denominator.get2dhistogram(i, j);
-            success                     = result._2dhistograms[index]->Divide(&denominator2dHist);
-            if (!success) {
-                throw DivisionFailed();
-            }
-        }
-    }
-
-    return result;
-}
-
 const TH1D HistogramProjections::get1dhistogram(const size_t i) const
 {
-    if (i > _dimensionality - 1) {
+    if (i >= _dimensionality) {
         throw HistogramNotFound();
     }
     return *_1dhistograms[i];
@@ -107,7 +77,7 @@ size_t HistogramProjections::_indexConversion(const size_t i, const size_t j) co
     size_t smaller = i < j ? i : j;
     size_t larger  = i > j ? i : j;
 
-    if (larger > _dimensionality - 1) {
+    if (larger >= _dimensionality) {
         throw HistogramNotFound();
     }
 
@@ -118,7 +88,7 @@ size_t HistogramProjections::_indexConversion(const size_t i, const size_t j) co
 }
 
 Approximation::Approximation(const PhspBins& bins, const std::string& name)
-    : HistogramProjections(bins, name), _graph(Graph(getDimensionality()))
+    : HistogramProjections(bins, name), _graph(Graph(_dimensionality))
 {
     ;
 }
@@ -126,8 +96,8 @@ Approximation::Approximation(const PhspBins& bins, const std::string& name)
 void Approximation::makeApproximation(void)
 {
     // Find the mutual information for each edge, add it to the graph
-    for (size_t outNode = 0; outNode < getDimensionality(); ++outNode) {
-        for (size_t inNode = outNode + 1; inNode < getDimensionality(); ++inNode) {
+    for (size_t outNode = 0; outNode < _dimensionality; ++outNode) {
+        for (size_t inNode = outNode + 1; inNode < _dimensionality; ++inNode) {
             TH2D   hist   = get2dhistogram(inNode, outNode);
             double weight = ChowLiu::mutual_info(&hist);
             _graph.addEdge(outNode, inNode, weight);
@@ -171,7 +141,7 @@ double Approximation::value(const PhspPoint& point) const
     double prob{prob1d};
 
     // Iterate over 2d histograms (there are d-1 of them), finding the conditional probabilities
-    for (size_t i = 0; i < getDimensionality() - 1; ++i) {
+    for (size_t i = 0; i < _dimensionality - 1; ++i) {
         // The 2d histograms we stored are (x, y) for p(x|y)
         // The x and y bins our point is in on our 2d histogram
         size_t xBin = _hists2d[i]->GetXaxis()->FindBin(point[_2dHistVars[i].first]);
@@ -179,6 +149,12 @@ double Approximation::value(const PhspPoint& point) const
 
         // Number of events in both X and Y bin
         double nXY = _hists2d[i]->GetBinContent(xBin, yBin);
+
+        // If this is 0, the probability of being in the multidimensional bin is also 0
+        if (nXY == 0.0) {
+            prob = 0.0;
+            break;
+        }
 
         // Number of events in the y bin
         // This could probably be streamlined a bit with yBin
@@ -189,8 +165,8 @@ double Approximation::value(const PhspPoint& point) const
     }
 
     // Just make a cursory check that things are sensible
-    if (prob > 1 || prob <= 0.0) {
-        throw BadEfficiency(prob, point);
+    if (prob > 1 || prob < 0.0) {
+        throw BadProbability(prob, point);
     }
 
     return prob;

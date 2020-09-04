@@ -85,12 +85,12 @@ void correctionPlot(const size_t                 param,
     // On the same canvas, draw histograms of the truth events, the measured events + the reweighted measured events
     std::string title = "Example Projection: " + path;
 
-    std::unique_ptr<TH1D> truth =
-        std::make_unique<TH1D>("truth", title.c_str(), binLimits.size() - 1, binLimits.data());
-    std::unique_ptr<TH1D> detected =
-        std::make_unique<TH1D>("detected", "detected", binLimits.size() - 1, binLimits.data());
-    std::unique_ptr<TH1D> corrected =
-        std::make_unique<TH1D>("corrected", "corrected", binLimits.size() - 1, binLimits.data());
+    std::unique_ptr<TH1D> truth = std::make_unique<TH1D>(
+        "truth", (title + ";Invariant Mass/GeV;Events").c_str(), binLimits.size() - 1, binLimits.data());
+    std::unique_ptr<TH1D> detected = std::make_unique<TH1D>(
+        "detected", (title + ";Invariant Mass/GeV;Events").c_str(), binLimits.size() - 1, binLimits.data());
+    std::unique_ptr<TH1D> corrected = std::make_unique<TH1D>(
+        "corrected", (title + ";Invariant Mass/GeV;Events").c_str(), binLimits.size() - 1, binLimits.data());
 
     // Truth histogram is easy to fill
     std::cout << "Fill truth histogram..." << std::flush;
@@ -105,15 +105,15 @@ void correctionPlot(const size_t                 param,
     for (auto detectedEvent : detectedEvents) {
         detected->Fill(parametrisation(detectedEvent)[param]);
         double weight = 1 / EfficiencyCorrection.value(parametrisation(detectedEvent));
-        if (!std::isfinite(weight)) {
-            std::cerr << "aaa this histogram is going to break" << std::endl;
+        if (std::isfinite(weight)) {
+            corrected->Fill(parametrisation(detectedEvent)[param], weight);
         }
-        corrected->Fill(parametrisation(detectedEvent)[param], weight);
     }
     std::cout << "done" << std::endl;
 
     std::unique_ptr<TCanvas> canvasPtr = std::make_unique<TCanvas>();
     canvasPtr->cd();
+    canvasPtr->SetLeftMargin(0.15);
 
     corrected->SetLineColor(kBlue);
     truth->SetLineColor(kGreen);
@@ -154,7 +154,7 @@ double simpleEfficiency(const dDecay_t& event)
  */
 double niceEfficiency(const dDecay_t& event)
 {
-    return invariantMass({event.kParams, event.pi1Params}) / 2;
+    return invariantMass({event.kParams, event.pi1Params}) / 3;
 }
 
 /*
@@ -216,7 +216,7 @@ int main()
     std::vector<dDecay_t> detectedEvents = RootData.events;
     std::random_device    rd;
     std::mt19937          generator(rd());
-    applyEfficiency(&generator, niceEfficiency, detectedEvents);
+    applyEfficiency(&generator, pTEfficiency, detectedEvents);
     std::cout << "done" << std::endl;
 
     PhspBins Bins = findBins();
