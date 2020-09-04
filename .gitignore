@@ -53,3 +53,10 @@ lhcbMonteCarlo/tools/DaVinciDev_v45r1/
 # Python
 *__pycache__/
 
+# Tex
+*.aux
+*.fdb_latexmk
+*.fls
+*.gz
+*.pdf
+*.png

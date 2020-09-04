@@ -1,0 +1,11 @@
+% For some reason pdflatex says it can't find this file, then i type "X" and it works
+% also you have to compile it twice to get the png
+\documentclass[preview, convert={density=300,size=1080x800,outext=.png}]{standalone}
+\usepackage{amsmath}
+
+\begin{document}
+\begin{align*}
+    H(X) = -\Sigma p(x)\log p(x) \\
+    H(X|Y) = -\Sigma p(x,y) \log \frac{p(x,y)}{p(x)}
+\end{align*}
+\end{document}
