@@ -1,5 +1,7 @@
 /*
  * Utility structs and stuff for fitting
+ * 
+ * Desperately needs renaming
  */
 #ifndef FITTERUTILS_H
 #define FITTERUTILS_H

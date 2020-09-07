@@ -24,9 +24,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat-security -Werror 
 # Debug
 set(CMAKE_BUILD_TYPE Debug)
 
+# Common functionality like plotting helpers + stuff
+add_subdirectory("${CMAKE_SOURCE_DIR}/common")
+
 # Add our fitter library
-# This defines a static library D2K3Pi
-add_subdirectory("${CMAKE_SOURCE_DIR}/lib")
+add_subdirectory("${CMAKE_SOURCE_DIR}/charmFitter")
 
 # Add also an efficiency library
 add_subdirectory("${CMAKE_SOURCE_DIR}/efficiency")

@@ -1,2 +1,5 @@
-add_executable(pull-study pull_study.cpp PullStudyHelpers.cpp ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
-target_link_libraries(pull-study D2K3Pi ${Boost_LIBRARIES} ${ROOT_LIBRARIES})
+add_executable(pull-study pull_study.cpp PullStudyHelpers.cpp DecaySimulator.cpp)
+
+target_link_libraries(pull-study common charmFitter ${Boost_LIBRARIES} ${ROOT_LIBRARIES})
+
+target_include_directories(pull-study PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include/")

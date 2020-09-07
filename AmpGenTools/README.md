@@ -2,7 +2,7 @@ AmpGenTools
 ===========
 
 This dir is for extra tools + stuff pertaining to AmpGen, such as options files (*.opt)
-It also contains the D-> K3pi CF and DCS amplitude model file things; these are needed to perform the phase space binning (lib/k3pi_binning.h).
+It also contains the D-> K3pi CF and DCS amplitude model file things; these are needed to perform the phase space binning (charmFitter/k3pi_binning.h).
 
 This is useful for the generated decays binning code.
 

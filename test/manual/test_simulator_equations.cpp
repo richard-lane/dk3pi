@@ -49,7 +49,7 @@ double chiSq(const std::vector<double> &times,
 void simulateDecays()
 {
     // Parameter values
-    DecayParams_t MyParams{
+    FitterUtil::DecayParams_t MyParams{
         .x     = 0.004,
         .y     = 0.007,
         .r     = 0.055,
@@ -73,16 +73,16 @@ void simulateDecays()
     double efficiencyTimescale = 1 / MyParams.width;
     auto   rsRate              = [&](const double x) { return Phys::cfRate(x, MyParams, efficiencyTimescale); };
     auto   wsRate              = [&](const double x) { return Phys::dcsRate(x, MyParams, efficiencyTimescale); };
-    double cfIntegral          = util::gaussLegendreQuad(rsRate, 0, maxTime);
-    double dcsIntegral         = util::gaussLegendreQuad(wsRate, 0, maxTime);
+    double cfIntegral          = FitterUtil::gaussLegendreQuad(rsRate, 0, maxTime);
+    double dcsIntegral         = FitterUtil::gaussLegendreQuad(wsRate, 0, maxTime);
 
     std::vector<double> expectedCfBinPopulation(numTimeBins, -1);
     std::vector<double> expectedDcsBinPopulation(numTimeBins, -1);
     for (size_t i = 0; i < numTimeBins; ++i) {
         expectedCfBinPopulation[i] =
-            numDecays * util::gaussLegendreQuad(rsRate, timeBinLimits[i], timeBinLimits[i + 1]) / cfIntegral;
+            numDecays * FitterUtil::gaussLegendreQuad(rsRate, timeBinLimits[i], timeBinLimits[i + 1]) / cfIntegral;
         expectedDcsBinPopulation[i] =
-            numDecays * util::gaussLegendreQuad(wsRate, timeBinLimits[i], timeBinLimits[i + 1]) / dcsIntegral;
+            numDecays * FitterUtil::gaussLegendreQuad(wsRate, timeBinLimits[i], timeBinLimits[i + 1]) / dcsIntegral;
     }
 
     // Generator and PDF for random numbers
@@ -144,7 +144,7 @@ void simulateDecays()
     delete wsCanvas;
 
     // Take the ratio of our datasets, plot against the expected ratio
-    std::vector<double> expectedParams    = util::expectedParams(MyParams);
+    std::vector<double> expectedParams    = FitterUtil::expectedParams(MyParams);
     TF1 *               expectedRatioFunc = new TF1("expectedPoly", "[0] + [1]*x + [2]*x*x", 0, maxTime);
     expectedRatioFunc->SetParameter(0, expectedParams[0]);
     expectedRatioFunc->SetParameter(1, expectedParams[1]);

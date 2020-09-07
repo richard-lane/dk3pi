@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/*",
-                "${workspaceFolder}/lib/**",
+                "${workspaceFolder}/charmFitter/**",
                 "${env:ROOTSYS}/include/*",
                 "/home/mh19137/Documents/HEP/dk3pi/lib/"
             ],

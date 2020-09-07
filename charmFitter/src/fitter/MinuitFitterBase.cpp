@@ -1,6 +1,8 @@
 #include <iostream>
 
-#include "D2K3PiError.h"
+#include <boost/filesystem.hpp>
+
+#include "FitError.h"
 #include "MinuitFitterBase.h"
 
 #include "Minuit2/MnMigrad.h"

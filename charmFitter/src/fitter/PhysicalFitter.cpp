@@ -30,19 +30,19 @@ double PhysicalFitFcn::operator()(const std::vector<double>& parameters) const
         throw D2K3PiException();
     }
 
-    DecayParams_t params = DecayParameters{.x     = parameters[0],
-                                           .y     = parameters[1],
-                                           .r     = parameters[2],
-                                           .z_im  = parameters[3],
-                                           .z_re  = parameters[4],
-                                           .width = parameters[5]};
+    FitterUtil::DecayParams_t params = FitterUtil::DecayParameters{.x     = parameters[0],
+                                                                   .y     = parameters[1],
+                                                                   .r     = parameters[2],
+                                                                   .z_im  = parameters[3],
+                                                                   .z_re  = parameters[4],
+                                                                   .width = parameters[5]};
 
     double chi2 = 0.0;
     if (_integralOptions.integrate) {
         for (size_t i = 0; i < theMeasurements.size(); ++i) {
             double model = Phys::dcsIntegralWithEfficiency(_integralOptions.binLimits[i],
                                                            _integralOptions.binLimits[i + 1],
-                                                           util::expectedParams(params),
+                                                           FitterUtil::expectedParams(params),
                                                            params.width,
                                                            0.0) /
                            Phys::cfIntegralWithEfficiency(
@@ -80,21 +80,21 @@ double ConstrainXYFcn::operator()(const std::vector<double>& parameters) const
         throw D2K3PiException();
     }
 
-    DecayParams_t params = DecayParameters{.x     = parameters[0],
-                                           .y     = parameters[1],
-                                           .r     = parameters[2],
-                                           .z_im  = parameters[3],
-                                           .z_re  = parameters[4],
-                                           .width = parameters[5]};
+    FitterUtil::DecayParams_t params = FitterUtil::DecayParameters{.x     = parameters[0],
+                                                                   .y     = parameters[1],
+                                                                   .r     = parameters[2],
+                                                                   .z_im  = parameters[3],
+                                                                   .z_re  = parameters[4],
+                                                                   .width = parameters[5]};
 
-    std::vector<double> expectedParams = util::expectedParams(params);
+    std::vector<double> expectedParams = FitterUtil::expectedParams(params);
 
     double chi2 = 0.0;
     if (_integralOptions.integrate) {
         for (size_t i = 0; i < theMeasurements.size(); ++i) {
             double model = Phys::dcsIntegralWithEfficiency(_integralOptions.binLimits[i],
                                                            _integralOptions.binLimits[i + 1],
-                                                           util::expectedParams(params),
+                                                           FitterUtil::expectedParams(params),
                                                            params.width,
                                                            _integralOptions.efficiencyTimescale) /
                            Phys::cfIntegralWithEfficiency(_integralOptions.binLimits[i],
@@ -180,8 +180,11 @@ void PhysicalFitter::fit()
     // Its range should cover the range of times that our time bins do
     const double minTime = _fitData.binLimits.front();
     const double maxTime = _fitData.binLimits.back();
-    bestFitFunction      = std::make_unique<TF1>(
-        "Best fit function", "[2]*[2] + [2]*([1]*[4] + [0]*[3])*[5]*x + 0.25 * ([0]*[0] + [1]*[1])*[5]*[5]*x*x", minTime, maxTime);
+    bestFitFunction =
+        std::make_unique<TF1>("Best fit function",
+                              "[2]*[2] + [2]*([1]*[4] + [0]*[3])*[5]*x + 0.25 * ([0]*[0] + [1]*[1])*[5]*[5]*x*x",
+                              minTime,
+                              maxTime);
     bestFitFunction->SetParameters(fitParams.fitParams.data());
 }
 

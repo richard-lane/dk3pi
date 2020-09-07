@@ -4,9 +4,7 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
-#include <vector>
-
-#include "util.h"
+#include "fitterUtil.h"
 
 #define INTEGRAL_TOLERANCE (std::numeric_limits<double>::epsilon())
 #define INTEGRAL_REFINEMENTS (25)
@@ -24,9 +22,9 @@ inline double rateRatio(const double time, const std::vector<double> &abcParams)
 /*
  * Ratio of rates given decay parameters
  */
-inline double rateRatio(const double time, const DecayParams_t &decayParams)
+inline double rateRatio(const double time, const FitterUtil::DecayParams_t &decayParams)
 {
-    return rateRatio(time, util::expectedParams(decayParams));
+    return rateRatio(time, FitterUtil::expectedParams(decayParams));
 }
 
 /*
@@ -54,7 +52,7 @@ inline double cfRate(const double time, const double width, const double tau)
 /*
  * CF decay rate with efficiency parametrised by tau
  */
-inline double cfRate(const double time, const DecayParams_t &decayParams, const double tau)
+inline double cfRate(const double time, const FitterUtil::DecayParams_t &decayParams, const double tau)
 {
     return cfRate(time, decayParams.width, tau);
 }
@@ -62,9 +60,9 @@ inline double cfRate(const double time, const DecayParams_t &decayParams, const 
 /*
  * Expected DCS decay rate at a given time with efficiency parameterise by tau
  */
-inline double dcsRate(const double time, const DecayParams_t &decayParams, const double tau)
+inline double dcsRate(const double time, const FitterUtil::DecayParams_t &decayParams, const double tau)
 {
-    std::vector<double> abcParams = util::expectedParams(decayParams);
+    std::vector<double> abcParams = FitterUtil::expectedParams(decayParams);
     return rateRatio(time, abcParams) * cfRate(time, decayParams.width, tau);
 }
 
@@ -87,7 +85,7 @@ cfIntegralWithEfficiency(const double low, const double high, const double width
 {
     // should really use std::bind
     auto f = [&](double x) { return cfRate(x, width, efficiencyTimescale); };
-    return util::gaussLegendreQuad(f, low, high);
+    return FitterUtil::gaussLegendreQuad(f, low, high);
 }
 
 /*
@@ -104,7 +102,7 @@ inline double dcsIntegralWithEfficiency(const double               low,
 {
     // should really use std::bind
     auto f = [&](double x) { return dcsRate(x, abcParams, width, efficiencyTimescale); };
-    return util::gaussLegendreQuad(f, low, high);
+    return FitterUtil::gaussLegendreQuad(f, low, high);
 }
 
 } // namespace Phys

@@ -36,7 +36,7 @@ performFit(size_t numTimeBins, double maxTime, double a, double b, double c, dou
     std::vector<double> ratioErrors   = std::vector<double>(numTimeBins, -1);
 
     // Create exponential bins
-    std::vector<double> timeBinLimits = util::exponentialBinLimits(maxTime, width, numTimeBins);
+    std::vector<double> timeBinLimits = FitterUtil::exponentialBinLimits(maxTime, width, numTimeBins);
 
     // Create idealised plot
     for (size_t i = 0; i < numTimeBins; ++i) {
@@ -66,7 +66,7 @@ int main()
 {
     // Create an idealised plot of our ratios
     // Find the parameters we expect
-    DecayParams_t DecayParams = {
+    FitterUtil::DecayParams_t DecayParams = {
         .x     = 0.004,
         .y     = 0.007,
         .r     = 0.05,
@@ -75,7 +75,7 @@ int main()
         .width = 2500.0,
     };
 
-    std::vector<double> params = util::expectedParams(DecayParams);
+    std::vector<double> params = FitterUtil::expectedParams(DecayParams);
     double              a      = params[0];
     double              b      = params[1];
     double              c      = params[2];

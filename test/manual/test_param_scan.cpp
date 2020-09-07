@@ -64,7 +64,7 @@ void plotScan(MinuitPolynomialFitter& MinuitChiSqFitter,
 void test_param_scan(void)
 {
     // Create an accept-reject dataset
-    DecayParams_t phaseSpaceParams = {
+    FitterUtil::DecayParams_t phaseSpaceParams = {
         .x     = WORLD_AVERAGE_X,
         .y     = WORLD_AVERAGE_Y,
         .r     = 0.055,
@@ -178,7 +178,7 @@ void test_param_scan(void)
 void test_2d_scan()
 {
     // Create an accept-reject dataset
-    DecayParams_t phaseSpaceParams = {
+    FitterUtil::DecayParams_t phaseSpaceParams = {
         .x     = 0.0037,
         .y     = 0.0066,
         .r     = 0.055,
@@ -279,7 +279,7 @@ void test_2d_scan()
 void test_z_scan()
 {
     // Create an accept-reject dataset
-    DecayParams_t phaseSpaceParams = {
+    FitterUtil::DecayParams_t phaseSpaceParams = {
         .x     = WORLD_AVERAGE_X,
         .y     = WORLD_AVERAGE_Y,
         .r     = 0.055,

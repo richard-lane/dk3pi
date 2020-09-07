@@ -4,37 +4,11 @@
 #include <memory>
 #include <random>
 
-#include <boost/filesystem.hpp>
-#include <boost/math/quadrature/gauss.hpp>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
 #include "D2K3PiError.h"
 
 #include <TObject.h>
-
-/*
- * Struct encapsulating the parameters needed to simulate decays.
- * Mixing params x, y
- * Phase space params r, Im(Z) and Re(Z)
- * Particle data \Gamma for the D meson
- *
- * Parameters are all initalised to zero by default and should be set by the user.
- *
- * Should really be in the util namespace
- */
-typedef struct DecayParameters {
-    // Mixing params
-    double x{0.0};
-    double y{0.0};
-
-    // Phase space params
-    double r{0.0};
-    double z_im{0.0};
-    double z_re{0.0};
-
-    // Particle data
-    double width{0.0};
-} DecayParams_t;
 
 namespace util
 {
@@ -91,7 +65,7 @@ void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
 /*
  * Plot a vector as a histogram
  *
- * This won't make a production-quality plot but is useful for checking stuff
+ * This won't make a publication-quality plot but is useful for checking stuff
  */
 void saveHistogram(const std::vector<double> &vector,
                    const std::string &        path,
@@ -131,48 +105,11 @@ std::vector<double> findBinLimits(const std::vector<double> &dataSet,
                                   const double               highBin);
 
 /*
- * Find exponentially-distributed limits of numBins bins from 0 up to maxTime, whose width is described by
- * exp(-decayConstant * time)
- */
-std::vector<double> exponentialBinLimits(const double maxTime, const double decayConstant, const size_t numBins);
-
-/*
- * Find our expected a, b and c in (a + bt + ct^2) from a set of phase space parameters.
- *
- * Returns a vector of {a, b, c}
- */
-std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
-
-/*
  * Take two vectors of Re() and Im() values, output a vector of (magnitude, phase) pairs
  * Phase is between 0 and 2pi
  */
 std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> real,
                                                      const std::vector<double> imaginary);
-
-/*
- * Use adaptive quadrature to find an approximation to the integral of f between low and high limits
- */
-template <typename Func>
-double adadptiveTrapQuad(Func         f,
-                         const double low,
-                         const double high,
-                         const double tolerance,
-                         const size_t maxRefinements,
-                         double *     errorEstimate = nullptr)
-{
-    return boost::math::quadrature::trapezoidal(f, low, high, tolerance, maxRefinements, errorEstimate);
-}
-
-/*
- * Use Gauss-Legendre quadrature to find an approximation to the integral of f between low and high limits
- *
- * Evaluates the function at 15 points, as the weights and abcissa have been precalculated for this number of points.
- */
-template <typename Func> double gaussLegendreQuad(Func f, const double low, const double high)
-{
-    return boost::math::quadrature::gauss<double, 15>::integrate(f, low, high);
-}
 
 /*
  * Find the mean and std dev of a vector
@@ -212,7 +149,6 @@ std::vector<std::vector<double>> correlatedGaussianNumbers(const std::shared_ptr
  * Doesn't check that the input matrix is positive-definite! No idea what will happen if you pass something else into it
  *
  * Returns lower triangular matrix L
- *
  */
 std::vector<std::vector<double>> choleskyDecomp(const std::vector<std::vector<double>> &matrix);
 

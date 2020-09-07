@@ -15,7 +15,7 @@ BOOST_AUTO_TEST_CASE(test_numbers_of_decays, *boost::unit_test::tolerance(1))
 {
     // Set some reasonable DecayParams that gives us a positive number of DCS/CF decays
     // Gives a, b, c = 0.0025, 0.55, 101.5625
-    DecayParams_t DecayParams = {
+    FitterUtil::DecayParams_t DecayParams = {
         .x     = 0.004,
         .y     = 0.007,
         .r     = 0.05,

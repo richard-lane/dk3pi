@@ -18,6 +18,7 @@
 #include "RatioCalculator.h"
 #include "ReadAmpGen.h"
 #include "RootFitter.h"
+#include "fitterUtil.h"
 #include "util.h"
 
 /*
@@ -53,7 +54,7 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
 
     // Define time-space bin limits to perform ratio calculation with
     std::vector<double> timeBinLimits{};
-    timeBinLimits = util::exponentialBinLimits(0.006, 2500, 15);
+    timeBinLimits = FitterUtil::exponentialBinLimits(0.006, 2500, 15);
 
     std::cout << "Taking ratios" << std::endl;
     // Calculate the ratios between the datasets in each bin

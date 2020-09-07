@@ -84,7 +84,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 
     // Find exponentially-spaced time bin limits to use
     // Make some bins at the start wider (because of the efficiency)
-    std::vector<double> binLimits = util::exponentialBinLimits(maxTime, width, numBins);
+    std::vector<double> binLimits = FitterUtil::exponentialBinLimits(maxTime, width, numBins);
     binLimits.erase(binLimits.begin() + 1, binLimits.begin() + 3);
     binLimits.erase(binLimits.begin() + 4);
 
@@ -103,9 +103,9 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     boost::progress_display showProgress(numExperiments);
 
     for (size_t i = 0; i < numExperiments; ++i) {
-        double        thisX            = xyVals[0][i];
-        double        thisY            = xyVals[1][i];
-        DecayParams_t phaseSpaceParams = {
+        double                    thisX            = xyVals[0][i];
+        double                    thisY            = xyVals[1][i];
+        FitterUtil::DecayParams_t phaseSpaceParams = {
             .x     = thisX,
             .y     = thisY,
             .r     = 0.055,
@@ -185,7 +185,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         double deltaChiSqZ = chiSqFixedZ - MyFitter.fitParams.fitStatistic;
         zCoverage[i]       = std::sqrt(std::fabs(deltaChiSqZ));
 
-        std::vector<double> expectedFitParams = util::expectedParams(phaseSpaceParams);
+        std::vector<double> expectedFitParams = FitterUtil::expectedParams(phaseSpaceParams);
         plotFit(expectedFitParams, MyFitter, maxTime, i);
 
         // Store parameter and chi squared

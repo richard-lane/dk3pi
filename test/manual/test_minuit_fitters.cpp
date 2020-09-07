@@ -21,7 +21,7 @@
 void compareRootMinuit(void)
 {
     // Create an accept-reject dataset
-    DecayParams_t phaseSpaceParams = {
+    FitterUtil::DecayParams_t phaseSpaceParams = {
         .x     = WORLD_AVERAGE_X,
         .y     = WORLD_AVERAGE_Y,
         .r     = 0.055,
@@ -58,7 +58,7 @@ void compareRootMinuit(void)
     MyDecays.findDcsDecayTimes(numDcsEvents);
 
     // Define some time bins
-    std::vector<double> timeBinLimits = util::exponentialBinLimits(maxTime, phaseSpaceParams.width, 15);
+    std::vector<double> timeBinLimits = FitterUtil::exponentialBinLimits(maxTime, phaseSpaceParams.width, 15);
 
     // Divide using RatioCalculator
     std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, timeBinLimits);
@@ -145,7 +145,7 @@ void compareRootMinuit(void)
     ConstrainXYNoIntegral.bestFitFunction->SetLineStyle(kDashed);
 
     TF1*                trueFit        = new TF1("true fit", "[0] +[1]*x+[2]*x*x", 0, maxTime);
-    std::vector<double> expectedParams = util::expectedParams(phaseSpaceParams);
+    std::vector<double> expectedParams = FitterUtil::expectedParams(phaseSpaceParams);
     trueFit->SetParameter(0, expectedParams[0]);
     trueFit->SetParameter(1, expectedParams[1]);
     trueFit->SetParameter(2, expectedParams[2]);

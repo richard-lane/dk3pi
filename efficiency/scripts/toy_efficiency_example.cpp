@@ -2,6 +2,7 @@
  * Read in some data from AmpGen, apply a toy efficiency function and plot Dalitz plots and 1d projections of invariant
  * masses or something
  */
+#include <iostream>
 #include <memory>
 #include <random>
 #include <string>

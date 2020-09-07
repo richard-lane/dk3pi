@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "DecaySimulator.h"
+#include "fitterUtil.h"
 
 namespace PullStudyHelpers
 {
@@ -36,10 +37,10 @@ void plotHist(const std::vector<double>& vector, const size_t numBins, const std
  * count!
  *
  */
-double numDCSDecays(const size_t         numCFDecays,
-                    const DecayParams_t& phaseSpaceParams,
-                    double               maxTime,
-                    double               efficiencyTimescale);
+double numDCSDecays(const size_t                     numCFDecays,
+                    const FitterUtil::DecayParams_t& phaseSpaceParams,
+                    double                           maxTime,
+                    double                           efficiencyTimescale);
 
 } // namespace PullStudyHelpers
 

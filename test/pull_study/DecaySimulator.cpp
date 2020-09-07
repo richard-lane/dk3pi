@@ -35,9 +35,9 @@ SimulatedDecays::SimulatedDecays(const std::function<double(void)> &  generateTi
     _dcsRate = dcsRate;
 
     // Check that our generating pdf is normalised correctly
-    if (std::abs(util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) - 1.0) > 10 * DBL_EPSILON) {
+    if (std::abs(FitterUtil::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) - 1.0) > 10 * DBL_EPSILON) {
         std::cerr << "generating pdf not normalised; integral between " << _minTime << " and " << _maxTime
-                  << " evaluates to " << util::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) << std::endl;
+                  << " evaluates to " << FitterUtil::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) << std::endl;
         throw D2K3PiException();
     }
 
@@ -57,7 +57,7 @@ void SimulatedDecays::test(const size_t numPoints, const std::vector<double> &bi
 
     std::vector<double> expectedNormalisedBinPop(numBins, -1);
     for (size_t i = 0; i < numBins; ++i) {
-        expectedNormalisedBinPop[i] = util::gaussLegendreQuad(_generatingPDF, binLimits[i], binLimits[i + 1]);
+        expectedNormalisedBinPop[i] = FitterUtil::gaussLegendreQuad(_generatingPDF, binLimits[i], binLimits[i + 1]);
     }
 
     // Generate numPoints points and bin them

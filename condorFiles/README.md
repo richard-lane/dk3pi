@@ -3,7 +3,7 @@ When running code on Bristol's HPC grid, they don't like if I run code directly 
 
 Instead submit jobs to the worker nodes with the scripts in this dir
 
-#### Usage:
+#### Usage- Pull Study:
 First build target pull-study and move it to this directory :^)
 
 Then run

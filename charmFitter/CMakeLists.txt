@@ -8,19 +8,19 @@ set(fitter
   src/fitter/PhysicalFitter.cpp
   )
 
-add_library(D2K3Pi STATIC
+add_library(charmFitter STATIC
   src/PhaseSpaceBinning.cpp
   src/RatioCalculator.cpp
-  src/util.cpp
+  src/fitterUtil.cpp
   ${fitter}
   )
 
-set(CMAKE_BUILD_TYPE Debug)
-
-target_include_directories(D2K3Pi
-  PUBLIC ${CMAKE_CURRENT_LIST_DIR} "include/" "include/fitter/"
+target_include_directories(charmFitter
+  PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include/"
+  PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include/fitter/"
+  PUBLIC "${CMAKE_SOURCE_DIR}/common/include/"
   )
 
-target_compile_features(D2K3Pi
+target_compile_features(charmFitter
   PUBLIC cxx_auto_type cxx_range_for cxx_uniform_initialization
   )
