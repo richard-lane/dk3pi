@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "../pull_study/DecaySimulator.h"
+#include "DecaySimulator.h"
 
 BOOST_AUTO_TEST_SUITE(simulator_IT)
 

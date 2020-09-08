@@ -1,10 +1,8 @@
-#ifndef TEST_AMPLITUDE_CPP
-#define TEST_AMPLITUDE_CPP
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "amplitudes.h"
+
+#include <boost/filesystem.hpp>
 
 /*
  * Test that the correct error gets thrown when we can't find the specified fcn in a shared library
@@ -23,5 +21,3 @@ BOOST_AUTO_TEST_CASE(test_amplitude_fcn_not_found)
     BOOST_CHECK_NO_THROW(readFromSharedLib(library.string(), real_fcn));
     BOOST_CHECK_THROW(readFromSharedLib(library.string(), fake_fcn), FunctionNotFoundException);
 }
-
-#endif // TEST_AMPLITUDE_CPP

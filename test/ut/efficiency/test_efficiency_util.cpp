@@ -1,7 +1,3 @@
-#ifndef TEST_EFFICIENCY_UTIL_CPP
-#define TEST_EFFICIENCY_UTIL_CPP
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "efficiencyUtil.h"
@@ -59,5 +55,3 @@ BOOST_AUTO_TEST_CASE(test_pt)
 
     BOOST_CHECK_CLOSE(expectedPT, pT(particles), 1e-7);
 }
-
-#endif // TEST_EFFICIENCY_UTIL_CPP

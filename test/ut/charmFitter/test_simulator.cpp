@@ -1,8 +1,3 @@
-
-#ifndef TEST_SIMULATOR_CPP
-#define TEST_SIMULATOR_CPP
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -12,8 +7,8 @@
 #include <utility>
 #include <vector>
 
-#include "../pull_study/DecaySimulator.h"
 #include "D2K3PiError.h"
+#include "DecaySimulator.h"
 #include "physics.h"
 
 /*
@@ -58,9 +53,10 @@ BOOST_AUTO_TEST_CASE(test_hist_unsorted_bin_limits)
 BOOST_AUTO_TEST_CASE(test_max_dcs_ratio)
 {
     // These params should give us a,b,c = 9, 252, 45
-    FitterUtil::DecayParams_t DecayParams = FitterUtil::DecayParams_t{.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
-    std::vector<double>       abcParams   = FitterUtil::expectedParams(DecayParams);
-    double                    maxTime     = 1;
+    FitterUtil::DecayParams_t DecayParams =
+        FitterUtil::DecayParams_t{.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
+    std::vector<double> abcParams = FitterUtil::expectedParams(DecayParams);
+    double              maxTime   = 1;
 
     // No efficiency
     double efficiencyTimescale = 0;
@@ -87,5 +83,3 @@ BOOST_AUTO_TEST_CASE(test_max_dcs_ratio)
         std::abs(MyDecays.maxDCSRatio() - 306. / (DecayParams.width / (1 - std::exp(-DecayParams.width * maxTime)))) <
         100 * DBL_EPSILON);
 }
-
-#endif // TEST_SIMULATOR_CPP

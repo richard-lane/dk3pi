@@ -1,7 +1,3 @@
-#ifndef TEST_FITTER_CPP
-#define TEST_FITTER_CPP
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -16,6 +12,26 @@
 #include "fitter/RootFitter.h"
 
 #include "TMatrixD.h"
+
+/*
+ * At the moment can't use boose test to check vectors of floats are equal within tolerance;
+ * Use this as a workaround
+ */
+// Have to make it a macro so that it reports exact line numbers when checks fail.
+#ifndef CHECK_CLOSE_COLLECTIONS
+#define CHECK_CLOSE_COLLECTIONS(aa, bb, tolerance)            \
+    {                                                         \
+        using std::distance;                                  \
+        using std::begin;                                     \
+        using std::end;                                       \
+        auto a = begin(aa), ae = end(aa);                     \
+        auto b = begin(bb);                                   \
+        BOOST_CHECK(distance(a, ae) == distance(b, end(bb))); \
+        for (; a != ae; ++a, ++b) {                           \
+            BOOST_CHECK_CLOSE(*a, *b, tolerance);             \
+        }                                                     \
+    }
+#endif // CHECK_CLOSE_COLLECTIONS
 
 /*
  * Test that data following a quadratic function has sensible fit parameters
@@ -186,5 +202,3 @@ BOOST_AUTO_TEST_CASE(test_corr_cov_conversion, *boost::unit_test::tolerance(0.00
 
     BOOST_CHECK(MyFitter.covarianceVector2CorrelationMatrix(covarianceVector) == expectedCorrMatrix);
 }
-
-#endif // TEST_FITTER_CPP

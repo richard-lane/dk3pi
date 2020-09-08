@@ -18,8 +18,6 @@
 
 #include "Minuit2/MnMinos.h"
 
-#include "testutil.h"
-
 void splitVectorOfPairs(std::vector<std::pair<double, double>>& pairs,
                         std::vector<double>&                    first,
                         std::vector<double>&                    second)

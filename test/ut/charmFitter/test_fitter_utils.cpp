@@ -1,7 +1,3 @@
-#ifndef TEST_FITTER_UTILS_CPP
-#define TEST_FITTER_UTILS_CPP
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -75,5 +71,3 @@ BOOST_AUTO_TEST_CASE(test_zero_data_error)
 
     BOOST_CHECK_THROW(FitData MyData(binLimits, zeros, errs), D2K3PiException);
 }
-
-#endif // TEST_FITTER_UTILS_CPP

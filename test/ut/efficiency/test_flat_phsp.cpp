@@ -1,7 +1,3 @@
-#ifndef TEST_FLAT_PHSP_CPP
-#define TEST_FLAT_PHSP_CPP
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "flatPhsp.h"
@@ -31,5 +27,3 @@ BOOST_AUTO_TEST_CASE(test_weight)
     // Check that our weight has been set
     BOOST_CHECK(weight > 0);
 }
-
-#endif // TEST_FLAT_PHSP_CPP

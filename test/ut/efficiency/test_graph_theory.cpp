@@ -1,7 +1,3 @@
-#ifndef TEST_GRAPH_THEORY
-#define TEST_GRAPH_THEORY
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "graphTheory.h"
@@ -142,5 +138,3 @@ BOOST_AUTO_TEST_CASE(test_intree_cyclic)
 
     BOOST_CHECK_THROW(inTree(0, yesCycle), CyclicGraph);
 }
-
-#endif // TEST_GRAPH_THEORY

@@ -1,7 +1,3 @@
-#ifndef TEST_READROOT_CPP
-#define TEST_READROOT_CPP
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <TFile.h>
@@ -84,5 +80,3 @@ BOOST_AUTO_TEST_CASE(test_tree_not_found)
     BOOST_CHECK_NO_THROW(ReadRoot(cfFile.get(), realTree, realBranchNames));
     BOOST_CHECK_THROW(ReadRoot(cfFile.get(), fakeTree, realBranchNames), InvalidTree);
 }
-
-#endif // TEST_READROOT_CPP

@@ -1,12 +1,11 @@
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <cmath>
 #include <utility>
 #include <vector>
 
-#include "../pull_study/DecaySimulator.h"
-#include "../pull_study/PullStudyHelpers.h"
+#include "DecaySimulator.h"
+#include "PullStudyHelpers.h"
 
 /*
  * Test we find the correct relative number of DCS to CF decays

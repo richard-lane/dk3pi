@@ -1,10 +1,6 @@
-#ifndef TEST_Z_CPP
-#define TEST_Z_CPP
-
-#define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
-
 #include <cmath>
+
+#include <boost/test/unit_test.hpp>
 
 #include "findZ.h"
 
@@ -35,5 +31,3 @@ BOOST_AUTO_TEST_CASE(test_amplitude_fiddle_factor)
     BOOST_CHECK_CLOSE(expectedReal, fiddleFactor.real(), 1e-4);
     BOOST_CHECK_CLOSE(expectedImag, fiddleFactor.imag(), 1e-4);
 }
-
-#endif // TEST_Z_CPP

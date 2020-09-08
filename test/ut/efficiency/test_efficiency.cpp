@@ -1,7 +1,3 @@
-#ifndef TEST_EFFICIENCY_CPP
-#define TEST_EFFICIENCY_CPP
-
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <cstring>
@@ -165,5 +161,3 @@ BOOST_AUTO_TEST_CASE(test_swap_2d_hist)
     BOOST_CHECK_CLOSE(swappedHist.GetBinContent(2, 1), 2, 1e-7);
     BOOST_CHECK_CLOSE(swappedHist.GetBinContent(2, 2), 4, 1e-7);
 }
-
-#endif // TEST_EFFICIENCY_CPP
