@@ -1,0 +1,3 @@
+Stuff from when I was trying to estimate efficiency using AmpGen amplitude models
+
+I don't entirely know if this is still necessary but i've kept it here just in case...

@@ -1,18 +1,36 @@
-add_library(efficiency STATIC
-  lib/amplitudes.cpp
-  lib/ReadRoot.cpp
-  lib/findZ.cpp
-  lib/flatPhsp.cpp
-  lib/efficiency.cpp
-  lib/graphTheory.cpp
-  lib/ChowLiu.cpp
-  lib/efficiencyUtil.cpp
+# Miscellaneous utility stuff
+set(misc
+  misc/src/efficiencyUtil.cpp
+  misc/src/ReadRoot.cpp)
+  
+# Chow Liu efficiency estimate
+set(chowLiu
+  chowLiu/src/graphTheory.cpp
+  chowLiu/src/ChowLiu.cpp
+  chowLiu/src/efficiency.cpp
   )
 
-set(CMAKE_BUILD_TYPE Debug)
+# Weird AmpGen amplitude model stuff
+set(ampGen
+  ampGen/src/findZ.cpp
+  ampGen/src/flatPhsp.cpp
+  ampGen/src/amplitudes.cpp)
 
+# Define monolithic efficiency library
+add_library(efficiency STATIC
+  ${misc}
+  ${chowLiu}
+  ${ampGen}
+  )
+
+# Include dirs
+set(efficiencyIncludeDirs
+  "misc/include/"
+  "chowLiu/include/" 
+  "ampGen/include/"
+  "${CMAKE_SOURCE_DIR}/common/include")
 target_include_directories(efficiency
-  PUBLIC ${CMAKE_CURRENT_LIST_DIR} "include/" "include/" "${CMAKE_SOURCE_DIR}/common/include/"
+  PUBLIC ${efficiencyIncludeDirs}
   )
 
 target_compile_features(efficiency

@@ -21,12 +21,11 @@ double invariantMass(const std::vector<kinematicParams_t>& systemKinematics)
 
 std::vector<double> event2invariantMasses(const dDecay_t& event)
 {
-    return std::vector<double>{
-        invariantMass(std::vector<kinematicParams_t>{event.kParams, event.pi1Params}),
-        invariantMass(std::vector<kinematicParams_t>{event.pi1Params, event.pi2Params}),
-        invariantMass(std::vector<kinematicParams_t>{event.pi2Params, event.pi3Params}),
-        invariantMass(std::vector<kinematicParams_t>{event.kParams, event.pi1Params, event.pi2Params}),
-        invariantMass(std::vector<kinematicParams_t>{event.pi1Params, event.pi2Params, event.pi3Params})};
+    return std::vector<double>{invariantMass({event.kParams, event.pi1Params}),
+                               invariantMass({event.pi1Params, event.pi2Params}),
+                               invariantMass({event.pi2Params, event.pi3Params}),
+                               invariantMass({event.kParams, event.pi1Params, event.pi2Params}),
+                               invariantMass({event.pi1Params, event.pi2Params, event.pi3Params})};
 }
 
 double pT(const std::vector<kinematicParams_t>& particles)
