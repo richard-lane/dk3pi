@@ -2,8 +2,7 @@ set(fitterIT
  ../driver.cpp
  test_minuit_fitter.cpp
  test_ratio_calculator.cpp
- test_simulator.cpp
- ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
+ test_simulator.cpp)
 
 add_executable(it_fitter.exe ${fitterIT})
 

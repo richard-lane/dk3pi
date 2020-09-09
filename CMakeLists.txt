@@ -30,14 +30,8 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/common")
 # Add our fitter library
 add_subdirectory("${CMAKE_SOURCE_DIR}/charmFitter")
 
-# Add also an efficiency library
+# Add an efficiency library
 add_subdirectory("${CMAKE_SOURCE_DIR}/efficiency")
-
-# What is going on here
-add_subdirectory(${CMAKE_SOURCE_DIR}/efficiency/scripts/)
-
-# Bin ampgen decays
-add_subdirectory("${CMAKE_SOURCE_DIR}/test/bin_decays/")
 
 # UT
 enable_testing()
@@ -45,9 +39,3 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/test/ut/")
 
 # IT
 add_subdirectory("${CMAKE_SOURCE_DIR}/test/it/")
-
-# Stupid manual tests
-add_subdirectory("${CMAKE_SOURCE_DIR}/test/manual/")
-
-# Pull study
-add_subdirectory("${CMAKE_SOURCE_DIR}/test/pull_study/")

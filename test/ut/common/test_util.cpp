@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(test_expected_params, *boost::unit_test::tolerance(0.000000
     double expectedB = 252;
     double expectedC = 45;
 
-    std::vector<double> params = FitterUtil::expectedParams(DecayParams);
+    auto params = Phys::expectedParams(DecayParams);
 
     BOOST_CHECK(expectedA == params[0]);
     BOOST_CHECK(expectedB == params[1]);
@@ -168,14 +168,14 @@ BOOST_AUTO_TEST_CASE(test_integrals, *boost::unit_test::tolerance(1e-8))
         .x = 0.0, .y = std::sqrt(0.12), .r = 1, .z_im = 0.0, .z_re = 0.2 / std::sqrt(0.12), .width = 10};
 
     // Cursory check that expectedParams still works
-    BOOST_CHECK(std::abs(FitterUtil::expectedParams(DecayParams)[0] - 1) < 1e-8);
-    BOOST_CHECK(std::abs(FitterUtil::expectedParams(DecayParams)[1] - 2) < 1e-8);
-    BOOST_CHECK(std::abs(FitterUtil::expectedParams(DecayParams)[2] - 3) < 1e-8);
+    BOOST_CHECK(std::abs(Phys::expectedParams(DecayParams)[0] - 1) < 1e-8);
+    BOOST_CHECK(std::abs(Phys::expectedParams(DecayParams)[1] - 2) < 1e-8);
+    BOOST_CHECK(std::abs(Phys::expectedParams(DecayParams)[2] - 3) < 1e-8);
 
     // DCS integrals
     // Use efficiency timescale of 0 such that the efficiency is unity
     BOOST_CHECK(
-        std::abs(Phys::dcsIntegralWithEfficiency(0, 3, FitterUtil::expectedParams(DecayParams), DecayParams.width, 0) -
+        std::abs(Phys::dcsIntegralWithEfficiency(0, 3, Phys::expectedParams(DecayParams), DecayParams.width, 0) -
                  0.12599999999966256411) < 1e-10);
 
     // CF integrals
@@ -191,8 +191,8 @@ BOOST_AUTO_TEST_CASE(test_rates, *boost::unit_test::tolerance(1e-8))
 {
     FitterUtil::DecayParams_t DecayParams = {.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
 
-    // Trust that FitterUtil::expectedParams works
-    std::vector<double> expectedParams = FitterUtil::expectedParams(DecayParams);
+    // Trust that Phys::expectedParams works
+    auto expectedParams = Phys::expectedParams(DecayParams);
 
     // Rate ratio
     BOOST_CHECK_SMALL(Phys::rateRatio(100, expectedParams) - 475209.0, 1e-10);

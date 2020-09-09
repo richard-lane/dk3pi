@@ -39,13 +39,6 @@ typedef struct DecayParameters {
 std::vector<double> exponentialBinLimits(const double maxTime, const double decayConstant, const size_t numBins);
 
 /*
- * Find our expected a, b and c in (a + bt + ct^2) from a set of phase space parameters.
- *
- * Returns a vector of {a, b, c}
- */
-std::vector<double> expectedParams(const DecayParams_t &phaseSpaceParams);
-
-/*
  * Use Gauss-Legendre quadrature to find an approximation to the integral of f between low and high limits
  *
  * Evaluates the function at 15 points, as the weights and abcissa have been precalculated for this number of points.

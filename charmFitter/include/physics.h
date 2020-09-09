@@ -12,9 +12,25 @@
 namespace Phys
 {
 /*
+ * Find our expected a, b and c in (a + bt + ct^2) from a set of phase space parameters.
+ *
+ * Returns an array {a, b, c}
+ */
+inline std::array<double, 3> expectedParams(const FitterUtil::DecayParams_t &phaseSpaceParams)
+{
+    double expected_a = phaseSpaceParams.r * phaseSpaceParams.r;
+    double expected_b = phaseSpaceParams.r *
+                        (phaseSpaceParams.y * phaseSpaceParams.z_re + phaseSpaceParams.x * phaseSpaceParams.z_im) *
+                        phaseSpaceParams.width;
+    double expected_c = 0.25 * (std::pow(phaseSpaceParams.x, 2) + std::pow(phaseSpaceParams.y, 2)) *
+                        std::pow(phaseSpaceParams.width, 2);
+
+    return {expected_a, expected_b, expected_c};
+}
+/*
  * Ratio of rates given parameters a, b and c
  */
-inline double rateRatio(const double time, const std::vector<double> &abcParams)
+inline double rateRatio(const double time, const std::array<double, 3> &abcParams)
 {
     return abcParams[0] + time * abcParams[1] + time * time * abcParams[2];
 }
@@ -24,7 +40,7 @@ inline double rateRatio(const double time, const std::vector<double> &abcParams)
  */
 inline double rateRatio(const double time, const FitterUtil::DecayParams_t &decayParams)
 {
-    return rateRatio(time, FitterUtil::expectedParams(decayParams));
+    return rateRatio(time, expectedParams(decayParams));
 }
 
 /*
@@ -62,14 +78,14 @@ inline double cfRate(const double time, const FitterUtil::DecayParams_t &decayPa
  */
 inline double dcsRate(const double time, const FitterUtil::DecayParams_t &decayParams, const double tau)
 {
-    std::vector<double> abcParams = FitterUtil::expectedParams(decayParams);
+    auto abcParams = expectedParams(decayParams);
     return rateRatio(time, abcParams) * cfRate(time, decayParams.width, tau);
 }
 
 /*
  * Expected DCS decay rate at a given time with efficiency parametrised by tau
  */
-inline double dcsRate(const double time, const std::vector<double> &abcParams, const double width, const double tau)
+inline double dcsRate(const double time, const std::array<double, 3> &abcParams, const double width, const double tau)
 {
     return rateRatio(time, abcParams) * cfRate(time, width, tau);
 }
@@ -94,16 +110,31 @@ cfIntegralWithEfficiency(const double low, const double high, const double width
 
  * errorEstimate can be set to get an estimate of the error in the integral
  */
-inline double dcsIntegralWithEfficiency(const double               low,
-                                        const double               high,
-                                        const std::vector<double> &abcParams,
-                                        const double               width,
-                                        const double               efficiencyTimescale)
+inline double dcsIntegralWithEfficiency(const double                 low,
+                                        const double                 high,
+                                        const std::array<double, 3> &abcParams,
+                                        const double                 width,
+                                        const double                 efficiencyTimescale)
 {
     // should really use std::bind
     auto f = [&](double x) { return dcsRate(x, abcParams, width, efficiencyTimescale); };
     return FitterUtil::gaussLegendreQuad(f, low, high);
 }
+
+/*
+ * Find the number of DCS decays we need to simulate, given the number of CF decays and our phase space parameters.
+ *
+ * The ratio of DCS to CF decays is calculated from the ratio of the integrals of their decay rates.
+ * CF rate is exponential; DCS is exp * (a + bt + ct^2)
+ *
+ * Returns a double so e.g. can be used as the mean of a distribution. Cast to an integer type before using as a
+ * count!
+ *
+ */
+double numDCSDecays(const size_t                     numCFDecays,
+                    const FitterUtil::DecayParams_t &phaseSpaceParams,
+                    double                           maxTime,
+                    double                           efficiencyTimescale);
 
 } // namespace Phys
 

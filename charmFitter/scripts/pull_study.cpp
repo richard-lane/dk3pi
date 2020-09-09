@@ -7,7 +7,6 @@
 #include "FitterUtils.h"
 #include "MinuitPolynomialFitter.h"
 #include "PhysicalFitter.h"
-#include "PullStudyHelpers.h"
 #include "RatioCalculator.h"
 #include "physics.h"
 #include "util.h"
@@ -17,12 +16,34 @@
 
 #include <boost/progress.hpp>
 
+void plot_parameter_distribution(std::string         title,
+                                 std::vector<double> parameter,
+                                 size_t              nExperiments,
+                                 double              expectedMean,
+                                 double              expectedSigma)
+{
+    // Define axis limits
+    double xMin = expectedMean - 5 * expectedSigma;
+    double xMax = expectedMean - 5 * expectedSigma;
+
+    TH1D* MyGraph = new TH1D(title.c_str(), title.c_str(), 200, xMin, xMax);
+
+    MyGraph->FillN(nExperiments, parameter.data(), 0);
+    MyGraph->SetTitle((title + ";Normalised Pull;Count").c_str());
+
+    util::saveObjectToFile(MyGraph, (title + ".pdf").c_str());
+
+    std::cout << title + " mean:\t\t" + MyGraph->GetMean() << std::endl;
+    std::cout << title + " std dev:\t" + MyGraph->GetStdDev() << std::endl;
+    delete MyGraph;
+}
+
 /*
  * Plot a fit
  *
  * This should be two functions
  */
-void plotFit(std::vector<double>&  expectedFitParams,
+void plotFit(std::array<double, 3>&  expectedFitParams,
              const PhysicalFitter& MyFitter,
              const double          maxTime,
              const size_t          i,
@@ -113,8 +134,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
             .z_re  = 0.7609,
             .width = width,
         };
-        double meanNumDcsEvents =
-            PullStudyHelpers::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
+        double meanNumDcsEvents = Phys::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
 
         // Generator and PDF for random numbers
         std::uniform_real_distribution<double> uniform;
@@ -185,7 +205,7 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         double deltaChiSqZ = chiSqFixedZ - MyFitter.fitParams.fitStatistic;
         zCoverage[i]       = std::sqrt(std::fabs(deltaChiSqZ));
 
-        std::vector<double> expectedFitParams = FitterUtil::expectedParams(phaseSpaceParams);
+        auto expectedFitParams = Phys::expectedParams(phaseSpaceParams);
         plotFit(expectedFitParams, MyFitter, maxTime, i);
 
         // Store parameter and chi squared
@@ -208,10 +228,10 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     }
     std::cout << std::endl;
 
-    PullStudyHelpers::plot_parameter_distribution("r", rPull, numExperiments);
-    PullStudyHelpers::plot_parameter_distribution("Re(Z)", reZPull, numExperiments);
+    plot_parameter_distribution("r", rPull, numExperiments, 0, 1);
+    plot_parameter_distribution("Re(Z)", reZPull, numExperiments, 0, 1);
 
-    PullStudyHelpers::plotHist(chiSquaredVals, 50, "MinuitChiSq");
+    util::saveHistogram(chiSquaredVals, "MinuitChiSq.png", "", 100);
 
     // Plot a cumulative histogram of delta chi squared values
     size_t              nBins{50};

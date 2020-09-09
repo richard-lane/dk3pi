@@ -42,7 +42,7 @@ double PhysicalFitFcn::operator()(const std::vector<double>& parameters) const
         for (size_t i = 0; i < theMeasurements.size(); ++i) {
             double model = Phys::dcsIntegralWithEfficiency(_integralOptions.binLimits[i],
                                                            _integralOptions.binLimits[i + 1],
-                                                           FitterUtil::expectedParams(params),
+                                                           Phys::expectedParams(params),
                                                            params.width,
                                                            0.0) /
                            Phys::cfIntegralWithEfficiency(
@@ -87,14 +87,12 @@ double ConstrainXYFcn::operator()(const std::vector<double>& parameters) const
                                                                    .z_re  = parameters[4],
                                                                    .width = parameters[5]};
 
-    std::vector<double> expectedParams = FitterUtil::expectedParams(params);
-
     double chi2 = 0.0;
     if (_integralOptions.integrate) {
         for (size_t i = 0; i < theMeasurements.size(); ++i) {
             double model = Phys::dcsIntegralWithEfficiency(_integralOptions.binLimits[i],
                                                            _integralOptions.binLimits[i + 1],
-                                                           FitterUtil::expectedParams(params),
+                                                           Phys::expectedParams(params),
                                                            params.width,
                                                            _integralOptions.efficiencyTimescale) /
                            Phys::cfIntegralWithEfficiency(_integralOptions.binLimits[i],

@@ -7,11 +7,9 @@ set(fitterUT
   test_simulator.cpp)
 
 add_executable(ut_fitter.exe
-  ${fitterUT}
-  ${CMAKE_SOURCE_DIR}/test/pull_study/PullStudyHelpers.cpp
-  ${CMAKE_SOURCE_DIR}/test/pull_study/DecaySimulator.cpp)
+  ${fitterUT})
 
-target_link_libraries(ut_fitter.exe common charmFitter ${ROOT_LIBRARIES} ${Boost_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+target_link_libraries(ut_fitter.exe charmFitter common ${ROOT_LIBRARIES} ${Boost_LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
 target_include_directories(ut_fitter.exe PUBLIC "${CMAKE_SOURCE_DIR}/test/pull_study/")
 

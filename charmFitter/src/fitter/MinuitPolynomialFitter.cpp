@@ -33,11 +33,13 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
 
     double chi2 = 0.0;
 
+    std::array<double, 3> paramArray;
+    std::copy(parameters.begin(), parameters.end(), paramArray.begin());
     if (_integralOptions.integrate) {
         for (size_t i = 0; i < theMeasurements.size(); ++i) {
             double model = Phys::dcsIntegralWithEfficiency(_integralOptions.binLimits[i],
                                                            _integralOptions.binLimits[i + 1],
-                                                           parameters,
+                                                           paramArray,
                                                            _integralOptions.width,
                                                            _integralOptions.efficiencyTimescale) /
                            Phys::cfIntegralWithEfficiency(_integralOptions.binLimits[i],
@@ -48,7 +50,7 @@ double PolynomialChiSqFcn::operator()(const std::vector<double>& parameters) con
         }
     } else {
         for (size_t i = 0; i < theMeasurements.size(); ++i) {
-            chi2 += std::pow((Phys::rateRatio(thePositions[i], parameters) - theMeasurements[i]) / theMVariances[i], 2);
+            chi2 += std::pow((Phys::rateRatio(thePositions[i], paramArray) - theMeasurements[i]) / theMVariances[i], 2);
         }
     }
     return chi2;

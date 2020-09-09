@@ -36,3 +36,5 @@ target_include_directories(efficiency
 target_compile_features(efficiency
   PUBLIC cxx_auto_type cxx_range_for cxx_uniform_initialization
   )
+
+add_subdirectory(scripts/)

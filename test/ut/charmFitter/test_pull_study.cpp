@@ -5,7 +5,8 @@
 #include <vector>
 
 #include "DecaySimulator.h"
-#include "PullStudyHelpers.h"
+#include "fitterUtil.h"
+#include "physics.h"
 
 /*
  * Test we find the correct relative number of DCS to CF decays
@@ -28,5 +29,5 @@ BOOST_AUTO_TEST_CASE(test_numbers_of_decays, *boost::unit_test::tolerance(1))
     double maxTime     = 0.005;
 
     // Work this out using wolframalpha
-    BOOST_CHECK(std::abs(PullStudyHelpers::numDCSDecays(numCFDecays, DecayParams, maxTime, 0) - 275248) < 1);
+    BOOST_CHECK(std::abs(Phys::numDCSDecays(numCFDecays, DecayParams, maxTime, 0) - 275248) < 1);
 }

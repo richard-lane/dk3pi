@@ -2,8 +2,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../pull_study/DecaySimulator.h"
-#include "../pull_study/PullStudyHelpers.h"
+#include "DecaySimulator.h"
 #include "RatioCalculator.h"
 #include "fitter/MinuitPolynomialFitter.h"
 #include "fitter/PhysicalFitter.h"
@@ -70,10 +69,9 @@ void test_param_scan(void)
         .z_re  = 0.7609,
         .width = 2439.0,
     };
-    double maxTime     = 0.004;
-    size_t numCfEvents = 700000;
-    double numDcsEvents =
-        PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
+    double maxTime      = 0.004;
+    size_t numCfEvents  = 700000;
+    double numDcsEvents = Phys::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
 
     double efficiencyTimescale = phaseSpaceParams.width;
     auto   cfRate              = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
@@ -186,9 +184,8 @@ void test_2d_scan()
     };
     double maxTime = 0.002;
 
-    size_t numCfEvents = 1000000;
-    double numDcsEvents =
-        PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
+    size_t numCfEvents  = 1000000;
+    double numDcsEvents = Phys::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
 
     // No efficiency
     double efficiencyTimescale = 0;
@@ -287,9 +284,8 @@ void test_z_scan()
     };
     double maxTime = 0.002;
 
-    size_t numCfEvents = 1e7;
-    double numDcsEvents =
-        PullStudyHelpers::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
+    size_t numCfEvents  = 1e7;
+    double numDcsEvents = Phys::numDCSDecays(numCfEvents, phaseSpaceParams, maxTime, 1 / phaseSpaceParams.width);
 
     // No efficiency
     double efficiencyTimescale = 0;

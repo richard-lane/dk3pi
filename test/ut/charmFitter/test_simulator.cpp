@@ -55,8 +55,7 @@ BOOST_AUTO_TEST_CASE(test_max_dcs_ratio)
     // These params should give us a,b,c = 9, 252, 45
     FitterUtil::DecayParams_t DecayParams =
         FitterUtil::DecayParams_t{.x = 1, .y = 2, .r = 3, .z_im = 4, .z_re = 5, .width = 6};
-    std::vector<double> abcParams = FitterUtil::expectedParams(DecayParams);
-    double              maxTime   = 1;
+    double maxTime = 1;
 
     // No efficiency
     double efficiencyTimescale = 0;
