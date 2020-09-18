@@ -216,9 +216,7 @@ std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> r
 
 std::pair<double, double> meanAndStdDev(const std::vector<double> &v)
 {
-
-    double sum  = std::accumulate(v.begin(), v.end(), 0.0);
-    double mean = sum / v.size();
+    double mean = findMean(v);
 
     std::vector<double> diff(v.size());
     std::transform(v.begin(), v.end(), diff.begin(), std::bind2nd(std::minus<double>(), mean));

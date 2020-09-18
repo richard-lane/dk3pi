@@ -268,6 +268,15 @@ BOOST_AUTO_TEST_CASE(test_cov_matrix)
 }
 
 /*
+ * Test mean
+ */
+BOOST_AUTO_TEST_CASE(test_mean)
+{
+    std::array<double, 10> arr{2, 3, 7, 5, 6, 7, 8, 9, 10, 11};
+    BOOST_CHECK_CLOSE(util::findMean(arr), 6.8, 1e-9);
+}
+
+/*
  * Test mean + std dev function
  */
 BOOST_AUTO_TEST_CASE(test_mean_std)

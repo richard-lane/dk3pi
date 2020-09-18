@@ -112,6 +112,18 @@ std::vector<std::pair<double, double>> reIm2magPhase(const std::vector<double> r
                                                      const std::vector<double> imaginary);
 
 /*
+ * Find mean of container as a double
+ */
+template <typename Container> double findMean(const Container &c)
+{
+    double result{0.0};
+    for (auto x : c) {
+        result += x;
+    }
+    return result / c.size();
+}
+
+/*
  * Find the mean and std dev of a vector
  */
 std::pair<double, double> meanAndStdDev(const std::vector<double> &v);

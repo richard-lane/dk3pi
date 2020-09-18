@@ -13,193 +13,185 @@
 #include <TLegend.h>
 
 #include "ReadRoot.h"
+#include "bdt_reweighting.h"
 #include "efficiency.h"
 #include "efficiencyUtil.h"
+#include "scriptUtils.h"
 #include "util.h"
 
-struct EventDetectionProbNotNormalised : public std::exception {
-    EventDetectionProbNotNormalised(const double prob)
-        : _msg("Probability " + std::to_string(prob) + " not between 0 and 1")
-    {
-        ;
-    }
-
-    const char* what() const throw() { return _msg.c_str(); }
-
-  private:
-    const std::string _msg;
-};
-
-/*
- * Provide a random number generator, a vector of D decay events and a function that provides an event's detection
- * probability
- *
- * The probability of detecting an event should be a number between 0 and 1
- *
- * Removes the undetected events from the vector in-place.
- */
-void applyEfficiency(std::mt19937* const                    generator,
-                     const std::function<double(dDecay_t)>& eventDetectionProb,
-                     std::vector<dDecay_t>&                 events)
+static std::vector<PhspPoint> parametrisePoints(const std::vector<dDecay_t>& decay)
 {
-    std::uniform_real_distribution<double> uniformDistribution(0.0, 1.0);
-
-    // Lambda that we'll use to decide whether to remove our event
-    auto removeEvent = [&](const dDecay_t& event) {
-        double detectionProb = eventDetectionProb(event);
-        if (detectionProb < 0 || detectionProb > 1) {
-            throw EventDetectionProbNotNormalised(detectionProb);
-        }
-        return uniformDistribution(*generator) > detectionProb;
-    };
-
-    // Move the items to remove to the end of the vector and erase them
-    auto it = std::remove_if(events.begin(), events.end(), removeEvent);
-    events.erase(it, events.end());
+    std::vector<PhspPoint> parametrisedPoints(decay.size());
+    for (size_t i = 0; i < decay.size(); ++i) {
+        parametrisedPoints[i] = parametrisation(decay[i]);
+    }
+    return parametrisedPoints;
 }
 
-PhspPoint parametrisation(const dDecay_t& decay)
+static void plotHists(TH1D& truthHist, TH1D& mcHist, TH1D& detectedHist, TH1D& correctedHist, const char* path)
 {
-    // 5d phsp
-    PhspPoint point = PhspPoint(5);
-
-    // Use invariant masses m12, m23, m34, m123, m234
-    point[0] = invariantMass(std::vector<kinematicParams_t>{decay.kParams, decay.pi1Params});
-    point[1] = invariantMass(std::vector<kinematicParams_t>{decay.pi1Params, decay.pi2Params});
-    point[2] = invariantMass(std::vector<kinematicParams_t>{decay.pi2Params, decay.pi3Params});
-    point[3] = invariantMass(std::vector<kinematicParams_t>{decay.kParams, decay.pi1Params, decay.pi2Params});
-    point[4] = invariantMass(std::vector<kinematicParams_t>{decay.pi1Params, decay.pi2Params, decay.pi3Params});
-
-    return point;
-}
-
-/*
- * Plot 1d projections of true, detected + reconstructed data
- */
-void correctionPlot(const size_t                 param,
-                    const std::vector<double>&   binLimits,
-                    const std::vector<dDecay_t>& trueEvents,
-                    const std::vector<dDecay_t>& detectedEvents,
-                    const ChowLiuEfficiency&     EfficiencyCorrection,
-                    const std::string&           path)
-{
-    // On the same canvas, draw histograms of the truth events, the measured events + the reweighted measured events
-    std::string title = "Example Projection: " + path;
-
-    std::unique_ptr<TH1D> truth = std::make_unique<TH1D>(
-        "truth", (title + ";Invariant Mass/GeV;Events").c_str(), binLimits.size() - 1, binLimits.data());
-    std::unique_ptr<TH1D> detected = std::make_unique<TH1D>(
-        "detected", (title + ";Invariant Mass/GeV;Events").c_str(), binLimits.size() - 1, binLimits.data());
-    std::unique_ptr<TH1D> corrected = std::make_unique<TH1D>(
-        "corrected", (title + ";Invariant Mass/GeV;Events").c_str(), binLimits.size() - 1, binLimits.data());
-
-    // Truth histogram is easy to fill
-    std::cout << "Fill truth histogram..." << std::flush;
-    for (auto truthEvent : trueEvents) {
-        truth->Fill(parametrisation(truthEvent)[param]);
-    }
-    std::cout << "done" << std::endl;
-
-    // Detected histogram is easy to fill
-    // Corrected histogram is filled with weights 1/efficiency for each point
-    std::cout << "Calculate + fill corrected + detected histograms..." << std::flush;
-    for (auto detectedEvent : detectedEvents) {
-        detected->Fill(parametrisation(detectedEvent)[param]);
-        double weight = 1 / EfficiencyCorrection.value(parametrisation(detectedEvent));
-        if (std::isfinite(weight)) {
-            corrected->Fill(parametrisation(detectedEvent)[param], weight);
-        }
-    }
-    std::cout << "done" << std::endl;
-
     std::unique_ptr<TCanvas> canvasPtr = std::make_unique<TCanvas>();
     canvasPtr->cd();
     canvasPtr->SetLeftMargin(0.15);
 
-    corrected->SetLineColor(kBlue);
-    truth->SetLineColor(kGreen);
-    detected->SetLineColor(kRed);
+    correctedHist.SetLineColor(kBlue);
+    mcHist.SetLineColor(kBlack);
+    truthHist.SetLineColor(kGreen);
+    detectedHist.SetLineColor(kRed);
 
-    corrected->SetStats(false);
-    truth->SetStats(false);
-    detected->SetStats(false);
+    correctedHist.SetStats(false);
+    mcHist.SetStats(false);
+    truthHist.SetStats(false);
+    detectedHist.SetStats(false);
 
     // Legend
     std::unique_ptr<TLegend> legendPtr = std::make_unique<TLegend>(0.15, 0.25);
     legendPtr->SetTextSize(0.03);
-    legendPtr->AddEntry(corrected.get(), "Corrected", "l");
-    legendPtr->AddEntry(truth.get(), "Truth", "l");
-    legendPtr->AddEntry(detected.get(), "Detected", "l");
+    legendPtr->AddEntry(&correctedHist, "Corrected", "l");
+    legendPtr->AddEntry(&mcHist, "MC", "l");
+    legendPtr->AddEntry(&truthHist, "Truth", "l");
+    legendPtr->AddEntry(&detectedHist, "Detected", "l");
 
-    corrected->Draw("SAME");
-    truth->Draw("SAME");
-    detected->Draw("SAME");
+    correctedHist.Draw("SAME");
+    mcHist.Draw("SAME");
+    truthHist.Draw("SAME");
+    detectedHist.Draw("SAME");
     legendPtr->Draw();
-    canvasPtr->SaveAs(path.c_str());
+    canvasPtr->SaveAs(path);
 
     // If you want to visualise the actual efficiency
-    TH1D tmp = *detected;
-    tmp.SetTitle(("Efficiency" + path).c_str());
-    tmp.Divide(truth.get());
-    util::saveObjectToFile(&tmp, ("efficiency_" + path).c_str());
-}
-
-double simpleEfficiency(const dDecay_t& event)
-{
-    (void)event;
-    return 0.5;
+    TH1D* tmp = (TH1D*)detectedHist.Clone();
+    tmp->SetTitle((std::string("Efficiency") + path).c_str());
+    tmp->Divide(&truthHist);
+    util::saveObjectToFile(tmp, (std::string("efficiency_") + path).c_str());
 }
 
 /*
- * A nice efficiency that gets recovered well
+ * Take a collection of truth phase space points, detected phsp points and weights + make plots of truth parameters,
+ * detected parameters + weighted detected parameters
  */
-double niceEfficiency(const dDecay_t& event)
+static void makePlots(const std::vector<PhspPoint>& truth,
+                      const std::vector<PhspPoint>& mc,
+                      const std::vector<PhspPoint>& detected,
+                      const std::vector<double>     weights,
+                      const PhspBins&               binLimits,
+                      const std::string&            title)
 {
-    return invariantMass({event.kParams, event.pi1Params}) / 3;
-}
+    size_t dimensionality = truth[0].size();
+    assert(dimensionality == detected[0].size());
+    assert(weights.size() == detected.size());
 
-/*
- * A less-nice efficiency that doesn't get recovered as nicely
- */
-double awkwardEfficiency(const dDecay_t& event)
-{
-    std::vector<double> params = parametrisation(event);
-    double              e{1};
-    for (int i = 0; i < 3; ++i) {
-        e *= params[i] / 2;
-    }
-    return 5 * e;
-}
+    for (size_t i = 0; i < dimensionality; ++i) {
+        // Assign memory to histograms
+        std::unique_ptr<TH1D> truthHist = std::make_unique<TH1D>((title + "truth_" + std::to_string(i)).c_str(),
+                                                                 (title + "- truth " + std::to_string(i)).c_str(),
+                                                                 binLimits[i].size() - 1,
+                                                                 binLimits[i].data());
+        std::unique_ptr<TH1D> mcHist    = std::make_unique<TH1D>((title + "mc_" + std::to_string(i)).c_str(),
+                                                              (title + "- MC" + std::to_string(i)).c_str(),
+                                                              binLimits[i].size() - 1,
+                                                              binLimits[i].data());
 
-/*
- * An efficiency on the total pT of the k
- */
-double pTEfficiency(const dDecay_t& event)
-{
-    return std::sqrt(pT(event.kParams));
-}
-
-PhspBins findBins(void)
-{
-    std::cout << "Creating bins..." << std::flush;
-    std::array<size_t, 5>                    numBins    = {100, 100, 100, 100, 100};
-    std::array<std::pair<double, double>, 5> axisLimits = {std::make_pair(0.4, 1.6),
-                                                           std::make_pair(0.2, 1.4),
-                                                           std::make_pair(0.2, 1.4),
-                                                           std::make_pair(0.8, 1.8),
-                                                           std::make_pair(0.4, 1.8)};
-    PhspBins                                 Bins(5);
-    for (size_t i = 0; i < Bins.size(); ++i) {
-        Bins[i] = std::vector<double>(numBins[i] + 1);
-        for (size_t j = 0; j <= numBins[i]; ++j) {
-            Bins[i][j] = axisLimits[i].first + (axisLimits[i].second - axisLimits[i].first) * j / (numBins[i]);
+        std::unique_ptr<TH1D> detectedHist = std::make_unique<TH1D>((title + "detected_" + std::to_string(i)).c_str(),
+                                                                    (title + "- detected " + std::to_string(i)).c_str(),
+                                                                    binLimits[i].size() - 1,
+                                                                    binLimits[i].data());
+        std::unique_ptr<TH1D> correctedHist =
+            std::make_unique<TH1D>((title + "corrected_" + std::to_string(i)).c_str(),
+                                   (title + "- corrected " + std::to_string(i)).c_str(),
+                                   binLimits[i].size() - 1,
+                                   binLimits[i].data());
+        // Fill each histogram
+        for (const PhspPoint& event : truth) {
+            truthHist->Fill(event[i]);
         }
+        for (const PhspPoint& event : mc) {
+            mcHist->Fill(event[i]);
+        }
+        for (const PhspPoint& event : detected) {
+            detectedHist->Fill(event[i]);
+        }
+        for (size_t j = 0; j < detected.size(); ++j) {
+            if (std::isfinite(weights[j])) {
+                correctedHist->Fill(detected[j][i], weights[j]);
+            } else {
+                std::cerr << "Warning: stupid weight " << weights[j] << " at index " << j << std::endl;
+            }
+        }
+        plotHists(*truthHist, *mcHist, *detectedHist, *correctedHist, (title + std::to_string(i) + ".png").c_str());
+    }
+}
+
+/*
+ * Make an estimate to the efficiency using Chow Liu parametrisation of truth and mc, and reweight realData with these
+ * efficiencies.
+ *
+ * Then plot
+ */
+static void chowLiu(const PhspBins&               bins,
+                    const std::vector<PhspPoint>& truth,
+                    const std::vector<PhspPoint>& mc,
+                    const std::vector<PhspPoint>& realData)
+{
+    // Create the object used for making the efficiency parametrisation
+    std::cout << "\n====Chow Liu ====" << std::endl;
+    ChowLiuEfficiency EfficiencyCorrection(bins);
+
+    // Add the events of both type
+    std::cout << "Add truth events..." << std::flush;
+    for (auto event : truth) {
+        EfficiencyCorrection.addGeneratedEvent(event);
+    }
+    std::cout << "done" << std::endl;
+    std::cout << "add detected events..." << std::flush;
+    for (auto event : mc) {
+        EfficiencyCorrection.addMCEvent(event);
     }
     std::cout << "done" << std::endl;
 
-    return Bins;
+    // Perform efficiency parametrisation
+    std::cout << "Perform efficiency parametrisation..." << std::flush;
+    EfficiencyCorrection.efficiencyParametrisation();
+    std::cout << "done" << std::endl;
+
+    std::vector<double> chowLiuWeights(realData.size(), 0);
+    for (size_t i = 0; i < chowLiuWeights.size(); ++i) {
+        chowLiuWeights[i] = 1 / EfficiencyCorrection.value(realData[i]);
+    }
+    makePlots(truth, mc, realData, chowLiuWeights, bins, "chowLiu");
 }
 
+/*
+ * Use BDT to make estimate of efficiencies using truth and MC, then plot realData with weights
+ *
+ * Uses bins for plotting
+ */
+static void bdt(const PhspBins&               bins,
+                const std::vector<PhspPoint>& truth,
+                const std::vector<PhspPoint>& mc,
+                const std::vector<PhspPoint>& realData)
+{
+    // Take our data, train our BDT
+    std::cout << "\n====BDT====" << std::endl;
+    std::cout << "Training BDT..." << std::flush;
+    PyObject* bdt = initBDT(truth, mc);
+    std::cout << "done" << std::endl;
+
+    std::cout << "Finding weights..." << std::flush;
+    std::vector<double> weights = efficiency(bdt, realData, truth.size());
+    std::cout << "done" << std::endl;
+
+    makePlots(truth, mc, realData, weights, bins, "bdt");
+}
+
+/*
+ * Read in a load of D->K3Pi events from a ROOT file (probably generated with AmpGen); this will serve as our
+ * truth-level data
+ *
+ * Then prune these events to have "MC" and "real" datasets- these will follow the same distribution.
+ *
+ * Use MC/truth data to find an efficiency estimate, and plot truth-level and reweighted real data
+ */
 int main()
 {
     // Read in data from a ROOT file that I generated with AmpGen to get out mock "truth-level" data
@@ -212,41 +204,34 @@ int main()
     ReadRoot RootData(tFile.get(), ampgenTreeName, ampgenBranchNames, ampgenMomentumPostfixes);
     std::cout << "done" << std::endl;
 
-    // Run the rejection thing on the AmpGen data to get our mock "MC-level" data
-    std::cout << "Run rejection on the AmpGen data..." << std::flush;
+    // RNG that we need for applying efficiency to our data
+    std::random_device rd;
+    std::mt19937       generator(rd());
+
+    // Function that we'll use as our efficiency
+    const std::function<double(dDecay_t)> efficiencyFcn = awkwardEfficiency;
+
+    std::cout << "Generate \"MC\" data.." << std::flush;
+    std::vector<dDecay_t> trainingEvents = RootData.events;
+    applyEfficiency(&generator, efficiencyFcn, trainingEvents);
+    std::cout << "done" << std::endl;
+
+    // Generate more MC data
+    std::cout << "Generate \"real\" data..." << std::flush;
     std::vector<dDecay_t> detectedEvents = RootData.events;
-    std::random_device    rd;
-    std::mt19937          generator(rd());
-    applyEfficiency(&generator, pTEfficiency, detectedEvents);
+    applyEfficiency(&generator, efficiencyFcn, detectedEvents);
     std::cout << "done" << std::endl;
 
     PhspBins Bins = findBins();
 
-    // Create the object used for making the efficiency parametrisation
-    ChowLiuEfficiency EfficiencyCorrection(Bins);
+    // Find the phsp parametrisations of these datasets
+    std::vector<PhspPoint> truth    = parametrisePoints(RootData.events);
+    std::vector<PhspPoint> mc       = parametrisePoints(trainingEvents);
+    std::vector<PhspPoint> realData = parametrisePoints(detectedEvents);
 
-    // Add the events of both type
-    std::cout << "Add truth events..." << std::flush;
-    for (auto truthEvent : RootData.events) {
-        EfficiencyCorrection.addGeneratedEvent(parametrisation(truthEvent));
-    }
-    std::cout << "done" << std::endl;
-    std::cout << "add detected events..." << std::flush;
-    for (auto detectedEvent : detectedEvents) {
-        EfficiencyCorrection.addMCEvent(parametrisation(detectedEvent));
-    }
-    std::cout << "done" << std::endl;
-
-    // Perform efficiency parametrisation
-    std::cout << "Perform efficiency parametrisation..." << std::flush;
-    EfficiencyCorrection.efficiencyParametrisation();
-    std::cout << "done" << std::endl;
-
-    correctionPlot(0, Bins[0], RootData.events, detectedEvents, EfficiencyCorrection, "m12corr.png");
-    correctionPlot(1, Bins[1], RootData.events, detectedEvents, EfficiencyCorrection, "m23corr.png");
-    correctionPlot(2, Bins[2], RootData.events, detectedEvents, EfficiencyCorrection, "m34corr.png");
-    correctionPlot(3, Bins[3], RootData.events, detectedEvents, EfficiencyCorrection, "m123corr.png");
-    correctionPlot(4, Bins[4], RootData.events, detectedEvents, EfficiencyCorrection, "m234corr.png");
+    // Make plots of truth/detected/reweighted events using each of our methods
+    chowLiu(Bins, truth, mc, realData);
+    bdt(Bins, truth, mc, realData);
 
     return 0;
 }
