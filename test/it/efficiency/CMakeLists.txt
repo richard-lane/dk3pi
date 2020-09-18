@@ -1,7 +1,6 @@
 set(efficiencyIT
  ../driver.cpp
  flat_phase_space.cpp
- test_amplitudes.cpp
  test_chow_liu.cpp
  test_bdt.cpp)
 

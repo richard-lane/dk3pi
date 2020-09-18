@@ -9,7 +9,7 @@
 BOOST_AUTO_TEST_SUITE(test_chow_liu)
 
 /*
- * Create a 3d histogram with a probability of 0.1 to find an event in a given bin and see if we get something close
+ * Create a 3d histogram with a uniform probability to find an event in each bin and see if we get something close
  * back
  */
 BOOST_AUTO_TEST_CASE(test_chow_liu_probability)
@@ -33,8 +33,10 @@ BOOST_AUTO_TEST_CASE(test_chow_liu_probability)
 
 /*
  * Create 3d Gaussian, check the approximation gives us the right thing
+ *
+ * Note: a more robust test would check that this works with correlated Gaussians...
  */
-BOOST_AUTO_TEST_CASE(test_chow_liu_gaussians)
+BOOST_AUTO_TEST_CASE(test_chow_liu_uncorrelated_gaussians)
 {
     const size_t dimension{3};
     const size_t numBins{100};
@@ -88,8 +90,6 @@ BOOST_AUTO_TEST_CASE(test_chow_liu_gaussians)
             }
         }
     }
-    util::saveObjectToFile(&rootHist, "root.png");
-    util::saveObjectToFile(&approxHist, "approx.png");
 
     // Check that the probability that our histograms are the same is 1 (ish)
     // i.e. check that our histograms are the same
