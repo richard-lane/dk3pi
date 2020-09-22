@@ -34,31 +34,4 @@ std::pair<std::vector<double>, std::vector<double>> ratioAndError(const std::vec
                                                                   const std::vector<size_t> &numerator);
 } // namespace RatioCalculator
 
-/*
-class RatioCalculator
-{
-  public:
-    RatioCalculator(const std::vector<size_t> &denominator,
-                    const std::vector<size_t> &numerator,
-                    const std::vector<double> &binLimits);
-
-    void calculateRatios(void);
-
-    std::vector<double> ratio{};
-
-    std::vector<double> error{};
-
-    std::vector<double> binCentres{};
-    std::vector<double> binWidths{};
-
-  private:
-    std::vector<size_t> _denominator{};
-    std::vector<size_t> _numerator{};
-
-    std::vector<double> _binLimits{};
-
-    size_t _numBins{0};
-};
-*/
-
 #endif // RATIOCALCULATOR_H
