@@ -43,11 +43,11 @@ void plot_parameter_distribution(std::string         title,
  *
  * This should be two functions
  */
-void plotFit(std::array<double, 3>&  expectedFitParams,
-             const PhysicalFitter& MyFitter,
-             const double          maxTime,
-             const size_t          i,
-             const bool            drawTrueFit = true)
+void plotFit(std::array<double, 3>& expectedFitParams,
+             const PhysicalFitter&  MyFitter,
+             const double           maxTime,
+             const size_t           i,
+             const bool             drawTrueFit = true)
 {
     const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
     MyFitter.plot->SetTitle("Example Fit with Simulated Data;time/ps;DCS/CF ratio");
@@ -168,11 +168,11 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         std::vector<size_t> dcsCounts = util::binVector(MyDecays.WSDecayTimes, binLimits);
 
         // Find the ratio
-        RatioCalculator MyRatios(cfCounts, dcsCounts, binLimits);
-        MyRatios.calculateRatios();
+        std::pair<std::vector<double>, std::vector<double>> ratiosAndErrors =
+            RatioCalculator::ratioAndError(cfCounts, dcsCounts);
 
         IntegralOptions_t integralOptions(true, phaseSpaceParams.width, binLimits, 0.5 * efficiencyTimescale);
-        FitData_t         MyFitData(binLimits, MyRatios.ratio, MyRatios.error);
+        FitData_t         MyFitData(binLimits, ratiosAndErrors.first, ratiosAndErrors.second);
 
         // Fit data
         PhysicalFitter MyFitter(MyFitData, integralOptions, true);

@@ -115,11 +115,11 @@ void test_param_scan(void)
     // Divide using RatioCalculator
     std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, timeBinLimits);
     std::vector<size_t> dcsCounts = util::binVector(MyDecays.WSDecayTimes, timeBinLimits);
-    RatioCalculator     MyRatios  = RatioCalculator(cfCounts, dcsCounts, timeBinLimits);
-    MyRatios.calculateRatios();
+    std::pair<std::vector<double>, std::vector<double>> ratiosAndErrors =
+        RatioCalculator::ratioAndError(cfCounts, dcsCounts);
 
     // Create a fitter
-    FitData_t         MyFitData = FitData(timeBinLimits, MyRatios.ratio, MyRatios.error);
+    FitData_t         MyFitData = FitData(timeBinLimits, ratiosAndErrors.first, ratiosAndErrors.second);
     IntegralOptions_t integralOptions(true, phaseSpaceParams.width, timeBinLimits, efficiencyTimescale);
     PhysicalFitter    PhysicalFitter(MyFitData, integralOptions, true);
 
@@ -209,12 +209,12 @@ void test_z_scan()
     // Divide using RatioCalculator
     std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, timeBinLimits);
     std::vector<size_t> dcsCounts = util::binVector(MyDecays.WSDecayTimes, timeBinLimits);
-    RatioCalculator     MyRatios  = RatioCalculator(cfCounts, dcsCounts, timeBinLimits);
-    MyRatios.calculateRatios();
+    std::pair<std::vector<double>, std::vector<double>> ratiosAndErrors =
+        RatioCalculator::ratioAndError(cfCounts, dcsCounts);
 
     // Create fitters
     IntegralOptions_t integralOptions(true, phaseSpaceParams.width, timeBinLimits, 1 / phaseSpaceParams.width);
-    FitData_t         MyFitData            = FitData(timeBinLimits, MyRatios.ratio, MyRatios.error);
+    FitData_t         MyFitData            = FitData(timeBinLimits, ratiosAndErrors.first, ratiosAndErrors.second);
     PhysicalFitter    PhysFitter           = PhysicalFitter(MyFitData, integralOptions);
     PhysicalFitter    PhysFitterConstraint = PhysicalFitter(MyFitData, integralOptions, true);
 

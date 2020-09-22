@@ -67,19 +67,18 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
 
     std::cout << "Taking ratios" << std::endl;
     // Calculate the ratios between the datasets in each bin
-    std::vector<RatioCalculator> ratios{};
+    std::vector<std::pair<std::vector<double>, std::vector<double>>> ratiosAndErrors{};
     for (size_t bin = 0; bin < numBins; ++bin) {
         std::vector<size_t> cfCounts  = util::binVector(BinnedFavouredData[bin].decayTimes, timeBinLimits);
         std::vector<size_t> dcsCounts = util::binVector(BinnedMixedData[bin].decayTimes, timeBinLimits);
-        ratios.push_back(RatioCalculator(cfCounts, dcsCounts, timeBinLimits));
-        ratios[bin].calculateRatios();
+        ratiosAndErrors.push_back(RatioCalculator::ratioAndError(cfCounts, dcsCounts));
     }
 
     // Fit each ratio to a plot
     std::cout << "performing fits" << std::endl;
     std::vector<RootFitter> fitters{};
     for (size_t bin = 0; bin < numBins; ++bin) {
-        FitData_t thisBinFitData = FitData(timeBinLimits, ratios[bin].ratio, ratios[bin].error);
+        FitData_t thisBinFitData = FitData(timeBinLimits, ratiosAndErrors[bin].first, ratiosAndErrors[bin].second);
         fitters.push_back(RootFitter(thisBinFitData));
         fitters[bin].fit(0, 1); // Might need to change the max time here
         std::string title = "PhaseSpaceBin" + std::to_string(bin) + ".png";

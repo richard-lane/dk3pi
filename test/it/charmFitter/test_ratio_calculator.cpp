@@ -25,20 +25,19 @@ BOOST_AUTO_TEST_CASE(it_ratio_calculator)
                                        expectedRatios[4] * std::sqrt(2.0 / 5.0)};
 
     // Use the ratio calculator to bin times and calculate ratios
-    RatioCalculator MyRatioCalculator = RatioCalculator(denominator, numerator, binLimits);
-    MyRatioCalculator.calculateRatios();
+    auto ratioAndError = RatioCalculator::ratioAndError(denominator, numerator);
 
-    BOOST_CHECK_CLOSE(expectedRatios[0], MyRatioCalculator.ratio[0], 1e-10);
-    BOOST_CHECK_CLOSE(expectedRatios[1], MyRatioCalculator.ratio[1], 1e-10);
-    BOOST_CHECK_CLOSE(expectedRatios[2], MyRatioCalculator.ratio[2], 1e-10);
-    BOOST_CHECK_CLOSE(expectedRatios[3], MyRatioCalculator.ratio[3], 1e-10);
-    BOOST_CHECK_CLOSE(expectedRatios[4], MyRatioCalculator.ratio[4], 1e-10);
+    BOOST_CHECK_CLOSE(expectedRatios[0], ratioAndError.first[0], 1e-10);
+    BOOST_CHECK_CLOSE(expectedRatios[1], ratioAndError.first[1], 1e-10);
+    BOOST_CHECK_CLOSE(expectedRatios[2], ratioAndError.first[2], 1e-10);
+    BOOST_CHECK_CLOSE(expectedRatios[3], ratioAndError.first[3], 1e-10);
+    BOOST_CHECK_CLOSE(expectedRatios[4], ratioAndError.first[4], 1e-10);
 
-    BOOST_CHECK_CLOSE(expectedErrors[0], MyRatioCalculator.error[0], 1e-10);
-    BOOST_CHECK_CLOSE(expectedErrors[1], MyRatioCalculator.error[1], 1e-10);
-    BOOST_CHECK_CLOSE(expectedErrors[2], MyRatioCalculator.error[2], 1e-10);
-    BOOST_CHECK_CLOSE(expectedErrors[3], MyRatioCalculator.error[3], 1e-10);
-    BOOST_CHECK_CLOSE(expectedErrors[4], MyRatioCalculator.error[4], 1e-10);
+    BOOST_CHECK_CLOSE(expectedErrors[0], ratioAndError.second[0], 1e-10);
+    BOOST_CHECK_CLOSE(expectedErrors[1], ratioAndError.second[1], 1e-10);
+    BOOST_CHECK_CLOSE(expectedErrors[2], ratioAndError.second[2], 1e-10);
+    BOOST_CHECK_CLOSE(expectedErrors[3], ratioAndError.second[3], 1e-10);
+    BOOST_CHECK_CLOSE(expectedErrors[4], ratioAndError.second[4], 1e-10);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
