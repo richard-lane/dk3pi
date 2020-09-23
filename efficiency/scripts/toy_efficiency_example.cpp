@@ -98,7 +98,7 @@ static void makePlots(const std::vector<PhspPoint>& truth,
                                                                     binLimits[i].data());
         std::unique_ptr<TH1D> correctedHist =
             std::make_unique<TH1D>((title + "corrected_" + std::to_string(i)).c_str(),
-                                   (title + "- corrected " + std::to_string(i)).c_str(),
+                                   (title + " Reweighting Projection " + std::to_string(i) + ";Inv Mass /GeV; Count").c_str(),
                                    binLimits[i].size() - 1,
                                    binLimits[i].data());
         // Fill each histogram
@@ -181,7 +181,7 @@ static void bdt(const PhspBins&               bins,
     std::vector<double> weights = efficiency(bdt, realData, truth.size());
     std::cout << "done" << std::endl;
 
-    makePlots(truth, mc, realData, weights, bins, "bdt");
+    makePlots(truth, mc, realData, weights, bins, "BDT");
 }
 
 /*
