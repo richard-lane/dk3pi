@@ -1,0 +1,14 @@
+% For some reason pdflatex says it can't find this file, then i type "X" and it works
+% also you have to compile it twice to get the png
+\documentclass[preview, convert={density=300,size=1080x800,outext=.png}]{standalone}
+\usepackage{amsmath}
+
+\begin{document}
+\begin{equation*}
+    \frac{\Gamma(D^0(t) \rightarrow f)}{\Gamma (\overline{D}^0(t) \rightarrow f)}
+    \approx  r_{D,\Omega}^2
+    + r_{D,\Omega} \left( yRe(Z_\Omega^f) + xIm(Z_\Omega^f)\right)(\Gamma_Dt)
+    + \frac{y^2 + x^2}{4} (\Gamma_Dt)^2
+\end{equation*}
+\end{document}
+
