@@ -15,10 +15,10 @@
 #include "TH2D.h"
 #include "TRandom.h"
 
+#include "MinuitPolynomialFitter.h"
 #include "PhaseSpaceBinning.h"
 #include "RatioCalculator.h"
 #include "ReadAmpGen.h"
-#include "RootFitter.h"
 #include "fitterUtil.h"
 #include "util.h"
 
@@ -76,13 +76,17 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
 
     // Fit each ratio to a plot
     std::cout << "performing fits" << std::endl;
-    std::vector<RootFitter> fitters{};
+    std::vector<MinuitPolynomialFitter> fitters{};
+    IntegralOptions_t                   integralOptions(false, 0, timeBinLimits, 0);
+    const util::LegendParams_t          legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.7, .y2 = 0.9, .header = ""};
+
     for (size_t bin = 0; bin < numBins; ++bin) {
         FitData_t thisBinFitData = FitData(timeBinLimits, ratiosAndErrors[bin].first, ratiosAndErrors[bin].second);
-        fitters.push_back(RootFitter(thisBinFitData));
-        fitters[bin].fit(0, 1); // Might need to change the max time here
+        fitters.push_back(MinuitPolynomialFitter(thisBinFitData, integralOptions));
+        fitters[bin].setPolynomialParams({1, 1, 1}, {1, 1, 1});
+        fitters[bin].fit();
         std::string title = "PhaseSpaceBin" + std::to_string(bin) + ".png";
-        fitters[bin].saveFitPlot("Phase Space Bin " + std::to_string(bin), title);
+        fitters[bin].saveFitPlot("Phase Space Bin " + std::to_string(bin), title, &legendParams);
     }
 
     // Find the invariant mass of each mixed event and plot them on a scatter plot

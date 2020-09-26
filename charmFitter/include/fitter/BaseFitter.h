@@ -24,6 +24,11 @@ class BaseFitter
      */
     std::unique_ptr<TGraphErrors> plot = nullptr;
 
+    /*
+     * Perform a fit
+     */
+    virtual void fit() = 0;
+
   protected:
     /*
      * The data to be fit.

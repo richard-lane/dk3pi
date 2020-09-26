@@ -1,7 +1,6 @@
 set(fitter
   src/fitter/FitterUtils.cpp
   src/fitter/BaseFitter.cpp
-  src/fitter/RootFitter.cpp
   src/fitter/MinuitFitterBase.cpp
   src/fitter/MinuitScannerBase.cpp
   src/fitter/MinuitPolynomialFitter.cpp
