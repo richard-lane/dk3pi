@@ -6,9 +6,9 @@ import os
 import re
 
 
-def lfn_paths(stripping_versions, mag_types) -> list:
+def bk_paths(stripping_versions, mag_types) -> list:
     """
-    Find the CERN grid LFNs for D->K3Pi
+    Find the CERN grid bookkeeping paths for D->K3Pi
 
     Takes in an iterable of stripping versions and magnet polarities to use; returns a list of LFNs
 
@@ -85,13 +85,14 @@ def lfn_paths(stripping_versions, mag_types) -> list:
     return paths
 
 
-def dst_exists(dst_path: str) -> bool:
+def check_bkfile_exists(dst_path: str) -> None:
     """
     Check whether a file exists in the DIRAC bookkeeping
 
+    Raises something (slowly...) if the file doesn't exist
+
     """
-    print(BKQuery(type="Path", dqflag="OK", path=dst_path))
-    return False
+    BKQuery(type="Path", dqflag="OK", path=dst_path).getDataset()
 
 
 # Choose magnet polarities + stripping versions
@@ -110,9 +111,8 @@ strippings = [
 ]
 
 # Debug
-for lfn in lfn_paths(strippings, magtypes):
-    print(lfn)
-    dst_exists(lfn)
+check_bkfile_exists(bk_paths(strippings, magtypes)[0])
+check_bkfile_exists("fred")
 
 """
 A remnant from the Old Years
