@@ -93,9 +93,9 @@ def check_bkfile_exists(bookkeeping_path: str) -> None:
 
     """
     print(
-        "Checking if "
+        "Checking if\n\t"
         + bookkeeping_path
-        + " exists; might throw a weird error if it doesn't"
+        + "\nexists; might throw a weird error if it doesn't"
     )
     BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
 
