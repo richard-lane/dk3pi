@@ -1,3 +1,5 @@
+This dir is badly named, its also got stuff for retrieving real data in it
+
 Tools, files etc. for requesting LHCb Monte Carlo data from the CERN grid
 
 The idea is that you should just be able to clone this repo (maybe with a sparse checkout??) onto lxplus
