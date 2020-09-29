@@ -115,10 +115,6 @@ strippings = [
     "Stripping34",
 ]
 
-# Debug
-check_bkfile_exists(bk_paths(strippings, magtypes)[0])
-check_bkfile_exists("fred")
-
 bk_files = bk_paths(strippings, magtypes)
 
 for path in bk_files:
