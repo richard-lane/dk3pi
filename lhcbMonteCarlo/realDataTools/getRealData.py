@@ -85,19 +85,21 @@ def bk_paths(stripping_versions, mag_types) -> list:
     return paths
 
 
-def check_bkfile_exists(bookkeeping_path: str) -> None:
+def check_bkfiles_exist(bookkeeping_paths: list) -> None:
     """
-    Check whether a file exists in the DIRAC bookkeeping
+    Check whether an iterable of file paths all exist in the DIRAC bookkeeping
 
-    Raises something (slowly...) if the file doesn't exist
+    Raises something (slowly...) if a file doesn't exist
 
     """
     print(
-        "Checking if\n\t"
-        + bookkeeping_path
-        + "\nexists; might throw a weird error if it doesn't"
+        "Checking if"
+        + "\n\t".join(bookkeeping_paths)
+        + "\nexist; might throw a weird error if one doesn't"
     )
-    BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
+    for bookkeeping_path in bookkeeping_paths:
+        # Make a request that will fail if the path doesn't exist, and will succeed otherwise
+        BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
 
 
 # Choose magnet polarities + stripping versions
@@ -117,10 +119,10 @@ strippings = [
 
 bk_files = bk_paths(strippings, magtypes)
 
-for path in bk_files:
-    # Check the file exists
-    check_bkfile_exists(path)
+# Check the files exist
+check_bkfiles_exist(bk_files)
 
+for path in bk_files:
     # Get the data
     print("Get " + path)
 
