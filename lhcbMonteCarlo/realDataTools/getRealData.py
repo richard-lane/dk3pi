@@ -93,7 +93,7 @@ def check_bkfiles_exist(bookkeeping_paths: list) -> None:
 
     """
     print(
-        "Checking if"
+        "Checking if\n\t"
         + "\n\t".join(bookkeeping_paths)
         + "\nexist; might throw a weird error if one doesn't"
     )
