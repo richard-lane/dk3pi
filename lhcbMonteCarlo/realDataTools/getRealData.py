@@ -92,6 +92,7 @@ def check_bkfile_exists(dst_path: str) -> None:
     Raises something (slowly...) if the file doesn't exist
 
     """
+    print("Checking if " dst_path + " exists; might throw a weird error if it doesn't")
     BKQuery(type="Path", dqflag="OK", path=dst_path).getDataset()
 
 
