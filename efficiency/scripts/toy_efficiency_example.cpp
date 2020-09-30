@@ -82,6 +82,20 @@ static void makePlots(const std::vector<PhspPoint>& truth,
     assert(weights.size() == detected.size());
 
     for (size_t i = 0; i < dimensionality; ++i) {
+        // Translate an index into a parametrisation label
+        std::string paramLabel = "";
+        switch (i) {
+        case 0: paramLabel = "m(K pi_{1})"; break;
+        case 1: paramLabel = "m(pi_{1} pi_{2})"; break;
+        case 2: paramLabel = "m(pi_{2} pi_{3})"; break;
+        case 3: paramLabel = "m(K pi_{1} pi_{2})"; break;
+        case 4: paramLabel = "m(pi_{1} pi_{2} pi_{3})"; break;
+        default:
+            // We're in 5d
+            std::cerr << "Expected 5d phsp, got dimension index" << i << std::endl;
+            assert(false);
+        }
+
         // Assign memory to histograms
         std::unique_ptr<TH1D> truthHist = std::make_unique<TH1D>((title + "truth_" + std::to_string(i)).c_str(),
                                                                  (title + "- truth " + std::to_string(i)).c_str(),
@@ -96,11 +110,13 @@ static void makePlots(const std::vector<PhspPoint>& truth,
                                                                     (title + "- detected " + std::to_string(i)).c_str(),
                                                                     binLimits[i].size() - 1,
                                                                     binLimits[i].data());
-        std::unique_ptr<TH1D> correctedHist =
-            std::make_unique<TH1D>((title + "corrected_" + std::to_string(i)).c_str(),
-                                   (title + " Reweighting Projection " + std::to_string(i) + ";Inv Mass /GeV; Count").c_str(),
-                                   binLimits[i].size() - 1,
-                                   binLimits[i].data());
+
+        // It's this hist that determines that plot title
+        std::unique_ptr<TH1D> correctedHist = std::make_unique<TH1D>(
+            (title + "corrected_" + std::to_string(i)).c_str(),
+            (title + " Reweighting Projection " + paramLabel + ";Inv Mass " + paramLabel + "/GeV; Count").c_str(),
+            binLimits[i].size() - 1,
+            binLimits[i].data());
         // Fill each histogram
         for (const PhspPoint& event : truth) {
             truthHist->Fill(event[i]);
