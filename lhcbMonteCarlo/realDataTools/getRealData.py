@@ -1,18 +1,24 @@
 """
-Get the real data
+Script for getting real LHCb data
+
+Creates a list of DST paths to get, and then should probably do something to get them
+
+Run from within Ganga on lxplus
 
 """
 import os
 import re
 
 
-def bk_paths(stripping_versions, mag_types) -> list:
+def bk_paths(stripping_versions, mag_types, file_type) -> list:
     """
     Find the CERN grid bookkeeping paths for D->K3Pi
 
-    Takes in an iterable of stripping versions and magnet polarities to use; returns a list of LFNs
-
     Contains a lot of internal state about the allowed stripping versions, etc.
+
+        stripping_versions: iterable of stripping versions to use as strs
+        mag_types         : iterable of magnetisation directions to use as strs (i.e. "MagDown" and/or "MagUp")
+        file_type         : DST file name as str, e.g. "CHARMCOMPLETEEVENT.DST"
 
     """
     # All possible magnet polarities
@@ -54,6 +60,7 @@ def bk_paths(stripping_versions, mag_types) -> list:
     paths = []
 
     for stripping in stripping_versions:
+        print("Stripping version: " + stripping)
 
         # Find the year corresponding to this stripping version
         # Doesn't do anything in the case where a stripping version occurs over multiple years, but hopefully this hasn't happened
@@ -63,12 +70,9 @@ def bk_paths(stripping_versions, mag_types) -> list:
                 year = key
         assert year
 
-        print("Creating job(s) for stripping: " + stripping)
-
-        fileType = "CHARMCOMPLETEEVENT.DST"
         for magtype in magtypes:
             assert magtype in knownMagTypes
-            print("With magnet setting: " + magtype)
+            print("\tMagnet setting: " + magtype)
 
             paths.append(
                 "/LHCb/Collision%s/Beam%sGeV-VeloClosed-%s/Real Data/Reco%s/%s/90000000/%s"
@@ -78,7 +82,7 @@ def bk_paths(stripping_versions, mag_types) -> list:
                     magtype,
                     recoVersion[stripping],
                     stripping,
-                    fileType,
+                    file_type,
                 )
             )
 
@@ -102,29 +106,35 @@ def check_bkfiles_exist(bookkeeping_paths: list) -> None:
         BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
 
 
-# Choose magnet polarities + stripping versions
-# We're interested in both magnet polarities
-# We want all the stripping versions that contain charm data
-magtypes = ["MagDown", "MagUp"]
-strippings = [
-    "Stripping21r1",
-    "Stripping20r1",
-    "Stripping21",
-    "Stripping20",
-    "Stripping24",
-    "Stripping28",
-    "Stripping29",
-    "Stripping34",
-]
+def main():
+    # Choose magnet polarities + stripping versions
+    # We're interested in both magnet polarities
+    # We want all the stripping versions that contain charm data
+    magtypes = ["MagDown", "MagUp"]
+    strippings = [
+        "Stripping21r1",
+        "Stripping20r1",
+        "Stripping21",
+        "Stripping20",
+        "Stripping24",
+        "Stripping28",
+        "Stripping29",
+        "Stripping34",
+    ]
 
-bk_files = bk_paths(strippings, magtypes)
+    bk_files = bk_paths(strippings, magtypes, "CHARMCOMPLETEEVENT.DST")
 
-# Check the files exist
-check_bkfiles_exist(bk_files)
+    # Check the files exist
+    check_bkfiles_exist(bk_files)
 
-for path in bk_files:
-    # Get the data
-    print("Get " + path)
+    for path in bk_files:
+        # Get the data
+        print("Get " + path)
+
+
+if __name__ == "__main__":
+    main()
+
 
 """
 A remnant from the Old Years
