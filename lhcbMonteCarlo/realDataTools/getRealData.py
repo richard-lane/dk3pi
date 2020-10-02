@@ -63,8 +63,8 @@ def bk_paths(years, mag_types, dst_name) -> list:
         for magtype in mag_types:
             print("\tMagnet setting: " + magtype)
             paths.append(
-                f"/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-magtype/"
-                "Real Data/Reco{reco_version[stripping_version]}/{stripping_version}/90000000/{dst_name}"
+                f"/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-{magtype}/"
+                f"Real Data/Reco{reco_version[stripping_version]}/{stripping_version}/90000000/{dst_name}"
             )
 
     return paths
@@ -85,6 +85,7 @@ def check_bkfiles_exist(bookkeeping_paths: list) -> None:
     for bookkeeping_path in bookkeeping_paths:
         # Make a request that will fail if the path doesn't exist, and will succeed otherwise
         BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
+        print(bookkeeping_path + " exists")
 
 
 def setup_job(years, mag_types):
