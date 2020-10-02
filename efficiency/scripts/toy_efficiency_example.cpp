@@ -85,11 +85,11 @@ static void makePlots(const std::vector<PhspPoint>& truth,
         // Translate an index into a parametrisation label
         std::string paramLabel = "";
         switch (i) {
-        case 0: paramLabel = "m(K pi_{1})"; break;
-        case 1: paramLabel = "m(pi_{1} pi_{2})"; break;
-        case 2: paramLabel = "m(pi_{2} pi_{3})"; break;
-        case 3: paramLabel = "m(K pi_{1} pi_{2})"; break;
-        case 4: paramLabel = "m(pi_{1} pi_{2} pi_{3})"; break;
+        case 0: paramLabel = "m(K- pi+)"; break;
+        case 1: paramLabel = "m(pi+ pi+)"; break;
+        case 2: paramLabel = "m(pi+ pi-)"; break;
+        case 3: paramLabel = "m(K- pi+ pi-)"; break;
+        case 4: paramLabel = "m(pi+ pi+ pi-)"; break;
         default:
             // We're in 5d
             std::cerr << "Expected 5d phsp, got dimension index" << i << std::endl;
