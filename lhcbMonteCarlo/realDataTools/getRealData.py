@@ -115,7 +115,7 @@ def check_bkfiles_exist(bookkeeping_paths: list) -> None:
 
 def main():
     # We're interested in both magnet polarities
-    magtypes = ["MagDown", "MagUp"]
+    magtypes = ("MagDown", "MagUp")
 
     # We want data from all years
     years = ("2011", "2012", "2015", "2016", "2017", "2018")
