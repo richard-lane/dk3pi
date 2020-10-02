@@ -21,16 +21,6 @@ def bk_paths(years, mag_types, dst_name) -> list:
         dst_name : DST file name as str, e.g. "CHARMCOMPLETEEVENT.DST"
 
     """
-    # One stripping line per year that contains the data I want
-    stripping_lines = {
-        "2011": "StrippingDstarPromptWithD02HHHHLine",
-        "2012": "StrippingDstarPromptWithD02HHHHLine",
-        "2015": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
-        "2016": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
-        "2017": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
-        "2018": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
-    }
-
     # Stripping versions that contain the stripping lines I want
     # I found these by going on the LHCb stripping project site
     stripping_versions = {
@@ -97,21 +87,73 @@ def check_bkfiles_exist(bookkeeping_paths: list) -> None:
         BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
 
 
-def main():
-    # We're interested in both magnet polarities
-    magtypes = ("MagDown", "MagUp")
+def setup_job(years, mag_types):
+    """
+    Set up a DaVinci job to get the data from the grid
 
+    Does not submit the job, but sets everything up so that it is ready for submission
+
+        years    : an iterable of data-taking years to consider, as strs
+        mag_types: an iterable of magnetisations, as strs. i.e. "MagUp" and/or "MagDown"
+
+    """
+    # If the directory where we will be storing my local copy of DaVinci already exists, raise
+    if os.path.exists("./DaVinciDev_v45r1/"):
+        raise Exception("rm the davnci dir before submitting job")
+
+    # Init DaVinci
+    j = Job(name="DK3Pi Prompt Real Data")
+    myApp = prepareGaudiExec("DaVinci", "v45r1", myPath=".")
+
+    # Find LHCb bookkeeping paths to the data we want
+    bk_files = bk_paths(years, mag_types, "CHARMCOMPLETEEVENT.DST")
+
+    # Check these files all exist
+    check_bkfiles_exist(bk_files)
+
+    # One stripping line per year that contains the data I want
+    # From the LHCb stripping project site
+    stripping_lines = {
+        "2011": "StrippingDstarPromptWithD02HHHHLine",
+        "2012": "StrippingDstarPromptWithD02HHHHLine",
+        "2015": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
+        "2016": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
+        "2017": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
+        "2018": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
+    }
+
+    # Initialise an nTuple
+    assert False
+
+    # Add some tuple tools
+
+    # Add branches for each particle that we're interested in
+
+    # Add the proper decay time of the D0
+
+    # Configure DaVinci itself
+
+    # Ask for luminosity information
+
+    # Return the job
+
+
+def submit_job():
+    """
+    Submit a job to the grid
+
+    """
+    pass
+
+
+def main():
     # We want data from all years
     years = ("2011", "2012", "2015", "2016", "2017", "2018")
 
-    bk_files = bk_paths(years, magtypes, "CHARMCOMPLETEEVENT.DST")
+    # We're interested in both magnet polarities
+    mag_types = ("MagDown", "MagUp")
 
-    # Check the files exist
-    check_bkfiles_exist(bk_files)
-
-    for path in bk_files:
-        # Get the data
-        print("Get " + path)
+    job = setup_job(years, mag_types)
 
 
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
