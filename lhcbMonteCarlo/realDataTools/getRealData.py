@@ -69,28 +69,12 @@ def bk_paths(years, mag_types, dst_name) -> list:
     for year in years:
         print("Year: " + year)
 
-        # Find the year corresponding to this stripping version
-        # Doesn't do anything in the case where a stripping version occurs over multiple years, but hopefully this hasn't happened
-        # year = None
-        # for key in knownStrippingVersions:
-        #    if stripping in knownStrippingVersions[key]:
-        #        year = key
-        # assert year
-
         stripping_version = stripping_versions[year]
         for magtype in mag_types:
             print("\tMagnet setting: " + magtype)
-
             paths.append(
-                "/LHCb/Collision%s/Beam%sGeV-VeloClosed-%s/Real Data/Reco%s/%s/90000000/%s"
-                % (
-                    year[2:],
-                    beam_energies[year],
-                    magtype,
-                    reco_version[stripping_version],
-                    stripping_version,
-                    dst_name,
-                )
+                f"/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-magtype/"
+                "Real Data/Reco{reco_version[stripping_version]}/{stripping_version}/90000000/{dst_name}"
             )
 
     return paths
