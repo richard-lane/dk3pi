@@ -70,7 +70,7 @@ def bk_paths(stripping_versions, mag_types, file_type) -> list:
                 year = key
         assert year
 
-        for magtype in magtypes:
+        for magtype in mag_types:
             assert magtype in knownMagTypes
             print("\tMagnet setting: " + magtype)
 
@@ -131,9 +131,8 @@ def main():
         # Get the data
         print("Get " + path)
 
-
-if __name__ == "__main__":
-    main()
+# Unfortunately we can't wrap this in if name==main since we need to run it via ganga
+main()
 
 
 """
