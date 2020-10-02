@@ -52,11 +52,17 @@ static void plotHists(TH1D& truthHist, TH1D& mcHist, TH1D& detectedHist, TH1D& c
     legendPtr->AddEntry(&truthHist, "Truth", "l");
     legendPtr->AddEntry(&detectedHist, "Detected", "l");
 
+    // Scale
+    double max =
+        truthHist.GetMaximum() > detectedHist.GetMaximum() ? truthHist.GetMaximum() : detectedHist.GetMaximum();
+    correctedHist.SetMaximum(1.1 * max);
+
     correctedHist.Draw("SAME");
     mcHist.Draw("SAME");
     truthHist.Draw("SAME");
     detectedHist.Draw("SAME");
     legendPtr->Draw();
+
     canvasPtr->SaveAs(path);
 
     // If you want to visualise the actual efficiency
@@ -97,35 +103,42 @@ static void makePlots(const std::vector<PhspPoint>& truth,
         }
 
         // Assign memory to histograms
-        std::unique_ptr<TH1D> truthHist = std::make_unique<TH1D>((title + "truth_" + std::to_string(i)).c_str(),
-                                                                 (title + "- truth " + std::to_string(i)).c_str(),
-                                                                 binLimits[i].size() - 1,
-                                                                 binLimits[i].data());
-        std::unique_ptr<TH1D> mcHist    = std::make_unique<TH1D>((title + "mc_" + std::to_string(i)).c_str(),
-                                                              (title + "- MC" + std::to_string(i)).c_str(),
-                                                              binLimits[i].size() - 1,
-                                                              binLimits[i].data());
-
-        std::unique_ptr<TH1D> detectedHist = std::make_unique<TH1D>((title + "detected_" + std::to_string(i)).c_str(),
-                                                                    (title + "- detected " + std::to_string(i)).c_str(),
-                                                                    binLimits[i].size() - 1,
-                                                                    binLimits[i].data());
+        std::unique_ptr<TH1D> truthHist = std::make_unique<TH1D>(
+            (title + "truth_" + std::to_string(i)).c_str(),
+            (title + " Reweighting Projection " + paramLabel + ";Inv Mass " + paramLabel + "/GeV; Count").c_str(),
+            binLimits[i].size() - 1,
+            binLimits[i].data());
 
         // It's this hist that determines that plot title
+        std::unique_ptr<TH1D> mcHist = std::make_unique<TH1D>(
+            (title + "mc_" + std::to_string(i)).c_str(),
+            (title + " Reweighting Projection " + paramLabel + ";Inv Mass " + paramLabel + "/GeV; Count").c_str(),
+            binLimits[i].size() - 1,
+            binLimits[i].data());
+
+        std::unique_ptr<TH1D> detectedHist = std::make_unique<TH1D>(
+            (title + "detected_" + std::to_string(i)).c_str(),
+            (title + " Reweighting Projection " + paramLabel + ";Inv Mass " + paramLabel + "/GeV; Count").c_str(),
+            binLimits[i].size() - 1,
+            binLimits[i].data());
+
         std::unique_ptr<TH1D> correctedHist = std::make_unique<TH1D>(
             (title + "corrected_" + std::to_string(i)).c_str(),
             (title + " Reweighting Projection " + paramLabel + ";Inv Mass " + paramLabel + "/GeV; Count").c_str(),
             binLimits[i].size() - 1,
             binLimits[i].data());
+
         // Fill each histogram
+        // We want to normalise the hists to the same area to compare shapes
+        const double weight = static_cast<double>(truth.size()) / detected.size();
         for (const PhspPoint& event : truth) {
             truthHist->Fill(event[i]);
         }
         for (const PhspPoint& event : mc) {
-            mcHist->Fill(event[i]);
+            mcHist->Fill(event[i], weight);
         }
         for (const PhspPoint& event : detected) {
-            detectedHist->Fill(event[i]);
+            detectedHist->Fill(event[i], weight);
         }
         for (size_t j = 0; j < detected.size(); ++j) {
             if (std::isfinite(weights[j])) {
