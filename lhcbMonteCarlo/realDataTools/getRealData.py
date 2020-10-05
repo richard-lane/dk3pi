@@ -100,6 +100,9 @@ def submit_job(dst_paths: list, stripping_lines) -> None:
         stripping_line: iterable of str reprs of the LHCb stripping line to use for this dataset
 
     """
+    # Check that the DSTs we're looking for all exist
+    check_bkfiles_exist(dst_paths)
+
     # If the directory where we will be storing my local copy of DaVinci already exists, raise
     if os.path.exists("./DaVinciDev_v45r1/"):
         raise Exception("rm the davnci dir before submitting job")
@@ -149,10 +152,10 @@ def main():
     }
 
     for key in bookkeeping_paths:
-        check_bkfiles_exist(bookkeeping_paths[key])
-
         # Create a job for one bk path to test
-        submit_job(bookkeeping_paths[0:1], stripping_lines[2011])
+        year = "2011"
+        print(bookkeeping_paths[year])
+        submit_job(bookkeeping_paths[year][0:1], stripping_lines[year])
 
 
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
