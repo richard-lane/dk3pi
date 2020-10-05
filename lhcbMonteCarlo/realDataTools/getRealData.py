@@ -10,7 +10,7 @@ import os
 import re
 
 
-def bk_paths(years, mag_types, dst_name) -> list:
+def bk_paths(years, mag_types, dst_name) -> dict:
     """
     Find the CERN grid bookkeeping paths for D->K3Pi
 
@@ -19,6 +19,8 @@ def bk_paths(years, mag_types, dst_name) -> list:
         years    : iterable of data-taking years to consider, as strs
         mag_types: iterable of magnetisation directions to use as strs (i.e. "MagDown" and/or "MagUp")
         dst_name : DST file name as str, e.g. "CHARMCOMPLETEEVENT.DST"
+
+    Returns a dict of {year: [DST paths]}
 
     """
     # Stripping versions that contain the stripping lines I want
@@ -55,14 +57,15 @@ def bk_paths(years, mag_types, dst_name) -> list:
         "Stripping34": "18",
     }
 
-    paths = []
+    paths = dict()
     for year in years:
+        paths[year] = []
         print("Year: " + year)
 
         stripping_version = stripping_versions[year]
         for magtype in mag_types:
             print("\tMagnet setting: " + magtype)
-            paths.append(
+            paths[year].append(
                 f"/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-{magtype}/"
                 f"Real Data/Reco{reco_version[stripping_version]}/{stripping_version}/90000000/{dst_name}"
             )
@@ -88,14 +91,14 @@ def check_bkfiles_exist(bookkeeping_paths: list) -> None:
         print(bookkeeping_path + " exists")
 
 
-def setup_job(years, mag_types):
+def setup_job(dst_path, stripping_line):
     """
-    Set up a DaVinci job to get the data from the grid
+    Set up a DaVinci job to get the data from a DST
 
     Does not submit the job, but sets everything up so that it is ready for submission
 
-        years    : an iterable of data-taking years to consider, as strs
-        mag_types: an iterable of magnetisations, as strs. i.e. "MagUp" and/or "MagDown"
+        dst_path      : the location of the DST in the LHCb bookkeeping
+        stripping_line: str repr of the LHCb stripping line to use for this dataset
 
     """
     # If the directory where we will be storing my local copy of DaVinci already exists, raise
@@ -103,25 +106,9 @@ def setup_job(years, mag_types):
         raise Exception("rm the davnci dir before submitting job")
 
     # Init DaVinci
-    j = Job(name="DK3Pi Prompt Real Data")
+    # Might need to avoid doing this twice
+    j = Job(name=f"DK3Pi Prompt Real Data: {dst_path}")
     myApp = prepareGaudiExec("DaVinci", "v45r1", myPath=".")
-
-    # Find LHCb bookkeeping paths to the data we want
-    bk_files = bk_paths(years, mag_types, "CHARMCOMPLETEEVENT.DST")
-
-    # Check these files all exist
-    check_bkfiles_exist(bk_files)
-
-    # One stripping line per year that contains the data I want
-    # From the LHCb stripping project site
-    stripping_lines = {
-        "2011": "StrippingDstarPromptWithD02HHHHLine",
-        "2012": "StrippingDstarPromptWithD02HHHHLine",
-        "2015": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
-        "2016": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
-        "2017": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
-        "2018": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
-    }
 
     # Initialise an nTuple
     assert False
@@ -150,11 +137,24 @@ def submit_job():
 def main():
     # We want data from all years
     years = ("2011", "2012", "2015", "2016", "2017", "2018")
+    bookkeeping_paths = bk_paths(years, ("MagDown", "MagUp"), "CHARMCOMPLETEEVENT.DST")
 
-    # We're interested in both magnet polarities
-    mag_types = ("MagDown", "MagUp")
+    # One stripping line per year that contains the data I want
+    # From the LHCb stripping project site
+    stripping_lines = {
+        "2011": "StrippingDstarPromptWithD02HHHHLine",
+        "2012": "StrippingDstarPromptWithD02HHHHLine",
+        "2015": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
+        "2016": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
+        "2017": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
+        "2018": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
+    }
 
-    job = setup_job(years, mag_types)
+    for key in bookkeeping_paths:
+        check_bkfiles_exist(bookkeeping_paths[key])
+
+        # Create job
+        pass
 
 
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
