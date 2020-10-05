@@ -156,9 +156,6 @@ def main():
 
         # Create a job for one bk path to test
         submit_job(bookkeeping_paths[0:1], stripping_lines[2011])
-        for path in bookkeeping_paths[key]:
-            job = setup_job(path, stripping_lines[key])
-            submit_job(job)
 
 
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
