@@ -9,6 +9,8 @@ Run from within Ganga on lxplus
 import os
 import re
 
+from Configurables import DecayTreeTuple
+
 
 def bk_paths(years, mag_types, dst_name) -> dict:
     """
@@ -21,6 +23,8 @@ def bk_paths(years, mag_types, dst_name) -> dict:
         dst_name : DST file name as str, e.g. "CHARMCOMPLETEEVENT.DST"
 
     Returns a dict of {year: [DST paths]}
+    Years are strs
+    DST paths are strs beginning LFN:/
 
     """
     # Stripping versions that contain the stripping lines I want
@@ -66,7 +70,7 @@ def bk_paths(years, mag_types, dst_name) -> dict:
         for magtype in mag_types:
             print("\tMagnet setting: " + magtype)
             paths[year].append(
-                f"/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-{magtype}/"
+                f"LFN:/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-{magtype}/"
                 f"Real Data/Reco{reco_version[stripping_version]}/{stripping_version}/90000000/{dst_name}"
             )
 
@@ -91,14 +95,12 @@ def check_bkfiles_exist(bookkeeping_paths: list) -> None:
         print(bookkeeping_path + " exists")
 
 
-def setup_job(dst_path, stripping_line):
+def submit_job(dst_paths: list, stripping_lines) -> None:
     """
-    Set up a DaVinci job to get the data from a DST
+    Submit a job to the grid; config defined in ./nTupleOptions.py
 
-    Does not submit the job, but sets everything up so that it is ready for submission
-
-        dst_path      : the location of the DST in the LHCb bookkeeping
-        stripping_line: str repr of the LHCb stripping line to use for this dataset
+        dst_path      : list of DST locations in the LHCb bookkeeping
+        stripping_line: iterable of str reprs of the LHCb stripping line to use for this dataset
 
     """
     # If the directory where we will be storing my local copy of DaVinci already exists, raise
@@ -106,32 +108,31 @@ def setup_job(dst_path, stripping_line):
         raise Exception("rm the davnci dir before submitting job")
 
     # Init DaVinci
-    # Might need to avoid doing this twice
-    j = Job(name=f"DK3Pi Prompt Real Data: {dst_path}")
     myApp = prepareGaudiExec("DaVinci", "v45r1", myPath=".")
 
-    # Initialise an nTuple
-    assert False
+    # Init job + tell Ganga where my config file is
+    j = Job(name="Prompt DK3Pi Data")
+    j.application = myApp
+    j.application.options = ["nTupleOptions.py"]
+    j.application.platform = "x86_64-centos7-gcc8-opt"
 
-    # Add some tuple tools
+    # Tell Ganga what data to use
+    assert (
+        False
+    ), "idk how to tell DaVinci about all our files/stripping lines in the right way"
+    j.inputdata = dst_paths
 
-    # Add branches for each particle that we're interested in
+    # Job uses Dirac backend i guess (?)
+    j.backend = Dirac()
 
-    # Add the proper decay time of the D0
+    # Tell the job to split itself up a bit
+    j.splitter = SplitByFiles(filesPerJob=50)
 
-    # Configure DaVinci itself
+    # Configure where to send the output
+    j.outputfiles = [DiracFile("*.root")]
 
-    # Ask for luminosity information
-
-    # Return the job
-
-
-def submit_job():
-    """
-    Submit a job to the grid
-
-    """
-    pass
+    # Submit job
+    j.submit()
 
 
 def main():
@@ -153,8 +154,11 @@ def main():
     for key in bookkeeping_paths:
         check_bkfiles_exist(bookkeeping_paths[key])
 
-        # Create job
-        pass
+        # Create a job for one bk path to test
+        submit_job(bookkeeping_paths[0:1], stripping_lines[2011])
+        for path in bookkeeping_paths[key]:
+            job = setup_job(path, stripping_lines[key])
+            submit_job(job)
 
 
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
