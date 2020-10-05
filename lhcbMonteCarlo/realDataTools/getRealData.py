@@ -9,8 +9,6 @@ Run from within Ganga on lxplus
 import os
 import re
 
-from Configurables import DecayTreeTuple
-
 
 def bk_paths(years, mag_types, dst_name) -> dict:
     """
@@ -24,7 +22,6 @@ def bk_paths(years, mag_types, dst_name) -> dict:
 
     Returns a dict of {year: [DST paths]}
     Years are strs
-    DST paths are strs beginning LFN:/
 
     """
     # Stripping versions that contain the stripping lines I want
@@ -70,7 +67,7 @@ def bk_paths(years, mag_types, dst_name) -> dict:
         for magtype in mag_types:
             print("\tMagnet setting: " + magtype)
             paths[year].append(
-                f"LFN:/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-{magtype}/"
+                f"/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-{magtype}/"
                 f"Real Data/Reco{reco_version[stripping_version]}/{stripping_version}/90000000/{dst_name}"
             )
 
@@ -161,60 +158,3 @@ def main():
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
 main()
 
-
-"""
-A remnant from the Old Years
-        bkpath = (
-            "/LHCb/Collision%s/Beam%sGeV-VeloClosed-%s/Real Data/Reco%s/%s/90000000/%s"
-            % (
-                datatype[2:],
-                beamEnergy[datatype],
-                magtype,
-                recoVersion[stripping],
-                stripping,
-                fileType,
-            )
-        )
-        print("Using BK path: " + bkpath)
-        bkq = BKQuery(type="Path", dqflag="OK", path=bkpath)
-        ds = bkq.getDataset()
-
-        # Find running period
-        whichData = None
-        for k, v in knownStrippingVersions.iteritems():
-            if stripping in v:
-                whichData = k
-                break
-        if not whichData:
-            raise Exception("Unknown running period")
-
-        params = {}
-        params["stripping"] = stripping
-        params["magtype"] = magtype
-        params["whichData"] = whichData
-
-        b = BenderModule(
-            version=benderVersion, directory=userReleaseArea, module=moduleFile
-        )
-        b.params = params
-
-        j = Job()
-        j.name = "Collision" + datatype[2:] + "_" + magtype + "_" + stripping
-        j.application = b
-        j.backend = Dirac()
-        j.inputdata = ds
-        # j.backend.settings['BannedSites'] = ['LCG.IN2P3.fr']
-
-        # NB remember to change the tuple name in the Bender script to match this!
-        tupleFile = (
-            "Bd2hhpi0-Collision"
-            + datatype[2:]
-            + "-"
-            + magtype
-            + "-"
-            + stripping
-            + ".root"
-        )
-        j.outputfiles = [DiracFile(tupleFile), LocalFile("summary.xml")]
-        j.splitter = SplitByFiles(filesPerJob=50)
-"""
