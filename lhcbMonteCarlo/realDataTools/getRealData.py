@@ -61,11 +61,8 @@ def bk_paths(years, mag_types, dst_name) -> dict:
     paths = dict()
     for year in years:
         paths[year] = []
-        print("Year: " + year)
-
         stripping_version = stripping_versions[year]
         for magtype in mag_types:
-            print("\tMagnet setting: " + magtype)
             paths[year].append(
                 f"/LHCb/Collision{year[2:]}/Beam{beam_energies[year]}GeV-VeloClosed-{magtype}/"
                 f"Real Data/Reco{reco_version[stripping_version]}/{stripping_version}/90000000/{dst_name}"
