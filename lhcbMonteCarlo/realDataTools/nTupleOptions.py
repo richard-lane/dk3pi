@@ -1,6 +1,14 @@
+import sys
+
 from Configurables import DecayTreeTuple
 from DecayTreeTuple.Configuration import *
 from Configurables import DaVinci
+
+# Arg parsing
+# Arguments are passed through from ganga to this conf file via sys.argv, i think
+# Should be a list of [bk path, stripping line, root file path]
+print(sys.argv)
+assert False
 
 # Initialise an nTuple for all of our data
 dtt = DecayTreeTuple("TupleDstToD0pi_D0ToKpipipi")

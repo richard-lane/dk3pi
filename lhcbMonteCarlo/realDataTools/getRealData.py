@@ -74,22 +74,16 @@ def bk_paths(years, mag_types, dst_name) -> dict:
     return paths
 
 
-def check_bkfiles_exist(bookkeeping_paths: list) -> None:
+def check_bkfile_exists(bookkeeping_path: str) -> None:
     """
-    Check whether an iterable of file paths all exist in the DIRAC bookkeeping
+    Check whether a file path exists in the DIRAC bookkeeping
 
     Raises something (slowly...) if a file doesn't exist
 
     """
-    print(
-        "Checking if\n\t"
-        + "\n\t".join(bookkeeping_paths)
-        + "\nexist; might throw a weird error if one doesn't"
-    )
-    for bookkeeping_path in bookkeeping_paths:
-        # Make a request that will fail if the path doesn't exist, and will succeed otherwise
-        BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
-        print(bookkeeping_path + " exists")
+    # Make a request that will fail if the path doesn't exist, and will succeed otherwise
+    BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
+    print(bookkeeping_path + " exists")
 
 
 def create_davinci_application(path: str, version: str):
@@ -105,36 +99,35 @@ def create_davinci_application(path: str, version: str):
     return prepareGaudiExec("DaVinci", version, myPath=path)
 
 
-def submit_job(dst_paths: list, stripping_lines) -> None:
+def submit_job(
+    bk_path: str, stripping_line: str, n_tuple_path: str, app, files_per_job=5
+) -> None:
     """
-    Submit a job to the grid; config defined in ./nTupleOptions.py
+    Submit a job to the grid, config defined in ./nTupleOptions.py
 
-        dst_path      : list of DST locations in the LHCb bookkeeping
-        stripping_line: iterable of str reprs of the LHCb stripping line to use for this dataset
+    The stripping line, bookkeeping path and nTuple path are passed across to this script
+
+    Must provide an instantiated davinci application or something via app
 
     """
-    # Check that the DSTs we're looking for all exist
-    check_bkfiles_exist(dst_paths)
+    check_bkfile_exists(bk_path)
 
     # Init job + tell Ganga where my config file is
     j = Job(name="Prompt DK3Pi Data")
-    j.application = create_davinci_application(".", "v45r1")
+    j.application = app
     j.application.options = ["nTupleOptions.py"]
     j.application.platform = "x86_64-centos7-gcc8-opt"
 
     # Tell Ganga what data to use
-    assert (
-        False
-    ), "idk how to tell DaVinci about all our files/stripping lines in the right way"
-    j.inputdata = dst_paths
+    j.application.args = [bk_path, stripping_line, n_tuple_path]
 
     # Job uses Dirac backend i guess (?)
     j.backend = Dirac()
 
     # Tell the job to split itself up a bit
-    j.splitter = SplitByFiles(filesPerJob=50)
+    j.splitter = SplitByFiles(filesPerJob=files_per_job)
 
-    # Configure where to send the output
+    # Configure which files to spit out, i think?
     j.outputfiles = [DiracFile("*.root")]
 
     # Submit job
@@ -157,11 +150,19 @@ def main():
         "2018": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
     }
 
+    # Init DaVinci
+    daVinci_app = create_davinci_application(".", "v45r1")
+
     for key in bookkeeping_paths:
         # Create a job for one bk path to test
         year = "2011"
-        print(bookkeeping_paths[year])
-        submit_job(bookkeeping_paths[year][0:1], stripping_lines[year])
+        submit_job(
+            bookkeeping_paths[year][0],
+            stripping_lines[year],
+            "test.root",
+            daVinci_app,
+            1,
+        )
 
 
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
