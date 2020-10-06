@@ -92,6 +92,19 @@ def check_bkfiles_exist(bookkeeping_paths: list) -> None:
         print(bookkeeping_path + " exists")
 
 
+def create_davinci_application(path: str, version: str):
+    """
+    Create a local copy of the Davinic application
+
+    returns whatever prepareGaudiExec() returns, idk i can't find any documentation on it ???
+
+    """
+    if os.path.exists(os.path.join(path, "DaVinciDev_v45r1/")):
+        raise Exception("rm the davnci dir before submitting job")
+
+    return prepareGaudiExec("DaVinci", version, myPath=path)
+
+
 def submit_job(dst_paths: list, stripping_lines) -> None:
     """
     Submit a job to the grid; config defined in ./nTupleOptions.py
@@ -103,16 +116,9 @@ def submit_job(dst_paths: list, stripping_lines) -> None:
     # Check that the DSTs we're looking for all exist
     check_bkfiles_exist(dst_paths)
 
-    # If the directory where we will be storing my local copy of DaVinci already exists, raise
-    if os.path.exists("./DaVinciDev_v45r1/"):
-        raise Exception("rm the davnci dir before submitting job")
-
-    # Init DaVinci
-    myApp = prepareGaudiExec("DaVinci", "v45r1", myPath=".")
-
     # Init job + tell Ganga where my config file is
     j = Job(name="Prompt DK3Pi Data")
-    j.application = myApp
+    j.application = create_davinci_application(".", "v45r1")
     j.application.options = ["nTupleOptions.py"]
     j.application.platform = "x86_64-centos7-gcc8-opt"
 
@@ -160,4 +166,3 @@ def main():
 
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
 main()
-
