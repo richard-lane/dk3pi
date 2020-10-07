@@ -71,18 +71,6 @@ def bk_paths(years, mag_types, dst_name) -> dict:
     return paths
 
 
-def check_bkfile_exists(bookkeeping_path: str) -> None:
-    """
-    Check whether a file path exists in the DIRAC bookkeeping
-
-    Raises something (slowly...) if a file doesn't exist
-
-    """
-    # Make a request that will fail if the path doesn't exist, and will succeed otherwise
-    BKQuery(type="Path", dqflag="OK", path=bookkeeping_path).getDataset()
-    print(bookkeeping_path + " exists")
-
-
 def create_davinci_application(path: str, version: str):
     """
     Create a local copy of the Davinic application
@@ -96,6 +84,64 @@ def create_davinci_application(path: str, version: str):
     return prepareGaudiExec("DaVinci", version, myPath=path)
 
 
+def davinci_config(n_tuple_path: str, stripping_line: str) -> str:
+    """
+    Return a str containing complete DaVinci config
+
+    This is a kind of stupid way of doing things but it lets us manage DaVinci without having a separate script
+
+    """
+    return "print('Loading DaVinci config')"
+    "from Configurables import DecayTreeTuple\n"
+    "from DecayTreeTuple.Configuration import *\n"
+    "from Configurables import DaVinci\n"
+    "\n"
+    "\n"
+    "# Initialise an nTuple for all of our data\n"
+    "dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')\n"
+    f"dtt.Inputs = ['/Event/AllStreams/Phys/{stripping_line}/Particles']\n"
+    "dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K- ^pi+ ^pi+ ^pi-) ^pi+]CC'\n"
+    "\n"
+    "# Add some tuple tools\n"
+    "#tuple_tools = {\n"
+    "#    'TupleToolTISTOS',\n"
+    "#    'TupleToolL0Calo',\n"
+    "#    'TupleToolRecoStats',\n"
+    "#    'TupleToolTrigger',\n"
+    "#    'TupleToolTrackInfo',\n"
+    "#}\n"
+    "#for tool in tuple_tools:\n"
+    "#    dtt.addTupleTool(tool)\n"
+    "\n"
+    "# Add branches for each particle that we're interested in\n"
+    "dtt.addBranches(\n"
+    "    {\n"
+    "        'Dstar': '[D*(2010)+ -> (D0 -> K- pi+ pi+ pi-) pi+]CC',\n"
+    "        'D0': '[D*(2010)+ -> ^(D0 -> K- pi+ pi+ pi-) pi+]CC',\n"
+    "        'Kminus': '[D*(2010)+ -> (D0 -> ^K- pi+ pi+ pi-) pi+]CC',\n"
+    "        'pi1plus': '[D*(2010)+ -> (D0 -> K- ^pi+ pi+ pi-) pi+]CC',\n"
+    "        'pi2plus': '[D*(2010)+ -> (D0 -> K- pi+ ^pi+ pi-) pi+]CC',\n"
+    "        'pi3minus': '[D*(2010)+ -> (D0 -> K- pi+ pi+ ^pi-) pi+]CC',\n"
+    "        'pisoft': '[D*(2010)+ -> (D0 -> K- pi+ pi+ pi-) ^pi+]CC',\n"
+    "    }\n"
+    ")\n"
+    "\n"
+    "# Add the proper decay time of the D0\n"
+    "dtt.D0.addTupleTool('TupleToolPropertime')\n"
+    "\n"
+    "# Configure DaVinci itself\n"
+    "DaVinci().UserAlgorithms += [dtt]\n"
+    "DaVinci().InputType = 'DST'\n"
+    f"DaVinci().TupleFile = '{n_tuple_path}'\n"
+    "DaVinci().PrintFreq = 1000\n"
+    "\n"
+    "# Ask for luminosity information\n"
+    "DaVinci().Lumi = not DaVinci().Simulation\n"
+    "\n"
+    "# Ask for all events\n"
+    "DaVinci().EvtMax = -1\n"
+
+
 def submit_job(
     bk_path: str, stripping_line: str, n_tuple_path: str, app, files_per_job=5
 ) -> None:
@@ -107,25 +153,23 @@ def submit_job(
     Must provide an instantiated davinci application or something via app
 
     """
-    check_bkfile_exists(bk_path)
-
-    # Init job + tell Ganga where my config file is
-    j = Job(name="Prompt DK3Pi Data")
+    # Init job
+    j = Job(name=f"Prompt DK3Pi Data: {n_tuple_path}")
     j.application = app
-    j.application.options = ["./nTupleOptions.py"]
     j.application.platform = "x86_64-centos7-gcc8-opt"
 
-    # Tell Ganga what data to use
-    j.application.extraOpts = "print([i for i in range(10)])"
+    # Provide options to DaVinci via this string
+    j.application.extraOpts = davinci_config(n_tuple_path, stripping_line)
 
     # Job uses Dirac backend i guess (?)
     j.backend = Dirac()
 
-    # Tell the job to split itself up a bit
-    #j.splitter = SplitByFiles(filesPerJob=files_per_job)
+    # Tell the job which data to use, and how to split the files up for processing
+    j.inputdata = BKQuery(bk_path, dqflag=["OK"]).getDataset()
+    j.splitter = SplitByFiles(filesPerJob=files_per_job)
 
     # Configure which files to spit out, i think?
-    j.outputfiles = [DiracFile("*.root"), LocalFile("tmp.txt")]
+    j.outputfiles = [DiracFile("*.root")]
 
     # Submit job
     j.submit()
@@ -153,11 +197,7 @@ def main():
     # Create a job for one bk path to test
     year = "2011"
     submit_job(
-        bookkeeping_paths[year][0],
-        stripping_lines[year],
-        "test.root",
-        daVinci_app,
-        1,
+        bookkeeping_paths[year][0], stripping_lines[year], "test.root", daVinci_app, 1
     )
 
 
