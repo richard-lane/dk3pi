@@ -112,20 +112,20 @@ def submit_job(
     # Init job + tell Ganga where my config file is
     j = Job(name="Prompt DK3Pi Data")
     j.application = app
-    j.application.options = ["nTupleOptions.py"]
+    j.application.options = ["./nTupleOptions.py"]
     j.application.platform = "x86_64-centos7-gcc8-opt"
 
     # Tell Ganga what data to use
-    j.application.args = [bk_path, stripping_line, n_tuple_path]
+    j.application.extraOpts = "print(Hello wordl)"
 
     # Job uses Dirac backend i guess (?)
     j.backend = Dirac()
 
     # Tell the job to split itself up a bit
-    j.splitter = SplitByFiles(filesPerJob=files_per_job)
+    #j.splitter = SplitByFiles(filesPerJob=files_per_job)
 
     # Configure which files to spit out, i think?
-    j.outputfiles = [DiracFile("*.root")]
+    j.outputfiles = [DiracFile("*.root"), LocalFile("tmp.txt")]
 
     # Submit job
     j.submit()
@@ -150,16 +150,15 @@ def main():
     # Init DaVinci
     daVinci_app = create_davinci_application(".", "v45r1")
 
-    for key in bookkeeping_paths:
-        # Create a job for one bk path to test
-        year = "2011"
-        submit_job(
-            bookkeeping_paths[year][0],
-            stripping_lines[year],
-            "test.root",
-            daVinci_app,
-            1,
-        )
+    # Create a job for one bk path to test
+    year = "2011"
+    submit_job(
+        bookkeeping_paths[year][0],
+        stripping_lines[year],
+        "test.root",
+        daVinci_app,
+        1,
+    )
 
 
 # Unfortunately we can't wrap this in if name==main since we need to run it via ganga
