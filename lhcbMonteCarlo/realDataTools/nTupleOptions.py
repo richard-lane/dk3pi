@@ -7,6 +7,7 @@ from Configurables import DaVinci
 # Arg parsing
 # Arguments are passed through from ganga to this conf file via sys.argv, i think
 # Should be a list of [bk path, stripping line, root file path]
+print("Hello from the davinci script")
 with open("tmp.txt", "w") as f:
     f.write("writing sys argv:\n")
     f.write(str(sys.argv))

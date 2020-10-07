@@ -116,7 +116,7 @@ def submit_job(
     j.application.platform = "x86_64-centos7-gcc8-opt"
 
     # Tell Ganga what data to use
-    j.application.extraOpts = "print(Hello wordl)"
+    j.application.extraOpts = "print([i for i in range(10)])"
 
     # Job uses Dirac backend i guess (?)
     j.backend = Dirac()
