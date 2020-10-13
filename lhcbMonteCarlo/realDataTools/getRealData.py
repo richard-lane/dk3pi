@@ -99,7 +99,7 @@ def davinci_config(n_tuple_path: str, stripping_line: str) -> str:
     "\n"
     "# Initialise an nTuple for all of our data\n"
     "dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')\n"
-    f"dtt.Inputs = ['/Event/AllStreams/Phys/{stripping_line}/Particles']\n"
+    f"dtt.Inputs = ['Phys/{stripping_line}/Particles']\n"
     "dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K- ^pi+ ^pi+ ^pi-) ^pi+]CC'\n"
     "\n"
     "# Add some tuple tools\n"
@@ -134,6 +134,10 @@ def davinci_config(n_tuple_path: str, stripping_line: str) -> str:
     "DaVinci().InputType = 'DST'\n"
     f"DaVinci().TupleFile = '{n_tuple_path}'\n"
     "DaVinci().PrintFreq = 1000\n"
+    ""
+    "# This is necessary since we're reading from a microDST\n"
+    "DaVinci().RootInTES = '/Event/Charm'\n"
+    ""
     "\n"
     "# Ask for luminosity information\n"
     "DaVinci().Lumi = not DaVinci().Simulation\n"
@@ -195,9 +199,12 @@ def main():
     daVinci_app = create_davinci_application(".", "v45r1")
 
     # Create a job for one bk path to test
-    year = "2011"
     submit_job(
-        bookkeeping_paths[year][0], stripping_lines[year], "test.root", daVinci_app, 1
+        "/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping21r1/90000000/CHARM.MDST",
+        stripping_lines["2011"],
+        "test.root",
+        daVinci_app,
+        5
     )
 
 
