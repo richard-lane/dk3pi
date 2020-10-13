@@ -9,11 +9,15 @@ from DecayTreeTuple.Configuration import *
 from Configurables import DaVinci
 from GaudiConf import IOHelper
 
+# Stripping line from stripping project website; remove the word 'Stripping' from the front
 line = 'DstarPromptWithD02HHHHLine'
 stream = 'Charm'
 
 # Initialise an nTuple for all of our data
 dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')
+
+# Find this location from bender dst-dump, or something
+# Since the data file is a microDST, this is relative to /Event/{stream}
 dtt.Inputs = ['Phys/{0}/Particles'.format(line)]
 dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K- ^pi+ ^pi+ ^pi-) ^pi+]CC'
 
