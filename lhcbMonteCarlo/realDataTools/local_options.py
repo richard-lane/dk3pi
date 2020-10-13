@@ -9,9 +9,12 @@ from DecayTreeTuple.Configuration import *
 from Configurables import DaVinci
 from GaudiConf import IOHelper
 
+line = 'DstarPromptWithD02HHHHLine'
+stream = 'Charm'
+
 # Initialise an nTuple for all of our data
 dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')
-dtt.Inputs = ['Phys/StrippingDstarPromptWithD02HHHHLine/Particles']
+dtt.Inputs = ['Phys/{0}/Particles'.format(line)]
 dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K- ^pi+ ^pi+ ^pi-) ^pi+]CC'
 
 # Add some tuple tools\n"
@@ -50,7 +53,7 @@ DaVinci().DataType = '2011'
 DaVinci().Simulation = False
 
 # This is necessary since we're reading from a microDST
-DaVinci().RootInTES = '/Event/Charm'
+DaVinci().RootInTES = '/Event/{0}'.format(stream)
 
 # Ask for luminosity information
 DaVinci().Lumi = not DaVinci().Simulation
@@ -62,6 +65,6 @@ DaVinci().EvtMax = -1
 
 # Use local input data
 IOHelper().inputFiles([
-    './00041838_00000067_1.charm.mdst'
+    './00041838_00000057_1.charm.mdst'
 ], clear=True)
 
