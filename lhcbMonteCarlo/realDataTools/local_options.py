@@ -8,6 +8,11 @@ from Configurables import DecayTreeTuple
 from DecayTreeTuple.Configuration import *
 from Configurables import DaVinci
 from GaudiConf import IOHelper
+from PhysConf.Filters import LoKi_Filters
+
+# We only want to look at a single TES location, so we don't need to unpack every event from the file
+# This means we can use a pre-filter
+DaVinci().EventPreFilters = LoKi_Filters(STRIP_Code = "HLT_PASS_RE('.*DstarPromptWithD02HHHHLine.*')").filters('Filters')
 
 # Stripping line from stripping project website; remove the word 'Stripping' from the front
 line = 'DstarPromptWithD02HHHHLine'
