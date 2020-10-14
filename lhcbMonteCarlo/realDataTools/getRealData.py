@@ -84,14 +84,26 @@ def create_davinci_application(path: str, version: str):
     return prepareGaudiExec("DaVinci", version, myPath=path)
 
 
-def davinci_config(n_tuple_path: str, stripping_line: str, stream: str) -> str:
+def davinci_config(
+    n_tuple_name: str, n_tuple_path: str, stripping_line: str, stream: str
+) -> str:
     """
     Return a str containing complete DaVinci config
 
     This is a kind of stupid way of doing things but it lets us manage DaVinci without having a separate script
 
+        n_tuple_name: tree name or something within the nTuple. Basically just a unique identifier
+        n_tuple_path: path to save our nTuple to
+        stripping_line: stripping line from the STRIPPING project website
+        stream: stream name; can also get this from the STRIPPING site. Probably "Charm" for real data
+
     """
-    return "print('Loading DaVinci config\\n\tpath: {0}\\n\tline: {1}\\n\tstream: {2}'.format(n_tuple_path, stripping_line, stream)\n"
+    # Return a string that will be written to a file that is used to configure DaVinci
+    return "print('Loading DaVinci config')\n"
+    f"print('\tpath: {n_tuple_path}')\n"
+    f"print('\tline: {stripping_line}')\n"
+    f"print('\tstream: {stream}')\n"
+    "\n"
     "from Configurables import DecayTreeTuple\n"
     "from DecayTreeTuple.Configuration import *\n"
     "from Configurables import DaVinci\n"
@@ -100,16 +112,14 @@ def davinci_config(n_tuple_path: str, stripping_line: str, stream: str) -> str:
     "\n"
     "# We only want to look at a single TES location, so we don't need to unpack every event from the file\n"
     "# This means we should use a pre-filter\n"
-    """DaVinci().EventPreFilters = LoKi_Filters(STRIP_Code = "HLT_PASS_RE('.*DstarPromptWithD02HHHHLine.*')").filters('Filters')\n"""
-    "\n"
-    "# Stripping line from stripping project website; remove the word 'Stripping' from the front\n"
+    f"""DaVinci().EventPreFilters = LoKi_Filters(STRIP_Code = "HLT_PASS_RE('.*{stripping_line}.*')").filters('Filters')\n"""
     "\n"
     "# Initialise an nTuple for all of our data\n"
-    "dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')\n"
+    f"dtt = DecayTreeTuple('{n_tuple_name}')\n"
     "\n"
     "# Find this location from bender dst-dump, or something\n"
     "# Since the data file is a microDST, this is relative to /Event/{stream}\n"
-    "dtt.Inputs = ['Phys/{0}/Particles'.format(stripping_line)]\n"
+    f"dtt.Inputs = ['Phys/{stripping_line}/Particles']\n"
     "dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K+ ^pi- ^pi- ^pi+) ^pi+]CC'\n"
     "\n"
     "# Add branches for each particle that we're interested in\n"
@@ -131,13 +141,13 @@ def davinci_config(n_tuple_path: str, stripping_line: str, stream: str) -> str:
     "# Configure DaVinci itself\n"
     "DaVinci().UserAlgorithms += [dtt]\n"
     "DaVinci().InputType = 'MDST'\n"
-    "DaVinci().TupleFile = '{0}'.format(n_tuple_path)\n"
+    f"DaVinci().TupleFile = '{n_tuple_path}'\n"
     "DaVinci().PrintFreq = 1000\n"
     "DaVinci().DataType = '2011'\n"
     "DaVinci().Simulation = False\n"
     "\n"
     "# This is necessary since we're reading from a microDST\n"
-    "DaVinci().RootInTES = '/Event/{0}'.format(stream)\n"
+    f"DaVinci().RootInTES = '/Event/{stream}'\n"
     "\n"
     "# Ask for luminosity information\n"
     "DaVinci().Lumi = not DaVinci().Simulation\n"
@@ -146,12 +156,15 @@ def davinci_config(n_tuple_path: str, stripping_line: str, stream: str) -> str:
     "\n"
     "# Ask for all events\n"
     "DaVinci().EvtMax = -1\n"
+    "\n"
+    "print('Loaded DaVinci config')\n"
 
 
 def submit_job(
     bk_path: str,
     stripping_line: str,
     n_tuple_path: str,
+    n_tuple_name: str,
     stream: str,
     app,
     files_per_job=5,
@@ -170,7 +183,9 @@ def submit_job(
     j.application.platform = "x86_64-centos7-gcc8-opt"
 
     # Provide options to DaVinci via this string
-    j.application.extraOpts = davinci_config(n_tuple_path, stripping_line, stream)
+    j.application.extraOpts = davinci_config(
+        n_tuple_name, n_tuple_path, stripping_line, stream
+    )
 
     # Job uses Dirac backend i guess (?)
     j.backend = Dirac()
