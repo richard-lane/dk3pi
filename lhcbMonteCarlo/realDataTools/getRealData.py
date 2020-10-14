@@ -91,7 +91,7 @@ def davinci_config(n_tuple_path: str, stripping_line: str, stream: str) -> str:
     This is a kind of stupid way of doing things but it lets us manage DaVinci without having a separate script
 
     """
-    return "print('Loading DaVinci config\n\tpath: {0}\n\tline: {1}\n\tstream: {2}'.format(n_tuple_path, stripping_line, stream)\n"
+    return "print('Loading DaVinci config\\n\tpath: {0}\\n\tline: {1}\\n\tstream: {2}'.format(n_tuple_path, stripping_line, stream)\n"
     "from Configurables import DecayTreeTuple\n"
     "from DecayTreeTuple.Configuration import *\n"
     "from Configurables import DaVinci\n"
@@ -149,7 +149,12 @@ def davinci_config(n_tuple_path: str, stripping_line: str, stream: str) -> str:
 
 
 def submit_job(
-        bk_path: str, stripping_line: str, n_tuple_path: str, stream: str, app, files_per_job=5
+    bk_path: str,
+    stripping_line: str,
+    n_tuple_path: str,
+    stream: str,
+    app,
+    files_per_job=5,
 ) -> None:
     """
     Submit a job to the grid, config defined in ./nTupleOptions.py
@@ -207,7 +212,7 @@ def main():
         "test_WS.root",
         "Charm",
         daVinci_app,
-        5
+        5,
     )
 
 
