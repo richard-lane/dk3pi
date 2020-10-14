@@ -84,70 +84,72 @@ def create_davinci_application(path: str, version: str):
     return prepareGaudiExec("DaVinci", version, myPath=path)
 
 
-def davinci_config(n_tuple_path: str, stripping_line: str) -> str:
+def davinci_config(n_tuple_path: str, stripping_line: str, stream: str) -> str:
     """
     Return a str containing complete DaVinci config
 
     This is a kind of stupid way of doing things but it lets us manage DaVinci without having a separate script
 
     """
-    return "print('Loading DaVinci config')"
+    return "print('Loading DaVinci config\n\tpath: {0}\n\tline: {1}\n\tstream: {2}'.format(n_tuple_path, stripping_line, stream)\n"
     "from Configurables import DecayTreeTuple\n"
     "from DecayTreeTuple.Configuration import *\n"
     "from Configurables import DaVinci\n"
+    "from PhysConf.Filters import LoKi_Filters\n"
     "\n"
+    "\n"
+    "# We only want to look at a single TES location, so we don't need to unpack every event from the file\n"
+    "# This means we should use a pre-filter\n"
+    """DaVinci().EventPreFilters = LoKi_Filters(STRIP_Code = "HLT_PASS_RE('.*DstarPromptWithD02HHHHLine.*')").filters('Filters')\n"""
+    "\n"
+    "# Stripping line from stripping project website; remove the word 'Stripping' from the front\n"
     "\n"
     "# Initialise an nTuple for all of our data\n"
     "dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')\n"
-    f"dtt.Inputs = ['Phys/{stripping_line}/Particles']\n"
-    "dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K- ^pi+ ^pi+ ^pi-) ^pi+]CC'\n"
     "\n"
-    "# Add some tuple tools\n"
-    "#tuple_tools = {\n"
-    "#    'TupleToolTISTOS',\n"
-    "#    'TupleToolL0Calo',\n"
-    "#    'TupleToolRecoStats',\n"
-    "#    'TupleToolTrigger',\n"
-    "#    'TupleToolTrackInfo',\n"
-    "#}\n"
-    "#for tool in tuple_tools:\n"
-    "#    dtt.addTupleTool(tool)\n"
+    "# Find this location from bender dst-dump, or something\n"
+    "# Since the data file is a microDST, this is relative to /Event/{stream}\n"
+    "dtt.Inputs = ['Phys/{0}/Particles'.format(stripping_line)]\n"
+    "dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K+ ^pi- ^pi- ^pi+) ^pi+]CC'\n"
     "\n"
     "# Add branches for each particle that we're interested in\n"
     "dtt.addBranches(\n"
     "    {\n"
-    "        'Dstar': '[D*(2010)+ -> (D0 -> K- pi+ pi+ pi-) pi+]CC',\n"
-    "        'D0': '[D*(2010)+ -> ^(D0 -> K- pi+ pi+ pi-) pi+]CC',\n"
-    "        'Kminus': '[D*(2010)+ -> (D0 -> ^K- pi+ pi+ pi-) pi+]CC',\n"
-    "        'pi1plus': '[D*(2010)+ -> (D0 -> K- ^pi+ pi+ pi-) pi+]CC',\n"
-    "        'pi2plus': '[D*(2010)+ -> (D0 -> K- pi+ ^pi+ pi-) pi+]CC',\n"
-    "        'pi3minus': '[D*(2010)+ -> (D0 -> K- pi+ pi+ ^pi-) pi+]CC',\n"
-    "        'pisoft': '[D*(2010)+ -> (D0 -> K- pi+ pi+ pi-) ^pi+]CC',\n"
+    "        'Dstar': '[D*(2010)+ -> (D0 -> K+ pi- pi- pi+) pi+]CC',\n"
+    "        'D': '[D*(2010)+ -> ^(D0 -> K+ pi- pi- pi+) pi+]CC',\n"
+    "        'K': '[D*(2010)+ -> (D0 -> ^K+ pi- pi- pi+) pi+]CC',\n"
+    "        'pi1': '[D*(2010)+ -> (D0 -> K+ ^pi- pi- pi+) pi+]CC',\n"
+    "        'pi2': '[D*(2010)+ -> (D0 -> K+ pi- ^pi- pi+) pi+]CC',\n"
+    "        'pi3': '[D*(2010)+ -> (D0 -> K+ pi- pi- ^pi+) pi+]CC',\n"
+    "        'pisoft': '[D*(2010)+ -> (D0 -> K+ pi- pi- pi+) ^pi+]CC',\n"
     "    }\n"
     ")\n"
     "\n"
-    "# Add the proper decay time of the D0\n"
-    "dtt.D0.addTupleTool('TupleToolPropertime')\n"
+    "# Add the proper decay time of the D\n"
+    "dtt.D.addTupleTool('TupleToolPropertime')\n"
     "\n"
     "# Configure DaVinci itself\n"
     "DaVinci().UserAlgorithms += [dtt]\n"
-    "DaVinci().InputType = 'DST'\n"
-    f"DaVinci().TupleFile = '{n_tuple_path}'\n"
+    "DaVinci().InputType = 'MDST'\n"
+    "DaVinci().TupleFile = '{0}'.format(n_tuple_path)\n"
     "DaVinci().PrintFreq = 1000\n"
-    ""
+    "DaVinci().DataType = '2011'\n"
+    "DaVinci().Simulation = False\n"
+    "\n"
     "# This is necessary since we're reading from a microDST\n"
-    "DaVinci().RootInTES = '/Event/Charm'\n"
-    ""
+    "DaVinci().RootInTES = '/Event/{0}'.format(stream)\n"
     "\n"
     "# Ask for luminosity information\n"
     "DaVinci().Lumi = not DaVinci().Simulation\n"
+    "DaVinci().CondDBtag = 'default'\n"
+    "DaVinci().DDDBtag = 'default'\n"
     "\n"
     "# Ask for all events\n"
     "DaVinci().EvtMax = -1\n"
 
 
 def submit_job(
-    bk_path: str, stripping_line: str, n_tuple_path: str, app, files_per_job=5
+        bk_path: str, stripping_line: str, n_tuple_path: str, stream: str, app, files_per_job=5
 ) -> None:
     """
     Submit a job to the grid, config defined in ./nTupleOptions.py
@@ -163,7 +165,7 @@ def submit_job(
     j.application.platform = "x86_64-centos7-gcc8-opt"
 
     # Provide options to DaVinci via this string
-    j.application.extraOpts = davinci_config(n_tuple_path, stripping_line)
+    j.application.extraOpts = davinci_config(n_tuple_path, stripping_line, stream)
 
     # Job uses Dirac backend i guess (?)
     j.backend = Dirac()
@@ -187,12 +189,12 @@ def main():
     # One stripping line per year that contains the data I want
     # From the LHCb stripping project site
     stripping_lines = {
-        "2011": "StrippingDstarPromptWithD02HHHHLine",
-        "2012": "StrippingDstarPromptWithD02HHHHLine",
-        "2015": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
-        "2016": "StrippingDstarD2HHHHDstarD2KPiPiPiLine ",
-        "2017": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
-        "2018": "StrippingDstarD2HHHHDstarD2KPiPiPiLine",
+        "2011": "DstarPromptWithD02HHHHLine",
+        "2012": "DstarPromptWithD02HHHHLine",
+        "2015": "DstarD2HHHHDstarD2KPiPiPiLine ",
+        "2016": "DstarD2HHHHDstarD2KPiPiPiLine ",
+        "2017": "DstarD2HHHHDstarD2KPiPiPiLine",
+        "2018": "DstarD2HHHHDstarD2KPiPiPiLine",
     }
 
     # Init DaVinci
@@ -202,7 +204,8 @@ def main():
     submit_job(
         "/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping21r1/90000000/CHARM.MDST",
         stripping_lines["2011"],
-        "test.root",
+        "test_WS.root",
+        "Charm",
         daVinci_app,
         5
     )

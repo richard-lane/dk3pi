@@ -24,18 +24,7 @@ dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')
 # Find this location from bender dst-dump, or something
 # Since the data file is a microDST, this is relative to /Event/{stream}
 dtt.Inputs = ['Phys/{0}/Particles'.format(line)]
-dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K- ^pi+ ^pi+ ^pi-) ^pi+]CC'
-
-# Add some tuple tools\n"
-tuple_tools = {
-    'TupleToolTISTOS',
-    'TupleToolL0Calo',
-    'TupleToolRecoStats',
-    'TupleToolTrigger',
-    'TupleToolTrackInfo',
-}
-for tool in tuple_tools:
-    dtt.addTupleTool(tool)
+dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K+ ^pi- ^pi- ^pi+) ^pi+]CC'
 
 # Add branches for each particle that we're interested in
 dtt.addBranches(
@@ -74,6 +63,6 @@ DaVinci().EvtMax = -1
 
 # Use local input data
 IOHelper().inputFiles([
-    './00041838_00000057_1.charm.mdst'
+    './00041838_00000067_1.charm.mdst'
 ], clear=True)
 
