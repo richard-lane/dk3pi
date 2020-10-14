@@ -105,7 +105,6 @@ def davinci_config(
         f"print('\tpath: {n_tuple_path}')\n"
         f"print('\tline: {stripping_line}')\n"
         f"print('\tstream: {stream}')\n"
-        "print(open(__file__).read())\n"
         "\n"
         "from Configurables import DecayTreeTuple\n"
         "from DecayTreeTuple.Configuration import *\n"
