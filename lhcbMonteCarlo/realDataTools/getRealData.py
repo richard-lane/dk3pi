@@ -99,6 +99,7 @@ def davinci_config(
 
     """
     # Return a string that will be written to a file that is used to configure DaVinci
+    # The decay descriptors need to be hard-coded in manually, since I don't think there's a good way to generate them programatically
     return "print('Loading DaVinci config')\n"
     f"print('\tpath: {n_tuple_path}')\n"
     f"print('\tline: {stripping_line}')\n"
@@ -209,7 +210,7 @@ def main():
 
     # One stripping line per year that contains the data I want
     # From the LHCb stripping project site
-    stripping_lines = {
+    prompt_stripping_lines = {
         "2011": "DstarPromptWithD02HHHHLine",
         "2012": "DstarPromptWithD02HHHHLine",
         "2015": "DstarD2HHHHDstarD2KPiPiPiLine ",
@@ -218,14 +219,24 @@ def main():
         "2018": "DstarD2HHHHDstarD2KPiPiPiLine",
     }
 
+    semileptonic_stripping_lines = {
+        "2011": "b2D0MuXK3PiCharmFromBSemiLine",
+        "2012": "b2D0MuXK3PiCharmFromBSemiLine",
+        "2015": "b2D0MuXK3PiCharmFromBSemiLine",
+        "2016": "b2D0MuXK3PiCharmFromBSemiLine",
+        "2017": "b2D0MuXK3PiCharmFromBSemiLine",
+        "2018": "b2D0MuXK3PiCharmFromBSemiLine",
+    }
+
     # Init DaVinci
     daVinci_app = create_davinci_application(".", "v45r1")
 
     # Create a job for one bk path to test
     submit_job(
         "/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping21r1/90000000/CHARM.MDST",
-        stripping_lines["2011"],
+        prompt_stripping_lines["2011"],
         "test_WS.root",
+        "test_tree",
         "Charm",
         daVinci_app,
         5,
