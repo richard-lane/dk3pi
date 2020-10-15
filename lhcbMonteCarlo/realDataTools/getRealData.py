@@ -127,7 +127,7 @@ def davinci_config(
         "# Since the data file is a microDST, this is relative to /Event/{stream}\n"
         f"dtt.Inputs = ['Phys/{stripping_line}/Particles']\n"
         "\n"
-        f"dtt.setDescriptorTemplate('{decay_descriptor}')"
+        f"dtt.setDescriptorTemplate('{decay_descriptor}')\n"
         "dtt.D.addTupleTool('TupleToolPropertime')\n"
         "\n"
         "# Configure DaVinci itself\n"
