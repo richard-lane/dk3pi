@@ -24,20 +24,7 @@ dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')
 # Find this location from bender dst-dump, or something
 # Since the data file is a microDST, this is relative to /Event/{stream}
 dtt.Inputs = ['Phys/{0}/Particles'.format(line)]
-dtt.Decay = '[B+ -> ^(D~0 -> ^K+ ^pi- ^pi- ^pi+) ^mu+]CC'
-
-# Add branches for each particle that we're interested in
-dtt.addBranches(
-    {
-        'Dstar': '[B+ -> (D~0 -> K- pi+ pi+ pi-) mu+]CC',
-        'D': '[B+ -> ^(D~0 -> K- pi+ pi+ pi-) mu+]CC',
-        'K': '[B+ -> (D~0 -> ^K- pi+ pi+ pi-) mu+]CC',
-        'pi1': '[B+ -> (D~0 -> K- ^pi+ pi+ pi-) mu+]CC',
-        'pi2': '[B+ -> (D~0 -> K- pi+ ^pi+ pi-) mu+]CC',
-        'pi3': '[B+ -> (D~0 -> K- pi+ pi+ ^pi-) mu+]CC',
-        'pisoft': '[B+ -> (D~0 -> K- pi+ pi+ pi-) mu+]CC',
-    }
-)
+dtt.setDescriptorTemplate('[B+ -> ${D}(D~0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${mu}mu+]CC')
 
 # Add the proper decay time of the D0\n"
 dtt.D.addTupleTool('TupleToolPropertime')
