@@ -12,10 +12,10 @@ from PhysConf.Filters import LoKi_Filters
 
 # We only want to look at a single TES location, so we don't need to unpack every event from the file
 # This means we can use a pre-filter
-DaVinci().EventPreFilters = LoKi_Filters(STRIP_Code = "HLT_PASS_RE('.*DstarPromptWithD02HHHHLine.*')").filters('Filters')
+DaVinci().EventPreFilters = LoKi_Filters(STRIP_Code = "HLT_PASS_RE('.*b2D0MuXK3PiCharmFromBSemiLine.*')").filters('Filters')
 
 # Stripping line from stripping project website; remove the word 'Stripping' from the front
-line = 'DstarPromptWithD02HHHHLine'
+line = 'b2D0MuXK3PiCharmFromBSemiLine'
 stream = 'Charm'
 
 # Initialise an nTuple for all of our data
@@ -24,23 +24,23 @@ dtt = DecayTreeTuple('TupleDstToD0pi_D0ToKpipipi')
 # Find this location from bender dst-dump, or something
 # Since the data file is a microDST, this is relative to /Event/{stream}
 dtt.Inputs = ['Phys/{0}/Particles'.format(line)]
-dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K+ ^pi- ^pi- ^pi+) ^pi+]CC'
+dtt.Decay = '[B+ -> ^(D~0 -> ^K+ ^pi- ^pi- ^pi+) ^mu+]CC'
 
 # Add branches for each particle that we're interested in
 dtt.addBranches(
     {
-        'Dstar': '[D*(2010)+ -> (D0 -> K- pi+ pi+ pi-) pi+]CC',
-        'D0': '[D*(2010)+ -> ^(D0 -> K- pi+ pi+ pi-) pi+]CC',
-        'Kminus': '[D*(2010)+ -> (D0 -> ^K- pi+ pi+ pi-) pi+]CC',
-        'pi1plus': '[D*(2010)+ -> (D0 -> K- ^pi+ pi+ pi-) pi+]CC',
-        'pi2plus': '[D*(2010)+ -> (D0 -> K- pi+ ^pi+ pi-) pi+]CC',
-        'pi3minus': '[D*(2010)+ -> (D0 -> K- pi+ pi+ ^pi-) pi+]CC',
-        'pisoft': '[D*(2010)+ -> (D0 -> K- pi+ pi+ pi-) ^pi+]CC',
+        'Dstar': '[B+ -> (D~0 -> K- pi+ pi+ pi-) mu+]CC',
+        'D': '[B+ -> ^(D~0 -> K- pi+ pi+ pi-) mu+]CC',
+        'K': '[B+ -> (D~0 -> ^K- pi+ pi+ pi-) mu+]CC',
+        'pi1': '[B+ -> (D~0 -> K- ^pi+ pi+ pi-) mu+]CC',
+        'pi2': '[B+ -> (D~0 -> K- pi+ ^pi+ pi-) mu+]CC',
+        'pi3': '[B+ -> (D~0 -> K- pi+ pi+ ^pi-) mu+]CC',
+        'pisoft': '[B+ -> (D~0 -> K- pi+ pi+ pi-) mu+]CC',
     }
 )
 
 # Add the proper decay time of the D0\n"
-dtt.D0.addTupleTool('TupleToolPropertime')
+dtt.D.addTupleTool('TupleToolPropertime')
 
 # Configure DaVinci itself
 DaVinci().UserAlgorithms += [dtt]
