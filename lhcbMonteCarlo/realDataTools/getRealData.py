@@ -202,8 +202,8 @@ def main():
 
     # One stripping line per year that contains the data I want
     # From the LHCb stripping project site
-    wrong_sign_prompt_descriptor = "[${Dstar}D*(2010)+ -> ${D}(D0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${pisoft}pi+]CC"
-    right_sign_prompt_descriptor = "[${Dstar}D*(2010)+ -> ${D}(D0 -> ${K}K- ${pi1}pi+ ${pi2}pi+ ${pi3}pi-) ${pisoft}pi+]CC"
+    wrong_sign_prompt_descriptor = "${Dstar}[D*(2010)+ -> ${D}(D0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${pisoft}pi+]CC"
+    right_sign_prompt_descriptor = "${Dstar}[D*(2010)+ -> ${D}(D0 -> ${K}K- ${pi1}pi+ ${pi2}pi+ ${pi3}pi-) ${pisoft}pi+]CC"
     prompt_stripping_lines = {
         "2011": "DstarPromptWithD02HHHHLine",
         "2012": "DstarPromptWithD02HHHHLine",
@@ -214,7 +214,7 @@ def main():
     }
 
     wrong_sign_semileptonic_descriptor = (
-        "[B+ -> ${D}(D~0 -> ${K}K+ ${pi1}pi+ ${pi2}pi+ ${pi3}pi-) ${mu}mu+]CC"
+        "[B+ -> ${D}(D~0 -> ${K}K- ${pi1}pi+ ${pi2}pi+ ${pi3}pi-) ${mu}mu+]CC"
     )
     right_sign_semileptonic_descriptor = (
         "[B+ -> ${D}(D~0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${mu}mu+]CC"
@@ -229,16 +229,16 @@ def main():
     }
 
     # Init DaVinci
-    daVinci_app = create_davinci_application(".", "v45r1")
+    daVinci_app = create_davinci_application("tmp", "v45r1")
 
     # Create a job for one bk path to test
     submit_job(
         "/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping21r1/90000000/CHARM.MDST",
         prompt_stripping_lines["2011"],
-        "test_WS.root",
+        "test_semileptionic_WS.root",
         "test_tree",
         "Charm",
-        wrong_sign_prompt_descriptor,
+        wrong_sign_semileptonic_descriptor,
         daVinci_app,
         5,
     )
