@@ -190,7 +190,7 @@ def submit_job(
     j.splitter = SplitByFiles(filesPerJob=files_per_job)
 
     # Configure which files to spit out, i think?
-    j.outputfiles = [DiracFile("*.root")]
+    j.outputfiles = [DiracFile("*.root"), LocalFile("*.root")]
 
     # Submit job
     j.submit()
@@ -236,10 +236,10 @@ def main():
     submit_job(
         "/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping21r1/90000000/CHARM.MDST",
         prompt_stripping_lines["2011"],
-        "test_semileptionic_WS.root",
-        "test_tree",
+        "test_2011_WS_prompt.root",
+        "dk3pi",
         "Charm",
-        wrong_sign_semileptonic_descriptor,
+        wrong_sign_prompt_descriptor,
         daVinci_app,
         5,
     )
