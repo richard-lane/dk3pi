@@ -202,7 +202,8 @@ def main():
 
     # One stripping line per year that contains the data I want
     # From the LHCb stripping project site
-    prompt_descriptor = "[${Dstar}D*(2010)+ -> ${D}(D0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${pisoft}pi+]CC"
+    wrong_sign_prompt_descriptor = "[${Dstar}D*(2010)+ -> ${D}(D0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${pisoft}pi+]CC"
+    right_sign_prompt_descriptor = "[${Dstar}D*(2010)+ -> ${D}(D0 -> ${K}K- ${pi1}pi+ ${pi2}pi+ ${pi3}pi-) ${pisoft}pi+]CC"
     prompt_stripping_lines = {
         "2011": "DstarPromptWithD02HHHHLine",
         "2012": "DstarPromptWithD02HHHHLine",
@@ -212,7 +213,12 @@ def main():
         "2018": "DstarD2HHHHDstarD2KPiPiPiLine",
     }
 
-    semileptonic_descriptor = "[B+ -> ${D}(D~0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${mu}mu+]CC"
+    wrong_sign_semileptonic_descriptor = (
+        "[B+ -> ${D}(D~0 -> ${K}K+ ${pi1}pi+ ${pi2}pi+ ${pi3}pi-) ${mu}mu+]CC"
+    )
+    right_sign_semileptonic_descriptor = (
+        "[B+ -> ${D}(D~0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${mu}mu+]CC"
+    )
     semileptonic_stripping_lines = {
         "2011": "b2D0MuXK3PiCharmFromBSemiLine",
         "2012": "b2D0MuXK3PiCharmFromBSemiLine",
@@ -232,6 +238,7 @@ def main():
         "test_WS.root",
         "test_tree",
         "Charm",
+        wrong_sign_prompt_descriptor,
         daVinci_app,
         5,
     )
