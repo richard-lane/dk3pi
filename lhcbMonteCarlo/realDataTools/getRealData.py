@@ -85,7 +85,11 @@ def create_davinci_application(path: str, version: str):
 
 
 def davinci_config(
-    n_tuple_name: str, n_tuple_path: str, stripping_line: str, stream: str
+    n_tuple_name: str,
+    n_tuple_path: str,
+    stripping_line: str,
+    stream: str,
+    decay_descriptor: str,
 ) -> str:
     """
     Return a str containing complete DaVinci config
@@ -96,10 +100,10 @@ def davinci_config(
         n_tuple_path: path to save our nTuple to
         stripping_line: stripping line from the STRIPPING project website
         stream: stream name; can also get this from the STRIPPING site. Probably "Charm" for real data
+        decay_descriptor: decay descriptor suitable for passing to decayTreeTuple.setDescriptorTemplate. Must define a branch called "D" so we can find its decay time
 
     """
     # Return a string that will be written to a file that is used to configure DaVinci
-    # The decay descriptors need to be hard-coded in manually, since I don't think there's a good way to generate them programatically
     return (
         "print('Loading DaVinci config')\n"
         f"print('\tpath: {n_tuple_path}')\n"
@@ -122,22 +126,8 @@ def davinci_config(
         "# Find this location from bender dst-dump, or something\n"
         "# Since the data file is a microDST, this is relative to /Event/{stream}\n"
         f"dtt.Inputs = ['Phys/{stripping_line}/Particles']\n"
-        "dtt.Decay = '[D*(2010)+ -> ^(D0 -> ^K+ ^pi- ^pi- ^pi+) ^pi+]CC'\n"
         "\n"
-        "# Add branches for each particle that we're interested in\n"
-        "dtt.addBranches(\n"
-        "    {\n"
-        "        'Dstar': '[D*(2010)+ -> (D0 -> K+ pi- pi- pi+) pi+]CC',\n"
-        "        'D': '[D*(2010)+ -> ^(D0 -> K+ pi- pi- pi+) pi+]CC',\n"
-        "        'K': '[D*(2010)+ -> (D0 -> ^K+ pi- pi- pi+) pi+]CC',\n"
-        "        'pi1': '[D*(2010)+ -> (D0 -> K+ ^pi- pi- pi+) pi+]CC',\n"
-        "        'pi2': '[D*(2010)+ -> (D0 -> K+ pi- ^pi- pi+) pi+]CC',\n"
-        "        'pi3': '[D*(2010)+ -> (D0 -> K+ pi- pi- ^pi+) pi+]CC',\n"
-        "        'pisoft': '[D*(2010)+ -> (D0 -> K+ pi- pi- pi+) ^pi+]CC',\n"
-        "    }\n"
-        ")\n"
-        "\n"
-        "# Add the proper decay time of the D\n"
+        f"dtt.setDescriptorTemplate('{decay_descriptor}')"
         "dtt.D.addTupleTool('TupleToolPropertime')\n"
         "\n"
         "# Configure DaVinci itself\n"
@@ -169,6 +159,7 @@ def submit_job(
     n_tuple_path: str,
     n_tuple_name: str,
     stream: str,
+    decay_descriptor: str,
     app,
     files_per_job=5,
 ) -> None:
@@ -187,7 +178,7 @@ def submit_job(
 
     # Provide options to DaVinci via this string
     j.application.extraOpts = davinci_config(
-        n_tuple_name, n_tuple_path, stripping_line, stream
+        n_tuple_name, n_tuple_path, stripping_line, stream, decay_descriptor
     )
 
     # Job uses Dirac backend i guess (?)
@@ -207,10 +198,11 @@ def submit_job(
 def main():
     # We want data from all years
     years = ("2011", "2012", "2015", "2016", "2017", "2018")
-    bookkeeping_paths = bk_paths(years, ("MagDown", "MagUp"), "CHARMCOMPLETEEVENT.DST")
+    bookkeeping_paths = bk_paths(years, ("MagDown", "MagUp"), "CHARM.MDST")
 
     # One stripping line per year that contains the data I want
     # From the LHCb stripping project site
+    prompt_descriptor = "[${Dstar}D*(2010)+ -> ${D}(D0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${pisoft}pi+]CC"
     prompt_stripping_lines = {
         "2011": "DstarPromptWithD02HHHHLine",
         "2012": "DstarPromptWithD02HHHHLine",
@@ -220,6 +212,7 @@ def main():
         "2018": "DstarD2HHHHDstarD2KPiPiPiLine",
     }
 
+    semileptonic_descriptor = "[B+ -> ${D}(D~0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${mu}mu+]CC"
     semileptonic_stripping_lines = {
         "2011": "b2D0MuXK3PiCharmFromBSemiLine",
         "2012": "b2D0MuXK3PiCharmFromBSemiLine",
