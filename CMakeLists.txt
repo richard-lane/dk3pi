@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # ROOT
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-find_package(ROOT REQUIRED COMPONENTS RIO Net Minuit2)
+find_package(ROOT REQUIRED COMPONENTS RIO Net Minuit2 RooFit RooStats RooFitCore)
 include(${ROOT_USE_FILE})
 
 # Boost
@@ -32,6 +32,9 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/charmFitter")
 
 # Add an efficiency library
 add_subdirectory("${CMAKE_SOURCE_DIR}/efficiency")
+
+# Library for doing sWeighting
+add_subdirectory("${CMAKE_SOURCE_DIR}/lhcbMonteCarlo/sWeighting")
 
 # UT
 enable_testing()
