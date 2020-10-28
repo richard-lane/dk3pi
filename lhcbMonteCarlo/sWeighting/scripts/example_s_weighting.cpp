@@ -1,6 +1,7 @@
 #include <memory>
 
 #include "sWeighting.h"
+#include "util.h"
 
 #include <RooRealVar.h>
 #include <TCanvas.h>
@@ -119,26 +120,16 @@ static void sPlotHist(const std::string &rootFile, const std::string &plotPath)
 
     signal->SetLineColor(kBlue);
     background->SetLineColor(kRed);
-
-    TCanvas *c{new TCanvas()};
-    c->cd();
     signal->SetStats(false);
-    signal->Draw("HIST L SAME");
-    background->Draw("HIST L SAME");
 
     // Legend
-    TLegend *legend = new TLegend(0.7, 0.7, 0.9, 0.9);
-    legend->AddEntry(signal, "Signal");
-    legend->AddEntry(background, "Background");
-    legend->Draw("SAME");
+    util::LegendParams_t legend{0.7, 0.7, 0.9, 0.9};
+    util::saveObjectsToFile<TH1D>(
+        {signal, background}, {"HIST C SAME", "HIST C SAME"}, {"Signal", "Background"}, plotPath, legend);
 
-    c->SaveAs(plotPath.c_str());
-
-    delete c;
-    delete legend;
     delete signal;
     delete background;
-    delete newFile;
+    delete newFile; // Can't delete this too early otherwise will segfault when reading the data
 }
 
 int main()

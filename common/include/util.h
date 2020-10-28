@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <iostream>
 #include <memory>
 #include <random>
 
@@ -8,6 +9,8 @@
 
 #include "D2K3PiError.h"
 
+#include <TCanvas.h>
+#include <TLegend.h>
 #include <TObject.h>
 
 namespace util
@@ -60,7 +63,48 @@ void saveObjectsToFile(const std::vector<TObject *> &  myObjects,
                        const std::vector<std::string> &drawOptions,
                        const std::vector<std::string> &legendLabel,
                        const std::string &             path,
-                       const LegendParams_t &          legendParams);
+                       const LegendParams_t &          legendParams)
+{
+    // Check that we have the same number of objects as options
+    size_t numObjects      = myObjects.size();
+    size_t numDrawOptions  = drawOptions.size();
+    size_t numLegendLabels = legendLabel.size();
+    if (numObjects != numDrawOptions || numLegendLabels != numDrawOptions) {
+        std::cerr << "Must pass same number of objects, options and legend labels; have " << numObjects << ", "
+                  << numDrawOptions << " and " << numLegendLabels << "." << std::endl;
+        throw D2K3PiException();
+    }
+    if (numObjects == 0) {
+        std::cerr << "Cannot plot 0 objects" << std::endl;
+        throw D2K3PiException();
+    }
+
+    TCanvas *canvas = new TCanvas();
+    canvas->cd();
+    canvas->SetLeftMargin(0.15); // Magic number means you can actually read axis labels
+
+    // Create a legend object; if we're drawing multiple plots on one canvas then we better have a legend to tell them
+    // apart
+    TLegend *legend = new TLegend(legendParams.x1,
+                                  legendParams.y1,
+                                  legendParams.x2,
+                                  legendParams.y2,
+                                  legendParams.header.c_str(),
+                                  legendParams.options.c_str());
+    legend->SetTextSize(0.03);
+
+    for (size_t i = 0; i < numObjects; ++i) {
+        T *myObject = (T *)myObjects[i];
+
+        legend->AddEntry(myObject, legendLabel[i].c_str(), "le");
+        myObject->Draw(drawOptions[i].c_str());
+    }
+
+    legend->Draw();
+    canvas->SaveAs(path.c_str());
+    delete legend;
+    delete canvas;
+}
 
 /*
  * Plot a vector as a histogram
