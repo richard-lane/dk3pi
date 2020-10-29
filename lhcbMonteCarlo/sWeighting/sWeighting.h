@@ -9,68 +9,46 @@
 namespace sWeighting
 {
 
-/*
- * Johnson function to use as signal model
- *
- * TODO maybe ive named these parameters wrong
- *
- *     dMassRange: variable encoding the low/high cutoffs for D mass
- *     meanDMass:  the central value of the D mass peak
- *     dMassWidth: width param for D mass peak; corresponds to parameter lambda in the Johnson function
- *     gamma: Johnson function gamma parameter; controls the shape of the distribution, distorts it left/right
- *     delta: Johnson function delta parameter; controls the strength of the Gaussian contribution
- *     massThreshhold: mass below which the PDF is set to 0
- */
-RooJohnson johnsonSignalModel(RooAbsReal& dMassRange,
-                              RooAbsReal& meanDMass,
-                              RooAbsReal& dMassWidth,
-                              RooAbsReal& gamma,
-                              RooAbsReal& delta,
-                              double      massThreshhold);
+struct BranchMismatch : public std::exception {
+    const char* what() const throw() { return "Number of ROOT branches, allowed ranges and units did not match."; };
+};
 
 /*
- * Prompt D background model
+ * Tell us the name, units, and min/max allowed values of a root branch
  *
- * This is some ridiculous thing that looks like
- *     (1-exp(-(deltaM - deltaM0)/c))*(deltaM/deltaM0)^a  + (deltaM/deltaM0- 1)*b
- *
- * deltaM is the Dstar-D0 mass difference; deltaM0 is the threshhold mass difference- i.e. the low mass difference
- * cutoff
- *
- * a, b, c are shape parameters
+ * Only deals with doubles for now
  */
-RooDstD0BG promptBackgroundModel(RooAbsReal& deltaM, RooAbsReal& deltaM0, RooAbsReal& a, RooAbsReal& b, RooAbsReal& c);
-
-/*
- * If no branch containing the D mass difference exists, we may have to create one
- *
- * This does that
- *
- * Copies the old root file to copy_<filename>, in case of things going bad
- */
-void addDeltaMBranch(const std::string& path,
-                     const std::string& treeName,
-                     const std::string& dMassBranchName,
-                     const std::string& dStarMassBranchName,
-                     const std::string& deltaMBranchName);
+struct RootBranch {
+    std::string name{};
+    std::string units{};
+    double      min{};
+    double      max{};
+};
 
 /*
  * Take in an nTuple containing raw (signal + background) D->K3pi data (inFile)
  *
  * Fit it to signal and background models, and write a new nTuple containing the sWeighted tree
  *
- * Should really take in a collection of branch names to preserve, but this is hard-coded for now
+ * Pass in a vector of (branch name, numerical limits, units) as branchesLimitsAndUnits
  *
- * I think the signal and background models both need to contain a variable named "DELTA_M", and the ROOT file needs a
- * branch named DELTA_M
- * but i don't actually know
+ * Pass in the name of the observable parameter in the models as observable. e.g. DELTA_M
+ *
+ * The output tree is named RooTreeDataStore_data_<treeName>
+ *
+ * if a mass fit plot C-string is provided then a plot of the mass fit will be created
+ * if a graphViz diagram C-string is provided then a graph showing the model structure will be created
+ *
  */
-void createWeightedRootFile(const std::string&              inFile,
-                            const std::string&              treeName,
-                            RooAbsPdf&                      signalModel,
-                            RooAbsPdf&                      backgroundModel,
-                            const std::vector<std::string>& fixedParams,
-                            const std::string&              outTreePath);
+std::unique_ptr<TTree> createWeightedRootFile(const std::string&              inFile,
+                                              const std::string&              treeName,
+                                              std::vector<RootBranch>         branchesLimitsAndUnits,
+                                              RooAbsPdf&                      signalModel,
+                                              RooAbsPdf&                      backgroundModel,
+                                              const std::string&              observable,
+                                              const std::vector<std::string>& fixedParams,
+                                              const char*                     massFitPlot     = nullptr,
+                                              const char*                     graphVizDiagram = nullptr);
 
 } // namespace sWeighting
 
