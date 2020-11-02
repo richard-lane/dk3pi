@@ -95,12 +95,16 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
     combinedModel.fitTo(data, RooFit::Extended());
 
     // Create an argument set the contains our models' parameters
-    RooArgSet* params{combinedModel.getParameters(data)};
+    // This allocates memory!
+    RooArgSet* params{combinedModel.getVariables()};
 
+    // Create a mass fit plot if we need to
     if (massFitPlot) {
-        RooRealVar* observableData = dynamic_cast<RooRealVar*>(&(*params)[TString(observable)]); // wtf
-        TCanvas*    c              = new TCanvas("data", "data");
-        RooPlot*    frame          = new RooPlot("Mass Fit", "Mass Fit", *observableData, 130, 170, 100);
+        RooRealVar* observableData = dynamic_cast<RooRealVar*>(&(*params)[TString(observable)]);
+
+        TCanvas* c     = new TCanvas("data", "data");
+        RooPlot* frame = new RooPlot(
+            "Mass Fit", "Mass Fit", *observableData, observableData->getMin(), observableData->getMax(), 100);
         data.plotOn(frame);
         combinedModel.plotOn(frame);
         combinedModel.plotOn(frame, RooFit::Components(signalModel), RooFit::LineStyle(kDashed));
@@ -119,6 +123,7 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
     // Perform sPlot fit to find the number of signal and background events
     RooStats::SPlot("sData", "An sPlot", data, &combinedModel, RooArgList(numSignalEvents, numBackgroundEvents));
 
+    delete params;
     return std::unique_ptr<TTree>(data.GetClonedTree());
 }
 
