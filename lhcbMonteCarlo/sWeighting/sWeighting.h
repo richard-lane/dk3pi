@@ -40,15 +40,15 @@ struct RootBranch {
  * if a graphViz diagram C-string is provided then a graph showing the model structure will be created
  *
  */
-std::unique_ptr<TTree> createWeightedRootFile(const std::string&              inFile,
-                                              const std::string&              treeName,
-                                              std::vector<RootBranch>         branchesLimitsAndUnits,
-                                              RooAbsPdf&                      signalModel,
-                                              RooAbsPdf&                      backgroundModel,
-                                              const std::string&              observable,
-                                              const std::vector<std::string>& fixedParams,
-                                              const char*                     massFitPlot     = nullptr,
-                                              const char*                     graphVizDiagram = nullptr);
+std::unique_ptr<TTree> createSWeightedTree(const std::string&              inFile,
+                                           const std::string&              treeName,
+                                           std::vector<RootBranch>         branchesLimitsAndUnits,
+                                           RooAbsPdf&                      signalModel,
+                                           RooAbsPdf&                      backgroundModel,
+                                           const std::string&              observable,
+                                           const std::vector<std::string>& fixedParams,
+                                           const char*                     massFitPlot     = nullptr,
+                                           const char*                     graphVizDiagram = nullptr);
 
 } // namespace sWeighting
 

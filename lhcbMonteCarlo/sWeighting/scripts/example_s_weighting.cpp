@@ -251,15 +251,15 @@ static void promptFit(const std::string& inFile,
 
     // sWeight the data
     // The new DELTA_M branch gets written to a tree at /DecayTree/, not /dk3pi/DecayTree/ so i guess let's use that
-    std::unique_ptr<TTree> weightedTree = sWeighting::createWeightedRootFile(inFile,
-                                                                             "DecayTree",
-                                                                             promptBranches(),
-                                                                             signalModel,
-                                                                             backgroundModel,
-                                                                             observableName,
-                                                                             paramsToFix,
-                                                                             outMassFitPlot.c_str(),
-                                                                             graph.c_str());
+    std::unique_ptr<TTree> weightedTree = sWeighting::createSWeightedTree(inFile,
+                                                                          "DecayTree",
+                                                                          promptBranches(),
+                                                                          signalModel,
+                                                                          backgroundModel,
+                                                                          observableName,
+                                                                          paramsToFix,
+                                                                          outMassFitPlot.c_str(),
+                                                                          graph.c_str());
 
     // Write the weighted tree to a new file
     weightedTree->SaveAs(outFile.c_str());
@@ -313,15 +313,15 @@ static void semiLeptonicFit(const std::string& inFile,
     delete newFile;
 
     // sWeight the data
-    std::unique_ptr<TTree> weightedTree = sWeighting::createWeightedRootFile(newFileName,
-                                                                             "DecayTree",
-                                                                             commonBranchParams(),
-                                                                             signalModel,
-                                                                             backgroundModel,
-                                                                             observableName,
-                                                                             paramsToFix,
-                                                                             outMassFitPlot.c_str(),
-                                                                             graph.c_str());
+    std::unique_ptr<TTree> weightedTree = sWeighting::createSWeightedTree(newFileName,
+                                                                          "DecayTree",
+                                                                          commonBranchParams(),
+                                                                          signalModel,
+                                                                          backgroundModel,
+                                                                          observableName,
+                                                                          paramsToFix,
+                                                                          outMassFitPlot.c_str(),
+                                                                          graph.c_str());
 
     // Write the weighted tree to a new file
     weightedTree->SaveAs(outFile.c_str());

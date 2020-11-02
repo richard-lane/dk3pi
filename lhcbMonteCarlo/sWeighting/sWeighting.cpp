@@ -127,15 +127,15 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
     return std::unique_ptr<TTree>(data.GetClonedTree());
 }
 
-std::unique_ptr<TTree> createWeightedRootFile(const std::string&              inFile,
-                                              const std::string&              treeName,
-                                              std::vector<RootBranch>         branchInfo,
-                                              RooAbsPdf&                      signalModel,
-                                              RooAbsPdf&                      backgroundModel,
-                                              const std::string&              observable,
-                                              const std::vector<std::string>& fixedParams,
-                                              const char*                     massFitPlot,
-                                              const char*                     graphVizDiagram)
+std::unique_ptr<TTree> createSWeightedTree(const std::string&              inFile,
+                                           const std::string&              treeName,
+                                           std::vector<RootBranch>         branchInfo,
+                                           RooAbsPdf&                      signalModel,
+                                           RooAbsPdf&                      backgroundModel,
+                                           const std::string&              observable,
+                                           const std::vector<std::string>& fixedParams,
+                                           const char*                     massFitPlot,
+                                           const char*                     graphVizDiagram)
 {
 
     // Read in the data we want from the tree; first select which branches we want then read the data from them into a
