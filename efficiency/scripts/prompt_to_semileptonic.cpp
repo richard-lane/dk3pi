@@ -106,17 +106,22 @@ static std::vector<PhspPoint> phsp(const std::string& rootFile, const std::strin
     return points;
 }
 
-static void plotProjection(TH1D& promptHist, TH1D& slHist, const std::string& path, const std::string& xTitle)
+static void
+plotProjection(TH1D& promptHist, TH1D& slHist, TH1D& reweightedHist, const std::string& path, const std::string& xTitle)
 {
     // Formatting
     promptHist.SetLineColor(kRed);
     slHist.SetLineColor(kGreen);
+    reweightedHist.SetLineColor(kBlue);
+
     promptHist.SetStats(false);
     slHist.SetStats(false);
+    reweightedHist.SetStats(false);
 
     // Scale hists
     promptHist.Scale(1 / promptHist.Integral());
     slHist.Scale(1 / slHist.Integral());
+    reweightedHist.Scale(1 / reweightedHist.Integral());
 
     // Axis
     promptHist.GetYaxis()->SetTitle("Relative counts");
@@ -124,8 +129,11 @@ static void plotProjection(TH1D& promptHist, TH1D& slHist, const std::string& pa
 
     // Save the plots
     util::LegendParams_t legend{0.7, 0.9, 0.7, 0.9};
-    util::saveObjectsToFile<TH1D>(
-        {&promptHist, &slHist}, {"HIST", "SAME HIST"}, {"Prompt", "SL"}, path.c_str(), legend);
+    util::saveObjectsToFile<TH1D>({&promptHist, &slHist, &reweightedHist},
+                                  {"HIST", "SAME HIST", "SAME HIST"},
+                                  {"Prompt", "SL", "Reweighted Prompt"},
+                                  path.c_str(),
+                                  legend);
 }
 
 int main()
@@ -160,7 +168,12 @@ int main()
     auto secondHalfOfPromptData    = std::vector<PhspPoint>(promptPoints.begin() + halfPromptSize, promptPoints.end());
     auto secondHalfOfPromptWeights = std::vector<double>(promptWeights.begin() + halfPromptSize, promptWeights.end());
     std::cout << "Training BDT" << std::endl;
-    auto efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.size())};
+    auto                efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.size())};
+    std::vector<double> prompt2SLweights = secondHalfOfPromptWeights;
+
+    for (size_t i = 0; i < prompt2SLweights.size(); ++i) {
+        prompt2SLweights[i] *= efficiencyWeights[i];
+    }
 
     // Create histograms of semileptonic, prompt + the prompt half that has been reweighted
     constexpr int d{5};
@@ -176,6 +189,8 @@ int main()
             secondHalfOfPromptData, secondHalfOfPromptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
         TH1D semileptonicHist{
             plotProjection(semileptonicPoints, semileptonicWeights, i, "semileptonic", nBins, low[i], high[i])};
-        plotProjection(promptHist, semileptonicHist, titles[i], labels[i]);
+        TH1D reweightedPrompt{
+            plotProjection(secondHalfOfPromptData, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
+        plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i]);
     }
 }
