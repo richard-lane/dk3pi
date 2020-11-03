@@ -26,11 +26,11 @@ PhspPoint parametrisation(const dDecay_t& decay)
     PhspPoint point = PhspPoint(5);
 
     // Use invariant masses m12, m23, m34, m123, m234
-    point[0] = invariantMass(std::vector<kinematicParams_t>{decay.kParams, decay.pi1Params});
-    point[1] = invariantMass(std::vector<kinematicParams_t>{decay.pi1Params, decay.pi2Params});
-    point[2] = invariantMass(std::vector<kinematicParams_t>{decay.pi2Params, decay.pi3Params});
-    point[3] = invariantMass(std::vector<kinematicParams_t>{decay.kParams, decay.pi1Params, decay.pi2Params});
-    point[4] = invariantMass(std::vector<kinematicParams_t>{decay.pi1Params, decay.pi2Params, decay.pi3Params});
+    point[0] = invariantMass({decay.kParams, decay.pi1Params});
+    point[1] = invariantMass({decay.pi1Params, decay.pi2Params});
+    point[2] = invariantMass({decay.pi2Params, decay.pi3Params});
+    point[3] = invariantMass({decay.kParams, decay.pi1Params, decay.pi2Params});
+    point[4] = invariantMass({decay.pi1Params, decay.pi2Params, decay.pi3Params});
 
     return point;
 }

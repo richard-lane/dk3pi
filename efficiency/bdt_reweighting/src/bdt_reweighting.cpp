@@ -31,7 +31,16 @@ static PyArrayObject* copyPhspPoints2Numpy(const std::vector<PhspPoint>& points)
     return array;
 }
 
-PyObject* initBDT(const std::vector<PhspPoint>& mcData, const std::vector<PhspPoint>& realData)
+static PyObject* castVector2Array(std::vector<double>& points)
+{
+    npy_intp size = points.size();
+    return PyArray_SimpleNewFromData(1, &size, NPY_DOUBLE, points.data());
+}
+
+PyObject* initBDT(const std::vector<PhspPoint>& mcData,
+                  const std::vector<PhspPoint>& realData,
+                  std::vector<double>*          mcWeights,
+                  std::vector<double>*          realWeights)
 {
     // Initialise Python interpreter
     Py_Initialize();
@@ -68,8 +77,36 @@ PyObject* initBDT(const std::vector<PhspPoint>& mcData, const std::vector<PhspPo
     assert(numpyRealData);
 
     // Create + return the BDT
+    // Four different cases requiring different types to be passed to PyObject_CallFunctionObjArgs;
+    // Both/neither/one of mc and real weights specified
+    // Kind of a mess
     PyObject* bdt = nullptr;
-    bdt           = PyObject_CallFunctionObjArgs(initFunc, numpyMCData, numpyRealData, NULL);
+
+    // Both weights
+    if (mcWeights && realWeights) {
+        PyObject* mcWeightArray   = castVector2Array(*mcWeights);
+        PyObject* realWeightArray = castVector2Array(*realWeights);
+        bdt = PyObject_CallFunctionObjArgs(initFunc, numpyMCData, numpyRealData, mcWeightArray, realWeightArray, NULL);
+    }
+
+    // Only MC weights
+    else if (mcWeights) {
+        PyObject* mcWeightArray = castVector2Array(*mcWeights);
+        bdt = PyObject_CallFunctionObjArgs(initFunc, numpyMCData, numpyRealData, mcWeightArray, NULL);
+    }
+
+    // Only real weights
+    else if (realWeights) {
+        PyObject* mcWeightArray   = Py_BuildValue(""); // python None
+        PyObject* realWeightArray = castVector2Array(*realWeights);
+        bdt = PyObject_CallFunctionObjArgs(initFunc, numpyMCData, numpyRealData, mcWeightArray, realWeightArray, NULL);
+    }
+
+    // Neither weights
+    else {
+        bdt = PyObject_CallFunctionObjArgs(initFunc, numpyMCData, numpyRealData, NULL);
+    }
+
     if (!bdt) {
         throw PythonError();
     }
@@ -113,7 +150,7 @@ std::vector<double> efficiency(PyObject* bdt, const std::vector<PhspPoint>& poin
     if (!iter) {
         throw PythonError();
     }
-    double*  dptr = static_cast<double*>(PyArray_DATA((PyArrayObject*)efficiencies));
+    double* dptr = static_cast<double*>(PyArray_DATA((PyArrayObject*)efficiencies));
     for (size_t i = 0; i < points.size(); ++i) {
         data[i] = *dptr;
         dptr++;

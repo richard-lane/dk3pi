@@ -46,8 +46,13 @@ inline char* py2chars(PyObject* obj)
 /*
  * Set up a hep_ml reweighting BDT using the MC and real data passed in
  *
+ * Optionally pass in weights. i don't know why they're not const
+ *
  */
-PyObject* initBDT(const std::vector<PhspPoint>& mcData, const std::vector<PhspPoint>& realData);
+PyObject* initBDT(const std::vector<PhspPoint>& mcData,
+                  const std::vector<PhspPoint>& realData,
+                  std::vector<double>*    mcWeights       = nullptr,
+                  std::vector<double>*    realDataWeights = nullptr);
 
 /*
  * Find the efficiency at a collection of points given a trained BDT

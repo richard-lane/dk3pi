@@ -2,16 +2,23 @@ import numpy as np
 from hep_ml.reweight import GBReweighter
 
 
-def init(mc_data, real_data):
+def init(mc_data, real_data, mc_weights=None, real_data_weights=None):
     """
     Initialise, train + return a BDT for performing the D->K3pi efficiency estimate
 
     Pass in an array-like of data points, each of which is an array-like of co-ordinates
     e.g. [[1, 2, 3, 4], [1, 4, 2, 5], ...]
 
+    Also optionally pass in an array-like of weights; if unweighted pass in None
+
     """
     reweighter = GBReweighter()
-    reweighter.fit(original=real_data, target=mc_data)
+    reweighter.fit(
+        original=real_data,
+        target=mc_data,
+        original_weight=real_data_weights,
+        target_weight=mc_weights,
+    )
 
     return reweighter
 
