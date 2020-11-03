@@ -12,8 +12,10 @@
 #include <RooDataSet.h>
 #include <RooRealVar.h>
 #include <RooStats/SPlot.h>
+#include <TAxis.h>
 #include <TCanvas.h>
 #include <TFile.h>
+#include <TLine.h>
 
 namespace sWeighting
 {
@@ -54,10 +56,71 @@ static RooDataSet readData(const std::string&                            rootFil
 }
 
 /*
+ * Create a plot of the fit
+ */
+static void massFitPlot(const RooDataSet&  dataset,
+                        const RooArgSet&   params,
+                        const std::string& observable,
+                        RooAbsPdf&         combinedModel,
+                        const RooAbsPdf&   signalModel,
+                        const RooAbsPdf&   backgroundModel,
+                        const char*        plotPath)
+{
+    // Create a canvas with appropriate pads for a main mass fit plot and a subsidiary residual plot
+    std::unique_ptr<TCanvas> c{std::make_unique<TCanvas>("data", "data")};
+    std::unique_ptr<TPad> massFitPad{std::make_unique<TPad>("mass fit", "mass fit", 0, 0.2, 1, 1)};
+    std::unique_ptr<TPad> residualPad{std::make_unique<TPad>("residual", "pull", 0, 0, 1, 0.2)};
+    massFitPad->SetBottomMargin(0.00001);
+    massFitPad->SetBorderMode(0);
+    residualPad->SetTopMargin(0.00001);
+    residualPad->SetBottomMargin(0.35);
+    residualPad->SetBorderMode(0);
+    massFitPad->Draw();
+    residualPad->Draw();
+
+    // Create a RooPlot for our observable
+    RooRealVar*              observableData = dynamic_cast<RooRealVar*>(&params[TString(observable)]);
+    const int                numBins{70};
+    std::unique_ptr<RooPlot> fitPlot(observableData->frame(RooFit::Title("Mass Fit"), RooFit::Bins(numBins)));
+
+    // Add the model and data to the RooPlot
+    // Add the combined model last, as this is the one that RooPlot will "remember"
+    // i.e. it will use these for calculating pulls, residuals etc.
+    dataset.plotOn(fitPlot.get());
+    combinedModel.plotOn(
+        fitPlot.get(), RooFit::Components(signalModel), RooFit::LineStyle(kDashed), RooFit::LineColor(kBlue));
+    combinedModel.plotOn(
+        fitPlot.get(), RooFit::Components(backgroundModel), RooFit::LineStyle(kDotted), RooFit::LineColor(kRed));
+    combinedModel.plotOn(fitPlot.get(), RooFit::LineColor(kGreen));
+
+    // Create a pull and a new frame to contain it
+    RooHist*                 pullHist{fitPlot->pullHist()};
+    std::unique_ptr<RooPlot> pullPlot(observableData->frame(RooFit::Title(" "), RooFit::Bins(numBins))); // Blank title
+    pullPlot->addPlotable(pullHist, "P");
+    pullPlot->GetYaxis()->SetNdivisions(10);
+
+    // Increase the size of the x axis label and tick size
+    pullPlot->GetXaxis()->SetTitleSize(0.15);
+    pullPlot->GetXaxis()->SetLabelSize(0.15);
+
+    // Draw the mass fit
+    massFitPad->cd();
+    fitPlot->Draw();
+
+    // Draw the pull and a horizontal line
+    TLine line(observableData->getMin(), 0, observableData->getMax(), 0);
+    residualPad->cd();
+    pullPlot->Draw();
+    line.Draw();
+
+    c->SaveAs(plotPath);
+};
+
+/*
  * Perform sWeighting
  *
- * The sPlot method requires us to fix all parameters of the model that are not yields once we have performed the fit;
- * these should be passed by name via fixedParameters
+ * The sPlot method requires us to fix all parameters of the model that are not yields once we have performed the
+ * fit; these should be passed by name via fixedParameters
  *
  * NB: doesn't check that sufficient/sensible parameters are fixed, since that's annoyingly hard
  *
@@ -70,7 +133,7 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
                                           RooAbsPdf&                      backgroundModel,
                                           const std::string&              observable,
                                           const std::vector<std::string>& fixedParameters,
-                                          const char*                     massFitPlot     = nullptr,
+                                          const char*                     massFitPlotPath = nullptr,
                                           const char*                     graphVizDiagram = nullptr)
 {
     std::cout << "Performing sWeighting" << std::endl;
@@ -99,20 +162,8 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
     RooArgSet* params{combinedModel.getVariables()};
 
     // Create a mass fit plot if we need to
-    if (massFitPlot) {
-        RooRealVar* observableData = dynamic_cast<RooRealVar*>(&(*params)[TString(observable)]);
-
-        TCanvas* c     = new TCanvas("data", "data");
-        RooPlot* frame = new RooPlot(
-            "Mass Fit", "Mass Fit", *observableData, observableData->getMin(), observableData->getMax(), 100);
-        data.plotOn(frame);
-        combinedModel.plotOn(frame);
-        combinedModel.plotOn(frame, RooFit::Components(signalModel), RooFit::LineStyle(kDashed));
-        combinedModel.plotOn(frame, RooFit::Components(backgroundModel), RooFit::LineStyle(kDotted));
-        frame->Draw();
-        c->SaveAs(massFitPlot);
-        delete frame;
-        delete c;
+    if (massFitPlotPath) {
+        massFitPlot(data, *params, observable, combinedModel, signalModel, backgroundModel, massFitPlotPath);
     }
 
     // Fix the parameters that we were meant to fix
@@ -138,8 +189,8 @@ std::unique_ptr<TTree> createSWeightedTree(const std::string&              inFil
                                            const char*                     graphVizDiagram)
 {
 
-    // Read in the data we want from the tree; first select which branches we want then read the data from them into a
-    // RooDataSet
+    // Read in the data we want from the tree; first select which branches we want then read the data from them into
+    // a RooDataSet
     std::vector<std::string>               branches{};
     std::vector<std::pair<double, double>> ranges{};
     std::vector<std::string>               units{};

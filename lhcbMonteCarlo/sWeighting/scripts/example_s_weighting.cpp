@@ -307,7 +307,7 @@ static void semiLeptonicFit(const std::string& inFile,
     oldFile.GetObject(treeName.c_str(), oldTree);
     assert(oldTree);
     TFile*                newFile = new TFile(newFileName.c_str(), "RECREATE");
-    [[maybe_unused]] auto newTree{oldTree->CloneTree()};
+    [[maybe_unused]] auto newTree{oldTree->CloneTree()}; // not actually unused. i think
     newFile->Write();
     delete oldTree;
     delete newFile;
