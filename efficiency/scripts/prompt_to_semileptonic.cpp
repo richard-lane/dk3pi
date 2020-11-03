@@ -124,7 +124,8 @@ static void plotProjection(TH1D& promptHist, TH1D& slHist, const std::string& pa
 
     // Save the plots
     util::LegendParams_t legend{0.7, 0.9, 0.7, 0.9};
-    util::saveObjectsToFile<TH1D>({&promptHist, &slHist}, {"HIST", "SAME HIST"}, {"Prompt", "SL"}, path.c_str(), legend);
+    util::saveObjectsToFile<TH1D>(
+        {&promptHist, &slHist}, {"HIST", "SAME HIST"}, {"Prompt", "SL"}, path.c_str(), legend);
 }
 
 int main()
@@ -150,12 +151,19 @@ int main()
     // Reweight prompt to semileptonic
 
     // Create histograms
-    const size_t nBins{100};
-    const double low{200};
-    const double high{1400};
 
-    TH1D promptHist{plotProjection(promptPoints, promptWeights, 1, "Phsp Projection", nBins, low, high)};
-    TH1D semileptonicHist{plotProjection(semileptonicPoints, semileptonicWeights, 1, "semileptonic", nBins, low, high)};
+    constexpr int d{5};
+    std::string   titles[d]{"proj0.png", "proj1.png", "proj2.png", "proj3.png", "proj4.png"};
+    std::string   labels[5]{
+        "M(K pi1) /MeV", "M(pi1 pi2) /MeV", "M(pi2 pi3) /MeV", "M(K pi1 pi2) /MeV", "M(pi1 pi2 pi3) /MeV"};
+    double low[d]{400, 200, 200, 700, 400};
+    double high[d]{1600, 1400, 1400, 1800, 1600};
+    size_t nBins{100};
 
-    plotProjection(promptHist, semileptonicHist, "proj1.png", "M(pi1 pi2) /MeV");
+    for (int i = 0; i < d; ++i) {
+        TH1D promptHist{plotProjection(promptPoints, promptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
+        TH1D semileptonicHist{
+            plotProjection(semileptonicPoints, semileptonicWeights, i, "semileptonic", nBins, low[i], high[i])};
+        plotProjection(promptHist, semileptonicHist, titles[i], labels[i]);
+    }
 }
