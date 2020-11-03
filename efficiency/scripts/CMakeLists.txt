@@ -8,4 +8,4 @@ target_link_libraries(toy_efficiency_example.exe common efficiency charmFitter $
 
 # Example reweighting prompt to semileptonic
 add_executable(prompt_to_semileptonic.exe ${CMAKE_CURRENT_SOURCE_DIR}/prompt_to_semileptonic.cpp scriptUtils.cpp)
-target_link_libraries(prompt_to_semileptonic.exe common efficiency ${ROOT_LIBRARIES})
+target_link_libraries(prompt_to_semileptonic.exe common efficiency ${ROOT_LIBRARIES} ${Boost_LIBRARIES})

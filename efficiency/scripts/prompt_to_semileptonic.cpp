@@ -149,9 +149,20 @@ int main()
     auto semileptonicWeights{wts(semileptonicFile, semileptonicTree, semileptonicWeightBranch)};
 
     // Reweight prompt to semileptonic
+    // Split the prompt data into two sets; this assumes they're distributed randomly in phase space
+    // Train the BDT on the first half of the prompt data
+    const size_t halfPromptSize   = promptPoints.size() / 2;
+    auto firstHalfOfPromptData    = std::vector<PhspPoint>(promptPoints.begin(), promptPoints.begin() + halfPromptSize);
+    auto firstHalfOfPromptWeights = std::vector<double>(promptWeights.begin(), promptWeights.begin() + halfPromptSize);
+    PyObject* bdt = initBDT(semileptonicPoints, firstHalfOfPromptData, &semileptonicWeights, &firstHalfOfPromptWeights);
 
-    // Create histograms
+    // Reweight the second half of the prompt data to look like the prompt data
+    auto secondHalfOfPromptData    = std::vector<PhspPoint>(promptPoints.begin() + halfPromptSize, promptPoints.end());
+    auto secondHalfOfPromptWeights = std::vector<double>(promptWeights.begin() + halfPromptSize, promptWeights.end());
+    std::cout << "Training BDT" << std::endl;
+    auto efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.size())};
 
+    // Create histograms of semileptonic, prompt + the prompt half that has been reweighted
     constexpr int d{5};
     std::string   titles[d]{"proj0.png", "proj1.png", "proj2.png", "proj3.png", "proj4.png"};
     std::string   labels[5]{
@@ -161,7 +172,8 @@ int main()
     size_t nBins{100};
 
     for (int i = 0; i < d; ++i) {
-        TH1D promptHist{plotProjection(promptPoints, promptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
+        TH1D promptHist{plotProjection(
+            secondHalfOfPromptData, secondHalfOfPromptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
         TH1D semileptonicHist{
             plotProjection(semileptonicPoints, semileptonicWeights, i, "semileptonic", nBins, low[i], high[i])};
         plotProjection(promptHist, semileptonicHist, titles[i], labels[i]);
