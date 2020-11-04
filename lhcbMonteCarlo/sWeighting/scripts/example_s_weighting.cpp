@@ -207,11 +207,11 @@ static void addDeltaMBranch(const std::string& path,
  *
  * Spit a new root with with weights out at outFile; draw a plot at outImg
  */
-static void promptFit(const std::string& inFile,
-                      const std::string& outFile,
-                      const std::string& outImg,
-                      const std::string& outMassFitPlot,
-                      const std::string& graph)
+[[maybe_unused]] static void promptFit(const std::string& inFile,
+                                       const std::string& outFile,
+                                       const std::string& outImg,
+                                       const std::string& outMassFitPlot,
+                                       const std::string& graph)
 {
     const std::string treeName{"dk3pi/DecayTree"};
 
@@ -273,11 +273,11 @@ static void promptFit(const std::string& inFile,
  *
  * Spit a new root with with weights out at outFile; draw a plot at outImg
  */
-static void semiLeptonicFit(const std::string& inFile,
-                            const std::string& outFile,
-                            const std::string& outImg,
-                            const std::string& outMassFitPlot,
-                            const std::string& graph)
+[[maybe_unused]] static void semiLeptonicFit(const std::string& inFile,
+                                             const std::string& outFile,
+                                             const std::string& outImg,
+                                             const std::string& outMassFitPlot,
+                                             const std::string& graph)
 {
     const std::string treeName{"dk3pi/DecayTree"};
 
@@ -332,13 +332,13 @@ static void semiLeptonicFit(const std::string& inFile,
 
 int main()
 {
-    const std::string rsPath{"./test_2011_RS_prompt.root"};
-    promptFit(rsPath, "newRS.root", "rs.png", "rsMassFit.png", "rsGraph.dot");
+    // const std::string rsPath{"./test_2011_RS_prompt.root"};
+    // promptFit(rsPath, "newRS.root", "rs.png", "rsMassFit.png", "rsGraph.dot");
 
-    const std::string wsPath{"./test_2011_WS_prompt.root"};
-    promptFit(wsPath, "newWS.root", "ws.png", "wsMassFit.png", "wsGraph.dot");
+    // const std::string wsPath{"./test_2011_WS_prompt.root"};
+    // promptFit(wsPath, "newWS.root", "ws.png", "wsMassFit.png", "wsGraph.dot");
 
-    const std::string slPath{"test_2011_RS_sl.root"};
+    const std::string slPath{"all.root"};
     semiLeptonicFit(slPath, "newSL.root", "sl.png", "slMassFit.png", "sl.dot");
 
     return 0;

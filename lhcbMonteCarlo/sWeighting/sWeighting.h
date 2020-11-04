@@ -39,6 +39,8 @@ struct RootBranch {
  * if a mass fit plot C-string is provided then a plot of the mass fit will be created
  * if a graphViz diagram C-string is provided then a graph showing the model structure will be created
  *
+ * multithreaded massfit uses 8 CPUS by default
+ *
  */
 std::unique_ptr<TTree> createSWeightedTree(const std::string&              inFile,
                                            const std::string&              treeName,
@@ -48,7 +50,8 @@ std::unique_ptr<TTree> createSWeightedTree(const std::string&              inFil
                                            const std::string&              observable,
                                            const std::vector<std::string>& fixedParams,
                                            const char*                     massFitPlot     = nullptr,
-                                           const char*                     graphVizDiagram = nullptr);
+                                           const char*                     graphVizDiagram = nullptr,
+                                           const int                       numCPU          = 8);
 
 } // namespace sWeighting
 

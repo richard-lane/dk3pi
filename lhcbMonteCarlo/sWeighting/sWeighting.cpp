@@ -68,8 +68,8 @@ static void massFitPlot(const RooDataSet&  dataset,
 {
     // Create a canvas with appropriate pads for a main mass fit plot and a subsidiary residual plot
     std::unique_ptr<TCanvas> c{std::make_unique<TCanvas>("data", "data")};
-    std::unique_ptr<TPad> massFitPad{std::make_unique<TPad>("mass fit", "mass fit", 0, 0.2, 1, 1)};
-    std::unique_ptr<TPad> residualPad{std::make_unique<TPad>("residual", "pull", 0, 0, 1, 0.2)};
+    std::unique_ptr<TPad>    massFitPad{std::make_unique<TPad>("mass fit", "mass fit", 0, 0.2, 1, 1)};
+    std::unique_ptr<TPad>    residualPad{std::make_unique<TPad>("residual", "pull", 0, 0, 1, 0.2)};
     massFitPad->SetBottomMargin(0.00001);
     massFitPad->SetBorderMode(0);
     residualPad->SetTopMargin(0.00001);
@@ -133,6 +133,7 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
                                           RooAbsPdf&                      backgroundModel,
                                           const std::string&              observable,
                                           const std::vector<std::string>& fixedParameters,
+                                          const int                       numCPU,
                                           const char*                     massFitPlotPath = nullptr,
                                           const char*                     graphVizDiagram = nullptr)
 {
@@ -154,8 +155,8 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
         combinedModel.graphVizTree(graphVizDiagram);
     }
 
-    // Fit the model to data, using an extended likelihood fit
-    combinedModel.fitTo(data, RooFit::Extended());
+    // Fit the model to data, using a multithreaded extended likelihood fit
+    combinedModel.fitTo(data, RooFit::Extended(), RooFit::NumCPU(numCPU));
 
     // Create an argument set the contains our models' parameters
     // This allocates memory!
@@ -186,7 +187,8 @@ std::unique_ptr<TTree> createSWeightedTree(const std::string&              inFil
                                            const std::string&              observable,
                                            const std::vector<std::string>& fixedParams,
                                            const char*                     massFitPlot,
-                                           const char*                     graphVizDiagram)
+                                           const char*                     graphVizDiagram,
+                                           const int                       numCPU)
 {
 
     // Read in the data we want from the tree; first select which branches we want then read the data from them into
@@ -202,7 +204,8 @@ std::unique_ptr<TTree> createSWeightedTree(const std::string&              inFil
     RooDataSet data = readData(inFile, treeName, branches, ranges, units);
 
     // Create a combined model and perform sWeighting
-    return sWeightData(data, signalModel, backgroundModel, observable, fixedParams, massFitPlot, graphVizDiagram);
+    return sWeightData(
+        data, signalModel, backgroundModel, observable, fixedParams, numCPU, massFitPlot, graphVizDiagram);
 }
 
 } // namespace sWeighting
