@@ -283,7 +283,7 @@ void test_z_scan()
         new TGraph2D(numTotalPoints, imVals.data(), reVals.data(), constrainedFitSigmaVals.data());
     ConstraintGraph->SetMaximum(maxSigma);
     ConstraintGraph->GetHistogram()->SetContour(numContours, contourLevels);
-    ConstraintGraph->SetTitle("Z Scan;Im(Z);Re(Z)");
+    ConstraintGraph->SetTitle("Simulated #chi^{2} Scan of Charm Interference Parameter;Im(Z);Re(Z)");
     ConstraintGraph->GetZaxis()->SetTitle("\\sigma");
 
     // Point representing "true" value of Z
@@ -350,7 +350,7 @@ void test_z_scan()
 int main()
 {
     // r scan
-    test_param_scan();
+    // test_param_scan();
 
     // 2d scans
     test_z_scan();

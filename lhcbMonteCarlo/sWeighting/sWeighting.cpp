@@ -9,6 +9,7 @@
 #include <RooAbsReal.h>
 #include <RooAddPdf.h>
 #include <RooArgSet.h>
+#include <RooDataHist.h>
 #include <RooDataSet.h>
 #include <RooRealVar.h>
 #include <RooStats/SPlot.h>
@@ -98,6 +99,7 @@ static void massFitPlot(const RooDataSet&  dataset,
     std::unique_ptr<RooPlot> pullPlot(observableData->frame(RooFit::Title(" "), RooFit::Bins(numBins))); // Blank title
     pullPlot->addPlotable(pullHist, "P");
     pullPlot->GetYaxis()->SetNdivisions(10);
+    pullPlot->GetYaxis()->SetRangeUser(-30, 30);
 
     // Increase the size of the x axis label and tick size
     pullPlot->GetXaxis()->SetTitleSize(0.15);
@@ -115,6 +117,42 @@ static void massFitPlot(const RooDataSet&  dataset,
 
     c->SaveAs(plotPath);
 };
+
+/*
+ * Returns the params after fitting
+ */
+static std::unique_ptr<RooArgSet> massFit(RooDataSet&        data,
+                                          RooAddPdf&         combinedModel,
+                                          const int          numCPU,
+                                          const char*        massFitPlotPath,
+                                          const std::string& observable,
+                                          const RooAbsPdf&   signalModel,
+                                          const RooAbsPdf&   backgroundModel)
+{
+    // Construct a dataset containing only our observable- this is all we need to perform the fit, and RooDataHist will
+    // crash if passed a dataset containing too many vars
+    const RooArgSet             fullArgSet = *data.get();
+    RooArgSet                   observableArgSet(fullArgSet[TString(observable)]);
+    std::unique_ptr<RooDataSet> minimalData(
+        dynamic_cast<RooDataSet*>(data.reduce(RooFit::SelectVars(observableArgSet))));
+
+    // Bin data TODO
+    std::cout << "binning data" << std::endl;
+    std::unique_ptr<RooDataHist> hist(minimalData->binnedClone());
+
+    // Fit the model to data, using a multithreaded extended likelihood fit
+    combinedModel.fitTo(*hist, RooFit::Extended(), RooFit::NumCPU(numCPU));
+
+    // Create an argument set the contains our models' parameters
+    std::unique_ptr<RooArgSet> params{combinedModel.getVariables()};
+
+    // Create a mass fit plot if we need to
+    if (massFitPlotPath) {
+        massFitPlot(data, *params, observable, combinedModel, signalModel, backgroundModel, massFitPlotPath);
+    }
+
+    return params;
+}
 
 /*
  * Perform sWeighting
@@ -137,14 +175,11 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
                                           const char*                     massFitPlotPath = nullptr,
                                           const char*                     graphVizDiagram = nullptr)
 {
-    std::cout << "Performing sWeighting" << std::endl;
-    // Create variables tracking the number of signal and number of background events
-    // The numbers here are just numbers that I have chosen
-    // They should probably be different and maybe be changed
-    RooRealVar numSignalEvents("numSignalEvents", "Signal Events", 20000, 0, 1000000);
-    RooRealVar numBackgroundEvents("numBackgroundEvents", "Background Events", 20000, 0, 1000000);
-
+    assert(false);
     // Create a combined model
+    RooRealVar numSignalEvents("numSignalEvents", "Signal Events", 1000000, 0, 5000000); // TODO un hard code
+    RooRealVar numBackgroundEvents(
+        "numBackgroundEvents", "Background Events", 1000000, 0, 5000000); // TODO un hard code
     RooAddPdf combinedModel("combined model",
                             "Combined Signal + Background Models",
                             RooArgList(signalModel, backgroundModel),
@@ -155,40 +190,33 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
         combinedModel.graphVizTree(graphVizDiagram);
     }
 
-    // Fit the model to data, using a multithreaded extended likelihood fit
-    combinedModel.fitTo(data, RooFit::Extended(), RooFit::NumCPU(numCPU));
+    // Perform mass fit + return the parameters
+    std::cout << "Performing mass fit" << std::endl;
+    std::unique_ptr<RooArgSet> params =
+        massFit(data, combinedModel, numCPU, massFitPlotPath, observable, signalModel, backgroundModel);
 
-    // Create an argument set the contains our models' parameters
-    // This allocates memory!
-    RooArgSet* params{combinedModel.getVariables()};
-
-    // Create a mass fit plot if we need to
-    if (massFitPlotPath) {
-        massFitPlot(data, *params, observable, combinedModel, signalModel, backgroundModel, massFitPlotPath);
-    }
-
-    // Fix the parameters that we were meant to fix
+    // Fix the parameters that we were meant to fix before sWeighting
     for (const auto& paramName : fixedParameters) {
         dynamic_cast<RooRealVar*>(&(*params)[paramName.c_str()])->setConstant();
     }
 
     // Perform sPlot fit to find the number of signal and background events
+    std::cout << "Creating sPlot" << std::endl;
     RooStats::SPlot("sData", "An sPlot", data, &combinedModel, RooArgList(numSignalEvents, numBackgroundEvents));
 
-    delete params;
     return std::unique_ptr<TTree>(data.GetClonedTree());
 }
 
-std::unique_ptr<TTree> createSWeightedTree(const std::string&              inFile,
-                                           const std::string&              treeName,
-                                           std::vector<RootBranch>         branchInfo,
-                                           RooAbsPdf&                      signalModel,
-                                           RooAbsPdf&                      backgroundModel,
-                                           const std::string&              observable,
-                                           const std::vector<std::string>& fixedParams,
-                                           const char*                     massFitPlot,
-                                           const char*                     graphVizDiagram,
-                                           const int                       numCPU)
+std::unique_ptr<TTree> findSWeights(const std::string&              inFile,
+                                    const std::string&              treeName,
+                                    std::vector<RootBranch>         branchInfo,
+                                    RooAbsPdf&                      signalModel,
+                                    RooAbsPdf&                      backgroundModel,
+                                    const std::string&              observable,
+                                    const std::vector<std::string>& fixedParams,
+                                    const char*                     massFitPlot,
+                                    const char*                     graphVizDiagram,
+                                    const int                       numCPU)
 {
 
     // Read in the data we want from the tree; first select which branches we want then read the data from them into

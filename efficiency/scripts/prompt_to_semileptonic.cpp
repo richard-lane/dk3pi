@@ -4,6 +4,8 @@
 #include "bdt_reweighting.h"
 #include "scriptUtils.h"
 
+#include <random>
+
 #include <TFile.h>
 #include <TH1D.h>
 
@@ -33,9 +35,12 @@ static TH1D plotProjection(const std::vector<PhspPoint>& points,
 /*
  * Take a D-> K pi1 pi2 pi3 root file, return a vector of weights
  */
-static std::vector<double>
-wts(const std::string& rootFile, const std::string& treeName, const std::string& weightBranchName)
+static std::vector<double> wts(const std::string&               rootFile,
+                               const std::string&               treeName,
+                               const std::string&               weightBranchName,
+                               const std::vector<size_t>* const discard = nullptr)
 {
+    std::cout << "finding weights" << std::endl;
     // Create ROOT file and TTree
     TFile  f(rootFile.c_str());
     TTree* tree;
@@ -47,12 +52,20 @@ wts(const std::string& rootFile, const std::string& treeName, const std::string&
     tree->SetBranchAddress(weightBranchName.c_str(), &wt);
 
     // Init vector to the right length
-    std::vector<double> weights(tree->GetEntries());
+    std::vector<double> weights{};
 
     // Iterate over tree filling in the right things
+    // Unless we're meant to discard them
+    size_t j{0};
     for (decltype(tree->GetEntries()) i = 0; i < tree->GetEntries(); ++i) {
         tree->GetEntry(i);
-        weights[i] = wt;
+        if (!discard) {
+            weights.push_back(wt);
+        } else if ((size_t)i == (*discard)[j]) {
+            j++;
+        } else {
+            weights.push_back(wt);
+        }
     }
 
     delete tree;
@@ -60,10 +73,12 @@ wts(const std::string& rootFile, const std::string& treeName, const std::string&
 }
 
 /*
- * Take a D-> K pi1 pi2 pi3 root file, return a vector of phsppoints
+ * Take a D-> K pi1 pi2 pi3 root file, return a vector of phsppoints and a vector of the indices that i threw away
  */
-static std::vector<PhspPoint> phsp(const std::string& rootFile, const std::string& treeName)
+static std::pair<std::vector<PhspPoint>, std::vector<size_t>>
+phsp(const std::string& rootFile, const std::string& treeName, const bool prune = false)
 {
+    std::cout << "finding phsp" << std::endl;
     // Create ROOT file and TTree
     TFile  f(rootFile.c_str());
     TTree* tree;
@@ -92,14 +107,32 @@ static std::vector<PhspPoint> phsp(const std::string& rootFile, const std::strin
     tree->SetBranchAddress("pi3_PZ", &decay.pi3Params.pz);
     tree->SetBranchAddress("pi3_PE", &decay.pi3Params.energy);
 
-    // Init vector to the right length
-    std::vector<PhspPoint> points(tree->GetEntries());
+    // Init pair of empty vectors
+    std::pair<std::vector<PhspPoint>, std::vector<size_t>> points{};
+
+    // RNG and distribution for doing accept-reject
+    std::random_device                     rd;
+    std::mt19937                           rng(rd());
+    std::uniform_real_distribution<double> dist(0, 1);
+
+    // PDF for rejecting some events if their invariant mass is near the eta prime mass peak
+    auto pdf = [](const double mass) {
+        if (mass < 800 || mass > 1000) {
+            return 1.0;
+        }
+        return 1 - 0.3 * (1 - std::fabs(mass - 900) / 200);
+    };
 
     // Iterate over tree filling in the right things
     for (decltype(tree->GetEntries()) i = 0; i < tree->GetEntries(); ++i) {
         // Work out its phsp params, insert into the vector
         tree->GetEntry(i);
-        points[i] = parametrisation(decay);
+        double mass = invariantMass({decay.kParams, decay.pi1Params});
+        if (!prune || dist(rng) < pdf(mass)) {
+            points.first.push_back(parametrisation(decay));
+        } else {
+            points.second.push_back(i);
+        }
     }
 
     delete tree;
@@ -125,12 +158,14 @@ plotProjection(TH1D& promptHist, TH1D& slHist, TH1D& reweightedHist, const std::
 
     // Axis
     promptHist.GetYaxis()->SetTitle("Relative counts");
+    promptHist.GetYaxis()->SetRangeUser(0., 0.045);
+    slHist.GetYaxis()->SetRangeUser(0., 0.045);
     promptHist.GetXaxis()->SetTitle(xTitle.c_str());
 
     // Save the plots
     util::LegendParams_t legend{0.7, 0.9, 0.7, 0.9};
     util::saveObjectsToFile<TH1D>({&promptHist, &slHist, &reweightedHist},
-                                  {"HIST", "SAME HIST", "SAME HIST"},
+                                  {"HIST E", "SAME HIST E", "SAME HIST E"},
                                   {"Prompt", "SL", "Reweighted Prompt"},
                                   path.c_str(),
                                   legend);
@@ -140,7 +175,7 @@ int main()
 {
     // Prompt ROOT file (should contain a branch containing event weights)
     const std::string promptFile{"newRS.root"};
-    const std::string promptTree{"RooTreeDataStore_data_DecayTree"};
+    const std::string promptTree{"RooTreeDataStore_merged_merged"};
     const std::string promptWeightBranch{"numSignalEvents_sw"};
 
     // Semileptonic ROOT file (should contain a branch containing event weights)
@@ -149,26 +184,29 @@ int main()
     const std::string semileptonicWeightBranch{"numSignalEvents_sw"};
 
     // Create vectors of phase space points
-    auto promptPoints{phsp(promptFile, promptTree)};
+    auto promptPoints{phsp(promptFile, promptTree, true)};
     auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree)};
 
     // Create vectors of weights
-    auto promptWeights{wts(promptFile, promptTree, promptWeightBranch)};
+    auto promptWeights{wts(promptFile, promptTree, promptWeightBranch, &promptPoints.second)};
     auto semileptonicWeights{wts(semileptonicFile, semileptonicTree, semileptonicWeightBranch)};
 
     // Reweight prompt to semileptonic
     // Split the prompt data into two sets; this assumes they're distributed randomly in phase space
     // Train the BDT on the first half of the prompt data
-    const size_t halfPromptSize   = promptPoints.size() / 2;
-    auto firstHalfOfPromptData    = std::vector<PhspPoint>(promptPoints.begin(), promptPoints.begin() + halfPromptSize);
+    const size_t halfPromptSize = promptPoints.first.size() / 2;
+    auto         firstHalfOfPromptData =
+        std::vector<PhspPoint>(promptPoints.first.begin(), promptPoints.first.begin() + halfPromptSize);
     auto firstHalfOfPromptWeights = std::vector<double>(promptWeights.begin(), promptWeights.begin() + halfPromptSize);
-    PyObject* bdt = initBDT(semileptonicPoints, firstHalfOfPromptData, &semileptonicWeights, &firstHalfOfPromptWeights);
+    PyObject* bdt =
+        initBDT(semileptonicPoints.first, firstHalfOfPromptData, &semileptonicWeights, &firstHalfOfPromptWeights);
 
     // Reweight the second half of the prompt data to look like the prompt data
-    auto secondHalfOfPromptData    = std::vector<PhspPoint>(promptPoints.begin() + halfPromptSize, promptPoints.end());
+    auto secondHalfOfPromptData =
+        std::vector<PhspPoint>(promptPoints.first.begin() + halfPromptSize, promptPoints.first.end());
     auto secondHalfOfPromptWeights = std::vector<double>(promptWeights.begin() + halfPromptSize, promptWeights.end());
     std::cout << "Training BDT" << std::endl;
-    auto                efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.size())};
+    auto                efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
     std::vector<double> prompt2SLweights = secondHalfOfPromptWeights;
 
     for (size_t i = 0; i < prompt2SLweights.size(); ++i) {
@@ -188,7 +226,7 @@ int main()
         TH1D promptHist{plotProjection(
             secondHalfOfPromptData, secondHalfOfPromptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
         TH1D semileptonicHist{
-            plotProjection(semileptonicPoints, semileptonicWeights, i, "semileptonic", nBins, low[i], high[i])};
+            plotProjection(semileptonicPoints.first, semileptonicWeights, i, "semileptonic", nBins, low[i], high[i])};
         TH1D reweightedPrompt{
             plotProjection(secondHalfOfPromptData, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
         plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i]);

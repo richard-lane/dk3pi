@@ -39,9 +39,9 @@ static void sPlotHist(const std::string&               rootFile,
 
     // Create + fill hists
     TH1D* signal =
-        new TH1D("signal", "Reweighted Events;Delta_M /MeV; Weighted Count", 100, axisLimits.first, axisLimits.second);
+        new TH1D("signal", "Reweighted Events;M(D)/MeV; Weighted Count", 100, axisLimits.first, axisLimits.second);
     TH1D* background =
-        new TH1D("bkg", "Reweighted Events;Delta_M /MeV; Weighted Count", 100, axisLimits.first, axisLimits.second);
+        new TH1D("bkg", "Reweighted Events;M(D)/MeV; Weighted Count", 100, axisLimits.first, axisLimits.second);
     auto numEvents{tree->GetEntries()};
     for (decltype(numEvents) i{0}; i < numEvents; ++i) {
         tree->GetEntry(i);
@@ -91,7 +91,7 @@ static std::vector<sWeighting::RootBranch> commonBranchParams(void)
             sWeighting::RootBranch{"D_P", "MeV", 0, max},       sWeighting::RootBranch{"D_PT", "MeV", 0, max},
             sWeighting::RootBranch{"D_PE", "MeV", 0, max},      sWeighting::RootBranch{"D_PX", "MeV", -max, max},
             sWeighting::RootBranch{"D_PY", "MeV", -max, max},   sWeighting::RootBranch{"D_PZ", "MeV", -max, max},
-            sWeighting::RootBranch{"D_M", "MeV", -max, max},    sWeighting::RootBranch{"D_MM", "MeV", 0, max},
+            sWeighting::RootBranch{"D_M", "MeV", 1820, 1910},   sWeighting::RootBranch{"D_MM", "MeV", 0, max},
             sWeighting::RootBranch{"D_MMERR", "MeV", 0, max},   sWeighting::RootBranch{"D_ID", "", -max, max},
             sWeighting::RootBranch{"D_TAU", "", -max, max},     sWeighting::RootBranch{"D_TAUERR", "", -max, max},
             sWeighting::RootBranch{"D_TAUCHI2", "", -max, max},
@@ -164,11 +164,11 @@ static std::vector<sWeighting::RootBranch> promptBranches(void)
  *
  * Copies the old root file to copy_<filename>, in case of things going bad
  */
-static void addDeltaMBranch(const std::string& path,
-                            const std::string& treeName,
-                            const std::string& dMassBranchName,
-                            const std::string& dStarMassBranchName,
-                            const std::string& deltaMBranchName)
+[[maybe_unused]] static void addDeltaMBranch(const std::string& path,
+                                             const std::string& treeName,
+                                             const std::string& dMassBranchName,
+                                             const std::string& dStarMassBranchName,
+                                             const std::string& deltaMBranchName)
 {
     std::cout << "Creating branch " << deltaMBranchName << std::endl;
     // Find the filename from the path so we know what to copy to
@@ -251,15 +251,15 @@ static void addDeltaMBranch(const std::string& path,
 
     // sWeight the data
     // The new DELTA_M branch gets written to a tree at /DecayTree/, not /dk3pi/DecayTree/ so i guess let's use that
-    std::unique_ptr<TTree> weightedTree = sWeighting::createSWeightedTree(inFile,
-                                                                          "DecayTree",
-                                                                          promptBranches(),
-                                                                          signalModel,
-                                                                          backgroundModel,
-                                                                          observableName,
-                                                                          paramsToFix,
-                                                                          outMassFitPlot.c_str(),
-                                                                          graph.c_str());
+    std::unique_ptr<TTree> weightedTree = sWeighting::findSWeights(inFile,
+                                                                   "DecayTree",
+                                                                   promptBranches(),
+                                                                   signalModel,
+                                                                   backgroundModel,
+                                                                   observableName,
+                                                                   paramsToFix,
+                                                                   outMassFitPlot.c_str(),
+                                                                   graph.c_str());
 
     // Write the weighted tree to a new file
     weightedTree->SaveAs(outFile.c_str());
@@ -287,8 +287,8 @@ static void addDeltaMBranch(const std::string& path,
     // Create a signal model
     // These RooRealVars need to have the same scope as the models that use them, otherwise the models will segfault
     std::string  observableName{"D_M"};
-    const double lowDMass{1825.};
-    const double hiDMass{1905.};
+    const double lowDMass{1820.};
+    const double hiDMass{1910.};
     RooRealVar   dMassVar(observableName.c_str(), observableName.c_str(), lowDMass, hiDMass, "MeV/c^2");
     RooRealVar   meanDMassVar("Mean D Mass", "Mean D Mass", 1865.0, 1850.0, 1880.0);
     RooRealVar   dMassWidthVar("D Mass Width", "D Mass Width", 10.0, 0.0001, 50.0);
@@ -296,32 +296,32 @@ static void addDeltaMBranch(const std::string& path,
 
     // Create a background model
     RooRealVar    aVar("a", "a", 0.005, 0.0, 0.01);
-    RooRealVar    bVar("b", "b", 0.0);
+    RooRealVar    bVar("b", "b", 0.0, -10.0, 10.0);
     RooPolynomial backgroundModel("SL Background", "Background PDF: Polynomial", dMassVar, RooArgList(aVar, bVar));
 
     // Create a new ROOT file with the tree not in a directory
     // Hack for now until i get the sWeighting to properly deal with directories; TODO
     std::string newFileName{"new_" + inFile};
-    TFile       oldFile(inFile.c_str());
-    TTree*      oldTree{nullptr};
-    oldFile.GetObject(treeName.c_str(), oldTree);
-    assert(oldTree);
-    TFile*                newFile = new TFile(newFileName.c_str(), "RECREATE");
-    [[maybe_unused]] auto newTree{oldTree->CloneTree()}; // not actually unused. i think
-    newFile->Write();
-    delete oldTree;
-    delete newFile;
+    // TFile       oldFile(inFile.c_str());
+    // TTree*      oldTree{nullptr};
+    // oldFile.GetObject(treeName.c_str(), oldTree);
+    // assert(oldTree);
+    // TFile*                newFile = new TFile(newFileName.c_str(), "RECREATE");
+    // [[maybe_unused]] auto newTree{oldTree->CloneTree()}; // not actually unused. i think
+    // newFile->Write();
+    // delete oldTree;
+    // delete newFile;
 
     // sWeight the data
-    std::unique_ptr<TTree> weightedTree = sWeighting::createSWeightedTree(newFileName,
-                                                                          "DecayTree",
-                                                                          commonBranchParams(),
-                                                                          signalModel,
-                                                                          backgroundModel,
-                                                                          observableName,
-                                                                          paramsToFix,
-                                                                          outMassFitPlot.c_str(),
-                                                                          graph.c_str());
+    std::unique_ptr<TTree> weightedTree = sWeighting::findSWeights(newFileName,
+                                                                   "DecayTree",
+                                                                   commonBranchParams(),
+                                                                   signalModel,
+                                                                   backgroundModel,
+                                                                   observableName,
+                                                                   paramsToFix,
+                                                                   outMassFitPlot.c_str(),
+                                                                   graph.c_str());
 
     // Write the weighted tree to a new file
     weightedTree->SaveAs(outFile.c_str());
@@ -332,14 +332,14 @@ static void addDeltaMBranch(const std::string& path,
 
 int main()
 {
-    // const std::string rsPath{"./test_2011_RS_prompt.root"};
-    // promptFit(rsPath, "newRS.root", "rs.png", "rsMassFit.png", "rsGraph.dot");
+    const std::string rsPath{"small_prompt.root"};
+    promptFit(rsPath, "newRS.root", "rs.png", "rsMassFit.png", "rsGraph.dot");
 
     // const std::string wsPath{"./test_2011_WS_prompt.root"};
     // promptFit(wsPath, "newWS.root", "ws.png", "wsMassFit.png", "wsGraph.dot");
 
-    const std::string slPath{"all.root"};
-    semiLeptonicFit(slPath, "newSL.root", "sl.png", "slMassFit.png", "sl.dot");
+    // const std::string slPath{"all.root"};
+    // semiLeptonicFit(slPath, "newSL.root", "sl.png", "slMassFit.png", "sl.dot");
 
     return 0;
 }
