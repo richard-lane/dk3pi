@@ -198,6 +198,7 @@ int main()
     auto         firstHalfOfPromptData =
         std::vector<PhspPoint>(promptPoints.first.begin(), promptPoints.first.begin() + halfPromptSize);
     auto firstHalfOfPromptWeights = std::vector<double>(promptWeights.begin(), promptWeights.begin() + halfPromptSize);
+    std::cout << "Training BDT" << std::endl;
     PyObject* bdt =
         initBDT(semileptonicPoints.first, firstHalfOfPromptData, &semileptonicWeights, &firstHalfOfPromptWeights);
 
@@ -205,8 +206,8 @@ int main()
     auto secondHalfOfPromptData =
         std::vector<PhspPoint>(promptPoints.first.begin() + halfPromptSize, promptPoints.first.end());
     auto secondHalfOfPromptWeights = std::vector<double>(promptWeights.begin() + halfPromptSize, promptWeights.end());
-    std::cout << "Training BDT" << std::endl;
-    auto                efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
+    std::cout << "Finding weights" << std::endl;
+    auto efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
     std::vector<double> prompt2SLweights = secondHalfOfPromptWeights;
 
     for (size_t i = 0; i < prompt2SLweights.size(); ++i) {

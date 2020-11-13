@@ -1,8 +1,5 @@
-#include <experimental/filesystem>
 #include <memory>
-#include <regex>
 
-#include "D2K3PiError.h"
 #include "sWeighting.h"
 #include "util.h"
 
@@ -64,61 +61,44 @@ static void sPlotHist(const std::string&               rootFile,
 }
 
 /*
- * Extract name of a ROOT file from its path
- *
- * Regex matchs a filename ending in .root, which may look like e.g, "file.root" "./file.root",
- * "directory/file.root", etc.
- * Should definitely be unit tested, but it isn't because i don't want to
- */
-static std::string rootFileName(const std::string& path)
-{
-    std::smatch matches;
-    std::regex_search(path, matches, std::regex(R"(.*?\/?([\w\-. ]+\.root))"));
-    if (matches.empty()) {
-        throw D2K3PiException();
-    }
-
-    return matches[1].str();
-}
-
-/*
  * return a vector of (branch name, units, limits) structs for branches common to both prompt and SL root files
  */
 static std::vector<sWeighting::RootBranch> commonBranchParams(void)
 {
     double max{4000000000};
-    return {sWeighting::RootBranch{"D_IP_OWNPV", "", 0, max},   sWeighting::RootBranch{"D_IPCHI2_OWNPV", "", -max, max},
-            sWeighting::RootBranch{"D_P", "MeV", 0, max},       sWeighting::RootBranch{"D_PT", "MeV", 0, max},
-            sWeighting::RootBranch{"D_PE", "MeV", 0, max},      sWeighting::RootBranch{"D_PX", "MeV", -max, max},
-            sWeighting::RootBranch{"D_PY", "MeV", -max, max},   sWeighting::RootBranch{"D_PZ", "MeV", -max, max},
-            sWeighting::RootBranch{"D_M", "MeV", 1820, 1910},   sWeighting::RootBranch{"D_MM", "MeV", 0, max},
-            sWeighting::RootBranch{"D_MMERR", "MeV", 0, max},   sWeighting::RootBranch{"D_ID", "", -max, max},
-            sWeighting::RootBranch{"D_TAU", "", -max, max},     sWeighting::RootBranch{"D_TAUERR", "", -max, max},
-            sWeighting::RootBranch{"D_TAUCHI2", "", -max, max},
+    return {
+        sWeighting::RootBranch{"D0_IP_OWNPV", "", 0, max},    sWeighting::RootBranch{"D0_IPCHI2_OWNPV", "", -max, max},
+        sWeighting::RootBranch{"D0_P", "MeV", 0, max},        sWeighting::RootBranch{"D0_PT", "MeV", 0, max},
+        sWeighting::RootBranch{"D0_PE", "MeV", 0, max},       sWeighting::RootBranch{"D0_PX", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_PY", "MeV", -max, max},    sWeighting::RootBranch{"D0_PZ", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_M", "MeV", 1820, 1910},    sWeighting::RootBranch{"D0_MM", "MeV", 0, max},
+        sWeighting::RootBranch{"D0_MMERR", "MeV", 0, max},    sWeighting::RootBranch{"D0_ID", "", -max, max},
+        sWeighting::RootBranch{"D0_TAU", "", -max, max},      sWeighting::RootBranch{"D0_TAUERR", "", -max, max},
+        sWeighting::RootBranch{"D0_TAUCHI2", "", -max, max},
 
-            sWeighting::RootBranch{"K_IP_OWNPV", "", 0, max},   sWeighting::RootBranch{"K_IPCHI2_OWNPV", "", 0, max},
-            sWeighting::RootBranch{"K_P", "MeV", 0, max},       sWeighting::RootBranch{"K_PT", "MeV", 0, max},
-            sWeighting::RootBranch{"K_PE", "MeV", 0, max},      sWeighting::RootBranch{"K_PX", "MeV", -max, max},
-            sWeighting::RootBranch{"K_PY", "MeV", -max, max},   sWeighting::RootBranch{"K_PZ", "MeV", -max, max},
-            sWeighting::RootBranch{"K_M", "MeV", -max, max},    sWeighting::RootBranch{"K_ID", "", -max, max},
+        sWeighting::RootBranch{"D0_P0_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"D0_P0_IPCHI2_OWNPV", "", 0, max},
+        sWeighting::RootBranch{"D0_P0_P", "MeV", 0, max},     sWeighting::RootBranch{"D0_P0_PT", "MeV", 0, max},
+        sWeighting::RootBranch{"D0_P0_PE", "MeV", 0, max},    sWeighting::RootBranch{"D0_P0_PX", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_P0_PY", "MeV", -max, max}, sWeighting::RootBranch{"D0_P0_PZ", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_P0_M", "MeV", -max, max},  sWeighting::RootBranch{"D0_P0_ID", "", -max, max},
 
-            sWeighting::RootBranch{"pi1_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"pi1_IPCHI2_OWNPV", "", 0, max},
-            sWeighting::RootBranch{"pi1_P", "MeV", 0, max},     sWeighting::RootBranch{"pi1_PT", "MeV", 0, max},
-            sWeighting::RootBranch{"pi1_PE", "MeV", 0, max},    sWeighting::RootBranch{"pi1_PX", "MeV", -max, max},
-            sWeighting::RootBranch{"pi1_PY", "MeV", -max, max}, sWeighting::RootBranch{"pi1_PZ", "MeV", -max, max},
-            sWeighting::RootBranch{"pi1_M", "MeV", 0, max},     sWeighting::RootBranch{"pi1_ID", "", -max, max},
+        sWeighting::RootBranch{"D0_P1_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"D0_P1_IPCHI2_OWNPV", "", 0, max},
+        sWeighting::RootBranch{"D0_P1_P", "MeV", 0, max},     sWeighting::RootBranch{"D0_P1_PT", "MeV", 0, max},
+        sWeighting::RootBranch{"D0_P1_PE", "MeV", 0, max},    sWeighting::RootBranch{"D0_P1_PX", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_P1_PY", "MeV", -max, max}, sWeighting::RootBranch{"D0_P1_PZ", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_P1_M", "MeV", 0, max},     sWeighting::RootBranch{"D0_P1_ID", "", -max, max},
 
-            sWeighting::RootBranch{"pi2_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"pi2_IPCHI2_OWNPV", "", 0, max},
-            sWeighting::RootBranch{"pi2_P", "MeV", 0, max},     sWeighting::RootBranch{"pi2_PT", "MeV", 0, max},
-            sWeighting::RootBranch{"pi2_PE", "MeV", 0, max},    sWeighting::RootBranch{"pi2_PX", "MeV", -max, max},
-            sWeighting::RootBranch{"pi2_PY", "MeV", -max, max}, sWeighting::RootBranch{"pi2_PZ", "MeV", -max, max},
-            sWeighting::RootBranch{"pi2_M", "MeV", 0, max},     sWeighting::RootBranch{"pi2_ID", "", -max, max},
+        sWeighting::RootBranch{"D0_P2_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"D0_P2_IPCHI2_OWNPV", "", 0, max},
+        sWeighting::RootBranch{"D0_P2_P", "MeV", 0, max},     sWeighting::RootBranch{"D0_P2_PT", "MeV", 0, max},
+        sWeighting::RootBranch{"D0_P2_PE", "MeV", 0, max},    sWeighting::RootBranch{"D0_P2_PX", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_P2_PY", "MeV", -max, max}, sWeighting::RootBranch{"D0_P2_PZ", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_P2_M", "MeV", 0, max},     sWeighting::RootBranch{"D0_P2_ID", "", -max, max},
 
-            sWeighting::RootBranch{"pi3_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"pi3_IPCHI2_OWNPV", "", 0, max},
-            sWeighting::RootBranch{"pi3_P", "MeV", 0, max},     sWeighting::RootBranch{"pi3_PT", "MeV", 0, max},
-            sWeighting::RootBranch{"pi3_PE", "MeV", 0, max},    sWeighting::RootBranch{"pi3_PX", "MeV", -max, max},
-            sWeighting::RootBranch{"pi3_PY", "MeV", -max, max}, sWeighting::RootBranch{"pi3_PZ", "MeV", -max, max},
-            sWeighting::RootBranch{"pi3_M", "MeV", 0, max},     sWeighting::RootBranch{"pi3_ID", "", -max, max}};
+        sWeighting::RootBranch{"D0_P3_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"D0_P3_IPCHI2_OWNPV", "", 0, max},
+        sWeighting::RootBranch{"D0_P3_P", "MeV", 0, max},     sWeighting::RootBranch{"D0_P3_PT", "MeV", 0, max},
+        sWeighting::RootBranch{"D0_P3_PE", "MeV", 0, max},    sWeighting::RootBranch{"D0_P3_PX", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_P3_PY", "MeV", -max, max}, sWeighting::RootBranch{"D0_P3_PZ", "MeV", -max, max},
+        sWeighting::RootBranch{"D0_P3_M", "MeV", 0, max},     sWeighting::RootBranch{"D0_P3_ID", "", -max, max}};
 }
 
 /*
@@ -129,77 +109,32 @@ static std::vector<sWeighting::RootBranch> promptBranches(void)
     double                              max{4000000000};
     auto                                commonBranches{commonBranchParams()};
     std::vector<sWeighting::RootBranch> extraBranches{
-        sWeighting::RootBranch{"Dstar_IPCHI2_OWNPV", "", -max, max},
-        sWeighting::RootBranch{"Dstar_P", "MeV", 0, max},
-        sWeighting::RootBranch{"Dstar_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"Dstar_PE", "MeV", 0, max},
-        sWeighting::RootBranch{"Dstar_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"Dstar_PY", "MeV", -max, max},
-        sWeighting::RootBranch{"Dstar_PZ", "MeV", 0, max},
-        sWeighting::RootBranch{"Dstar_M", "MeV", 0, max},
-        sWeighting::RootBranch{"Dstar_MM", "MeV", 0, max},
-        sWeighting::RootBranch{"Dstar_ID", "", -max, max},
+        sWeighting::RootBranch{"Dst_IPCHI2_OWNPV", "", -max, max},
+        sWeighting::RootBranch{"Dst_P", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_PT", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_PE", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_PX", "MeV", -max, max},
+        sWeighting::RootBranch{"Dst_PY", "MeV", -max, max},
+        sWeighting::RootBranch{"Dst_PZ", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_M", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_MM", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_ID", "", -max, max},
 
-        sWeighting::RootBranch{"pisoft_IP_OWNPV", "", 0, max},
-        sWeighting::RootBranch{"pisoft_IPCHI2_OWNPV", "", 0, max},
-        sWeighting::RootBranch{"pisoft_P", "MeV", 0, max},
-        sWeighting::RootBranch{"pisoft_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"pisoft_PE", "MeV", 0, max},
-        sWeighting::RootBranch{"pisoft_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"pisoft_PY", "MeV", -max, max},
-        sWeighting::RootBranch{"pisoft_PZ", "MeV", -max, max},
-        sWeighting::RootBranch{"pisoft_M", "MeV", 0, max},
-        sWeighting::RootBranch{"pisoft_ID", "", -max, max},
+        sWeighting::RootBranch{"Dst_pi_IP_OWNPV", "", 0, max},
+        sWeighting::RootBranch{"Dst_pi_IPCHI2_OWNPV", "", 0, max},
+        sWeighting::RootBranch{"Dst_pi_P", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_pi_PT", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_pi_PE", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_pi_PX", "MeV", -max, max},
+        sWeighting::RootBranch{"Dst_pi_PY", "MeV", -max, max},
+        sWeighting::RootBranch{"Dst_pi_PZ", "MeV", -max, max},
+        sWeighting::RootBranch{"Dst_pi_M", "MeV", 0, max},
+        sWeighting::RootBranch{"Dst_pi_ID", "", -max, max},
 
         sWeighting::RootBranch{"DELTA_M", "MeV", 139.3, 168.132}}; // hard coded ew
 
     commonBranches.insert(commonBranches.end(), extraBranches.begin(), extraBranches.end());
     return commonBranches;
-}
-
-/*
- * If no branch containing the D mass difference exists, we may have to create one
- *
- * This does that
- *
- * Copies the old root file to copy_<filename>, in case of things going bad
- */
-[[maybe_unused]] static void addDeltaMBranch(const std::string& path,
-                                             const std::string& treeName,
-                                             const std::string& dMassBranchName,
-                                             const std::string& dStarMassBranchName,
-                                             const std::string& deltaMBranchName)
-{
-    std::cout << "Creating branch " << deltaMBranchName << std::endl;
-    // Find the filename from the path so we know what to copy to
-    std::string newPath{"copy_" + rootFileName(path)};
-
-    // Copy old file before we do anything else, in case we break it
-    std::cout << "Copying " << path << " to " << newPath << std::endl;
-    std::experimental::filesystem::copy(path, newPath);
-
-    // Read our tree
-    TFile  f(path.c_str(), "update");
-    TTree* tree = f.Get<TTree>(treeName.c_str());
-    assert(tree);
-
-    // Create the new branch
-    double deltaM{0};
-    double dMass{0};
-    double dStarMass{0};
-    tree->SetBranchAddress(dMassBranchName.c_str(), &dMass);
-    tree->SetBranchAddress(dStarMassBranchName.c_str(), &dStarMass);
-    TBranch* deltaMBranch{tree->Branch(deltaMBranchName.c_str(), &deltaM, (deltaMBranchName + "/D").c_str())};
-
-    // Populate the branch
-    auto numEvents = tree->GetEntries();
-    for (decltype(numEvents) i = 0; i < numEvents; ++i) {
-        tree->GetEntry(i);
-        deltaM = dStarMass - dMass;
-        deltaMBranch->Fill();
-    }
-
-    tree->Write("", TObject::kOverwrite);
 }
 
 /*
@@ -245,9 +180,6 @@ static std::vector<sWeighting::RootBranch> promptBranches(void)
     RooRealVar cVar("c", "c", 2.0, 0.0001, 100.0);
     RooDstD0BG backgroundModel =
         RooDstD0BG("Prompt Background", "Background PDF: Prompt D", deltaM, deltaM0Var, aVar, bVar, cVar);
-
-    // Add a delta_m branch to our root file
-    addDeltaMBranch(inFile, treeName, "D_M", "Dstar_M", "DELTA_M");
 
     // sWeight the data
     // The new DELTA_M branch gets written to a tree at /DecayTree/, not /dk3pi/DecayTree/ so i guess let's use that

@@ -12,7 +12,7 @@ def init(mc_data, real_data, mc_weights=None, real_data_weights=None):
     Also optionally pass in an array-like of weights; if unweighted pass in None
 
     """
-    reweighter = GBReweighter()
+    reweighter = GBReweighter(max_depth=7, gb_args={"max_features": 1})
     reweighter.fit(
         original=real_data,
         target=mc_data,
