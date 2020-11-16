@@ -61,83 +61,6 @@ static void sPlotHist(const std::string&               rootFile,
 }
 
 /*
- * return a vector of (branch name, units, limits) structs for branches common to both prompt and SL root files
- */
-static std::vector<sWeighting::RootBranch> commonBranchParams(void)
-{
-    double max{4000000000};
-    return {
-        sWeighting::RootBranch{"D0_IP_OWNPV", "", 0, max},    sWeighting::RootBranch{"D0_IPCHI2_OWNPV", "", -max, max},
-        sWeighting::RootBranch{"D0_P", "MeV", 0, max},        sWeighting::RootBranch{"D0_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"D0_PE", "MeV", 0, max},       sWeighting::RootBranch{"D0_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_PY", "MeV", -max, max},    sWeighting::RootBranch{"D0_PZ", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_M", "MeV", 1820, 1910},    sWeighting::RootBranch{"D0_MM", "MeV", 0, max},
-        sWeighting::RootBranch{"D0_MMERR", "MeV", 0, max},    sWeighting::RootBranch{"D0_ID", "", -max, max},
-        sWeighting::RootBranch{"D0_TAU", "", -max, max},      sWeighting::RootBranch{"D0_TAUERR", "", -max, max},
-        sWeighting::RootBranch{"D0_TAUCHI2", "", -max, max},
-
-        sWeighting::RootBranch{"D0_P0_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"D0_P0_IPCHI2_OWNPV", "", 0, max},
-        sWeighting::RootBranch{"D0_P0_P", "MeV", 0, max},     sWeighting::RootBranch{"D0_P0_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"D0_P0_PE", "MeV", 0, max},    sWeighting::RootBranch{"D0_P0_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_P0_PY", "MeV", -max, max}, sWeighting::RootBranch{"D0_P0_PZ", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_P0_M", "MeV", -max, max},  sWeighting::RootBranch{"D0_P0_ID", "", -max, max},
-
-        sWeighting::RootBranch{"D0_P1_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"D0_P1_IPCHI2_OWNPV", "", 0, max},
-        sWeighting::RootBranch{"D0_P1_P", "MeV", 0, max},     sWeighting::RootBranch{"D0_P1_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"D0_P1_PE", "MeV", 0, max},    sWeighting::RootBranch{"D0_P1_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_P1_PY", "MeV", -max, max}, sWeighting::RootBranch{"D0_P1_PZ", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_P1_M", "MeV", 0, max},     sWeighting::RootBranch{"D0_P1_ID", "", -max, max},
-
-        sWeighting::RootBranch{"D0_P2_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"D0_P2_IPCHI2_OWNPV", "", 0, max},
-        sWeighting::RootBranch{"D0_P2_P", "MeV", 0, max},     sWeighting::RootBranch{"D0_P2_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"D0_P2_PE", "MeV", 0, max},    sWeighting::RootBranch{"D0_P2_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_P2_PY", "MeV", -max, max}, sWeighting::RootBranch{"D0_P2_PZ", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_P2_M", "MeV", 0, max},     sWeighting::RootBranch{"D0_P2_ID", "", -max, max},
-
-        sWeighting::RootBranch{"D0_P3_IP_OWNPV", "", 0, max}, sWeighting::RootBranch{"D0_P3_IPCHI2_OWNPV", "", 0, max},
-        sWeighting::RootBranch{"D0_P3_P", "MeV", 0, max},     sWeighting::RootBranch{"D0_P3_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"D0_P3_PE", "MeV", 0, max},    sWeighting::RootBranch{"D0_P3_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_P3_PY", "MeV", -max, max}, sWeighting::RootBranch{"D0_P3_PZ", "MeV", -max, max},
-        sWeighting::RootBranch{"D0_P3_M", "MeV", 0, max},     sWeighting::RootBranch{"D0_P3_ID", "", -max, max}};
-}
-
-/*
- * Return a vector of tuples (branch name, allowed range, unit) for prompt decays
- */
-static std::vector<sWeighting::RootBranch> promptBranches(void)
-{
-    double                              max{4000000000};
-    auto                                commonBranches{commonBranchParams()};
-    std::vector<sWeighting::RootBranch> extraBranches{
-        sWeighting::RootBranch{"Dst_IPCHI2_OWNPV", "", -max, max},
-        sWeighting::RootBranch{"Dst_P", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_PE", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"Dst_PY", "MeV", -max, max},
-        sWeighting::RootBranch{"Dst_PZ", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_M", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_MM", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_ID", "", -max, max},
-
-        sWeighting::RootBranch{"Dst_pi_IP_OWNPV", "", 0, max},
-        sWeighting::RootBranch{"Dst_pi_IPCHI2_OWNPV", "", 0, max},
-        sWeighting::RootBranch{"Dst_pi_P", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_pi_PT", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_pi_PE", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_pi_PX", "MeV", -max, max},
-        sWeighting::RootBranch{"Dst_pi_PY", "MeV", -max, max},
-        sWeighting::RootBranch{"Dst_pi_PZ", "MeV", -max, max},
-        sWeighting::RootBranch{"Dst_pi_M", "MeV", 0, max},
-        sWeighting::RootBranch{"Dst_pi_ID", "", -max, max},
-
-        sWeighting::RootBranch{"DELTA_M", "MeV", 139.3, 168.132}}; // hard coded ew
-
-    commonBranches.insert(commonBranches.end(), extraBranches.begin(), extraBranches.end());
-    return commonBranches;
-}
-
-/*
  * Fit to prompt D->K3Pi
  *
  * Spit a new root with with weights out at outFile; draw a plot at outImg
@@ -183,21 +106,21 @@ static std::vector<sWeighting::RootBranch> promptBranches(void)
 
     // sWeight the data
     // The new DELTA_M branch gets written to a tree at /DecayTree/, not /dk3pi/DecayTree/ so i guess let's use that
-    std::unique_ptr<TTree> weightedTree = sWeighting::findSWeights(inFile,
-                                                                   "DecayTree",
-                                                                   promptBranches(),
-                                                                   signalModel,
-                                                                   backgroundModel,
-                                                                   observableName,
-                                                                   paramsToFix,
-                                                                   outMassFitPlot.c_str(),
-                                                                   graph.c_str());
-
-    // Write the weighted tree to a new file
-    weightedTree->SaveAs(outFile.c_str());
+    sWeighting::Observable_t observable(observableName, loDeltaM, hiDeltaM, "MeV/c^2");
+    sWeighting::findSWeights(inFile,
+                             outFile,
+                             "DecayTree",
+                             signalModel,
+                             backgroundModel,
+                             500000,
+                             500000,
+                             observable,
+                             paramsToFix,
+                             outMassFitPlot.c_str(),
+                             graph.c_str());
 
     // Read in the new ROOT file and plot a histogram of reweighted mass difference
-    sPlotHist(outFile, outImg.c_str(), "RooTreeDataStore_data_DecayTree", "DELTA_M", {loDeltaM, hiDeltaM});
+    sPlotHist(outFile, outImg.c_str(), "DecayTree", "DELTA_M", {loDeltaM, hiDeltaM});
 }
 
 /*
@@ -233,38 +156,28 @@ static std::vector<sWeighting::RootBranch> promptBranches(void)
 
     // Create a new ROOT file with the tree not in a directory
     // Hack for now until i get the sWeighting to properly deal with directories; TODO
-    std::string newFileName{"new_" + inFile};
-    // TFile       oldFile(inFile.c_str());
-    // TTree*      oldTree{nullptr};
-    // oldFile.GetObject(treeName.c_str(), oldTree);
-    // assert(oldTree);
-    // TFile*                newFile = new TFile(newFileName.c_str(), "RECREATE");
-    // [[maybe_unused]] auto newTree{oldTree->CloneTree()}; // not actually unused. i think
-    // newFile->Write();
-    // delete oldTree;
-    // delete newFile;
 
     // sWeight the data
-    std::unique_ptr<TTree> weightedTree = sWeighting::findSWeights(newFileName,
-                                                                   "DecayTree",
-                                                                   commonBranchParams(),
-                                                                   signalModel,
-                                                                   backgroundModel,
-                                                                   observableName,
-                                                                   paramsToFix,
-                                                                   outMassFitPlot.c_str(),
-                                                                   graph.c_str());
-
-    // Write the weighted tree to a new file
-    weightedTree->SaveAs(outFile.c_str());
+    sWeighting::Observable_t observable(observableName, lowDMass, hiDMass, "MeV/c^2");
+    sWeighting::findSWeights(inFile,
+                             outFile,
+                             "DecayTree",
+                             signalModel,
+                             backgroundModel,
+                             500000,
+                             500000,
+                             observable,
+                             paramsToFix,
+                             outMassFitPlot.c_str(),
+                             graph.c_str());
 
     // Read in the new ROOT file and plot a hist of reweighted D mass
-    sPlotHist(outFile, outImg.c_str(), "RooTreeDataStore_data_DecayTree", "D_M", {lowDMass, hiDMass});
+    sPlotHist(outFile, outImg.c_str(), "DecayTree", "D_M", {lowDMass, hiDMass});
 }
 
 int main()
 {
-    const std::string rsPath{"small_prompt.root"};
+    const std::string rsPath{"wg_rs_prompt.root"};
     promptFit(rsPath, "newRS.root", "rs.png", "rsMassFit.png", "rsGraph.dot");
 
     // const std::string wsPath{"./test_2011_WS_prompt.root"};

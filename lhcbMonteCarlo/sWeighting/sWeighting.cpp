@@ -22,38 +22,22 @@ namespace sWeighting
 {
 
 /*
- * Read data from a ROOT file into a RooDataSet
+ * Read observable data from a ROOT file into a RooDataSet
  *
- * Need to pass in vectors of branch names, ranges (i.e. min/max allowed values) and units (e.g. "MeV^2")
  */
-static RooDataSet readData(const std::string&                            rootFilePath,
-                           const std::string&                            treeName,
-                           const std::vector<std::string>&               branchNames,
-                           const std::vector<std::pair<double, double>>& branchRanges,
-                           const std::vector<std::string>&               units)
+static RooDataSet readData(const std::string& rootFilePath, const std::string& treeName, const Observable_t& observable)
 {
     std::cout << "Reading data from" << rootFilePath << std::endl;
-    // Check that we have the right number of branch names and ranges
-    const size_t numBranches{branchNames.size()};
-    if (numBranches != branchRanges.size() || numBranches != units.size()) {
-        throw BranchMismatch();
-    }
-
-    // Create a dataset holding all the branches we want
-    std::unique_ptr<RooArgSet> branches = std::make_unique<RooArgSet>();
-    for (size_t i = 0; i < numBranches; ++i) {
-        RooRealVar branch(branchNames[i].c_str(),
-                          branchNames[i].c_str(),
-                          branchRanges[i].first,
-                          branchRanges[i].second,
-                          units[i].c_str());
-        assert(branches->addClone(branch));
-    }
+    RooArgSet branch{};
+    assert(branch.addClone(RooRealVar(observable.name.c_str(),
+                                      observable.name.c_str(),
+                                      observable.range.first,
+                                      observable.range.second,
+                                      observable.units.c_str())));
 
     // Create a RooDataSet, telling it compress data into a Tree
     RooAbsData::setDefaultStorageType(RooAbsData::Tree);
-    return RooDataSet(
-        "data", treeName.c_str(), *branches, RooFit::ImportFromFile(rootFilePath.c_str(), treeName.c_str()));
+    return RooDataSet("data", treeName.c_str(), branch, RooFit::ImportFromFile(rootFilePath.c_str(), treeName.c_str()));
 }
 
 /*
@@ -121,13 +105,8 @@ static void massFitPlot(const RooDataSet&  dataset,
 /*
  * Returns the params after fitting
  */
-static std::unique_ptr<RooArgSet> massFit(RooDataSet&        data,
-                                          RooAddPdf&         combinedModel,
-                                          const int          numCPU,
-                                          const char*        massFitPlotPath,
-                                          const std::string& observable,
-                                          const RooAbsPdf&   signalModel,
-                                          const RooAbsPdf&   backgroundModel)
+static std::unique_ptr<RooArgSet>
+massFit(RooDataSet& data, RooAddPdf& combinedModel, const int numCPU, const std::string& observable)
 {
     // Construct a dataset containing only our observable- this is all we need to perform the fit, and RooDataHist will
     // crash if passed a dataset containing too many vars
@@ -146,11 +125,6 @@ static std::unique_ptr<RooArgSet> massFit(RooDataSet&        data,
     // Create an argument set the contains our models' parameters
     std::unique_ptr<RooArgSet> params{combinedModel.getVariables()};
 
-    // Create a mass fit plot if we need to
-    if (massFitPlotPath) {
-        massFitPlot(data, *params, observable, combinedModel, signalModel, backgroundModel, massFitPlotPath);
-    }
-
     return params;
 }
 
@@ -163,24 +137,32 @@ static std::unique_ptr<RooArgSet> massFit(RooDataSet&        data,
  * NB: doesn't check that sufficient/sensible parameters are fixed, since that's annoyingly hard
  *
  * if a mass fit plot C-string is provided then a plot of the mass fit will be created
+ *
  * if a graphViz diagram C-string is provided then a graph showing the model structure will be created
+ *
+ * Returns a TTree containing the observable + some sWeighting branches
  *
  */
 static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
                                           RooAbsPdf&                      signalModel,
                                           RooAbsPdf&                      backgroundModel,
+                                          const int                       expectedNumSignal,
+                                          const int                       expectedNumBackground,
                                           const std::string&              observable,
                                           const std::vector<std::string>& fixedParameters,
                                           const int                       numCPU,
                                           const char*                     massFitPlotPath = nullptr,
                                           const char*                     graphVizDiagram = nullptr)
 {
-    assert(false);
     // Create a combined model
-    RooRealVar numSignalEvents("numSignalEvents", "Signal Events", 1000000, 0, 5000000); // TODO un hard code
-    RooRealVar numBackgroundEvents(
-        "numBackgroundEvents", "Background Events", 1000000, 0, 5000000); // TODO un hard code
-    RooAddPdf combinedModel("combined model",
+    RooRealVar numSignalEvents(
+        "numSignalEvents", "Signal Events", expectedNumSignal, 0, expectedNumSignal + expectedNumBackground);
+    RooRealVar numBackgroundEvents("numBackgroundEvents",
+                                   "Background Events",
+                                   expectedNumBackground,
+                                   0,
+                                   expectedNumSignal + expectedNumBackground);
+    RooAddPdf  combinedModel("combined model",
                             "Combined Signal + Background Models",
                             RooArgList(signalModel, backgroundModel),
                             RooArgList(numSignalEvents, numBackgroundEvents));
@@ -192,8 +174,12 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
 
     // Perform mass fit + return the parameters
     std::cout << "Performing mass fit" << std::endl;
-    std::unique_ptr<RooArgSet> params =
-        massFit(data, combinedModel, numCPU, massFitPlotPath, observable, signalModel, backgroundModel);
+    std::unique_ptr<RooArgSet> params = massFit(data, combinedModel, numCPU, observable);
+
+    // Create a mass fit plot if we need to
+    if (massFitPlotPath) {
+        massFitPlot(data, *params, observable, combinedModel, signalModel, backgroundModel, massFitPlotPath);
+    }
 
     // Fix the parameters that we were meant to fix before sWeighting
     for (const auto& paramName : fixedParameters) {
@@ -207,33 +193,37 @@ static std::unique_ptr<TTree> sWeightData(RooDataSet&                     data,
     return std::unique_ptr<TTree>(data.GetClonedTree());
 }
 
-std::unique_ptr<TTree> findSWeights(const std::string&              inFile,
-                                    const std::string&              treeName,
-                                    std::vector<RootBranch>         branchInfo,
-                                    RooAbsPdf&                      signalModel,
-                                    RooAbsPdf&                      backgroundModel,
-                                    const std::string&              observable,
-                                    const std::vector<std::string>& fixedParams,
-                                    const char*                     massFitPlot,
-                                    const char*                     graphVizDiagram,
-                                    const int                       numCPU)
+void findSWeights(const std::string&              inFile,
+                  const std::string&              outFile,
+                  const std::string&              treeName,
+                  RooAbsPdf&                      signalModel,
+                  RooAbsPdf&                      backgroundModel,
+                  const int                       expectedNumSignal,
+                  const int                       expectedNumBackground,
+                  const Observable_t&             observable,
+                  const std::vector<std::string>& fixedParams,
+                  const char*                     massFitPlot,
+                  const char*                     graphVizDiagram,
+                  const int                       numCPU)
 {
-
-    // Read in the data we want from the tree; first select which branches we want then read the data from them into
-    // a RooDataSet
-    std::vector<std::string>               branches{};
-    std::vector<std::pair<double, double>> ranges{};
-    std::vector<std::string>               units{};
-    for (const auto& c : branchInfo) {
-        branches.push_back(c.name);
-        ranges.push_back(std::make_pair(c.min, c.max));
-        units.push_back(c.units);
-    }
-    RooDataSet data = readData(inFile, treeName, branches, ranges, units);
+    // Read data from the ROOT file into a RooDataSet
+    RooDataSet data = readData(inFile, treeName, observable);
 
     // Create a combined model and perform sWeighting
-    return sWeightData(
-        data, signalModel, backgroundModel, observable, fixedParams, numCPU, massFitPlot, graphVizDiagram);
+    std::unique_ptr<TTree> sWeightingTree = sWeightData(data,
+                                                        signalModel,
+                                                        backgroundModel,
+                                                        expectedNumSignal,
+                                                        expectedNumBackground,
+                                                        observable.name,
+                                                        fixedParams,
+                                                        numCPU,
+                                                        massFitPlot,
+                                                        graphVizDiagram);
+
+    // Write to file
+    sWeightingTree->SetName(treeName.c_str());
+    sWeightingTree->SaveAs(outFile.c_str(), "RECREATE");
 }
 
 } // namespace sWeighting
