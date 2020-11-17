@@ -34,6 +34,8 @@ static TH1D plotProjection(const std::vector<PhspPoint>& points,
 
 /*
  * Take a D-> K pi1 pi2 pi3 root file, return a vector of weights
+ *
+ * discard indices provided in the vector
  */
 static std::vector<double> wts(const std::string&               rootFile,
                                const std::string&               treeName,
@@ -87,25 +89,25 @@ phsp(const std::string& rootFile, const std::string& treeName, const bool prune 
 
     // Buffers
     dDecay_t decay;
-    tree->SetBranchAddress("K_PX", &decay.kParams.px);
-    tree->SetBranchAddress("K_PY", &decay.kParams.py);
-    tree->SetBranchAddress("K_PZ", &decay.kParams.pz);
-    tree->SetBranchAddress("K_PE", &decay.kParams.energy);
+    tree->SetBranchAddress("D0_P0_PX", &decay.kParams.px);
+    tree->SetBranchAddress("D0_P0_PY", &decay.kParams.py);
+    tree->SetBranchAddress("D0_P0_PZ", &decay.kParams.pz);
+    tree->SetBranchAddress("D0_P0_PE", &decay.kParams.energy);
 
-    tree->SetBranchAddress("pi1_PX", &decay.pi1Params.px);
-    tree->SetBranchAddress("pi1_PY", &decay.pi1Params.py);
-    tree->SetBranchAddress("pi1_PZ", &decay.pi1Params.pz);
-    tree->SetBranchAddress("pi1_PE", &decay.pi1Params.energy);
+    tree->SetBranchAddress("D0_P1_PX", &decay.pi1Params.px);
+    tree->SetBranchAddress("D0_P1_PY", &decay.pi1Params.py);
+    tree->SetBranchAddress("D0_P1_PZ", &decay.pi1Params.pz);
+    tree->SetBranchAddress("D0_P1_PE", &decay.pi1Params.energy);
 
-    tree->SetBranchAddress("pi2_PX", &decay.pi2Params.px);
-    tree->SetBranchAddress("pi2_PY", &decay.pi2Params.py);
-    tree->SetBranchAddress("pi2_PZ", &decay.pi2Params.pz);
-    tree->SetBranchAddress("pi2_PE", &decay.pi2Params.energy);
+    tree->SetBranchAddress("D0_P2_PX", &decay.pi2Params.px);
+    tree->SetBranchAddress("D0_P2_PY", &decay.pi2Params.py);
+    tree->SetBranchAddress("D0_P2_PZ", &decay.pi2Params.pz);
+    tree->SetBranchAddress("D0_P2_PE", &decay.pi2Params.energy);
 
-    tree->SetBranchAddress("pi3_PX", &decay.pi3Params.px);
-    tree->SetBranchAddress("pi3_PY", &decay.pi3Params.py);
-    tree->SetBranchAddress("pi3_PZ", &decay.pi3Params.pz);
-    tree->SetBranchAddress("pi3_PE", &decay.pi3Params.energy);
+    tree->SetBranchAddress("D0_P3_PX", &decay.pi3Params.px);
+    tree->SetBranchAddress("D0_P3_PY", &decay.pi3Params.py);
+    tree->SetBranchAddress("D0_P3_PZ", &decay.pi3Params.pz);
+    tree->SetBranchAddress("D0_P3_PE", &decay.pi3Params.energy);
 
     // Init pair of empty vectors
     std::pair<std::vector<PhspPoint>, std::vector<size_t>> points{};
@@ -174,22 +176,24 @@ plotProjection(TH1D& promptHist, TH1D& slHist, TH1D& reweightedHist, const std::
 int main()
 {
     // Prompt ROOT file (should contain a branch containing event weights)
-    const std::string promptFile{"newRS.root"};
-    const std::string promptTree{"RooTreeDataStore_merged_merged"};
+    const std::string promptFile{"wg_rs_prompt.root"};
+    const std::string promptWeightFile("rs_weights.root");
+    const std::string promptTree{"DecayTree"};
     const std::string promptWeightBranch{"numSignalEvents_sw"};
 
     // Semileptonic ROOT file (should contain a branch containing event weights)
-    const std::string semileptonicFile{"newSL.root"};
-    const std::string semileptonicTree{"RooTreeDataStore_data_DecayTree"};
+    const std::string semileptonicFile{"wg_rs_sl.root"};
+    const std::string slWeightFile{"sl_weights.root"};
+    const std::string semileptonicTree{"DecayTree"};
     const std::string semileptonicWeightBranch{"numSignalEvents_sw"};
 
     // Create vectors of phase space points
-    auto promptPoints{phsp(promptFile, promptTree, true)};
+    auto promptPoints{phsp(promptFile, promptTree)};
     auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree)};
 
     // Create vectors of weights
-    auto promptWeights{wts(promptFile, promptTree, promptWeightBranch, &promptPoints.second)};
-    auto semileptonicWeights{wts(semileptonicFile, semileptonicTree, semileptonicWeightBranch)};
+    auto promptWeightArray{wts(promptWeightFile, promptTree, promptWeightBranch)};
+    auto slWeightArray{wts(slWeightFile, semileptonicTree, semileptonicWeightBranch)};
 
     // Reweight prompt to semileptonic
     // Split the prompt data into two sets; this assumes they're distributed randomly in phase space
@@ -197,17 +201,18 @@ int main()
     const size_t halfPromptSize = promptPoints.first.size() / 2;
     auto         firstHalfOfPromptData =
         std::vector<PhspPoint>(promptPoints.first.begin(), promptPoints.first.begin() + halfPromptSize);
-    auto firstHalfOfPromptWeights = std::vector<double>(promptWeights.begin(), promptWeights.begin() + halfPromptSize);
+    auto firstHalfOfPromptWeights =
+        std::vector<double>(promptWeightArray.begin(), promptWeightArray.begin() + halfPromptSize);
     std::cout << "Training BDT" << std::endl;
-    PyObject* bdt =
-        initBDT(semileptonicPoints.first, firstHalfOfPromptData, &semileptonicWeights, &firstHalfOfPromptWeights);
+    PyObject* bdt = initBDT(semileptonicPoints.first, firstHalfOfPromptData, &slWeightArray, &firstHalfOfPromptWeights);
 
     // Reweight the second half of the prompt data to look like the prompt data
     auto secondHalfOfPromptData =
         std::vector<PhspPoint>(promptPoints.first.begin() + halfPromptSize, promptPoints.first.end());
-    auto secondHalfOfPromptWeights = std::vector<double>(promptWeights.begin() + halfPromptSize, promptWeights.end());
+    auto secondHalfOfPromptWeights =
+        std::vector<double>(promptWeightArray.begin() + halfPromptSize, promptWeightArray.end());
     std::cout << "Finding weights" << std::endl;
-    auto efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
+    auto                efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
     std::vector<double> prompt2SLweights = secondHalfOfPromptWeights;
 
     for (size_t i = 0; i < prompt2SLweights.size(); ++i) {
@@ -227,7 +232,7 @@ int main()
         TH1D promptHist{plotProjection(
             secondHalfOfPromptData, secondHalfOfPromptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
         TH1D semileptonicHist{
-            plotProjection(semileptonicPoints.first, semileptonicWeights, i, "semileptonic", nBins, low[i], high[i])};
+            plotProjection(semileptonicPoints.first, slWeightArray, i, "semileptonic", nBins, low[i], high[i])};
         TH1D reweightedPrompt{
             plotProjection(secondHalfOfPromptData, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
         plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i]);

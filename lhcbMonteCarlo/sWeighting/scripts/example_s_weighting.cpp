@@ -80,8 +80,8 @@ static void sPlotHist(const std::string&               rootFile,
     // Create a signal model
     // These RooRealVars need to have the same scope as the models that use them, otherwise the models will segfault
     std::string  observableName{"DELTA_M"};
-    const double loDeltaM{139.3};
-    const double hiDeltaM{168.0};
+    const double loDeltaM{134.7};
+    const double hiDeltaM{170.1};
     RooRealVar   deltaM(observableName.c_str(), observableName.c_str(), loDeltaM, hiDeltaM, "MeV/c^2");
     RooRealVar   meanDMassVar("Mean D Mass", "Mean D Mass", 146.0, 144.0, 147.0);
     RooRealVar   dMassWidthVar("D Mass Width", "D Mass Width", 1.0, 0.0001, 5.0);
@@ -136,14 +136,11 @@ static void sPlotHist(const std::string&               rootFile,
 {
     const std::string treeName{"dk3pi/DecayTree"};
 
-    // The parameters in our models that will be fixed after fitting
-    const std::vector<std::string> paramsToFix{"a", "b", "D_M", "D Mass Width", "Mean D Mass"};
-
     // Create a signal model
     // These RooRealVars need to have the same scope as the models that use them, otherwise the models will segfault
-    std::string  observableName{"D_M"};
-    const double lowDMass{1820.};
-    const double hiDMass{1910.};
+    std::string  observableName{"D0_M"};
+    const double lowDMass{1803.};
+    const double hiDMass{1925.};
     RooRealVar   dMassVar(observableName.c_str(), observableName.c_str(), lowDMass, hiDMass, "MeV/c^2");
     RooRealVar   meanDMassVar("Mean D Mass", "Mean D Mass", 1865.0, 1850.0, 1880.0);
     RooRealVar   dMassWidthVar("D Mass Width", "D Mass Width", 10.0, 0.0001, 50.0);
@@ -156,6 +153,9 @@ static void sPlotHist(const std::string&               rootFile,
 
     // Create a new ROOT file with the tree not in a directory
     // Hack for now until i get the sWeighting to properly deal with directories; TODO
+
+    // The parameters in our models that will be fixed after fitting
+    const std::vector<std::string> paramsToFix{"a", "b", observableName, "D Mass Width", "Mean D Mass"};
 
     // sWeight the data
     sWeighting::Observable_t observable(observableName, lowDMass, hiDMass, "MeV/c^2");
@@ -172,19 +172,19 @@ static void sPlotHist(const std::string&               rootFile,
                              graph.c_str());
 
     // Read in the new ROOT file and plot a hist of reweighted D mass
-    sPlotHist(outFile, outImg.c_str(), "DecayTree", "D_M", {lowDMass, hiDMass});
+    sPlotHist(outFile, outImg.c_str(), "DecayTree", observableName, {lowDMass, hiDMass});
 }
 
 int main()
 {
     const std::string rsPath{"wg_rs_prompt.root"};
-    promptFit(rsPath, "newRS.root", "rs.png", "rsMassFit.png", "rsGraph.dot");
+    promptFit(rsPath, "rs_weights.root", "rs.png", "rsMassFit.png", "rsGraph.dot");
 
     // const std::string wsPath{"./test_2011_WS_prompt.root"};
     // promptFit(wsPath, "newWS.root", "ws.png", "wsMassFit.png", "wsGraph.dot");
 
-    // const std::string slPath{"all.root"};
-    // semiLeptonicFit(slPath, "newSL.root", "sl.png", "slMassFit.png", "sl.dot");
+    const std::string slPath{"wg_rs_sl.root"};
+    semiLeptonicFit(slPath, "sl_weights.root", "sl.png", "slMassFit.png", "sl.dot");
 
     return 0;
 }
