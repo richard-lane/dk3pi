@@ -177,13 +177,13 @@ static void sPlotHist(const std::string&               rootFile,
 
 int main()
 {
-    const std::string rsPath{"wg_rs_prompt.root"};
+    const std::string rsPath{"cut_wg_rs_prompt.root"};
     promptFit(rsPath, "rs_weights.root", "rs.png", "rsMassFit.png", "rsGraph.dot");
 
     // const std::string wsPath{"./test_2011_WS_prompt.root"};
     // promptFit(wsPath, "newWS.root", "ws.png", "wsMassFit.png", "wsGraph.dot");
 
-    const std::string slPath{"wg_rs_sl.root"};
+    const std::string slPath{"cut_wg_rs_sl.root"};
     semiLeptonicFit(slPath, "sl_weights.root", "sl.png", "slMassFit.png", "sl.dot");
 
     return 0;

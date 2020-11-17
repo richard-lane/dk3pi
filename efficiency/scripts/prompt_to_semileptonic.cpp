@@ -176,13 +176,13 @@ plotProjection(TH1D& promptHist, TH1D& slHist, TH1D& reweightedHist, const std::
 int main()
 {
     // Prompt ROOT file (should contain a branch containing event weights)
-    const std::string promptFile{"wg_rs_prompt.root"};
+    const std::string promptFile{"cut_wg_rs_prompt.root"};
     const std::string promptWeightFile("rs_weights.root");
     const std::string promptTree{"DecayTree"};
     const std::string promptWeightBranch{"numSignalEvents_sw"};
 
     // Semileptonic ROOT file (should contain a branch containing event weights)
-    const std::string semileptonicFile{"wg_rs_sl.root"};
+    const std::string semileptonicFile{"cut_wg_rs_sl.root"};
     const std::string slWeightFile{"sl_weights.root"};
     const std::string semileptonicTree{"DecayTree"};
     const std::string semileptonicWeightBranch{"numSignalEvents_sw"};
