@@ -1,10 +1,7 @@
 #include "scriptUtils.h"
 
-<<<<<<< HEAD
-=======
 #include <TH1D.h>
 
->>>>>>> feature/histSlices
 HistogramSlices::HistogramSlices(const std::string&               title,
                                  const size_t                     numSlices,
                                  const size_t                     numBins,
@@ -12,14 +9,6 @@ HistogramSlices::HistogramSlices(const std::string&               title,
                                  const std::pair<double, double>& sliceLimits,
                                  const size_t                     plotVarIndex,
                                  const size_t                     sliceVarIndex)
-<<<<<<< HEAD
-    : _slices(std::vector<TH1D>(numSlices,
-                                TH1D(title.c_str(), title.c_str(), numBins, histLimits.first, histLimits.second))),
-      _sliceHist(TH1D("Slice Hist", "Slice Hist", numSlices, sliceLimits.first, sliceLimits.second)),
-      _plotVarIndex(plotVarIndex), _sliceVarIndex(sliceVarIndex)
-{
-    ;
-=======
     : _sliceHist(TH1D((title + "Slice Hist").c_str(), "Slice Hist", numSlices, sliceLimits.first, sliceLimits.second)),
       _plotVarIndex(plotVarIndex), _sliceVarIndex(sliceVarIndex)
 {
@@ -29,7 +18,6 @@ HistogramSlices::HistogramSlices(const std::string&               title,
         _slices.push_back(TH1D(thisTitle.c_str(), thisTitle.c_str(), numBins, histLimits.first, histLimits.second));
         _slices[i].SetStats(false);
     }
->>>>>>> feature/histSlices
 }
 
 void HistogramSlices::add(const PhspPoint& point, const double wt)
@@ -59,17 +47,6 @@ void HistogramSlices::add(const std::vector<PhspPoint>& points, const std::vecto
     }
 }
 
-<<<<<<< HEAD
-void HistogramSlices::plotSlices(const std::string& path)
-{
-    for (size_t i = 0; i < _slices.size(); ++i) {
-        _slices[i].Scale(1 / _numPoints);
-        _slices[i].GetYaxis()->SetRangeUser(0., 0.016);
-        util::saveObjectToFile(&_slices[i], path + std::to_string(i) + ".png", "HIST E");
-
-        // Rescale. Just in case we want to plot twice
-        _slices[i].Scale(1 / _numPoints);
-=======
 void HistogramSlices::setColour(const EColor colour)
 {
     for (auto& hist : _slices) {
@@ -116,7 +93,6 @@ void plotSlices(const std::string&               path,
         for (auto& histSlice : slices) {
             histSlice._slices[i].Scale(1 / histSlice._numPoints);
         }
->>>>>>> feature/histSlices
     }
 }
 
