@@ -1,5 +1,10 @@
 #include "scriptUtils.h"
 
+<<<<<<< HEAD
+=======
+#include <TH1D.h>
+
+>>>>>>> feature/histSlices
 HistogramSlices::HistogramSlices(const std::string&               title,
                                  const size_t                     numSlices,
                                  const size_t                     numBins,
@@ -7,12 +12,24 @@ HistogramSlices::HistogramSlices(const std::string&               title,
                                  const std::pair<double, double>& sliceLimits,
                                  const size_t                     plotVarIndex,
                                  const size_t                     sliceVarIndex)
+<<<<<<< HEAD
     : _slices(std::vector<TH1D>(numSlices,
                                 TH1D(title.c_str(), title.c_str(), numBins, histLimits.first, histLimits.second))),
       _sliceHist(TH1D("Slice Hist", "Slice Hist", numSlices, sliceLimits.first, sliceLimits.second)),
       _plotVarIndex(plotVarIndex), _sliceVarIndex(sliceVarIndex)
 {
     ;
+=======
+    : _sliceHist(TH1D((title + "Slice Hist").c_str(), "Slice Hist", numSlices, sliceLimits.first, sliceLimits.second)),
+      _plotVarIndex(plotVarIndex), _sliceVarIndex(sliceVarIndex)
+{
+    _slices.reserve(numSlices);
+    for (size_t i = 0; i < numSlices; ++i) {
+        const std::string thisTitle = "Slice " + std::to_string(i) + ": " + title;
+        _slices.push_back(TH1D(thisTitle.c_str(), thisTitle.c_str(), numBins, histLimits.first, histLimits.second));
+        _slices[i].SetStats(false);
+    }
+>>>>>>> feature/histSlices
 }
 
 void HistogramSlices::add(const PhspPoint& point, const double wt)
@@ -42,6 +59,7 @@ void HistogramSlices::add(const std::vector<PhspPoint>& points, const std::vecto
     }
 }
 
+<<<<<<< HEAD
 void HistogramSlices::plotSlices(const std::string& path)
 {
     for (size_t i = 0; i < _slices.size(); ++i) {
@@ -51,6 +69,54 @@ void HistogramSlices::plotSlices(const std::string& path)
 
         // Rescale. Just in case we want to plot twice
         _slices[i].Scale(1 / _numPoints);
+=======
+void HistogramSlices::setColour(const EColor colour)
+{
+    for (auto& hist : _slices) {
+        hist.SetLineColor(colour);
+    }
+}
+
+void plotSlices(const std::string&               path,
+                std::vector<HistogramSlices>&    slices,
+                const std::vector<std::string>&  plotOptions,
+                const std::vector<std::string>&  labels,
+                const std::pair<double, double>& range)
+{
+    assert(slices.size() == plotOptions.size());
+    assert(slices.size() == labels.size());
+
+    size_t numSlices = slices[0]._slices.size();
+    for (const auto& histSlice : slices) {
+        assert(numSlices == histSlice._slices.size());
+    }
+
+    for (size_t i = 0; i < numSlices; ++i) {
+        const std::string    slicePath{path + std::to_string(i) + ".png"};
+        std::vector<TH1D*>   hists{};
+        util::LegendParams_t legend{0.7, 0.9, 0.7, 0.9};
+
+        for (auto& histSlice : slices) {
+            // Scale hists so they all look nice
+            histSlice._slices[i].Scale(1 / histSlice._numPoints);
+            hists.push_back(&histSlice._slices[i]);
+
+            // Set Y axis range
+            histSlice._slices[i].GetYaxis()->SetRangeUser(range.first, range.second);
+        }
+        // Plot hists
+        util::saveObjectsToFile<TH1D>(
+            std::vector<TObject*>(hists.begin(), hists.end()), plotOptions, labels, slicePath, legend);
+    }
+
+    // Rescale. Just in case we want to plot again after this fcn returns
+    // If there is a failure before now this will leave the hist slices in a broken state, but that isn't likely to be
+    // important
+    for (size_t i = 0; i < numSlices; ++i) {
+        for (auto& histSlice : slices) {
+            histSlice._slices[i].Scale(1 / histSlice._numPoints);
+        }
+>>>>>>> feature/histSlices
     }
 }
 

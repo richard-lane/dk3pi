@@ -239,14 +239,40 @@ int main()
     }
 
     // Create slices for something
-    HistogramSlices slices("Reweighted Hist Slice;m(K\\pi_1);relative counts",
-                           10,
-                           100,
-                           std::make_pair(low[0], high[0]),
-                           std::make_pair(low[1], high[1]),
-                           0,
-                           1);
-    slices.add(secondHalfOfPromptData, &prompt2SLweights);
+    HistogramSlices promptSlices("Prompt Hist Slice;m(K\\pi_1);relative counts",
+                                 10,
+                                 100,
+                                 std::make_pair(low[0], high[0]),
+                                 std::make_pair(low[1], high[1]),
+                                 0,
+                                 1);
+    promptSlices.add(secondHalfOfPromptData, &secondHalfOfPromptWeights);
+    promptSlices.setColour(kRed);
 
-    slices.plotSlices("testSlice");
+    HistogramSlices slSlices("SL Hist Slice;m(K\\pi_1);relative counts",
+                             10,
+                             100,
+                             std::make_pair(low[0], high[0]),
+                             std::make_pair(low[1], high[1]),
+                             0,
+                             1);
+    slSlices.add(semileptonicPoints.first, &slWeightArray);
+    slSlices.setColour(kGreen);
+
+    HistogramSlices reweightedSlices("Reweighted Hist Slice ;m(K\\pi_1);relative counts",
+                                     10,
+                                     100,
+                                     std::make_pair(low[0], high[0]),
+                                     std::make_pair(low[1], high[1]),
+                                     0,
+                                     1);
+    reweightedSlices.add(secondHalfOfPromptData, &prompt2SLweights);
+    reweightedSlices.setColour(kBlue);
+
+    std::vector<HistogramSlices> slices{promptSlices, slSlices, reweightedSlices};
+    plotSlices("slices",
+               slices,
+               {"HIST E SAME", "HIST E SAME", "HIST E SAME"},
+               {"Prompt", "SL", "Reweighted"},
+               {-0.0002, 0.015});
 }

@@ -58,12 +58,22 @@ class HistogramSlices
     void add(const PhspPoint& point, const double wt = 1);
     void add(const std::vector<PhspPoint>& points, const std::vector<double>* weights = nullptr);
 
-    /*
-     * Plots to <path>0.png, <oath>1.png, <path>2.png,...
-     */
-    void plotSlices(const std::string& path);
+    void setColour(const EColor colour);
 
   private:
+    /*
+     * Plots slices on the same canvas to <path>0.png, <oath>1.png, <path>2.png,...
+     *
+     * Have to set Y limits here, as if you set limits then scale it breaks.
+     *
+     * yep
+     */
+    friend void plotSlices(const std::string&               path,
+                           std::vector<HistogramSlices>&    slices,
+                           const std::vector<std::string>&  plotOptions,
+                           const std::vector<std::string>&  labels,
+                           const std::pair<double, double>& range);
+
     std::vector<TH1D> _slices{};
 
     /*
