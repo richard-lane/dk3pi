@@ -1,5 +1,59 @@
 #include "scriptUtils.h"
 
+HistogramSlices::HistogramSlices(const std::string&               title,
+                                 const size_t                     numSlices,
+                                 const size_t                     numBins,
+                                 const std::pair<double, double>& histLimits,
+                                 const std::pair<double, double>& sliceLimits,
+                                 const size_t                     plotVarIndex,
+                                 const size_t                     sliceVarIndex)
+    : _slices(std::vector<TH1D>(numSlices,
+                                TH1D(title.c_str(), title.c_str(), numBins, histLimits.first, histLimits.second))),
+      _sliceHist(TH1D("Slice Hist", "Slice Hist", numSlices, sliceLimits.first, sliceLimits.second)),
+      _plotVarIndex(plotVarIndex), _sliceVarIndex(sliceVarIndex)
+{
+    ;
+}
+
+void HistogramSlices::add(const PhspPoint& point, const double wt)
+{
+    // Find the right histogram to put it in
+    // ROOT bin indexing starts from 1
+    const size_t slice = _sliceHist.FindBin(point[_sliceVarIndex]) - 1;
+
+    // Add this point to it
+    _slices[slice].Fill(point[_plotVarIndex], wt);
+
+    _numPoints += wt;
+}
+
+void HistogramSlices::add(const std::vector<PhspPoint>& points, const std::vector<double>* wts)
+{
+    if (wts) {
+        assert(points.size() == wts->size());
+        for (size_t i = 0; i < points.size(); ++i) {
+            this->add(points[i], (*wts)[i]);
+        }
+
+    } else {
+        for (const auto& point : points) {
+            this->add(point);
+        }
+    }
+}
+
+void HistogramSlices::plotSlices(const std::string& path)
+{
+    for (size_t i = 0; i < _slices.size(); ++i) {
+        _slices[i].Scale(1 / _numPoints);
+        _slices[i].GetYaxis()->SetRangeUser(0., 0.016);
+        util::saveObjectToFile(&_slices[i], path + std::to_string(i) + ".png", "HIST E");
+
+        // Rescale. Just in case we want to plot twice
+        _slices[i].Scale(1 / _numPoints);
+    }
+}
+
 void applyEfficiency(std::mt19937* const                    generator,
                      const std::function<double(dDecay_t)>& eventDetectionProb,
                      std::vector<dDecay_t>&                 events)

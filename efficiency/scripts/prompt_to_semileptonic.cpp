@@ -237,4 +237,16 @@ int main()
             plotProjection(secondHalfOfPromptData, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
         plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i]);
     }
+
+    // Create slices for something
+    HistogramSlices slices("Reweighted Hist Slice;m(K\\pi_1);relative counts",
+                           10,
+                           100,
+                           std::make_pair(low[0], high[0]),
+                           std::make_pair(low[1], high[1]),
+                           0,
+                           1);
+    slices.add(secondHalfOfPromptData, &prompt2SLweights);
+
+    slices.plotSlices("testSlice");
 }

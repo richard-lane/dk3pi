@@ -30,6 +30,60 @@ struct EventDetectionProbNotNormalised : public std::exception {
 };
 
 /*
+ * Helper for representing a multidimensional distribution as slices through a histogram
+ *
+ */
+class HistogramSlices
+{
+  public:
+    /*
+     * Hists named <title>
+     *
+     * Titles should follow ROOT's convention of the title string being semicolon-separated:
+     *     "<global plot title>;<x axis title>;<y axis title>"
+     */
+    HistogramSlices(const std::string&               title,
+                    const size_t                     numSlices,
+                    const size_t                     numBins,
+                    const std::pair<double, double>& histLimits,
+                    const std::pair<double, double>& sliceLimits,
+                    const size_t                     plotVarIndex,
+                    const size_t                     sliceVarIndex);
+
+    /*
+     * Add a point to the histograms
+     *
+     * Weights default to 1 if unspecified
+     */
+    void add(const PhspPoint& point, const double wt = 1);
+    void add(const std::vector<PhspPoint>& points, const std::vector<double>* weights = nullptr);
+
+    /*
+     * Plots to <path>0.png, <oath>1.png, <path>2.png,...
+     */
+    void plotSlices(const std::string& path);
+
+  private:
+    std::vector<TH1D> _slices{};
+
+    /*
+     * Hist for tracking which slice a point belongs in
+     */
+    TH1D _sliceHist{};
+
+    /*
+     * Indices of variables we're taking the slices across and we're making the histograms in
+     */
+    size_t _plotVarIndex{};
+    size_t _sliceVarIndex{};
+
+    /*
+     * Floating point since the points can have weights
+     */
+    double _numPoints{0};
+};
+
+/*
  * Provide a random number generator, a vector of D decay events and a function that provides an event's detection
  * probability
  *
