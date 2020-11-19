@@ -112,28 +112,19 @@ phsp(const std::string& rootFile, const std::string& treeName, const bool prune 
     // Init pair of empty vectors
     std::pair<std::vector<PhspPoint>, std::vector<size_t>> points{};
 
-    // RNG and distribution for doing accept-reject
-    std::random_device                     rd;
-    std::mt19937                           rng(rd());
-    std::uniform_real_distribution<double> dist(0, 1);
-
-    // PDF for rejecting some events if their invariant mass is near the eta prime mass peak
-    auto pdf = [](const double mass) {
-        if (mass < 800 || mass > 1000) {
-            return 1.0;
-        }
-        return 1 - 0.3 * (1 - std::fabs(mass - 900) / 200);
-    };
-
     // Iterate over tree filling in the right things
     for (decltype(tree->GetEntries()) i = 0; i < tree->GetEntries(); ++i) {
-        // Work out its phsp params, insert into the vector
         tree->GetEntry(i);
-        double mass = invariantMass({decay.kParams, decay.pi1Params});
-        if (!prune || dist(rng) < pdf(mass)) {
-            points.first.push_back(parametrisation(decay));
-        } else {
+
+        // Find out if this event is in the forbidden hole
+        const double mass        = invariantMass({decay.kParams, decay.pi1Params});
+        const bool   eventInHole = (mass < 925.) && (mass > 875.);
+
+        // Don't add the point if we are pruning and the mass is in the forbidden hole
+        if (prune && eventInHole) {
             points.second.push_back(i);
+        } else {
+            points.first.push_back(parametrisation(decay));
         }
     }
 
@@ -188,12 +179,12 @@ int main()
     const std::string semileptonicWeightBranch{"numSignalEvents_sw"};
 
     // Create vectors of phase space points
-    auto promptPoints{phsp(promptFile, promptTree)};
-    auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree)};
+    auto promptPoints{phsp(promptFile, promptTree, true)};
+    auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree, true)};
 
     // Create vectors of weights
-    auto promptWeightArray{wts(promptWeightFile, promptTree, promptWeightBranch)};
-    auto slWeightArray{wts(slWeightFile, semileptonicTree, semileptonicWeightBranch)};
+    auto promptWeightArray{wts(promptWeightFile, promptTree, promptWeightBranch, &promptPoints.second)};
+    auto slWeightArray{wts(slWeightFile, semileptonicTree, semileptonicWeightBranch, &semileptonicPoints.second)};
 
     // Reweight prompt to semileptonic
     // Split the prompt data into two sets; this assumes they're distributed randomly in phase space
