@@ -117,10 +117,11 @@ phsp(const std::string& rootFile, const std::string& treeName, const bool prune 
         tree->GetEntry(i);
 
         // Find out if this event is in the forbidden hole
-        const double mass1       = invariantMass({decay.kParams, decay.pi1Params});
-        const double mass2       = invariantMass({decay.pi1Params, decay.pi2Params});
-        const double mass3       = invariantMass({decay.pi2Params, decay.pi3Params});
-        const bool   eventInHole = (mass1 < 925.) && (mass1 > 875.) && (mass2 < 900.) && (mass2 > 700) && (mass3 < 900) && (mass3 > 700);
+        const double mass1 = invariantMass({decay.kParams, decay.pi1Params});
+        const double mass2 = invariantMass({decay.pi1Params, decay.pi2Params});
+        const double mass3 = invariantMass({decay.pi2Params, decay.pi3Params});
+        const bool   eventInHole =
+            (mass1 < 925.) && (mass1 > 875.) && (mass2 < 900.) && (mass2 > 700) && (mass3 < 900) && (mass3 > 700);
 
         // Don't add the point if we are pruning and the event is in the forbidden hole
         if (prune && eventInHole) {
@@ -166,6 +167,21 @@ plotProjection(TH1D& promptHist, TH1D& slHist, TH1D& reweightedHist, const std::
                                   legend);
 }
 
+/*
+ * Split a vector v into the first and second half
+ *
+ * Does something if the vector has an odd length
+ */
+template <typename T> static std::pair<std::vector<T>, std::vector<T>> splitVector(const std::vector<T>& v)
+{
+    const size_t halfSize = v.size() / 2;
+
+    auto firstHalf  = std::vector<T>(v.begin(), v.begin() + halfSize);
+    auto secondHalf = std::vector<T>(v.begin() + halfSize, v.end());
+
+    return {firstHalf, secondHalf};
+}
+
 int main()
 {
     // Prompt ROOT file (should contain a branch containing event weights)
@@ -180,34 +196,40 @@ int main()
     const std::string semileptonicTree{"DecayTree"};
     const std::string semileptonicWeightBranch{"numSignalEvents_sw"};
 
-    // Create vectors of phase space points
+    // Split the prompt data into two sets; this assumes they're distributed randomly in phase space
     auto promptPoints{phsp(promptFile, promptTree, true)};
-    auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree, true)};
-
-    // Create vectors of weights
     auto promptWeightArray{wts(promptWeightFile, promptTree, promptWeightBranch, &promptPoints.second)};
+
+    auto promptDataHalves       = splitVector(promptPoints.first);
+    auto firstHalfOfPromptData  = promptDataHalves.first;
+    auto secondHalfOfPromptData = promptDataHalves.second;
+
+    auto promptWeightHalves        = splitVector(promptWeightArray);
+    auto firstHalfOfPromptWeights  = promptWeightHalves.first;
+    auto secondHalfOfPromptWeights = promptWeightHalves.second;
+
+    // Split the SL data into two sets; this assumes they're distributed randomly in phase space
+    auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree, true)};
     auto slWeightArray{wts(slWeightFile, semileptonicTree, semileptonicWeightBranch, &semileptonicPoints.second)};
 
-    // Reweight prompt to semileptonic
-    // Split the prompt data into two sets; this assumes they're distributed randomly in phase space
-    // Train the BDT on the first half of the prompt data
-    const size_t halfPromptSize = promptPoints.first.size() / 2;
-    auto         firstHalfOfPromptData =
-        std::vector<PhspPoint>(promptPoints.first.begin(), promptPoints.first.begin() + halfPromptSize);
-    auto firstHalfOfPromptWeights =
-        std::vector<double>(promptWeightArray.begin(), promptWeightArray.begin() + halfPromptSize);
+    auto slDataHalves       = splitVector(semileptonicPoints.first);
+    auto firstHalfOfSLData  = slDataHalves.first;
+    auto secondHalfOfSLData = slDataHalves.second;
+
+    auto slWeightHalves        = splitVector(slWeightArray);
+    auto firstHalfOfSLWeights  = slWeightHalves.first;
+    auto secondHalfOfSLWeights = slWeightHalves.second;
+
+    // Train the BDT on the first half of the data
     std::cout << "Training BDT" << std::endl;
-    PyObject* bdt = initBDT(semileptonicPoints.first, firstHalfOfPromptData, &slWeightArray, &firstHalfOfPromptWeights);
+    PyObject* bdt = initBDT(firstHalfOfSLData, firstHalfOfPromptData, &firstHalfOfSLWeights, &firstHalfOfPromptWeights);
 
     // Reweight the second half of the prompt data to look like the prompt data
-    auto secondHalfOfPromptData =
-        std::vector<PhspPoint>(promptPoints.first.begin() + halfPromptSize, promptPoints.first.end());
-    auto secondHalfOfPromptWeights =
-        std::vector<double>(promptWeightArray.begin() + halfPromptSize, promptWeightArray.end());
     std::cout << "Finding weights" << std::endl;
-    auto                efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
-    std::vector<double> prompt2SLweights = secondHalfOfPromptWeights;
+    auto efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
 
+    // Calculate the weights that we need
+    std::vector<double> prompt2SLweights = secondHalfOfPromptWeights;
     for (size_t i = 0; i < prompt2SLweights.size(); ++i) {
         prompt2SLweights[i] *= efficiencyWeights[i];
     }
@@ -225,7 +247,7 @@ int main()
         TH1D promptHist{plotProjection(
             secondHalfOfPromptData, secondHalfOfPromptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
         TH1D semileptonicHist{
-            plotProjection(semileptonicPoints.first, slWeightArray, i, "semileptonic", nBins, low[i], high[i])};
+            plotProjection(secondHalfOfSLData, secondHalfOfSLWeights, i, "semileptonic", nBins, low[i], high[i])};
         TH1D reweightedPrompt{
             plotProjection(secondHalfOfPromptData, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
         plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i]);
