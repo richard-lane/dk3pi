@@ -196,17 +196,10 @@ int main()
     const std::string semileptonicTree{"DecayTree"};
     const std::string semileptonicWeightBranch{"numSignalEvents_sw"};
 
-    // Create vectors of phase space points
-    auto promptPoints{phsp(promptFile, promptTree, true)};
-    auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree, true)};
-
-    // Create vectors of weights
-    auto promptWeightArray{wts(promptWeightFile, promptTree, promptWeightBranch, &promptPoints.second)};
-    auto slWeightArray{wts(slWeightFile, semileptonicTree, semileptonicWeightBranch, &semileptonicPoints.second)};
-
-    // Reweight prompt to semileptonic
     // Split the prompt data into two sets; this assumes they're distributed randomly in phase space
-    // Train the BDT on the first half of the prompt data
+    auto promptPoints{phsp(promptFile, promptTree, true)};
+    auto promptWeightArray{wts(promptWeightFile, promptTree, promptWeightBranch, &promptPoints.second)};
+
     auto promptDataHalves       = splitVector(promptPoints.first);
     auto firstHalfOfPromptData  = promptDataHalves.first;
     auto secondHalfOfPromptData = promptDataHalves.second;
@@ -215,13 +208,27 @@ int main()
     auto firstHalfOfPromptWeights  = promptWeightHalves.first;
     auto secondHalfOfPromptWeights = promptWeightHalves.second;
 
+    // Split the SL data into two sets; this assumes they're distributed randomly in phase space
+    auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree, true)};
+    auto slWeightArray{wts(slWeightFile, semileptonicTree, semileptonicWeightBranch, &semileptonicPoints.second)};
+
+    auto slDataHalves       = splitVector(semileptonicPoints.first);
+    auto firstHalfOfSLData  = slDataHalves.first;
+    auto secondHalfOfSLData = slDataHalves.second;
+
+    auto slWeightHalves        = splitVector(slWeightArray);
+    auto firstHalfOfSLWeights  = slWeightHalves.first;
+    auto secondHalfOfSLWeights = slWeightHalves.second;
+
+    // Train the BDT on the first half of the data
     std::cout << "Training BDT" << std::endl;
-    PyObject* bdt = initBDT(semileptonicPoints.first, firstHalfOfPromptData, &slWeightArray, &firstHalfOfPromptWeights);
+    PyObject* bdt = initBDT(firstHalfOfSLData, firstHalfOfPromptData, &firstHalfOfSLWeights, &firstHalfOfPromptWeights);
 
     // Reweight the second half of the prompt data to look like the prompt data
     std::cout << "Finding weights" << std::endl;
-    auto                efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
+    auto efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
 
+    // Calculate the weights that we need
     std::vector<double> prompt2SLweights = secondHalfOfPromptWeights;
     for (size_t i = 0; i < prompt2SLweights.size(); ++i) {
         prompt2SLweights[i] *= efficiencyWeights[i];
@@ -240,7 +247,7 @@ int main()
         TH1D promptHist{plotProjection(
             secondHalfOfPromptData, secondHalfOfPromptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
         TH1D semileptonicHist{
-            plotProjection(semileptonicPoints.first, slWeightArray, i, "semileptonic", nBins, low[i], high[i])};
+            plotProjection(secondHalfOfSLData, secondHalfOfSLWeights, i, "semileptonic", nBins, low[i], high[i])};
         TH1D reweightedPrompt{
             plotProjection(secondHalfOfPromptData, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
         plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i]);
