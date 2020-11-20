@@ -182,6 +182,46 @@ template <typename T> static std::pair<std::vector<T>, std::vector<T>> splitVect
     return {firstHalf, secondHalf};
 }
 
+typedef struct dataset {
+    std::vector<PhspPoint> points1{};
+    std::vector<double>    weights1{};
+
+    std::vector<PhspPoint> points2{};
+    std::vector<double>    weights2{};
+} dataset;
+
+/*
+ * Get data + weights from ROOT files
+ *
+ * prune tells us whether to throw away some points
+ */
+static dataset readData(const std::string& dataFile,
+                        const std::string& weightFile,
+                        const std::string& treeName,
+                        const std::string& weightBranch,
+                        const bool         prune)
+{
+    // Find our points + which indices we threw away if any
+    auto points{phsp(dataFile, treeName, prune)};
+
+    // Find our weights; we may have thrown some points away
+    std::vector<double> weights{};
+    if (prune) {
+        weights = wts(weightFile, treeName, weightBranch, &points.second);
+    } else {
+        weights = wts(weightFile, treeName, weightBranch);
+    }
+
+    // Split the points and weights
+    auto splitPoints  = splitVector(points.first);
+    auto splitWeights = splitVector(weights);
+
+    assert(splitPoints.first.size() == splitWeights.first.size());
+    assert(splitPoints.second.size() == splitWeights.second.size());
+
+    return dataset{splitPoints.first, splitWeights.first, splitPoints.second, splitWeights.second};
+}
+
 int main()
 {
     // Prompt ROOT file (should contain a branch containing event weights)
@@ -196,40 +236,19 @@ int main()
     const std::string semileptonicTree{"DecayTree"};
     const std::string semileptonicWeightBranch{"numSignalEvents_sw"};
 
-    // Split the prompt data into two sets; this assumes they're distributed randomly in phase space
-    auto promptPoints{phsp(promptFile, promptTree, true)};
-    auto promptWeightArray{wts(promptWeightFile, promptTree, promptWeightBranch, &promptPoints.second)};
-
-    auto promptDataHalves       = splitVector(promptPoints.first);
-    auto firstHalfOfPromptData  = promptDataHalves.first;
-    auto secondHalfOfPromptData = promptDataHalves.second;
-
-    auto promptWeightHalves        = splitVector(promptWeightArray);
-    auto firstHalfOfPromptWeights  = promptWeightHalves.first;
-    auto secondHalfOfPromptWeights = promptWeightHalves.second;
-
-    // Split the SL data into two sets; this assumes they're distributed randomly in phase space
-    auto semileptonicPoints{phsp(semileptonicFile, semileptonicTree, true)};
-    auto slWeightArray{wts(slWeightFile, semileptonicTree, semileptonicWeightBranch, &semileptonicPoints.second)};
-
-    auto slDataHalves       = splitVector(semileptonicPoints.first);
-    auto firstHalfOfSLData  = slDataHalves.first;
-    auto secondHalfOfSLData = slDataHalves.second;
-
-    auto slWeightHalves        = splitVector(slWeightArray);
-    auto firstHalfOfSLWeights  = slWeightHalves.first;
-    auto secondHalfOfSLWeights = slWeightHalves.second;
+    dataset promptData{readData(promptFile, promptWeightFile, promptTree, promptWeightBranch, false)};
+    dataset slData{readData(semileptonicFile, slWeightFile, semileptonicTree, semileptonicWeightBranch, false)};
 
     // Train the BDT on the first half of the data
     std::cout << "Training BDT" << std::endl;
-    PyObject* bdt = initBDT(firstHalfOfSLData, firstHalfOfPromptData, &firstHalfOfSLWeights, &firstHalfOfPromptWeights);
+    PyObject* bdt = initBDT(slData.points1, promptData.points1, &slData.weights1, &promptData.weights1);
 
     // Reweight the second half of the prompt data to look like the prompt data
     std::cout << "Finding weights" << std::endl;
-    auto efficiencyWeights{efficiency(bdt, secondHalfOfPromptData, semileptonicPoints.first.size())};
+    auto efficiencyWeights{efficiency(bdt, promptData.points2, slData.points1.size())};
 
     // Calculate the weights that we need
-    std::vector<double> prompt2SLweights = secondHalfOfPromptWeights;
+    std::vector<double> prompt2SLweights = promptData.weights2;
     for (size_t i = 0; i < prompt2SLweights.size(); ++i) {
         prompt2SLweights[i] *= efficiencyWeights[i];
     }
@@ -244,12 +263,12 @@ int main()
     size_t nBins{100};
 
     for (int i = 0; i < d; ++i) {
-        TH1D promptHist{plotProjection(
-            secondHalfOfPromptData, secondHalfOfPromptWeights, i, "Phsp Projection", nBins, low[i], high[i])};
+        TH1D promptHist{
+            plotProjection(promptData.points2, promptData.weights2, i, "Phsp Projection", nBins, low[i], high[i])};
         TH1D semileptonicHist{
-            plotProjection(secondHalfOfSLData, secondHalfOfSLWeights, i, "semileptonic", nBins, low[i], high[i])};
+            plotProjection(slData.points2, slData.weights2, i, "semileptonic", nBins, low[i], high[i])};
         TH1D reweightedPrompt{
-            plotProjection(secondHalfOfPromptData, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
+            plotProjection(promptData.points2, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
         plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i]);
     }
 
@@ -261,7 +280,7 @@ int main()
                                  std::make_pair(low[1], high[1]),
                                  0,
                                  1);
-    promptSlices.add(secondHalfOfPromptData, &secondHalfOfPromptWeights);
+    promptSlices.add(promptData.points2, &promptData.weights2);
     promptSlices.setColour(kRed);
 
     HistogramSlices slSlices("SL Hist Slice;m(K\\pi_1);relative counts",
@@ -271,7 +290,7 @@ int main()
                              std::make_pair(low[1], high[1]),
                              0,
                              1);
-    slSlices.add(semileptonicPoints.first, &slWeightArray);
+    slSlices.add(slData.points2, &slData.weights2);
     slSlices.setColour(kGreen);
 
     HistogramSlices reweightedSlices("Reweighted Hist Slice ;m(K\\pi_1);relative counts",
@@ -281,7 +300,7 @@ int main()
                                      std::make_pair(low[1], high[1]),
                                      0,
                                      1);
-    reweightedSlices.add(secondHalfOfPromptData, &prompt2SLweights);
+    reweightedSlices.add(promptData.points2, &prompt2SLweights);
     reweightedSlices.setColour(kBlue);
 
     std::vector<HistogramSlices> slices{promptSlices, slSlices, reweightedSlices};
