@@ -245,7 +245,7 @@ int main()
 
     // Reweight the second half of the prompt data to look like the prompt data
     std::cout << "Finding weights" << std::endl;
-    auto efficiencyWeights{efficiency(bdt, promptData.points2, slData.points1.size())};
+    auto efficiencyWeights{efficiency(bdt, promptData.points2, &promptData.weights2, slData.points1.size())};
 
     // Calculate the weights that we need
     std::vector<double> prompt2SLweights = promptData.weights2;

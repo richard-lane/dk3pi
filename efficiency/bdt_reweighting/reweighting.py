@@ -24,19 +24,21 @@ def init(mc_data, real_data, mc_weights=None, real_data_weights=None):
     return reweighter
 
 
-def predicted_weights(reweighter: GBReweighter, points, expected_num_points=None):
+def predicted_weights(
+    reweighter: GBReweighter, points, weights=None, expected_num_points=None
+):
     """
     Find the predicted weights at a given point from a (trained) reweighter
 
     If we want our reweighted distribution to have a certain number of points, provide this above
 
     """
-    weights = reweighter.predict_weights(points)
+    eff_weights = reweighter.predict_weights(points, weights)
 
     # We may want to fiddle with the weights so we get the right normalisation afterwards
     normalisation = 1.0
     if expected_num_points:
-        avg_weight = np.mean(weights)
+        avg_weight = np.mean(eff_weights)
         normalisation *= expected_num_points / (len(points) * avg_weight)
 
-    return normalisation * weights
+    return normalisation * eff_weights

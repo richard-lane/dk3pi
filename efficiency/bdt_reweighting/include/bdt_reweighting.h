@@ -51,14 +51,18 @@ inline char* py2chars(PyObject* obj)
  */
 PyObject* initBDT(const std::vector<PhspPoint>& mcData,
                   const std::vector<PhspPoint>& realData,
-                  std::vector<double>*    mcWeights       = nullptr,
-                  std::vector<double>*    realDataWeights = nullptr);
+                  std::vector<double>*          mcWeights       = nullptr,
+                  std::vector<double>*          realDataWeights = nullptr);
 
 /*
  * Find the efficiency at a collection of points given a trained BDT
  *
+ * weights           - initial weights
  * expectedNumPoints - the number of points expected in the distribution we're targeting
  */
-std::vector<double> efficiency(PyObject* bdt, const std::vector<PhspPoint>& point, const size_t expectedNumPoints);
+std::vector<double> efficiency(PyObject*                     bdt,
+                               const std::vector<PhspPoint>& points,
+                               std::vector<double>*          weights,
+                               const size_t                  expectedNumPoints);
 
 #endif // BDT_REWEIGHTING_H

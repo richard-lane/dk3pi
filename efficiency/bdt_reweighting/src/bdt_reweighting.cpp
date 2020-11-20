@@ -116,7 +116,10 @@ PyObject* initBDT(const std::vector<PhspPoint>& mcData,
     // But maybe it's fine
 }
 
-std::vector<double> efficiency(PyObject* bdt, const std::vector<PhspPoint>& points, const size_t expectedNumPoints)
+std::vector<double> efficiency(PyObject*                     bdt,
+                               const std::vector<PhspPoint>& points,
+                               std::vector<double>*          weights,
+                               const size_t                  expectedNumPoints)
 {
     assert(bdt);
     // Find the Python function we'll be calling
@@ -137,8 +140,8 @@ std::vector<double> efficiency(PyObject* bdt, const std::vector<PhspPoint>& poin
     PyArrayObject* numpyData = copyPhspPoints2Numpy(points);
     assert(numpyData);
 
-    // Find a numpy array of efficiency values
-    PyObject* efficiencies = PyObject_CallFunctionObjArgs(func, bdt, numpyData, numPoints, NULL);
+    PyObject* pyWeights{weights ? castVector2Array(*weights) : Py_BuildValue("")};
+    PyObject* efficiencies = PyObject_CallFunctionObjArgs(func, bdt, numpyData, pyWeights, numPoints, NULL);
     assert(efficiencies);
     Py_DECREF(func);
     Py_DECREF(numpyData);
