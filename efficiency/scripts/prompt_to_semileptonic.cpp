@@ -117,10 +117,12 @@ phsp(const std::string& rootFile, const std::string& treeName, const bool prune 
         tree->GetEntry(i);
 
         // Find out if this event is in the forbidden hole
-        const double mass        = invariantMass({decay.kParams, decay.pi1Params});
-        const bool   eventInHole = (mass < 925.) && (mass > 875.);
+        const double mass1       = invariantMass({decay.kParams, decay.pi1Params});
+        const double mass2       = invariantMass({decay.pi1Params, decay.pi2Params});
+        const double mass3       = invariantMass({decay.pi2Params, decay.pi3Params});
+        const bool   eventInHole = (mass1 < 925.) && (mass1 > 875.) && (mass2 < 900.) && (mass2 > 700) && (mass3 < 900) && (mass3 > 700);
 
-        // Don't add the point if we are pruning and the mass is in the forbidden hole
+        // Don't add the point if we are pruning and the event is in the forbidden hole
         if (prune && eventInHole) {
             points.second.push_back(i);
         } else {
