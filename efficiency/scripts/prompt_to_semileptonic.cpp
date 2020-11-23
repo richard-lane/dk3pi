@@ -134,8 +134,12 @@ phsp(const std::string& rootFile, const std::string& treeName, const bool prune 
     return points;
 }
 
-static void
-plotProjection(TH1D& promptHist, TH1D& slHist, TH1D& reweightedHist, const std::string& path, const std::string& xTitle)
+static void plotProjection(TH1D&              promptHist,
+                           TH1D&              slHist,
+                           TH1D&              reweightedHist,
+                           const std::string& path,
+                           const std::string& xTitle,
+                           const size_t       nTarget)
 {
     // Formatting
     promptHist.SetLineColor(kRed);
@@ -147,14 +151,13 @@ plotProjection(TH1D& promptHist, TH1D& slHist, TH1D& reweightedHist, const std::
     reweightedHist.SetStats(false);
 
     // Scale hists
-    promptHist.Scale(1 / promptHist.Integral());
-    slHist.Scale(1 / slHist.Integral());
-    reweightedHist.Scale(1 / reweightedHist.Integral());
+    promptHist.Scale(nTarget / promptHist.Integral());
+    reweightedHist.Scale(nTarget / reweightedHist.Integral());
 
     // Axis
     promptHist.GetYaxis()->SetTitle("Relative counts");
-    promptHist.GetYaxis()->SetRangeUser(0., 0.045);
-    slHist.GetYaxis()->SetRangeUser(0., 0.045);
+    //promptHist.GetYaxis()->SetRangeUser(0., 0.045);
+    //slHist.GetYaxis()->SetRangeUser(0., 0.045);
     promptHist.GetXaxis()->SetTitle(xTitle.c_str());
 
     // Save the plots
@@ -184,9 +187,11 @@ template <typename T> static std::pair<std::vector<T>, std::vector<T>> splitVect
 typedef struct dataset {
     std::vector<PhspPoint> points1{};
     std::vector<double>    weights1{};
+    std::vector<size_t>    discarded1{};
 
     std::vector<PhspPoint> points2{};
     std::vector<double>    weights2{};
+    std::vector<size_t>    discarded2{};
 } dataset;
 
 /*
@@ -211,14 +216,20 @@ static dataset readData(const std::string& dataFile,
         weights = wts(weightFile, treeName, weightBranch);
     }
 
-    // Split the points and weights
+    // Split the points, weights and discarded indices
     auto splitPoints  = splitVector(points.first);
     auto splitWeights = splitVector(weights);
+    auto splitDiscard = splitVector(points.second);
 
     assert(splitPoints.first.size() == splitWeights.first.size());
     assert(splitPoints.second.size() == splitWeights.second.size());
 
-    return dataset{splitPoints.first, splitWeights.first, splitPoints.second, splitWeights.second};
+    return dataset{splitPoints.first,
+                   splitWeights.first,
+                   splitDiscard.first,
+                   splitPoints.second,
+                   splitWeights.second,
+                   splitDiscard.second};
 }
 
 int main()
@@ -244,7 +255,9 @@ int main()
 
     // Reweight the second half of the prompt data to look like the prompt data
     std::cout << "Finding weights" << std::endl;
-    auto efficiencyWeights{efficiency(bdt, promptData.points2, &promptData.weights2, slData.points2.size())};
+    size_t nTarget =
+        slData.points2.size() * promptData.points2.size() / (promptData.points2.size() + promptData.discarded2.size());
+    auto efficiencyWeights{efficiency(bdt, promptData.points2, &promptData.weights2, nTarget)};
 
     // Calculate the weights that we need
     std::vector<double> prompt2SLweights = promptData.weights2;
@@ -268,7 +281,7 @@ int main()
             plotProjection(slData.points2, slData.weights2, i, "semileptonic", nBins, low[i], high[i])};
         TH1D reweightedPrompt{
             plotProjection(promptData.points2, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
-        plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i]);
+        plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i], nTarget);
     }
 
     // Create slices for something
