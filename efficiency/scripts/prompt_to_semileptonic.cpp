@@ -117,11 +117,10 @@ phsp(const std::string& rootFile, const std::string& treeName, const bool prune 
         tree->GetEntry(i);
 
         // Find out if this event is in the forbidden hole
-        const double mass1 = invariantMass({decay.kParams, decay.pi1Params});
-        const double mass2 = invariantMass({decay.pi1Params, decay.pi2Params});
-        const double mass3 = invariantMass({decay.pi2Params, decay.pi3Params});
-        const bool   eventInHole =
-            (mass1 < 925.) && (mass1 > 875.) && (mass2 < 900.) && (mass2 > 700) && (mass3 < 900) && (mass3 > 700);
+        [[maybe_unused]] const double mass1       = invariantMass({decay.kParams, decay.pi1Params});
+        [[maybe_unused]] const double mass2       = invariantMass({decay.pi1Params, decay.pi2Params});
+        [[maybe_unused]] const double mass3       = invariantMass({decay.pi2Params, decay.pi3Params});
+        const bool                    eventInHole = (mass1 < 925.) && (mass1 > 875.);
 
         // Don't add the point if we are pruning and the event is in the forbidden hole
         if (prune && eventInHole) {
@@ -236,7 +235,7 @@ int main()
     const std::string semileptonicTree{"DecayTree"};
     const std::string semileptonicWeightBranch{"numSignalEvents_sw"};
 
-    dataset promptData{readData(promptFile, promptWeightFile, promptTree, promptWeightBranch, false)};
+    dataset promptData{readData(promptFile, promptWeightFile, promptTree, promptWeightBranch, true)};
     dataset slData{readData(semileptonicFile, slWeightFile, semileptonicTree, semileptonicWeightBranch, false)};
 
     // Train the BDT on the first half of the data
@@ -245,7 +244,7 @@ int main()
 
     // Reweight the second half of the prompt data to look like the prompt data
     std::cout << "Finding weights" << std::endl;
-    auto efficiencyWeights{efficiency(bdt, promptData.points2, &promptData.weights2, slData.points1.size())};
+    auto efficiencyWeights{efficiency(bdt, promptData.points2, &promptData.weights2, slData.points2.size())};
 
     // Calculate the weights that we need
     std::vector<double> prompt2SLweights = promptData.weights2;
