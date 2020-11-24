@@ -81,6 +81,19 @@ def main():
         reweighted_err = np.sqrt(reweighted)
         sl_err = np.sqrt(sl)
 
+        # Rescale histograms and errors
+        prompt_integral = np.sum(prompt)
+        prompt /= prompt_integral
+        prompt_err /= prompt_integral
+
+        sl_integral = np.sum(sl)
+        sl /= sl_integral
+        sl_err /= sl_integral
+
+        reweighted_integral = np.sum(reweighted)
+        reweighted /= reweighted_integral
+        reweighted_err /= reweighted_integral
+
         # Find bin centres
         centres = np.mean(np.vstack([edges[0:-1], edges[1:]]), axis=0)
 
@@ -117,7 +130,7 @@ def main():
         )
         plt.legend()
 
-        plt.savefig(f"{i}.eps", format="eps", dpi=1200)
+        plt.savefig(f"{i}.png", format="png", dpi=1000)
         plt.clf()
 
 
