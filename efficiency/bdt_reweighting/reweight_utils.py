@@ -34,7 +34,7 @@ def invariant_masses(px, py, pz, energy):
     return np.sqrt(mass_squared)
 
 
-def plot_projection(phsp_points, i):
+def plot_projection(phsp_points, i, label):
     """
     Plot a histogram of the i'th projection of a collection of phase space points
 
@@ -42,38 +42,43 @@ def plot_projection(phsp_points, i):
     # Create an array of the points we're interested in
     data = phsp_points[:, i]
 
-    plt.hist(data, bins=100)
+    plt.hist(data, bins=np.linspace(200, 1800, 250))
+    plt.xlabel(label)
+    plt.ylabel("Counts")
     plt.show()
 
 
-def main():
+def inv_mass_parametrisation(
+    file_name: str, tree_name: str, k_branches, pi1_branches, pi2_branches, pi3_branches
+) -> np.ndarray:
     """
-    Test
+    Find the (Kpi1, pi1pi2, pi2pi3, Kpi1pi2, pi1pi2pi3) phsp parametrisation of a set of points in a ROOT file
+
+    branches should be iterables of branch names in the order [px, py, pz, pe]
 
     """
-    # Read in kinematic data from a ROOT file
-    f = "wg_rs_prompt.root"
-    k_px = read_branch(f, "DecayTree", "D0_P0_PX")
-    k_py = read_branch(f, "DecayTree", "D0_P0_PY")
-    k_pz = read_branch(f, "DecayTree", "D0_P0_PZ")
-    k_e = read_branch(f, "DecayTree", "D0_P0_PE")
+    # Read the data from all the events
+    k_px = read_branch(file_name, tree_name, k_branches[0])
+    k_py = read_branch(file_name, tree_name, k_branches[1])
+    k_pz = read_branch(file_name, tree_name, k_branches[2])
+    k_e = read_branch(file_name, tree_name, k_branches[3])
 
-    pi1_px = read_branch(f, "DecayTree", "D0_P1_PX")
-    pi1_py = read_branch(f, "DecayTree", "D0_P1_PY")
-    pi1_pz = read_branch(f, "DecayTree", "D0_P1_PZ")
-    pi1_e = read_branch(f, "DecayTree", "D0_P1_PE")
+    pi1_px = read_branch(file_name, tree_name, pi1_branches[0])
+    pi1_py = read_branch(file_name, tree_name, pi1_branches[1])
+    pi1_pz = read_branch(file_name, tree_name, pi1_branches[2])
+    pi1_e = read_branch(file_name, tree_name, pi1_branches[3])
 
-    pi2_px = read_branch(f, "DecayTree", "D0_P2_PX")
-    pi2_py = read_branch(f, "DecayTree", "D0_P2_PY")
-    pi2_pz = read_branch(f, "DecayTree", "D0_P2_PZ")
-    pi2_e = read_branch(f, "DecayTree", "D0_P2_PE")
+    pi2_px = read_branch(file_name, tree_name, pi2_branches[0])
+    pi2_py = read_branch(file_name, tree_name, pi2_branches[1])
+    pi2_pz = read_branch(file_name, tree_name, pi2_branches[2])
+    pi2_e = read_branch(file_name, tree_name, pi2_branches[3])
 
-    pi3_px = read_branch(f, "DecayTree", "D0_P3_PX")
-    pi3_py = read_branch(f, "DecayTree", "D0_P3_PY")
-    pi3_pz = read_branch(f, "DecayTree", "D0_P3_PZ")
-    pi3_e = read_branch(f, "DecayTree", "D0_P3_PE")
+    pi3_px = read_branch(file_name, tree_name, pi3_branches[0])
+    pi3_py = read_branch(file_name, tree_name, pi3_branches[1])
+    pi3_pz = read_branch(file_name, tree_name, pi3_branches[2])
+    pi3_e = read_branch(file_name, tree_name, pi3_branches[3])
 
-    # Find its invariant masses
+    # Find all invariant masses
     k_pi1 = invariant_masses(k_px + pi1_px, k_py + pi1_py, k_pz + pi1_pz, k_e + pi1_e)
     pi1_pi2 = invariant_masses(
         pi1_px + pi2_px, pi1_py + pi2_py, pi1_pz + pi2_pz, pi1_e + pi2_e
@@ -94,11 +99,34 @@ def main():
         pi1_e + pi2_e + pi3_e,
     )
 
-    points = np.column_stack((k_pi1, pi1_pi2, pi2_pi3, k_pi1_pi2, pi1_pi2_pi3))
+    return np.column_stack((k_pi1, pi1_pi2, pi2_pi3, k_pi1_pi2, pi1_pi2_pi3))
+
+
+def main():
+    """
+    Test
+
+    """
+    # Read in kinematic data from a ROOT file
+    points = inv_mass_parametrisation(
+        "wg_rs_prompt.root",
+        "DecayTree",
+        ("D0_P0_PX", "D0_P0_PY", "D0_P0_PZ", "D0_P0_PE"),
+        ("D0_P1_PX", "D0_P1_PY", "D0_P1_PZ", "D0_P1_PE"),
+        ("D0_P2_PX", "D0_P2_PY", "D0_P2_PZ", "D0_P2_PE"),
+        ("D0_P3_PX", "D0_P3_PY", "D0_P3_PZ", "D0_P3_PE"),
+    )
 
     # Plot projections
+    labels = (
+        "m(Kpi1) /MeV",
+        "m(pi1pi2) /MeV",
+        "m(pi2pi3) /MeV",
+        "m(Kpi1pi2) /MeV",
+        "m(pi1pi2pi3) /MeV",
+    )
     for i in range(5):
-        plot_projection(points, i)
+        plot_projection(points, i, labels[i])
 
 
 if __name__ == "__main__":
