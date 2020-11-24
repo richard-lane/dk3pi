@@ -6,12 +6,47 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 # This is really horrible but i can't think of a better way of doing it
 # Ideally i'd like to set a global python include path via the CMake build system...
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
 import reweighting
 import reweight_utils
+
+
+def chi_squared(counts_source, counts_target):
+    """
+    Implementation of chisq test for two distributions that ignores zeroes
+
+    Pass in counts in each bin
+
+    ChiSq defined as Sum((x_i - y_i)^2/(x_i + y_i)), because I do what I want
+
+    This should be unit tested but it isnt. But it works
+
+    """
+    assert len(counts_source) == len(counts_target)
+
+    # Want to catch warnings as if they were errors
+    warnings.filterwarnings("error")
+
+    try:
+        chi_sq = 0.0
+        for source, target in zip(counts_source, counts_target):
+            try:
+                x = (target - source) ** 2 / (target + source)
+                chi_sq += x
+
+            except RuntimeWarning:
+                # Misses the case where target = -source. But that won't happen...
+                pass
+
+    finally:
+        # Put the warning status back
+        warnings.filterwarnings("default")
+
+    return chi_sq
 
 
 def main():
