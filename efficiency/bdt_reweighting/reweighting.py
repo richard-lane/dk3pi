@@ -2,7 +2,18 @@ import numpy as np
 from hep_ml.reweight import GBReweighter
 
 
-def init(mc_data, real_data, mc_weights=None, real_data_weights=None):
+def init(
+    mc_data,
+    real_data,
+    mc_weights=None,
+    real_data_weights=None,
+    n_estimators=40,
+    learning_rate=0.2,
+    max_depth=3,
+    min_samples_leaf=200,
+    loss_regularization=5.0,
+    gb_args=None,
+):
     """
     Initialise, train + return a BDT for performing the D->K3pi efficiency estimate
 
@@ -12,8 +23,14 @@ def init(mc_data, real_data, mc_weights=None, real_data_weights=None):
     Also optionally pass in an array-like of weights; if unweighted pass in None
 
     """
-    # reweighter = GBReweighter(max_depth=7, gb_args={"max_features": 1})
-    reweighter = GBReweighter()
+    reweighter = GBReweighter(
+        n_estimators,
+        learning_rate,
+        max_depth,
+        min_samples_leaf,
+        loss_regularization,
+        gb_args,
+    )
     reweighter.fit(
         original=real_data,
         target=mc_data,
@@ -31,6 +48,7 @@ def predicted_weights(
     Find the predicted weights at a given point from a (trained) reweighter
 
     If we want our reweighted distribution to have a certain number of points, provide this above
+    This bit doesn't actually work right so just scale it yourself later
 
     """
     eff_weights = reweighter.predict_weights(points, weights)

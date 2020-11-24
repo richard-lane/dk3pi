@@ -36,16 +36,15 @@ def invariant_masses(px, py, pz, energy):
 
 def plot_projection(phsp_points, i, label):
     """
-    Plot a histogram of the i'th projection of a collection of phase space points
+    Return a histogram of the i'th projection of a collection of phase space points
+
+    Returns whatever plt.hist returns
 
     """
     # Create an array of the points we're interested in
     data = phsp_points[:, i]
 
-    plt.hist(data, bins=np.linspace(200, 1800, 250))
-    plt.xlabel(label)
-    plt.ylabel("Counts")
-    plt.show()
+    return plt.hist(data, bins=np.linspace(200, 1800, 250))
 
 
 def inv_mass_parametrisation(
@@ -100,34 +99,3 @@ def inv_mass_parametrisation(
     )
 
     return np.column_stack((k_pi1, pi1_pi2, pi2_pi3, k_pi1_pi2, pi1_pi2_pi3))
-
-
-def main():
-    """
-    Test
-
-    """
-    # Read in kinematic data from a ROOT file
-    points = inv_mass_parametrisation(
-        "wg_rs_prompt.root",
-        "DecayTree",
-        ("D0_P0_PX", "D0_P0_PY", "D0_P0_PZ", "D0_P0_PE"),
-        ("D0_P1_PX", "D0_P1_PY", "D0_P1_PZ", "D0_P1_PE"),
-        ("D0_P2_PX", "D0_P2_PY", "D0_P2_PZ", "D0_P2_PE"),
-        ("D0_P3_PX", "D0_P3_PY", "D0_P3_PZ", "D0_P3_PE"),
-    )
-
-    # Plot projections
-    labels = (
-        "m(Kpi1) /MeV",
-        "m(pi1pi2) /MeV",
-        "m(pi2pi3) /MeV",
-        "m(Kpi1pi2) /MeV",
-        "m(pi1pi2pi3) /MeV",
-    )
-    for i in range(5):
-        plot_projection(points, i, labels[i])
-
-
-if __name__ == "__main__":
-    main()
