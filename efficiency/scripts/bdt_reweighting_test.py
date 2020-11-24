@@ -69,34 +69,55 @@ def main():
     bins = np.linspace(200, 1800, 250)
     for i in range(5):
         prompt, edges = np.histogram(
-            test_prompt_data[:, i], bins=bins, weights=test_prompt_weights, density=True
+            test_prompt_data[:, i], bins=bins, weights=test_prompt_weights
         )
         reweighted, _ = np.histogram(
-            test_prompt_data[:, i], bins=bins, weights=efficiency_weights, density=True
+            test_prompt_data[:, i], bins=bins, weights=efficiency_weights
         )
-        sl, _ = np.histogram(
-            test_sl_data[:, i], bins=bins, weights=test_sl_weights, density=True
-        )
+        sl, _ = np.histogram(test_sl_data[:, i], bins=bins, weights=test_sl_weights)
+
+        # Find errors
+        prompt_err = np.sqrt(prompt)
+        reweighted_err = np.sqrt(reweighted)
+        sl_err = np.sqrt(sl)
 
         # Find bin centres
         centres = np.mean(np.vstack([edges[0:-1], edges[1:]]), axis=0)
 
         # Make plots
-        plt.plot(
-            centres, prompt, label="Prompt", color="red", marker=".", linestyle="None"
+        plt.errorbar(
+            centres,
+            prompt,
+            yerr=prompt_err,
+            label="Prompt",
+            color="red",
+            linewidth=0.5,
+            marker=".",
+            markersize=0.5,
         )
-        plt.plot(
+        plt.errorbar(
             centres,
             reweighted,
+            yerr=reweighted_err,
             label="Reweighted",
             color="blue",
+            linewidth=0.5,
             marker=".",
-            linestyle="None",
+            markersize=0.5,
         )
-        plt.plot(centres, sl, label="SL", color="green", marker=".", linestyle="None")
+        plt.errorbar(
+            centres,
+            sl,
+            yerr=sl_err,
+            label="SL",
+            color="green",
+            marker=".",
+            linewidth=0.5,
+            markersize=0.5,
+        )
         plt.legend()
 
-        plt.savefig(f"{i}.png")
+        plt.savefig(f"{i}.eps", format="eps", dpi=1200)
         plt.clf()
 
 
