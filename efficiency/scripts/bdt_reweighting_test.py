@@ -68,31 +68,34 @@ def main():
     # Compare the reweighted test prompt + test SL data by plotting some histograms
     bins = np.linspace(200, 1800, 250)
     for i in range(5):
-        plt.hist(
-            test_prompt_data[:, i],
-            bins=bins,
-            weights=test_prompt_weights,
-            alpha=0.5,
-            histtype="step",
-            label="Prompt",
+        prompt, edges = np.histogram(
+            test_prompt_data[:, i], bins=bins, weights=test_prompt_weights, density=True
         )
-        plt.hist(
-            test_prompt_data[:, i],
-            bins=bins,
-            weights=efficiency_weights,
-            alpha=0.5,
-            histtype="step",
+        reweighted, _ = np.histogram(
+            test_prompt_data[:, i], bins=bins, weights=efficiency_weights, density=True
+        )
+        sl, _ = np.histogram(
+            test_sl_data[:, i], bins=bins, weights=test_sl_weights, density=True
+        )
+
+        # Find bin centres
+        centres = np.mean(np.vstack([edges[0:-1], edges[1:]]), axis=0)
+
+        # Make plots
+        plt.plot(
+            centres, prompt, label="Prompt", color="red", marker=".", linestyle="None"
+        )
+        plt.plot(
+            centres,
+            reweighted,
             label="Reweighted",
+            color="blue",
+            marker=".",
+            linestyle="None",
         )
-        plt.hist(
-            test_sl_data[:, i],
-            bins=bins,
-            weights=test_sl_weights,
-            alpha=0.5,
-            histtype="step",
-            label="SL",
-        )
+        plt.plot(centres, sl, label="SL", color="green", marker=".", linestyle="None")
         plt.legend()
+
         plt.savefig(f"{i}.png")
         plt.clf()
 
