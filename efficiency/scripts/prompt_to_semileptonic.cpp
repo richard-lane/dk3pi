@@ -112,6 +112,11 @@ phsp(const std::string& rootFile, const std::string& treeName, const bool prune 
     // Init pair of empty vectors
     std::pair<std::vector<PhspPoint>, std::vector<size_t>> points{};
 
+    // RNGs
+    std::random_device                     rd;
+    std::mt19937                           rng(rd());
+    std::uniform_real_distribution<double> dist(0, 1);
+
     // Iterate over tree filling in the right things
     for (decltype(tree->GetEntries()) i = 0; i < tree->GetEntries(); ++i) {
         tree->GetEntry(i);
@@ -123,7 +128,7 @@ phsp(const std::string& rootFile, const std::string& treeName, const bool prune 
         const bool                    eventInHole = (mass1 < 925.) && (mass1 > 875.);
 
         // Don't add the point if we are pruning and the event is in the forbidden hole
-        if (prune && eventInHole) {
+        if (prune && eventInHole && dist(rng) < 0.5) {
             points.second.push_back(i);
         } else {
             points.first.push_back(parametrisation(decay));
@@ -156,15 +161,15 @@ static void plotProjection(TH1D&              promptHist,
 
     // Axis
     promptHist.GetYaxis()->SetTitle("Relative counts");
-    //promptHist.GetYaxis()->SetRangeUser(0., 0.045);
-    //slHist.GetYaxis()->SetRangeUser(0., 0.045);
+    promptHist.GetYaxis()->SetRangeUser(0., 8000.);
+    slHist.GetYaxis()->SetRangeUser(0., 8000.);
     promptHist.GetXaxis()->SetTitle(xTitle.c_str());
 
     // Save the plots
-    util::LegendParams_t legend{0.7, 0.9, 0.7, 0.9};
-    util::saveObjectsToFile<TH1D>({&promptHist, &slHist, &reweightedHist},
+    util::LegendParams_t legend{0.2, 0.4, 0.7, 0.9};
+    util::saveObjectsToFile<TH1D>({&slHist, &promptHist, &reweightedHist},
                                   {"HIST E", "SAME HIST E", "SAME HIST E"},
-                                  {"Prompt", "SL", "Reweighted Prompt"},
+                                  {"SL", "Prompt", "Reweighted Prompt"},
                                   path.c_str(),
                                   legend);
 }
@@ -275,13 +280,16 @@ int main()
     size_t nBins{100};
 
     for (int i = 0; i < d; ++i) {
-        TH1D promptHist{
-            plotProjection(promptData.points2, promptData.weights2, i, "Phsp Projection", nBins, low[i], high[i])};
+        TH1D promptHist{plotProjection(promptData.points2, promptData.weights2, i, "prompt", nBins, low[i], high[i])};
         TH1D semileptonicHist{
-            plotProjection(slData.points2, slData.weights2, i, "semileptonic", nBins, low[i], high[i])};
+            plotProjection(slData.points2, slData.weights2, i, "Phsp Projection", nBins, low[i], high[i])};
         TH1D reweightedPrompt{
             plotProjection(promptData.points2, prompt2SLweights, i, "Reweighted", nBins, low[i], high[i])};
-        plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i], nTarget);
+        if (!i) {
+            plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i], nTarget);
+        } else {
+            plotProjection(promptHist, semileptonicHist, reweightedPrompt, titles[i], labels[i], slData.points2.size());
+        }
     }
 
     // Create slices for something
