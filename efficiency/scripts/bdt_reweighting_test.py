@@ -168,6 +168,9 @@ def main():
         plt.savefig(f"{i}.png", format="png", dpi=1000)
         plt.clf()
 
+        # Print chi squareds
+        print(f"Orig: {chi_squared(prompt, sl)}\tReweighted: {chi_squared(reweighted, sl)}")
+
 
 if __name__ == "__main__":
     main()
