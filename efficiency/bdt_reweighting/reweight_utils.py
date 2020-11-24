@@ -58,12 +58,47 @@ def main():
     k_pz = read_branch(f, "DecayTree", "D0_P0_PZ")
     k_e = read_branch(f, "DecayTree", "D0_P0_PE")
 
+    pi1_px = read_branch(f, "DecayTree", "D0_P1_PX")
+    pi1_py = read_branch(f, "DecayTree", "D0_P1_PY")
+    pi1_pz = read_branch(f, "DecayTree", "D0_P1_PZ")
+    pi1_e = read_branch(f, "DecayTree", "D0_P1_PE")
+
+    pi2_px = read_branch(f, "DecayTree", "D0_P2_PX")
+    pi2_py = read_branch(f, "DecayTree", "D0_P2_PY")
+    pi2_pz = read_branch(f, "DecayTree", "D0_P2_PZ")
+    pi2_e = read_branch(f, "DecayTree", "D0_P2_PE")
+
+    pi3_px = read_branch(f, "DecayTree", "D0_P3_PX")
+    pi3_py = read_branch(f, "DecayTree", "D0_P3_PY")
+    pi3_pz = read_branch(f, "DecayTree", "D0_P3_PZ")
+    pi3_e = read_branch(f, "DecayTree", "D0_P3_PE")
+
     # Find its invariant masses
-    k_masses = invariant_masses(k_px, k_py, k_pz, k_e)
-    phsp = np.column_stack((k_masses, k_masses))
+    k_pi1 = invariant_masses(k_px + pi1_px, k_py + pi1_py, k_pz + pi1_pz, k_e + pi1_e)
+    pi1_pi2 = invariant_masses(
+        pi1_px + pi2_px, pi1_py + pi2_py, pi1_pz + pi2_pz, pi1_e + pi2_e
+    )
+    pi2_pi3 = invariant_masses(
+        pi2_px + pi3_px, pi2_py + pi3_py, pi2_pz + pi3_pz, pi2_e + pi3_e
+    )
+    k_pi1_pi2 = invariant_masses(
+        k_px + pi1_px + pi2_px,
+        k_py + pi1_py + pi2_py,
+        k_pz + pi1_pz + pi2_pz,
+        k_e + pi1_e + pi2_e,
+    )
+    pi1_pi2_pi3 = invariant_masses(
+        pi1_px + pi2_px + pi3_px,
+        pi1_py + pi2_py + pi3_py,
+        pi1_pz + pi2_pz + pi3_pz,
+        pi1_e + pi2_e + pi3_e,
+    )
+
+    points = np.column_stack((k_pi1, pi1_pi2, pi2_pi3, k_pi1_pi2, pi1_pi2_pi3))
 
     # Plot projections
-    plot_projection(phsp, 0)
+    for i in range(5):
+        plot_projection(points, i)
 
 
 if __name__ == "__main__":
