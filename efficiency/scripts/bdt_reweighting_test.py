@@ -49,18 +49,36 @@ def chi_squared(counts_source, counts_target):
     return chi_sq
 
 
-def combined_chi_squared(source_points, target_points, bins):
+def combined_chi_squared(
+    source_points, source_weights, target_points, target_weights, bins
+):
     """
-    Take two collections of multidimensional points and a binning to apply to each dimension
+    Take collections of multidimensional points + (scalar) weights and a binning to apply to each dimension
 
     Then finds the chi squared of each histogram projection using this binning and adds them to return a combined chi squared value
 
     """
-    # Bin the points into histogram projections
+    dimensionality = len(source_points[0])
+    assert dimensionality == len(target_points[0])
 
-    # Find chi squared for these histograms
+    chi_sq = 0.0
 
-    # Combine them + return
+    for d in range(dimensionality):
+
+        # Bin the points from this dimension into a histogram
+        source_counts, edges = np.histogram(
+            source_points[:, d], bins=bins, weights=source_weights
+        )
+        target_counts, _ = np.histogram(
+            target_points[:, d], bins=bins, weights=target_weights
+        )
+
+        assert np.all(np.abs(edges - bins) < 1e-3)  # Just in case it isn't. Luke told me to watch out
+
+        # Find chi squared between these histograms
+        chi_sq += chi_squared(source_counts, target_counts)
+
+    return chi_sq
 
 
 def main():
@@ -182,8 +200,16 @@ def main():
         plt.savefig(f"{i}.png", format="png", dpi=1000)
         plt.clf()
 
-        # Print chi squareds
-        print(f"Orig: {chi_squared(prompt, sl)}\tReweighted: {chi_squared(reweighted, sl)}")
+    # Print combined chi squared
+    unweighted_chi_sq = combined_chi_squared(
+        test_prompt_data, test_prompt_weights, test_sl_data, test_sl_weights, bins
+    )
+    weighted_chi_sq = combined_chi_squared(
+        test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
+    )
+    print(
+        f"\tunweighted CHI2:\t{unweighted_chi_sq}\n\treweighted CHI2:\t{weighted_chi_sq}"
+    )
 
 
 if __name__ == "__main__":
