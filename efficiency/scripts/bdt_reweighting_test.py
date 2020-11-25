@@ -49,6 +49,20 @@ def chi_squared(counts_source, counts_target):
     return chi_sq
 
 
+def combined_chi_squared(source_points, target_points, bins):
+    """
+    Take two collections of multidimensional points and a binning to apply to each dimension
+
+    Then finds the chi squared of each histogram projection using this binning and adds them to return a combined chi squared value
+
+    """
+    # Bin the points into histogram projections
+
+    # Find chi squared for these histograms
+
+    # Combine them + return
+
+
 def main():
     # Find phsp points for prompt + SL datasets
     print("Reading data...")
