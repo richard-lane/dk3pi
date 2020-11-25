@@ -73,7 +73,9 @@ def combined_chi_squared(
             target_points[:, d], bins=bins, weights=target_weights
         )
 
-        assert np.all(np.abs(edges - bins) < 1e-3)  # Just in case it isn't. Luke told me to watch out
+        assert np.all(
+            np.abs(edges - bins) < 1e-3
+        )  # Just in case it isn't. Luke told me to watch out
 
         # Find chi squared between these histograms
         chi_sq += chi_squared(source_counts, target_counts)
@@ -124,6 +126,9 @@ def main():
         training_prompt_data,
         training_sl_weights,
         training_prompt_weights,
+        n_estimators=200,
+        max_depth=6,
+        learning_rate=0.1,
     )
 
     # Reweight the test prompt data
@@ -168,7 +173,7 @@ def main():
         plt.errorbar(
             centres,
             prompt,
-            yerr=prompt_err,
+            # yerr=prompt_err,
             label="Prompt",
             color="red",
             linewidth=0.5,
@@ -178,7 +183,7 @@ def main():
         plt.errorbar(
             centres,
             reweighted,
-            yerr=reweighted_err,
+            # yerr=reweighted_err,
             label="Reweighted",
             color="blue",
             linewidth=0.5,
@@ -188,7 +193,7 @@ def main():
         plt.errorbar(
             centres,
             sl,
-            yerr=sl_err,
+            # yerr=sl_err,
             label="SL",
             color="green",
             marker=".",
@@ -197,7 +202,7 @@ def main():
         )
         plt.legend()
 
-        plt.savefig(f"{i}.png", format="png", dpi=1000)
+        plt.savefig(f"{i}.png", format="png", dpi=600)
         plt.clf()
 
     # Print combined chi squared
