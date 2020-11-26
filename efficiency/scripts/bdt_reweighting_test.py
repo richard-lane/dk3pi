@@ -83,6 +83,22 @@ def combined_chi_squared(
     return chi_sq
 
 
+def bin_data(
+    source, target, reweighted, source_weights, target_weights, reweighted_weights, bins
+):
+    """
+    Returns source counts, target counts, reweighted counts
+
+    """
+    source_counts, _ = np.histogram(source, bins=bins, weights=source_weights)
+    target_counts, _ = np.histogram(target, bins=bins, weights=target_weights)
+    reweighted_counts, _ = np.histogram(
+        reweighted, bins=bins, weights=reweighted_weights
+    )
+
+    return source_counts, target_counts, reweighted_counts
+
+
 def main():
     # Find phsp points for prompt + SL datasets
     print("Reading data...")
@@ -139,14 +155,18 @@ def main():
 
     # Compare the reweighted test prompt + test SL data by plotting some histograms
     bins = np.linspace(200, 1800, 250)
-    for i in range(5):
-        prompt, edges = np.histogram(
-            test_prompt_data[:, i], bins=bins, weights=test_prompt_weights
+    for i in range(len(test_prompt_data[0])):
+
+        # Find the i'th histogram projection
+        prompt, reweighted, sl = bin_data(
+            test_prompt_data[:, i],
+            test_sl_data[:, i],
+            test_prompt_data[:, i],
+            test_prompt_weights[:, i],
+            test_sl_weights[:, i],
+            efficiency_weights,
+            bins,
         )
-        reweighted, _ = np.histogram(
-            test_prompt_data[:, i], bins=bins, weights=efficiency_weights
-        )
-        sl, _ = np.histogram(test_sl_data[:, i], bins=bins, weights=test_sl_weights)
 
         # Find errors
         prompt_err = np.sqrt(prompt)
