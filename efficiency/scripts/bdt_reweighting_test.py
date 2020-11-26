@@ -163,7 +163,11 @@ def save_plot(
     plt.clf()
 
 
-def main():
+def read_data():
+    """
+    Returns phsp parametrised prompt_points, prompt_weights, sl_points, sl_weights
+
+    """
     # Find phsp points for prompt + SL datasets
     print("Reading data...")
     prompt_points = reweight_utils.inv_mass_parametrisation(
@@ -191,6 +195,14 @@ def main():
     sl_weights = reweight_utils.read_branch(
         "sl_weights.root", "DecayTree", "numSignalEvents_sw"
     )
+
+    return prompt_points, prompt_weights, sl_points, sl_weights
+
+
+def main():
+
+    # Read data from files + perform phsp parametrisation
+    prompt_points, prompt_weights, sl_points, sl_weights = read_data()
 
     # Split data into training + test data
     print("Splitting data...")
