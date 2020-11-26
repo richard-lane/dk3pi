@@ -314,13 +314,15 @@ def optimise():
 
     bins = np.linspace(200, 1800, 250)
 
-    def objective_fcn(
-        n_estimators, learning_rate, max_depth, min_samples_leaf, loss_regularization
-    ):
+    def objective_fcn(args):
         """
         Train BDT, reweight + find chi squared
 
         """
+        n_estimators, learning_rate, max_depth, min_samples_leaf, loss_regularization = (
+            args
+        )
+
         bdt = reweighting.init(
             training_sl_data,
             training_prompt_data,
@@ -341,44 +343,18 @@ def optimise():
             test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
         )
 
-    optimiser = skopt.Optimizer(
-        dimensions=[
-            skopt.space.Integer(20, 100),  # Num trees
-            skopt.space.Real(0.01, 0.5, prior="log-uniform"),  # Learning Rate
-            skopt.space.Integer(2, 6),  # Tree depth
-            skopt.space.Integer(20, 400),  # min samples leaf
-            skopt.space.Real(2.0, 10.0),  # loss reg
-        ]
+    dimensions = [
+        skopt.space.Integer(20, 100),  # Num trees
+        skopt.space.Real(0.01, 0.5, prior="log-uniform"),  # Learning Rate
+        skopt.space.Integer(2, 6),  # Tree depth
+        skopt.space.Integer(20, 400),  # min samples leaf
+        skopt.space.Real(2.0, 10.0),  # loss reg
+    ]
+
+    result = skopt.gp_minimize(
+        objective_fcn, dimensions, n_calls=25, n_random_starts=5, verbose=True
     )
-
-    num_cores = 4
-    num_iterations = 5
-    for _ in range(num_iterations):
-        x = optimiser.ask(n_points=num_cores)
-        print(x)
-        # It would be nice if we could ask it to use a similar number of trees at once, so we minimise time waiting
-        y = joblib.Parallel(n_jobs=num_cores)(
-            joblib.delayed(objective_fcn)(*v) for v in x
-        )
-        optimiser.tell(x, y)
-
-    index = 0
-    chisq = optimiser.yi[0]
-    for i in range(len(optimiser.yi)):
-        if optimiser.yi[i] < chisq:
-            chisq = optimiser.yi[i]
-            index = i
-        print(optimiser.yi[i], "\t", optimiser.Xi[i])
-
-    print(index, " ", chisq, " ", optimiser.Xi[index])
-
-    fig, ax = plt.subplots()
-    plt.bar([x for x in range(num_cores * num_iterations)], optimiser.yi)
-    ax.set_yscale("log")
-    plt.ylabel("Chisq")
-    plt.xlabel("Trial Number")
-    plt.title(f"Chi Squared for {num_cores * num_iterations} trials")
-    plt.show()
+    print(result.x)
 
 
 if __name__ == "__main__":
