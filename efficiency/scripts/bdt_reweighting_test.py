@@ -49,7 +49,125 @@ def chi_squared(counts_source, counts_target):
     return chi_sq
 
 
-def main():
+def combined_chi_squared(
+    source_points, source_weights, target_points, target_weights, bins
+):
+    """
+    Take collections of multidimensional points + (scalar) weights and a binning to apply to each dimension
+
+    Then finds the chi squared of each histogram projection using this binning and adds them to return a combined chi squared value
+
+    """
+    dimensionality = len(source_points[0])
+    assert dimensionality == len(target_points[0])
+
+    chi_sq = 0.0
+
+    for d in range(dimensionality):
+
+        # Bin the points from this dimension into a histogram
+        source_counts, edges = np.histogram(
+            source_points[:, d], bins=bins, weights=source_weights
+        )
+        target_counts, _ = np.histogram(
+            target_points[:, d], bins=bins, weights=target_weights
+        )
+
+        assert np.all(
+            np.abs(edges - bins) < 1e-3
+        )  # Just in case it isn't. Luke told me to watch out
+
+        # Find chi squared between these histograms
+        chi_sq += chi_squared(source_counts, target_counts)
+
+    return chi_sq
+
+
+def bin_data(
+    source, target, reweighted, source_weights, target_weights, reweighted_weights, bins
+):
+    """
+    Returns source counts, target counts, reweighted counts
+
+    """
+    source_counts, _ = np.histogram(source, bins=bins, weights=source_weights)
+    target_counts, _ = np.histogram(target, bins=bins, weights=target_weights)
+    reweighted_counts, _ = np.histogram(
+        reweighted, bins=bins, weights=reweighted_weights
+    )
+
+    return source_counts, target_counts, reweighted_counts
+
+
+def rescale(counts, errors):
+    """
+    Rescale a histogram and its errors to a total area of 1
+
+    """
+    assert len(errors) == len(counts)
+
+    integral = np.sum(counts)
+    counts /= integral
+    errors /= integral
+
+
+def save_plot(
+    bin_centres,
+    prompt_counts,
+    prompt_err,
+    reweighted_counts,
+    reweighted_err,
+    sl_counts,
+    sl_err,
+    path,
+    plot_errs=True,
+):
+    """
+    Save a plot of our histograms
+
+    """
+    # Make plots
+    plt.errorbar(
+        bin_centres,
+        prompt_counts,
+        yerr=prompt_err if plot_errs else None,
+        label="Prompt",
+        color="red",
+        linewidth=0.5,
+        marker=".",
+        markersize=0.5,
+    )
+    plt.errorbar(
+        bin_centres,
+        reweighted_counts,
+        yerr=reweighted_err if plot_errs else None,
+        label="Reweighted",
+        color="blue",
+        linewidth=0.5,
+        marker=".",
+        markersize=0.5,
+    )
+    plt.errorbar(
+        bin_centres,
+        sl_counts,
+        yerr=sl_err if plot_errs else None,
+        label="SL",
+        color="green",
+        marker=".",
+        linewidth=0.5,
+        markersize=0.5,
+    )
+    plt.legend()
+
+    plt.savefig(path, dpi=600)
+    plt.clf()
+
+
+def read_data():
+    """
+    Returns phsp parametrised prompt_points, prompt_weights, sl_points, sl_weights
+
+    """
     # Find phsp points for prompt + SL datasets
     print("Reading data...")
     prompt_points = reweight_utils.inv_mass_parametrisation(
@@ -78,6 +196,66 @@ def main():
         "sl_weights.root", "DecayTree", "numSignalEvents_sw"
     )
 
+    return prompt_points, prompt_weights, sl_points, sl_weights
+
+
+def plot_projections(
+    test_prompt_data,
+    test_sl_data,
+    test_prompt_weights,
+    test_sl_weights,
+    efficiency_weights,
+    bins,
+):
+    """
+    Plot phase space projections, save files to 0.png, 1.png, 2.png etc.
+
+    """
+    # Compare the reweighted test prompt + test SL data by plotting some histograms
+    for i in range(len(test_prompt_data[0])):
+
+        # Find the i'th histogram projection
+        prompt, sl, reweighted = bin_data(
+            test_prompt_data[:, i],
+            test_sl_data[:, i],
+            test_prompt_data[:, i],
+            test_prompt_weights,
+            test_sl_weights,
+            efficiency_weights,
+            bins,
+        )
+
+        # Find errors
+        prompt_err = np.sqrt(prompt)
+        reweighted_err = np.sqrt(reweighted)
+        sl_err = np.sqrt(sl)
+
+        # Rescale histograms and errors
+        rescale(prompt, prompt_err)
+        rescale(sl, sl_err)
+        rescale(reweighted, reweighted_err)
+
+        # Find bin centres
+        centres = np.mean(np.vstack([bins[0:-1], bins[1:]]), axis=0)
+
+        # Plot
+        save_plot(
+            centres,
+            prompt,
+            prompt_err,
+            reweighted,
+            reweighted_err,
+            sl,
+            sl_err,
+            f"{i}.png",
+            False,
+        )
+
+
+def main():
+    # Read data from files + perform phsp parametrisation
+    prompt_points, prompt_weights, sl_points, sl_weights = read_data()
+
     # Split data into training + test data
     print("Splitting data...")
     training_prompt_data, test_prompt_data = np.array_split(prompt_points, 2)
@@ -92,6 +270,9 @@ def main():
         training_prompt_data,
         training_sl_weights,
         training_prompt_weights,
+        n_estimators=2,
+        max_depth=6,
+        learning_rate=0.1,
     )
 
     # Reweight the test prompt data
@@ -100,76 +281,27 @@ def main():
         bdt, test_prompt_data, test_prompt_weights
     )
 
-    # Compare the reweighted test prompt + test SL data by plotting some histograms
+    # Plot phsp projections
     bins = np.linspace(200, 1800, 250)
-    for i in range(5):
-        prompt, edges = np.histogram(
-            test_prompt_data[:, i], bins=bins, weights=test_prompt_weights
-        )
-        reweighted, _ = np.histogram(
-            test_prompt_data[:, i], bins=bins, weights=efficiency_weights
-        )
-        sl, _ = np.histogram(test_sl_data[:, i], bins=bins, weights=test_sl_weights)
+    plot_projections(
+        test_prompt_data,
+        test_sl_data,
+        test_prompt_weights,
+        test_sl_weights,
+        efficiency_weights,
+        bins,
+    )
 
-        # Find errors
-        prompt_err = np.sqrt(prompt)
-        reweighted_err = np.sqrt(reweighted)
-        sl_err = np.sqrt(sl)
-
-        # Rescale histograms and errors
-        prompt_integral = np.sum(prompt)
-        prompt /= prompt_integral
-        prompt_err /= prompt_integral
-
-        sl_integral = np.sum(sl)
-        sl /= sl_integral
-        sl_err /= sl_integral
-
-        reweighted_integral = np.sum(reweighted)
-        reweighted /= reweighted_integral
-        reweighted_err /= reweighted_integral
-
-        # Find bin centres
-        centres = np.mean(np.vstack([edges[0:-1], edges[1:]]), axis=0)
-
-        # Make plots
-        plt.errorbar(
-            centres,
-            prompt,
-            yerr=prompt_err,
-            label="Prompt",
-            color="red",
-            linewidth=0.5,
-            marker=".",
-            markersize=0.5,
-        )
-        plt.errorbar(
-            centres,
-            reweighted,
-            yerr=reweighted_err,
-            label="Reweighted",
-            color="blue",
-            linewidth=0.5,
-            marker=".",
-            markersize=0.5,
-        )
-        plt.errorbar(
-            centres,
-            sl,
-            yerr=sl_err,
-            label="SL",
-            color="green",
-            marker=".",
-            linewidth=0.5,
-            markersize=0.5,
-        )
-        plt.legend()
-
-        plt.savefig(f"{i}.png", format="png", dpi=1000)
-        plt.clf()
-
-        # Print chi squareds
-        print(f"Orig: {chi_squared(prompt, sl)}\tReweighted: {chi_squared(reweighted, sl)}")
+    # Print combined chi squared
+    unweighted_chi_sq = combined_chi_squared(
+        test_prompt_data, test_prompt_weights, test_sl_data, test_sl_weights, bins
+    )
+    weighted_chi_sq = combined_chi_squared(
+        test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
+    )
+    print(
+        f"\tunweighted CHI2:\t{unweighted_chi_sq}\n\treweighted CHI2:\t{weighted_chi_sq}"
+    )
 
 
 if __name__ == "__main__":
