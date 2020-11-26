@@ -99,6 +99,18 @@ def bin_data(
     return source_counts, target_counts, reweighted_counts
 
 
+def rescale(counts, errors):
+    """
+    Rescale a histogram and its errors to a total area of 1
+
+    """
+    assert len(errors) == len(counts)
+
+    integral = np.sum(counts)
+    counts /= integral
+    errors /= integral
+
+
 def main():
     # Find phsp points for prompt + SL datasets
     print("Reading data...")
@@ -174,17 +186,9 @@ def main():
         sl_err = np.sqrt(sl)
 
         # Rescale histograms and errors
-        prompt_integral = np.sum(prompt)
-        prompt /= prompt_integral
-        prompt_err /= prompt_integral
-
-        sl_integral = np.sum(sl)
-        sl /= sl_integral
-        sl_err /= sl_integral
-
-        reweighted_integral = np.sum(reweighted)
-        reweighted /= reweighted_integral
-        reweighted_err /= reweighted_integral
+        rescale(prompt, prompt_err)
+        rescale(sl, sl_err)
+        rescale(reweighted, reweighted_err)
 
         # Find bin centres
         centres = np.mean(np.vstack([edges[0:-1], edges[1:]]), axis=0)
