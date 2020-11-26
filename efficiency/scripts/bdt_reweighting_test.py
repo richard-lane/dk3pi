@@ -111,6 +111,58 @@ def rescale(counts, errors):
     errors /= integral
 
 
+def save_plot(
+    bin_centres,
+    prompt_counts,
+    prompt_err,
+    reweighted_counts,
+    reweighted_err,
+    sl_counts,
+    sl_err,
+    path,
+    plot_errs=True,
+):
+    """
+    Save a plot of our histograms
+
+    """
+    # Make plots
+    plt.errorbar(
+        centres,
+        prompt,
+        yerr=prompt_err if plot_errs else None,
+        label="Prompt",
+        color="red",
+        linewidth=0.5,
+        marker=".",
+        markersize=0.5,
+    )
+    plt.errorbar(
+        centres,
+        reweighted,
+        yerr=reweighted_err if plot_errs else None,
+        label="Reweighted",
+        color="blue",
+        linewidth=0.5,
+        marker=".",
+        markersize=0.5,
+    )
+    plt.errorbar(
+        centres,
+        sl,
+        yerr=sl_err if plot_errs else None,
+        label="SL",
+        color="green",
+        marker=".",
+        linewidth=0.5,
+        markersize=0.5,
+    )
+    plt.legend()
+
+    plt.savefig(path, dpi=600)
+    plt.clf()
+
+
 def main():
     # Find phsp points for prompt + SL datasets
     print("Reading data...")
@@ -193,41 +245,18 @@ def main():
         # Find bin centres
         centres = np.mean(np.vstack([edges[0:-1], edges[1:]]), axis=0)
 
-        # Make plots
-        plt.errorbar(
+        # Plot
+        save_plot(
             centres,
             prompt,
-            # yerr=prompt_err,
-            label="Prompt",
-            color="red",
-            linewidth=0.5,
-            marker=".",
-            markersize=0.5,
-        )
-        plt.errorbar(
-            centres,
+            prompt_err,
             reweighted,
-            # yerr=reweighted_err,
-            label="Reweighted",
-            color="blue",
-            linewidth=0.5,
-            marker=".",
-            markersize=0.5,
-        )
-        plt.errorbar(
-            centres,
+            reweighted_err,
             sl,
-            # yerr=sl_err,
-            label="SL",
-            color="green",
-            marker=".",
-            linewidth=0.5,
-            markersize=0.5,
+            sl_err,
+            f"{i}.png",
+            False,
         )
-        plt.legend()
-
-        plt.savefig(f"{i}.png", format="png", dpi=600)
-        plt.clf()
 
     # Print combined chi squared
     unweighted_chi_sq = combined_chi_squared(
