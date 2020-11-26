@@ -215,7 +215,7 @@ def plot_projections(
     for i in range(len(test_prompt_data[0])):
 
         # Find the i'th histogram projection
-        prompt, reweighted, sl = bin_data(
+        prompt, sl, reweighted = bin_data(
             test_prompt_data[:, i],
             test_sl_data[:, i],
             test_prompt_data[:, i],
