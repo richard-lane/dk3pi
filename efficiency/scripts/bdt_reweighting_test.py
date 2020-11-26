@@ -8,6 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 
+import skopt
+import joblib
+
 # This is really horrible but i can't think of a better way of doing it
 # Ideally i'd like to set a global python include path via the CMake build system...
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
@@ -338,6 +341,46 @@ def optimise():
             test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
         )
 
+    optimiser = skopt.Optimizer(
+        dimensions=[
+            skopt.space.Integer(20, 100),  # Num trees
+            skopt.space.Real(0.01, 0.5, prior="log-uniform"),  # Learning Rate
+            skopt.space.Integer(2, 6),  # Tree depth
+            skopt.space.Integer(20, 400),  # min samples leaf
+            skopt.space.Real(2.0, 10.0),  # loss reg
+        ]
+    )
+
+    num_cores = 4
+    num_iterations = 5
+    for _ in range(num_iterations):
+        x = optimiser.ask(n_points=num_cores)
+        print(x)
+        # It would be nice if we could ask it to use a similar number of trees at once, so we minimise time waiting
+        y = joblib.Parallel(n_jobs=num_cores)(
+            joblib.delayed(objective_fcn)(*v) for v in x
+        )
+        optimiser.tell(x, y)
+
+    index = 0
+    chisq = optimiser.yi[0]
+    for i in range(len(optimiser.yi)):
+        if optimiser.yi[i] < chisq:
+            chisq = optimiser.yi[i]
+            index = i
+        print(optimiser.yi[i], "\t", optimiser.Xi[i])
+
+    print(index, " ", chisq, " ", optimiser.Xi[index])
+
+    fig, ax = plt.subplots()
+    plt.bar([x for x in range(num_cores * num_iterations)], optimiser.yi)
+    ax.set_yscale("log")
+    plt.ylabel("Chisq")
+    plt.xlabel("Trial Number")
+    plt.title(f"Chi Squared for {num_cores * num_iterations} trials")
+    plt.show()
+
 
 if __name__ == "__main__":
-    plot_projections()
+    # plot_projections()
+    optimise()
