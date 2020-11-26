@@ -8,6 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 
+import skopt
+import joblib
+
 # This is really horrible but i can't think of a better way of doing it
 # Ideally i'd like to set a global python include path via the CMake build system...
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
@@ -199,7 +202,7 @@ def read_data():
     return prompt_points, prompt_weights, sl_points, sl_weights
 
 
-def plot_projections(
+def make_plots(
     test_prompt_data,
     test_sl_data,
     test_prompt_weights,
@@ -252,7 +255,11 @@ def plot_projections(
         )
 
 
-def main():
+def plot_projections():
+    """
+    Plot phsp projections with default BDT
+
+    """
     # Read data from files + perform phsp parametrisation
     prompt_points, prompt_weights, sl_points, sl_weights = read_data()
 
@@ -270,9 +277,6 @@ def main():
         training_prompt_data,
         training_sl_weights,
         training_prompt_weights,
-        n_estimators=2,
-        max_depth=6,
-        learning_rate=0.1,
     )
 
     # Reweight the test prompt data
@@ -283,7 +287,7 @@ def main():
 
     # Plot phsp projections
     bins = np.linspace(200, 1800, 250)
-    plot_projections(
+    make_plots(
         test_prompt_data,
         test_sl_data,
         test_prompt_weights,
@@ -292,17 +296,91 @@ def main():
         bins,
     )
 
-    # Print combined chi squared
-    unweighted_chi_sq = combined_chi_squared(
-        test_prompt_data, test_prompt_weights, test_sl_data, test_sl_weights, bins
+
+def optimise():
+    """
+    Find the optimal BDT parameters for a given dataset...
+
+    """
+    # Read data from files + perform phsp parametrisation
+    prompt_points, prompt_weights, sl_points, sl_weights = read_data()
+
+    # Split data into training + test data
+    print("Splitting data...")
+    training_prompt_data, test_prompt_data = np.array_split(prompt_points, 2)
+    training_sl_data, test_sl_data = np.array_split(sl_points, 2)
+    training_prompt_weights, test_prompt_weights = np.array_split(prompt_weights, 2)
+    training_sl_weights, test_sl_weights = np.array_split(sl_weights, 2)
+
+    bins = np.linspace(200, 1800, 250)
+
+    def objective_fcn(
+        n_estimators, learning_rate, max_depth, min_samples_leaf, loss_regularization
+    ):
+        """
+        Train BDT, reweight + find chi squared
+
+        """
+        bdt = reweighting.init(
+            training_sl_data,
+            training_prompt_data,
+            training_sl_weights,
+            training_prompt_weights,
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            min_samples_leaf=min_samples_leaf,
+            loss_regularization=loss_regularization,
+        )
+
+        efficiency_weights = reweighting.predicted_weights(
+            bdt, test_prompt_data, test_prompt_weights
+        )
+
+        return combined_chi_squared(
+            test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
+        )
+
+    optimiser = skopt.Optimizer(
+        dimensions=[
+            skopt.space.Integer(20, 100),  # Num trees
+            skopt.space.Real(0.01, 0.5, prior="log-uniform"),  # Learning Rate
+            skopt.space.Integer(2, 6),  # Tree depth
+            skopt.space.Integer(20, 400),  # min samples leaf
+            skopt.space.Real(2.0, 10.0),  # loss reg
+        ]
     )
-    weighted_chi_sq = combined_chi_squared(
-        test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
-    )
-    print(
-        f"\tunweighted CHI2:\t{unweighted_chi_sq}\n\treweighted CHI2:\t{weighted_chi_sq}"
-    )
+
+    num_cores = 4
+    num_iterations = 5
+    for _ in range(num_iterations):
+        x = optimiser.ask(n_points=num_cores)
+        print(x)
+        # It would be nice if we could ask it to use a similar number of trees at once, so we minimise time waiting
+        y = joblib.Parallel(n_jobs=num_cores)(
+            joblib.delayed(objective_fcn)(*v) for v in x
+        )
+        optimiser.tell(x, y)
+
+    index = 0
+    chisq = optimiser.yi[0]
+    for i in range(len(optimiser.yi)):
+        if optimiser.yi[i] < chisq:
+            chisq = optimiser.yi[i]
+            index = i
+        print(optimiser.yi[i], "\t", optimiser.Xi[i])
+
+    print(index, " ", chisq, " ", optimiser.Xi[index])
+
+    fig, ax = plt.subplots()
+    plt.bar([x for x in range(num_cores * num_iterations)], optimiser.yi)
+    ax.set_yscale("log")
+    plt.ylabel("Chisq")
+    plt.xlabel("Trial Number")
+    plt.title(f"Chi Squared for {num_cores * num_iterations} trials")
+    plt.show()
 
 
 if __name__ == "__main__":
-    main()
+    # plot_projections()
+    optimise()
