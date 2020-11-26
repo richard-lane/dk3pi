@@ -128,8 +128,8 @@ def save_plot(
     """
     # Make plots
     plt.errorbar(
-        centres,
-        prompt,
+        bin_centres,
+        prompt_counts,
         yerr=prompt_err if plot_errs else None,
         label="Prompt",
         color="red",
@@ -138,8 +138,8 @@ def save_plot(
         markersize=0.5,
     )
     plt.errorbar(
-        centres,
-        reweighted,
+        bin_centres,
+        reweighted_counts,
         yerr=reweighted_err if plot_errs else None,
         label="Reweighted",
         color="blue",
@@ -148,8 +148,8 @@ def save_plot(
         markersize=0.5,
     )
     plt.errorbar(
-        centres,
-        sl,
+        bin_centres,
+        sl_counts,
         yerr=sl_err if plot_errs else None,
         label="SL",
         color="green",
@@ -199,13 +199,19 @@ def read_data():
     return prompt_points, prompt_weights, sl_points, sl_weights
 
 
-def plot_projections():
+def plot_projections(
+    test_prompt_data,
+    test_sl_data,
+    test_prompt_weights,
+    test_sl_weights,
+    efficiency_weights,
+    bins,
+):
     """
     Plot phase space projections, save files to 0.png, 1.png, 2.png etc.
 
     """
     # Compare the reweighted test prompt + test SL data by plotting some histograms
-    bins = np.linspace(200, 1800, 250)
     for i in range(len(test_prompt_data[0])):
 
         # Find the i'th histogram projection
@@ -213,8 +219,8 @@ def plot_projections():
             test_prompt_data[:, i],
             test_sl_data[:, i],
             test_prompt_data[:, i],
-            test_prompt_weights[:, i],
-            test_sl_weights[:, i],
+            test_prompt_weights,
+            test_sl_weights,
             efficiency_weights,
             bins,
         )
@@ -230,7 +236,7 @@ def plot_projections():
         rescale(reweighted, reweighted_err)
 
         # Find bin centres
-        centres = np.mean(np.vstack([edges[0:-1], edges[1:]]), axis=0)
+        centres = np.mean(np.vstack([bins[0:-1], bins[1:]]), axis=0)
 
         # Plot
         save_plot(
@@ -247,7 +253,6 @@ def plot_projections():
 
 
 def main():
-
     # Read data from files + perform phsp parametrisation
     prompt_points, prompt_weights, sl_points, sl_weights = read_data()
 
@@ -265,7 +270,7 @@ def main():
         training_prompt_data,
         training_sl_weights,
         training_prompt_weights,
-        n_estimators=200,
+        n_estimators=2,
         max_depth=6,
         learning_rate=0.1,
     )
@@ -277,7 +282,15 @@ def main():
     )
 
     # Plot phsp projections
-    plot_projections()
+    bins = np.linspace(200, 1800, 250)
+    plot_projections(
+        test_prompt_data,
+        test_sl_data,
+        test_prompt_weights,
+        test_sl_weights,
+        efficiency_weights,
+        bins,
+    )
 
     # Print combined chi squared
     unweighted_chi_sq = combined_chi_squared(
