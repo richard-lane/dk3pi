@@ -199,7 +199,7 @@ def read_data():
     return prompt_points, prompt_weights, sl_points, sl_weights
 
 
-def plot_projections(
+def make_plots(
     test_prompt_data,
     test_sl_data,
     test_prompt_weights,
@@ -252,7 +252,11 @@ def plot_projections(
         )
 
 
-def main():
+def plot_projections():
+    """
+    Plot phsp projections with default BDT
+
+    """
     # Read data from files + perform phsp parametrisation
     prompt_points, prompt_weights, sl_points, sl_weights = read_data()
 
@@ -270,9 +274,6 @@ def main():
         training_prompt_data,
         training_sl_weights,
         training_prompt_weights,
-        n_estimators=2,
-        max_depth=6,
-        learning_rate=0.1,
     )
 
     # Reweight the test prompt data
@@ -283,7 +284,7 @@ def main():
 
     # Plot phsp projections
     bins = np.linspace(200, 1800, 250)
-    plot_projections(
+    make_plots(
         test_prompt_data,
         test_sl_data,
         test_prompt_weights,
@@ -292,17 +293,51 @@ def main():
         bins,
     )
 
-    # Print combined chi squared
-    unweighted_chi_sq = combined_chi_squared(
-        test_prompt_data, test_prompt_weights, test_sl_data, test_sl_weights, bins
-    )
-    weighted_chi_sq = combined_chi_squared(
-        test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
-    )
-    print(
-        f"\tunweighted CHI2:\t{unweighted_chi_sq}\n\treweighted CHI2:\t{weighted_chi_sq}"
-    )
+
+def optimise():
+    """
+    Find the optimal BDT parameters for a given dataset...
+
+    """
+    # Read data from files + perform phsp parametrisation
+    prompt_points, prompt_weights, sl_points, sl_weights = read_data()
+
+    # Split data into training + test data
+    print("Splitting data...")
+    training_prompt_data, test_prompt_data = np.array_split(prompt_points, 2)
+    training_sl_data, test_sl_data = np.array_split(sl_points, 2)
+    training_prompt_weights, test_prompt_weights = np.array_split(prompt_weights, 2)
+    training_sl_weights, test_sl_weights = np.array_split(sl_weights, 2)
+
+    bins = np.linspace(200, 1800, 250)
+
+    def objective_fcn(
+        n_estimators, learning_rate, max_depth, min_samples_leaf, loss_regularization
+    ):
+        """
+        Train BDT, reweight + find chi squared
+
+        """
+        bdt = reweighting.init(
+            training_sl_data,
+            training_prompt_data,
+            training_sl_weights,
+            training_prompt_weights,
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            min_samples_leaf=min_samples_leaf,
+            loss_regularization=loss_regularization,
+        )
+
+        efficiency_weights = reweighting.predicted_weights(
+            bdt, test_prompt_data, test_prompt_weights
+        )
+
+        return combined_chi_squared(
+            test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
+        )
 
 
 if __name__ == "__main__":
-    main()
+    plot_projections()
