@@ -199,36 +199,11 @@ def read_data():
     return prompt_points, prompt_weights, sl_points, sl_weights
 
 
-def main():
+def plot_projections():
+    """
+    Plot phase space projections, save files to 0.png, 1.png, 2.png etc.
 
-    # Read data from files + perform phsp parametrisation
-    prompt_points, prompt_weights, sl_points, sl_weights = read_data()
-
-    # Split data into training + test data
-    print("Splitting data...")
-    training_prompt_data, test_prompt_data = np.array_split(prompt_points, 2)
-    training_sl_data, test_sl_data = np.array_split(sl_points, 2)
-    training_prompt_weights, test_prompt_weights = np.array_split(prompt_weights, 2)
-    training_sl_weights, test_sl_weights = np.array_split(sl_weights, 2)
-
-    # Train the BDT on training data
-    print("Training BDT...")
-    bdt = reweighting.init(
-        training_sl_data,
-        training_prompt_data,
-        training_sl_weights,
-        training_prompt_weights,
-        n_estimators=200,
-        max_depth=6,
-        learning_rate=0.1,
-    )
-
-    # Reweight the test prompt data
-    print("Reweighting...")
-    efficiency_weights = reweighting.predicted_weights(
-        bdt, test_prompt_data, test_prompt_weights
-    )
-
+    """
     # Compare the reweighted test prompt + test SL data by plotting some histograms
     bins = np.linspace(200, 1800, 250)
     for i in range(len(test_prompt_data[0])):
@@ -269,6 +244,40 @@ def main():
             f"{i}.png",
             False,
         )
+
+
+def main():
+
+    # Read data from files + perform phsp parametrisation
+    prompt_points, prompt_weights, sl_points, sl_weights = read_data()
+
+    # Split data into training + test data
+    print("Splitting data...")
+    training_prompt_data, test_prompt_data = np.array_split(prompt_points, 2)
+    training_sl_data, test_sl_data = np.array_split(sl_points, 2)
+    training_prompt_weights, test_prompt_weights = np.array_split(prompt_weights, 2)
+    training_sl_weights, test_sl_weights = np.array_split(sl_weights, 2)
+
+    # Train the BDT on training data
+    print("Training BDT...")
+    bdt = reweighting.init(
+        training_sl_data,
+        training_prompt_data,
+        training_sl_weights,
+        training_prompt_weights,
+        n_estimators=200,
+        max_depth=6,
+        learning_rate=0.1,
+    )
+
+    # Reweight the test prompt data
+    print("Reweighting...")
+    efficiency_weights = reweighting.predicted_weights(
+        bdt, test_prompt_data, test_prompt_weights
+    )
+
+    # Plot phsp projections
+    plot_projections()
 
     # Print combined chi squared
     unweighted_chi_sq = combined_chi_squared(
