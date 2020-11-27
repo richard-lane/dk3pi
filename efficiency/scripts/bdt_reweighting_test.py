@@ -123,6 +123,8 @@ def save_plot(
     sl_counts,
     sl_err,
     path,
+    x_label,
+    title,
     plot_errs=True,
 ):
     """
@@ -130,15 +132,16 @@ def save_plot(
 
     """
     # Make plots
+    line_width = 0.5
+    marker = "_"
     plt.errorbar(
         bin_centres,
         prompt_counts,
         yerr=prompt_err if plot_errs else None,
         label="Prompt",
         color="red",
-        linewidth=0.5,
-        marker=".",
-        markersize=0.5,
+        linewidth=line_width,
+        marker=marker,
     )
     plt.errorbar(
         bin_centres,
@@ -146,9 +149,8 @@ def save_plot(
         yerr=reweighted_err if plot_errs else None,
         label="Reweighted",
         color="blue",
-        linewidth=0.5,
-        marker=".",
-        markersize=0.5,
+        linewidth=line_width,
+        marker=marker,
     )
     plt.errorbar(
         bin_centres,
@@ -156,11 +158,13 @@ def save_plot(
         yerr=sl_err if plot_errs else None,
         label="SL",
         color="green",
-        marker=".",
-        linewidth=0.5,
-        markersize=0.5,
+        linewidth=line_width,
+        marker=marker,
     )
     plt.legend()
+    plt.ylabel("Counts (normalised)")
+    plt.xlabel(x_label)
+    plt.title(title)
 
     plt.savefig(path, dpi=600)
     plt.clf()
@@ -214,6 +218,14 @@ def make_plots(
     Plot phase space projections, save files to 0.png, 1.png, 2.png etc.
 
     """
+    units = (
+        "M(Kpi1) /MeV",
+        "M(pi1pi2) /MeV",
+        "M(pi2pi3) /MeV",
+        "M(Kpi1pi2) /MeV",
+        "M(pi1pi2pi3) /MeV",
+    )
+    titles = ["Phase space projection"] * 5
     # Compare the reweighted test prompt + test SL data by plotting some histograms
     for i in range(len(test_prompt_data[0])):
 
@@ -251,8 +263,11 @@ def make_plots(
             sl,
             sl_err,
             f"{i}.png",
-            False,
+            units[i],
+            titles[i],
+            True,
         )
+        print(f"Created {i}")
 
 
 def plot_projections():
@@ -352,11 +367,11 @@ def optimise():
     ]
 
     result = skopt.gp_minimize(
-        objective_fcn, dimensions, n_calls=25, n_random_starts=5, verbose=True
+        objective_fcn, dimensions, n_calls=25, n_random_starts=5, verbose=True, n_jobs=4
     )
     print(result.x)
 
 
 if __name__ == "__main__":
-    # plot_projections()
-    optimise()
+    plot_projections()
+    #  optimise()
