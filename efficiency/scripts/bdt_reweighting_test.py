@@ -203,6 +203,14 @@ def read_data():
         "sl_weights.root", "DecayTree", "numSignalEvents_sw"
     )
 
+    # Remove some points to make the distributions look more different
+    # indices_to_delete = []
+    # for i in range(len(sl_points)):
+    #    if sl_points[i][1] < 900 * np.random.random():
+    #        indices_to_delete.append(i)
+    # sl_points = np.delete(sl_points, indices_to_delete, axis=0)
+    # sl_weights = np.delete(sl_weights, indices_to_delete)
+
     return prompt_points, prompt_weights, sl_points, sl_weights
 
 
@@ -334,9 +342,13 @@ def optimise():
         Train BDT, reweight + find chi squared
 
         """
-        n_estimators, learning_rate, max_depth, min_samples_leaf, loss_regularization = (
-            args
-        )
+        (
+            n_estimators,
+            learning_rate,
+            max_depth,
+            min_samples_leaf,
+            loss_regularization,
+        ) = args
 
         bdt = reweighting.init(
             training_sl_data,
