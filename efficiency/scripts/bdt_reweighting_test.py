@@ -123,6 +123,8 @@ def save_plot(
     sl_counts,
     sl_err,
     path,
+    x_label,
+    title,
     plot_errs=True,
 ):
     """
@@ -130,15 +132,16 @@ def save_plot(
 
     """
     # Make plots
+    line_width = 0.5
+    marker = "_"
     plt.errorbar(
         bin_centres,
         prompt_counts,
         yerr=prompt_err if plot_errs else None,
         label="Prompt",
         color="red",
-        linewidth=0.5,
-        marker=".",
-        markersize=0.5,
+        linewidth=line_width,
+        marker=marker,
     )
     plt.errorbar(
         bin_centres,
@@ -146,9 +149,8 @@ def save_plot(
         yerr=reweighted_err if plot_errs else None,
         label="Reweighted",
         color="blue",
-        linewidth=0.5,
-        marker=".",
-        markersize=0.5,
+        linewidth=line_width,
+        marker=marker,
     )
     plt.errorbar(
         bin_centres,
@@ -156,11 +158,13 @@ def save_plot(
         yerr=sl_err if plot_errs else None,
         label="SL",
         color="green",
-        marker=".",
-        linewidth=0.5,
-        markersize=0.5,
+        linewidth=line_width,
+        marker=marker,
     )
     plt.legend()
+    plt.ylabel("Counts (normalised)")
+    plt.xlabel(x_label)
+    plt.title(title)
 
     plt.savefig(path, dpi=600)
     plt.clf()
@@ -214,6 +218,14 @@ def make_plots(
     Plot phase space projections, save files to 0.png, 1.png, 2.png etc.
 
     """
+    units = (
+        "M(Kpi1) /MeV",
+        "M(pi1pi2) /MeV",
+        "M(pi2pi3) /MeV",
+        "M(Kpi1pi2) /MeV",
+        "M(pi1pi2pi3) /MeV",
+    )
+    titles = ["Phase space projection"] * 5
     # Compare the reweighted test prompt + test SL data by plotting some histograms
     for i in range(len(test_prompt_data[0])):
 
@@ -251,8 +263,11 @@ def make_plots(
             sl,
             sl_err,
             f"{i}.png",
-            False,
+            units[i],
+            titles[i],
+            True,
         )
+        print(f"Created {i}")
 
 
 def plot_projections():
@@ -314,13 +329,15 @@ def optimise():
 
     bins = np.linspace(200, 1800, 250)
 
-    def objective_fcn(
-        n_estimators, learning_rate, max_depth, min_samples_leaf, loss_regularization
-    ):
+    def objective_fcn(args):
         """
         Train BDT, reweight + find chi squared
 
         """
+        n_estimators, learning_rate, max_depth, min_samples_leaf, loss_regularization = (
+            args
+        )
+
         bdt = reweighting.init(
             training_sl_data,
             training_prompt_data,
@@ -341,46 +358,20 @@ def optimise():
             test_prompt_data, efficiency_weights, test_sl_data, test_sl_weights, bins
         )
 
-    optimiser = skopt.Optimizer(
-        dimensions=[
-            skopt.space.Integer(20, 100),  # Num trees
-            skopt.space.Real(0.01, 0.5, prior="log-uniform"),  # Learning Rate
-            skopt.space.Integer(2, 6),  # Tree depth
-            skopt.space.Integer(20, 400),  # min samples leaf
-            skopt.space.Real(2.0, 10.0),  # loss reg
-        ]
+    dimensions = [
+        skopt.space.Integer(20, 100),  # Num trees
+        skopt.space.Real(0.01, 0.5, prior="log-uniform"),  # Learning Rate
+        skopt.space.Integer(2, 6),  # Tree depth
+        skopt.space.Integer(20, 400),  # min samples leaf
+        skopt.space.Real(2.0, 10.0),  # loss reg
+    ]
+
+    result = skopt.gp_minimize(
+        objective_fcn, dimensions, n_calls=25, n_random_starts=5, verbose=True, n_jobs=4
     )
-
-    num_cores = 4
-    num_iterations = 5
-    for _ in range(num_iterations):
-        x = optimiser.ask(n_points=num_cores)
-        print(x)
-        # It would be nice if we could ask it to use a similar number of trees at once, so we minimise time waiting
-        y = joblib.Parallel(n_jobs=num_cores)(
-            joblib.delayed(objective_fcn)(*v) for v in x
-        )
-        optimiser.tell(x, y)
-
-    index = 0
-    chisq = optimiser.yi[0]
-    for i in range(len(optimiser.yi)):
-        if optimiser.yi[i] < chisq:
-            chisq = optimiser.yi[i]
-            index = i
-        print(optimiser.yi[i], "\t", optimiser.Xi[i])
-
-    print(index, " ", chisq, " ", optimiser.Xi[index])
-
-    fig, ax = plt.subplots()
-    plt.bar([x for x in range(num_cores * num_iterations)], optimiser.yi)
-    ax.set_yscale("log")
-    plt.ylabel("Chisq")
-    plt.xlabel("Trial Number")
-    plt.title(f"Chi Squared for {num_cores * num_iterations} trials")
-    plt.show()
+    print(result.x)
 
 
 if __name__ == "__main__":
-    # plot_projections()
-    optimise()
+    plot_projections()
+    #  optimise()
