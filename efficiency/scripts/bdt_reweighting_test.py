@@ -379,11 +379,28 @@ def optimise():
     ]
 
     result = skopt.gp_minimize(
-        objective_fcn, dimensions, n_calls=25, n_random_starts=5, verbose=True, n_jobs=4
+        objective_fcn, dimensions, n_calls=3, n_random_starts=3, verbose=True, n_jobs=4
     )
     print(result.x)
 
+    # Save a bar chart of chi squared values
+    fig, ax = plt.subplots()
+    x = [_ for _ in range(len(result.func_vals))]
+    y = result.func_vals
+    ax.bar(x, y)
+    ax.set_yscale('log')
+    ax.set_xlabel("Trial")
+    ax.set_ylabel("ChiSq")
+    plt.savefig("chiSqs.png")
+
+    # Save a text file of Chi squareds and params
+    with open("results.txt", "w") as f:
+        for chisq, params in zip(y, result.x_iters):
+            f.write(f"{chisq}\t{params}\n")
+        f.write("\n")
+
+
 
 if __name__ == "__main__":
-    plot_projections()
-    #  optimise()
+    #  plot_projections()
+    optimise()
