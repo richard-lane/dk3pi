@@ -8,7 +8,7 @@ stream_output = True
 stream_error = True
 
 should_transfer_files = Yes
-transfer_input_files = ../efficiency/scripts/bdt_reweighting_test.py, /storage/mh19137/python_venv/
+transfer_input_files = ../efficiency/scripts/bdt_reweighting_test.py, ../efficiency/bdt_reweighting/reweighting.py, ../efficiency/bdt_reweighting/reweight_utils.py, cut_wg_rs_prompt.root, cut_wg_rs_sl.root, rs_weights.root, sl_weights.root
 
 request_cpus = 1
 request_memory = 64

@@ -1,12 +1,11 @@
 #!/bin/bash
 # Check that I can run my BDT script on Condor
 
-echo "Running test BDT script"
+set -e
+source /software/mh19137/venvs/python3/bin/activate
 which python
-python --version
-source /storage/mh19137/python_venv/bin/activate
+locate libc.so.6
 
-which python
-python --version
+echo "Running test BDT script"
 python bdt_reweighting_test.py
 
