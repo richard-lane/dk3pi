@@ -116,6 +116,7 @@ def rescale(counts, errors):
 
 def save_plot(
     bin_centres,
+    bin_widths,
     prompt_counts,
     prompt_err,
     reweighted_counts,
@@ -131,20 +132,23 @@ def save_plot(
     Save a plot of our histograms
 
     """
-    # Make plots
+    fig, ax = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": [2, 1]})
     line_width = 0.5
-    markersize = 1
+    markersize = 0.0
+    alpha = 0.5
     marker = "_"
     for count, colour, label in zip(
         (prompt_counts, reweighted_counts, sl_counts),
         ("red", "blue", "green"),
         ("Prompt", "Reweighted", "SL"),
     ):
-        plt.errorbar(
+        ax[0].errorbar(
             bin_centres,
             count,
             yerr=prompt_err if plot_errs else None,
+            xerr=bin_widths if plot_errs else None,
             label=label,
+            alpha=alpha,
             color=colour,
             linewidth=line_width,
             marker=marker,
@@ -152,9 +156,10 @@ def save_plot(
             fmt=" ",
         )
     plt.legend()
-    plt.ylabel("Counts (normalised)")
+    ax[0].set_ylabel("Counts (normalised)")
     plt.xlabel(x_label)
-    plt.title(title)
+    fig.subplots_adjust(hspace=0)
+    fig.suptitle(title)
 
     plt.savefig(path, dpi=600)
     plt.clf()
@@ -251,9 +256,13 @@ def make_plots(
         # Find bin centres
         centres = np.mean(np.vstack([bins[0:-1], bins[1:]]), axis=0)
 
+        # Find bin widths
+        widths = [0.5 * (j - i) for i, j in zip(bins[:-1], bins[1:])]
+
         # Plot
         save_plot(
             centres,
+            widths,
             prompt,
             prompt_err,
             reweighted,
