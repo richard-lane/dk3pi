@@ -132,20 +132,21 @@ def save_plot(
     Save a plot of our histograms
 
     """
-    fig, ax = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": [2, 1]})
+    fig, ax = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": [2.5, 1]})
     line_width = 0.5
     markersize = 0.0
     alpha = 0.5
     marker = "_"
-    for count, colour, label in zip(
+    for count, err, colour, label in zip(
         (prompt_counts, reweighted_counts, sl_counts),
+        (prompt_err, reweighted_err, sl_err),
         ("red", "blue", "green"),
         ("Prompt", "Reweighted", "SL"),
     ):
         ax[0].errorbar(
             bin_centres,
             count,
-            yerr=prompt_err if plot_errs else None,
+            yerr=err if plot_errs else None,
             xerr=bin_widths if plot_errs else None,
             label=label,
             alpha=alpha,
@@ -155,8 +156,39 @@ def save_plot(
             markersize=markersize,
             fmt=" ",
         )
-    plt.legend()
+
+    # Find difference between Prompt + SL and difference between Reweighted + SL
+    prompt_minus_sl = prompt_counts - sl_counts
+    reweighted_minus_sl = reweighted_counts - sl_counts
+
+    # Find the associated errors
+    prompt_minus_sl_err = np.sqrt(prompt_err ** 2 + sl_err ** 2)
+    reweighted_minus_sl_err = np.sqrt(reweighted_err ** 2 + sl_err ** 2)
+
+    # Plot
+    for diff, err, colour, label in zip(
+        (prompt_minus_sl, reweighted_minus_sl),
+        (prompt_minus_sl_err, reweighted_minus_sl_err),
+        ("red", "blue"),
+        ("Prompt-SL", "Reweighted-SL"),
+    ):
+        ax[1].errorbar(
+            bin_centres,
+            diff,
+            yerr=err if plot_errs else None,
+            xerr=bin_widths if plot_errs else None,
+            label=label,
+            color=colour,
+            linewidth=line_width,
+            marker=marker,
+            markersize=markersize,
+            fmt=" ",
+        )
+
+    ax[0].legend()
+    ax[1].legend()
     ax[0].set_ylabel("Counts (normalised)")
+    ax[1].set_ylabel(r"$\Delta$Counts")
     plt.xlabel(x_label)
     fig.subplots_adjust(hspace=0)
     fig.suptitle(title)
