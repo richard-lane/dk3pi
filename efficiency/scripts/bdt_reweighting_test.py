@@ -320,9 +320,11 @@ def plot_projections():
     )
 
 
-def optimise():
+def optimise(n_calls):
     """
     Find the optimal BDT parameters for a given dataset...
+
+    Try n_calls BDT configurations; starts with n_calls//5 random points
 
     """
     # Read data from files + perform phsp parametrisation
@@ -371,15 +373,15 @@ def optimise():
         )
 
     dimensions = [
-        skopt.space.Integer(20, 100),  # Num trees
-        skopt.space.Real(0.01, 0.5, prior="log-uniform"),  # Learning Rate
-        skopt.space.Integer(2, 6),  # Tree depth
-        skopt.space.Integer(20, 400),  # min samples leaf
-        skopt.space.Real(2.0, 10.0),  # loss reg
+        skopt.space.Integer(20, 250),  # Num trees
+        skopt.space.Real(0.01, 0.8, prior="log-uniform"),  # Learning Rate
+        skopt.space.Integer(3, 10),  # Tree depth
+        skopt.space.Integer(20, 750),  # min samples leaf
+        skopt.space.Real(1.5, 50.0),  # loss reg
     ]
 
     result = skopt.gp_minimize(
-        objective_fcn, dimensions, n_calls=3, n_random_starts=3, verbose=True, n_jobs=4
+        objective_fcn, dimensions, n_calls=n_calls, n_random_starts=n_calls//5, verbose=True,
     )
     print(result.x)
 
@@ -403,4 +405,5 @@ def optimise():
 
 if __name__ == "__main__":
     #  plot_projections()
-    optimise()
+    n_calls = 250
+    optimise(n_calls)
