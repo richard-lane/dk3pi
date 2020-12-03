@@ -193,7 +193,7 @@ def save_plot(
     fig.subplots_adjust(hspace=0)
     fig.suptitle(title)
 
-    plt.savefig(path, dpi=600)
+    plt.savefig(path, dpi=600, bbox_inches="tight")
     plt.clf()
 
 
