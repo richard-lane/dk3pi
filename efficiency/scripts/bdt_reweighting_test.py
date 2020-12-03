@@ -254,13 +254,19 @@ def make_plots(
 
     """
     units = (
-        "M(Kpi1) /MeV",
-        "M(pi1pi2) /MeV",
-        "M(pi2pi3) /MeV",
-        "M(Kpi1pi2) /MeV",
-        "M(pi1pi2pi3) /MeV",
+        r"M($K\pi_1$) /MeV",
+        r"M($\pi_1\pi_2$) /MeV",
+        r"M($\pi_2\pi_3$) /MeV",
+        r"M($K\pi_1\pi_2$) /MeV",
+        r"M($\pi_1\pi_2\pi_3$) /MeV",
     )
-    titles = ["Phase space projection"] * 5
+    titles = [
+        r"Projection: M($K\pi_1$)",
+        r"Projection: M($\pi_1\pi_2$)",
+        r"Projection: M($\pi_1\pi_2\pi_3$)",
+        r"Projection: M($K\pi_1\pi_2$)",
+        r"Projection: M($\pi_1\pi_2\pi_3$)",
+    ]
     # Compare the reweighted test prompt + test SL data by plotting some histograms
     for i in range(len(test_prompt_data[0])):
 
