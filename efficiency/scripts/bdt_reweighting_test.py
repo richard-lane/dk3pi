@@ -133,37 +133,24 @@ def save_plot(
     """
     # Make plots
     line_width = 0.5
+    markersize = 1
     marker = "_"
-    plt.errorbar(
-        bin_centres,
-        prompt_counts,
-        yerr=prompt_err if plot_errs else None,
-        label="Prompt",
-        color="red",
-        linewidth=line_width,
-        marker=marker,
-        fmt=' ',
-    )
-    plt.errorbar(
-        bin_centres,
-        reweighted_counts,
-        yerr=reweighted_err if plot_errs else None,
-        label="Reweighted",
-        color="blue",
-        linewidth=line_width,
-        marker=marker,
-        fmt=' ',
-    )
-    plt.errorbar(
-        bin_centres,
-        sl_counts,
-        yerr=sl_err if plot_errs else None,
-        label="SL",
-        color="green",
-        linewidth=line_width,
-        marker=marker,
-        fmt=' ',
-    )
+    for count, colour, label in zip(
+        (prompt_counts, reweighted_counts, sl_counts),
+        ("red", "blue", "green"),
+        ("Prompt", "Reweighted", "SL"),
+    ):
+        plt.errorbar(
+            bin_centres,
+            count,
+            yerr=prompt_err if plot_errs else None,
+            label=label,
+            color=colour,
+            linewidth=line_width,
+            marker=marker,
+            markersize=markersize,
+            fmt=" ",
+        )
     plt.legend()
     plt.ylabel("Counts (normalised)")
     plt.xlabel(x_label)
@@ -207,12 +194,12 @@ def read_data():
     )
 
     # Remove some points to make the distributions look more different
-    # indices_to_delete = []
-    # for i in range(len(sl_points)):
-    #    if sl_points[i][1] < 900 * np.random.random():
-    #        indices_to_delete.append(i)
-    # sl_points = np.delete(sl_points, indices_to_delete, axis=0)
-    # sl_weights = np.delete(sl_weights, indices_to_delete)
+    indices_to_delete = []
+    for i in range(len(sl_points)):
+        if sl_points[i][1] < 900 * np.random.random():
+            indices_to_delete.append(i)
+    sl_points = np.delete(sl_points, indices_to_delete, axis=0)
+    sl_weights = np.delete(sl_weights, indices_to_delete)
 
     return prompt_points, prompt_weights, sl_points, sl_weights
 
@@ -384,7 +371,11 @@ def optimise(n_calls):
     ]
 
     result = skopt.gp_minimize(
-        objective_fcn, dimensions, n_calls=n_calls, n_random_starts=n_calls//5, verbose=True,
+        objective_fcn,
+        dimensions,
+        n_calls=n_calls,
+        n_random_starts=n_calls // 5,
+        verbose=True,
     )
     print(result.x)
 
@@ -393,7 +384,7 @@ def optimise(n_calls):
     x = [_ for _ in range(len(result.func_vals))]
     y = result.func_vals
     ax.bar(x, y)
-    ax.set_yscale('log')
+    ax.set_yscale("log")
     ax.set_xlabel("Trial")
     ax.set_ylabel("ChiSq")
     plt.savefig("chiSqs.png")
@@ -403,7 +394,6 @@ def optimise(n_calls):
         for chisq, params in zip(y, result.x_iters):
             f.write(f"{chisq}\t{params}\n")
         f.write("\n")
-
 
 
 if __name__ == "__main__":
