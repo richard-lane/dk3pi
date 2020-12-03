@@ -142,6 +142,7 @@ def save_plot(
         color="red",
         linewidth=line_width,
         marker=marker,
+        fmt=' ',
     )
     plt.errorbar(
         bin_centres,
@@ -151,6 +152,7 @@ def save_plot(
         color="blue",
         linewidth=line_width,
         marker=marker,
+        fmt=' ',
     )
     plt.errorbar(
         bin_centres,
@@ -160,6 +162,7 @@ def save_plot(
         color="green",
         linewidth=line_width,
         marker=marker,
+        fmt=' ',
     )
     plt.legend()
     plt.ylabel("Counts (normalised)")
@@ -404,6 +407,6 @@ def optimise(n_calls):
 
 
 if __name__ == "__main__":
-    #  plot_projections()
-    n_calls = 250
-    optimise(n_calls)
+    plot_projections()
+    #  n_calls = 250
+    #  optimise(n_calls)
