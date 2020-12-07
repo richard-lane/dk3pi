@@ -466,34 +466,6 @@ def roc_score(prompt_points, sl_points, prompt_weights, sl_weights):
     )
 
 
-def roc_curve(prompt_points, sl_points, prompt_weights, sl_weights):
-    """
-    Return FPR, TPR, threshhold
-
-    """
-    points_train, points_test, labels_train, labels_test, weights_train, weights_test = classification.split_data_for_classification(
-        prompt_points, sl_points, prompt_weights, sl_weights
-    )
-
-    # Train classifier
-    classifier = classification.train_classifier(
-        points_train, labels_train, weights_train
-    )
-
-    # Find probabilities for the test data being correctly classified
-    probs = classifier.predict_proba(points_test)[:, 1]
-
-    #test
-    sig_weights = weights_test * (labels_test == 1)
-    bkg_weights = weights_test * (labels_test == 0)
-
-    threshhold, probs = np.unique(probs, return_inverse=True)
-    tpr = np.bincount(probs, weights=sig_weights)[::-1].cumsum()
-    fpr = np.bincount(probs, weights=bkg_weights)[::-1].cumsum()
-    tpr/=tpr[-1]
-    fpr/=fpr[-1]
-    return fpr, tpr, threshhold[::-1]
-
 def roc_score_test():
     """
     Compare ROC AUC scores for unweighted + reweighted distributions
@@ -520,14 +492,18 @@ def roc_score_test():
     )
 
     linspace = np.linspace(0, 1)
-    curve_before = roc_curve(test_prompt_data, test_sl_data, test_prompt_weights, test_sl_weights)
-    curve_after = roc_curve(test_prompt_data, test_sl_data, efficiency_weights, test_sl_weights)
+    curve_before = classification.roc_curve(
+        test_prompt_data, test_sl_data, test_prompt_weights, test_sl_weights
+    )
+    curve_after = classification.roc_curve(
+        test_prompt_data, test_sl_data, efficiency_weights, test_sl_weights
+    )
     plt.plot(curve_before[0], curve_before[1], label="Before Reweighting")
     plt.plot(curve_after[0], curve_after[1], label="After Reweighting")
     plt.plot(linspace, linspace, label="Indistinguishable", linestyle="--", color="k")
     plt.legend()
     plt.xlabel("FPR")
-    plt.ylabel("FPR")
+    plt.ylabel("TPR")
     plt.title("ROC Curves for Binary Classification of Prompt/Semileptonic Phsp Data")
     plt.show()
 

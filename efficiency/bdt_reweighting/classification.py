@@ -41,13 +41,34 @@ def train_classifier(distribution, classification, weights):
     return GradientBoostingClassifier().fit(distribution, classification, weights)
 
 
-def classification_score(classifier, data, classifications, weights):
+def roc_curve(prompt_points, sl_points, prompt_weights, sl_weights):
     """
-    Find the ROC AUC (Area Under Curve: Receiver Operating Characteristic) score given a trained classifier, a dataset, its classification and weights
-
-    Data probably has to be in some sort of order
+    Return FPR, TPR, threshholds suitable for making a ROC curve plot
 
     """
-    return roc_auc_score(
-        classifications, classifier.predict_proba(data)[:, 1], sample_weight=weights
+    points_train, points_test, labels_train, labels_test, weights_train, weights_test = split_data_for_classification(
+        prompt_points, sl_points, prompt_weights, sl_weights
     )
+
+    # Train classifier
+    classifier = train_classifier(points_train, labels_train, weights_train)
+
+    # Find probabilities for the test data being correctly classified
+    probs = classifier.predict_proba(points_test)[:, 1]
+
+    # Find which weights correspond to prompt/sl
+    s_weights = weights_test * (labels_test == 1)
+    p_weights = weights_test * (labels_test == 0)
+
+    # Find probabilities of false classification and decision function values (i think)
+    threshhold, probs = np.unique(probs, return_inverse=True)
+
+    # Find cumulative type 1/2 error rates
+    tpr = np.bincount(probs, weights=s_weights)[::-1].cumsum()
+    fpr = np.bincount(probs, weights=p_weights)[::-1].cumsum()
+
+    # Normalise probabilities
+    tpr /= tpr[-1]
+    fpr /= fpr[-1]
+
+    return fpr, tpr, threshhold[::-1]
