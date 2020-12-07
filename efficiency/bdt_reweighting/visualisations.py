@@ -23,14 +23,25 @@ class Slices:
         _slice_limits = np.linspace(bin_limits[0], bin_limits[1], num_slices + 1)
 
         # Create an array of arrays for the bin contents of each slice
-        _slice_array = np.zeros((num_slices, num_bins))
+        _slice_array = np.zeros((num_slices, num_bins), dtpye=np.float64)
 
     def add_point(self, point, weight=1):
         """
         Add a point to the correct bin in the correct histogram
 
         """
-        pass
+        # Find the right histogram
+        # If the point's _slice_index'th co-ordinate is in the N'th bin of _slice_limits,
+        # it belongs in the N'th histogram slice
+        this_slice = np.digitize(point[_slice_index], _slice_limits) - 1
+        assert 0 <= this_slice < len(_slice_limits)
+
+        # Find the right bin in this histogram
+        this_bin = np.digitize(point[_plot_index], _bin_limits) - 1
+        assert 0 <= this_bin < len(_bin_limits)
+
+        # Increment the right bin
+        _slice_array[this_slice][this_bin] += weight
 
     def add_points(self, points, weights=None):
         """
