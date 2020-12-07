@@ -21,10 +21,9 @@ def split_data_for_classification(
     assert len(target_distribution) == len(target_weights)
 
     data = np.concatenate([original_distribution, target_distribution])
-    weights = np.concatenate(original_weights, target_weights)
+    weights = np.concatenate((original_weights, target_weights))
 
     # Use 0 to label the original distribution and 1 to label the target
-    data = np.concatenate([original_distribution, target_distribution])
     labels = np.array([0] * len(original_distribution) + [1] * len(target_distribution))
 
     return train_test_split(data, labels, weights)
@@ -45,6 +44,8 @@ def train_classifier(distribution, classification, weights):
 def classification_score(classifier, data, classifications, weights):
     """
     Find the ROC AUC (Area Under Curve: Receiver Operating Characteristic) score given a trained classifier, a dataset, its classification and weights
+
+    Data probably has to be in some sort of order
 
     """
     return roc_auc_score(
