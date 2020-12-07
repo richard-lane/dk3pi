@@ -1,0 +1,58 @@
+Executable = ./test_bdt_script.sh
+Universe = vanilla
+
+Output = bdt_tuning.job.$(cluster).$(process).out
+Error = bdt_tuning.job.$(cluster).$(process).err
+Log = bdt_tuning.job.$(cluster).$(process).log
+stream_output = True
+stream_error = True
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = ../efficiency/scripts/bdt_reweighting_test.py, ../efficiency/bdt_reweighting/reweighting.py, ../efficiency/bdt_reweighting/reweight_utils.py, cut_wg_rs_prompt.root, cut_wg_rs_sl.root, rs_weights.root, sl_weights.root
+
+request_cpus = 1
+request_memory = 64
+
+# Some hosts are bad
+Requirements = (Machine != "hd-38-01.dice.priv" && Machine != "hd-38-20.dice.priv" \
+&& Machine != "hd-38-02.dice.priv" && Machine != "hd-38-21.dice.priv" \
+&& Machine != "hd-38-03.dice.priv" && Machine != "hd-38-22.dice.priv" \
+&& Machine != "hd-38-04.dice.priv" && Machine != "hd-38-23.dice.priv" \
+&& Machine != "hd-38-05.dice.priv" && Machine != "hd-38-24.dice.priv" \
+&& Machine != "hd-38-06.dice.priv" && Machine != "hd-38-25.dice.priv" \
+&& Machine != "hd-38-07.dice.priv" && Machine != "hd-38-26.dice.priv" \
+&& Machine != "hd-38-08.dice.priv" && Machine != "hd-38-27.dice.priv" \
+&& Machine != "hd-38-09.dice.priv" && Machine != "hd-38-28.dice.priv" \
+&& Machine != "hd-38-10.dice.priv" && Machine != "hd-38-29.dice.priv" \
+&& Machine != "hd-38-11.dice.priv" && Machine != "hd-38-30.dice.priv" \
+&& Machine != "hd-38-12.dice.priv" && Machine != "hd-38-31.dice.priv" \
+&& Machine != "hd-38-13.dice.priv" && Machine != "hd-38-32.dice.priv" \
+&& Machine != "hd-38-14.dice.priv" && Machine != "hd-38-33.dice.priv" \
+&& Machine != "hd-38-15.dice.priv" && Machine != "hd-38-34.dice.priv" \
+&& Machine != "hd-38-16.dice.priv" && Machine != "hd-38-35.dice.priv" \
+&& Machine != "hd-38-17.dice.priv" && Machine != "hd-38-36.dice.priv" \
+&& Machine != "hd-38-18.dice.priv" && Machine != "hd-38-37.dice.priv" \
+&& Machine != "hd-38-19.dice.priv" && Machine != "hd-38-38.dice.priv")
+
+Requirements = (Machine != "hd-37-01.dice.priv" && Machine != "hd-37-20.dice.priv" \
+&& Machine != "hd-37-02.dice.priv" && Machine != "hd-37-21.dice.priv" \
+&& Machine != "hd-37-03.dice.priv" && Machine != "hd-37-22.dice.priv" \
+&& Machine != "hd-37-04.dice.priv" && Machine != "hd-37-23.dice.priv" \
+&& Machine != "hd-37-05.dice.priv" && Machine != "hd-37-24.dice.priv" \
+&& Machine != "hd-37-06.dice.priv" && Machine != "hd-37-25.dice.priv" \
+&& Machine != "hd-37-07.dice.priv" && Machine != "hd-37-26.dice.priv" \
+&& Machine != "hd-37-08.dice.priv" && Machine != "hd-37-27.dice.priv" \
+&& Machine != "hd-37-09.dice.priv" && Machine != "hd-37-28.dice.priv" \
+&& Machine != "hd-37-10.dice.priv" && Machine != "hd-37-29.dice.priv" \
+&& Machine != "hd-37-11.dice.priv" && Machine != "hd-37-30.dice.priv" \
+&& Machine != "hd-37-12.dice.priv" && Machine != "hd-37-31.dice.priv" \
+&& Machine != "hd-37-13.dice.priv" && Machine != "hd-37-32.dice.priv" \
+&& Machine != "hd-37-14.dice.priv" && Machine != "hd-37-33.dice.priv" \
+&& Machine != "hd-37-15.dice.priv" && Machine != "hd-37-34.dice.priv" \
+&& Machine != "hd-37-16.dice.priv" && Machine != "hd-37-35.dice.priv" \
+&& Machine != "hd-37-17.dice.priv" && Machine != "hd-37-36.dice.priv" \
+&& Machine != "hd-37-18.dice.priv" && Machine != "hd-37-37.dice.priv" \
+&& Machine != "hd-37-19.dice.priv" && Machine != "hd-37-38.dice.priv")
+
+queue

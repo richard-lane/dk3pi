@@ -116,6 +116,7 @@ def rescale(counts, errors):
 
 def save_plot(
     bin_centres,
+    bin_widths,
     prompt_counts,
     prompt_err,
     reweighted_counts,
@@ -131,42 +132,68 @@ def save_plot(
     Save a plot of our histograms
 
     """
-    # Make plots
+    fig, ax = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": [2.5, 1]})
     line_width = 0.5
+    markersize = 0.0
+    alpha = 0.5
     marker = "_"
-    plt.errorbar(
-        bin_centres,
-        prompt_counts,
-        yerr=prompt_err if plot_errs else None,
-        label="Prompt",
-        color="red",
-        linewidth=line_width,
-        marker=marker,
-    )
-    plt.errorbar(
-        bin_centres,
-        reweighted_counts,
-        yerr=reweighted_err if plot_errs else None,
-        label="Reweighted",
-        color="blue",
-        linewidth=line_width,
-        marker=marker,
-    )
-    plt.errorbar(
-        bin_centres,
-        sl_counts,
-        yerr=sl_err if plot_errs else None,
-        label="SL",
-        color="green",
-        linewidth=line_width,
-        marker=marker,
-    )
-    plt.legend()
-    plt.ylabel("Counts (normalised)")
-    plt.xlabel(x_label)
-    plt.title(title)
+    for count, err, colour, label in zip(
+        (prompt_counts, reweighted_counts, sl_counts),
+        (prompt_err, reweighted_err, sl_err),
+        ("red", "blue", "green"),
+        ("Prompt", "Reweighted", "SL"),
+    ):
+        ax[0].errorbar(
+            bin_centres,
+            count,
+            yerr=err if plot_errs else None,
+            xerr=bin_widths if plot_errs else None,
+            label=label,
+            alpha=alpha,
+            color=colour,
+            linewidth=line_width,
+            marker=marker,
+            markersize=markersize,
+            fmt=" ",
+        )
 
-    plt.savefig(path, dpi=600)
+    # Find difference between Prompt + SL and difference between Reweighted + SL
+    prompt_minus_sl = prompt_counts - sl_counts
+    reweighted_minus_sl = reweighted_counts - sl_counts
+
+    # Find the associated errors
+    prompt_minus_sl_err = np.sqrt(prompt_err ** 2 + sl_err ** 2)
+    reweighted_minus_sl_err = np.sqrt(reweighted_err ** 2 + sl_err ** 2)
+
+    # Plot
+    for diff, err, colour, label in zip(
+        (prompt_minus_sl, reweighted_minus_sl),
+        (prompt_minus_sl_err, reweighted_minus_sl_err),
+        ("red", "blue"),
+        ("Prompt-SL", "Reweighted-SL"),
+    ):
+        ax[1].errorbar(
+            bin_centres,
+            diff,
+            yerr=err if plot_errs else None,
+            xerr=bin_widths if plot_errs else None,
+            label=label,
+            color=colour,
+            linewidth=line_width,
+            marker=marker,
+            markersize=markersize,
+            fmt=" ",
+        )
+
+    ax[0].legend()
+    ax[1].legend()
+    ax[0].set_ylabel("Counts (normalised)")
+    ax[1].set_ylabel(r"$\Delta$Counts")
+    plt.xlabel(x_label)
+    fig.subplots_adjust(hspace=0)
+    fig.suptitle(title)
+
+    plt.savefig(path, dpi=600, bbox_inches="tight")
     plt.clf()
 
 
@@ -203,6 +230,14 @@ def read_data():
         "sl_weights.root", "DecayTree", "numSignalEvents_sw"
     )
 
+    # Remove some points to make the distributions look more different
+    indices_to_delete = []
+    for i in range(len(sl_points)):
+        if sl_points[i][1] < 900 * np.random.random():
+            indices_to_delete.append(i)
+    sl_points = np.delete(sl_points, indices_to_delete, axis=0)
+    sl_weights = np.delete(sl_weights, indices_to_delete)
+
     return prompt_points, prompt_weights, sl_points, sl_weights
 
 
@@ -219,13 +254,19 @@ def make_plots(
 
     """
     units = (
-        "M(Kpi1) /MeV",
-        "M(pi1pi2) /MeV",
-        "M(pi2pi3) /MeV",
-        "M(Kpi1pi2) /MeV",
-        "M(pi1pi2pi3) /MeV",
+        r"M($K\pi_1$) /MeV",
+        r"M($\pi_1\pi_2$) /MeV",
+        r"M($\pi_2\pi_3$) /MeV",
+        r"M($K\pi_1\pi_2$) /MeV",
+        r"M($\pi_1\pi_2\pi_3$) /MeV",
     )
-    titles = ["Phase space projection"] * 5
+    titles = [
+        r"Projection: M($K\pi_1$)",
+        r"Projection: M($\pi_1\pi_2$)",
+        r"Projection: M($\pi_1\pi_2\pi_3$)",
+        r"Projection: M($K\pi_1\pi_2$)",
+        r"Projection: M($\pi_1\pi_2\pi_3$)",
+    ]
     # Compare the reweighted test prompt + test SL data by plotting some histograms
     for i in range(len(test_prompt_data[0])):
 
@@ -253,9 +294,13 @@ def make_plots(
         # Find bin centres
         centres = np.mean(np.vstack([bins[0:-1], bins[1:]]), axis=0)
 
+        # Find bin widths
+        widths = [0.5 * (j - i) for i, j in zip(bins[:-1], bins[1:])]
+
         # Plot
         save_plot(
             centres,
+            widths,
             prompt,
             prompt_err,
             reweighted,
@@ -312,9 +357,11 @@ def plot_projections():
     )
 
 
-def optimise():
+def optimise(n_calls):
     """
     Find the optimal BDT parameters for a given dataset...
+
+    Try n_calls BDT configurations; starts with n_calls//5 random points
 
     """
     # Read data from files + perform phsp parametrisation
@@ -334,9 +381,13 @@ def optimise():
         Train BDT, reweight + find chi squared
 
         """
-        n_estimators, learning_rate, max_depth, min_samples_leaf, loss_regularization = (
-            args
-        )
+        (
+            n_estimators,
+            learning_rate,
+            max_depth,
+            min_samples_leaf,
+            loss_regularization,
+        ) = args
 
         bdt = reweighting.init(
             training_sl_data,
@@ -359,19 +410,40 @@ def optimise():
         )
 
     dimensions = [
-        skopt.space.Integer(20, 100),  # Num trees
-        skopt.space.Real(0.01, 0.5, prior="log-uniform"),  # Learning Rate
-        skopt.space.Integer(2, 6),  # Tree depth
-        skopt.space.Integer(20, 400),  # min samples leaf
-        skopt.space.Real(2.0, 10.0),  # loss reg
+        skopt.space.Integer(20, 250),  # Num trees
+        skopt.space.Real(0.01, 0.8, prior="log-uniform"),  # Learning Rate
+        skopt.space.Integer(3, 10),  # Tree depth
+        skopt.space.Integer(20, 750),  # min samples leaf
+        skopt.space.Real(1.5, 50.0),  # loss reg
     ]
 
     result = skopt.gp_minimize(
-        objective_fcn, dimensions, n_calls=25, n_random_starts=5, verbose=True, n_jobs=4
+        objective_fcn,
+        dimensions,
+        n_calls=n_calls,
+        n_random_starts=n_calls // 5,
+        verbose=True,
     )
     print(result.x)
+
+    # Save a bar chart of chi squared values
+    fig, ax = plt.subplots()
+    x = [_ for _ in range(len(result.func_vals))]
+    y = result.func_vals
+    ax.bar(x, y)
+    ax.set_yscale("log")
+    ax.set_xlabel("Trial")
+    ax.set_ylabel("ChiSq")
+    plt.savefig("chiSqs.png")
+
+    # Save a text file of Chi squareds and params
+    with open("results.txt", "w") as f:
+        for chisq, params in zip(y, result.x_iters):
+            f.write(f"{chisq}\t{params}\n")
+        f.write("\n")
 
 
 if __name__ == "__main__":
     plot_projections()
-    #  optimise()
+    #  n_calls = 250
+    #  optimise(n_calls)
