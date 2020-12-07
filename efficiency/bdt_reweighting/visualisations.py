@@ -15,17 +15,17 @@ class Slices:
         bin_limits should be an iterable (lower_limit, upper_limit)
 
         """
-        _plot_index = plot_index
-        _slice_index = slice_index
+        self._plot_index = plot_index
+        self._slice_index = slice_index
 
         # Create an array for the limits of our histogram slices
-        _bin_limits = np.linspace(bin_limits[0], bin_limits[1], num_bins + 1)
+        self._bin_limits = np.linspace(bin_limits[0], bin_limits[1], num_bins + 1)
 
         # Create an array for the limits of our slices
-        _slice_limits = np.linspace(bin_limits[0], bin_limits[1], num_slices + 1)
+        self._slice_limits = np.linspace(bin_limits[0], bin_limits[1], num_slices + 1)
 
         # Create an array of arrays for the bin contents of each slice
-        _slice_array = np.zeros((num_slices, num_bins), dtpye=np.float64)
+        self._slice_array = np.zeros((num_slices, num_bins), dtype=np.float64)
 
     def add_point(self, point, weight=1):
         """
@@ -51,7 +51,7 @@ class Slices:
         Add a series of points to the correct bins in the correct histograms
 
         """
-        w = weights if weights else np.ones_like(points[:, 0])
+        w = weights if weights is not None else np.ones_like(points[:, 0])
         assert len(points) == len(w)
 
         for point, weight in zip(points, weights):
@@ -96,10 +96,12 @@ def plot_slices(path, slices, labels):
     for i in range(num_slices):
         slice_path = path + str(i) + ".png"
 
-        for s in slices:
+        for s, label in zip(slices, labels):
             # Scale such that the sum of all slices have an area of 1
             counts = np.copy(s._slice_array[i]) / s._num_points
 
             # Plot
-            plt.plot(centres, counts)
+            plt.plot(centres, counts, label=label)
+        plt.legend()
         plt.savefig(slice_path)
+        plt.clf()
