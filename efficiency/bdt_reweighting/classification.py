@@ -3,11 +3,12 @@ Stuff for quantifying and visualising how well our BDT reweighting is going
 
 """
 import numpy as np
+from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
 
 
-def _split_data_for_classification(
+def split_data_for_classification(
     original_distribution, target_distribution, original_weights, target_weights
 ):
     """
@@ -39,3 +40,13 @@ def train_classifier(distribution, classification, weights):
 
     """
     return GradientBoostingClassifier().fit(distribution, classification, weights)
+
+
+def classification_score(classifier, data, classifications, weights):
+    """
+    Find the ROC AUC (Area Under Curve: Receiver Operating Characteristic) score given a trained classifier, a dataset, its classification and weights
+
+    """
+    return roc_auc_score(
+        classifications, classifier.predict_proba(data)[:, 1], sample_weight=weights
+    )
