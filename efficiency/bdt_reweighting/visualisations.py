@@ -10,17 +10,40 @@ class Slices:
         Init an instance for plotting histogram projections of the plot_index'th parameter,
         taking slices along the slice_index'th parameter
 
+        bin_limits should be an iterable (lower_limit, upper_limit)
+
+        """
+        _plot_index = plot_index
+        _slice_index = slice_index
+
+        # Create an array for the limits of our histogram slices
+        _bin_limits = np.linspace(bin_limits[0], bin_limits[1], num_bins + 1)
+
+        # Create an array for the limits of our slices
+        _slice_limits = np.linspace(bin_limits[0], bin_limits[1], num_slices + 1)
+
+        # Create an array of arrays for the bin contents of each slice
+        _slice_array = np.zeros((num_slices, num_bins))
+
+    def add_point(self, point, weight=1):
+        """
+        Add a point to the correct bin in the correct histogram
+
         """
         pass
 
-    def add_point(point, weight=1):
-        pass
+    def add_points(self, points, weights=None):
+        """
+        Add a series of points to the correct bins in the correct histograms
 
-    def add_points(points, weights=None):
+        """
         pass
 
     # Array of histograms representing each slice through phase space
     _slice_array = None
+
+    # Bin limits for finding which bin a point belongs in
+    _bin_limits = None
 
     # Bin limits for finding which histogram a point belongs in
     _slice_limits = None
