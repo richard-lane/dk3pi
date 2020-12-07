@@ -48,7 +48,11 @@ class Slices:
         Add a series of points to the correct bins in the correct histograms
 
         """
-        pass
+        w = weights if weights else np.ones_like(points[:, 0])
+        assert len(points) = len(w)
+
+        for point, weight in zip(points, weights):
+            add_point(point, weight)
 
     # Array of histograms representing each slice through phase space
     _slice_array = None
