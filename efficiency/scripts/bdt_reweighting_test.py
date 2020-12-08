@@ -556,7 +556,8 @@ def plot_slices():
         (Prompt_Slices, SL_Slices, Reweighted_Slices),
         ("Prompt", "SL", "Reweighted"),
         ("red", "green", "blue"),
-        r"M($\pi_1\pi_2$) /MeV"
+        r"M($\pi_1\pi_2$) /MeV",
+        r"M($K\pi_1$) /MeV",
     )
 
 

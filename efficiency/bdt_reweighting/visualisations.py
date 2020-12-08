@@ -75,11 +75,14 @@ class Slices:
     _num_points = 0.0
 
 
-def plot_slices(path, slices, labels, colours, units):
+def plot_slices(path, slices, labels, colours, hist_xlabel, slice_parameter: str):
     """
     Plot an iterable of slices to <path>0.png, <path>1.png etc.
 
     colours should be an iterable of strings e.g. ("red", "green", "blue") for passing to matplotlib
+
+    hist_xlabel will label the x axes of the slice histograms
+    slice_parameter should be a string like r"M($K\pi_1$)"
 
     """
     assert len(slices) == len(labels)
@@ -98,6 +101,10 @@ def plot_slices(path, slices, labels, colours, units):
 
     for i in range(num_slices):
         slice_path = path + str(i) + ".png"
+
+        # Find the range of values used for this slice
+        min_value = slices[0]._slice_limits[i]
+        max_value = slices[0]._slice_limits[i + 1]
 
         for s, label, colour in zip(slices, labels, colours):
             # Find errors, replacing NaN with none in the case of negative weights
@@ -120,8 +127,8 @@ def plot_slices(path, slices, labels, colours, units):
                 linewidth=0.5,
                 color=colour,
             )
-        plt.title(f"Slice {i}")
-        plt.xlabel(units)
+        plt.title(f"{min_value} < {slice_parameter} < {max_value}")
+        plt.xlabel(hist_xlabel)
         plt.ylabel("Counts (normalised)")
         plt.ylim(0, 0.04)
         plt.legend()
