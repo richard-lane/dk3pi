@@ -75,9 +75,11 @@ class Slices:
     _num_points = 0.0
 
 
-def plot_slices(path, slices, labels):
+def plot_slices(path, slices, labels, colours, units):
     """
     Plot an iterable of slices to <path>0.png, <path>1.png etc.
+
+    colours should be an iterable of strings e.g. ("red", "green", "blue") for passing to matplotlib
 
     """
     assert len(slices) == len(labels)
@@ -92,16 +94,36 @@ def plot_slices(path, slices, labels):
 
     # Find the bin centres for plotting
     centres = np.mean(np.vstack([bin_limits[0:-1], bin_limits[1:]]), axis=0)
+    widths = [0.5 * (j - i) for i, j in zip(bin_limits[:-1], bin_limits[1:])]
 
     for i in range(num_slices):
         slice_path = path + str(i) + ".png"
 
-        for s, label in zip(slices, labels):
+        for s, label, colour in zip(slices, labels, colours):
+            # Find errors, replacing NaN with none in the case of negative weights
+            counts = np.copy(s._slice_array[i])
+            errors = np.sqrt(counts)
+            errors = np.nan_to_num(errors)
+
             # Scale such that the sum of all slices have an area of 1
-            counts = np.copy(s._slice_array[i]) / s._num_points
+            counts /= s._num_points
+            errors /= s._num_points
 
             # Plot
-            plt.plot(centres, counts, label=label)
+            plt.errorbar(
+                centres,
+                counts,
+                xerr=widths,
+                yerr=errors,
+                label=label,
+                marker="_",
+                linewidth=0.5,
+                color=colour,
+            )
+        plt.title(f"Slice {i}")
+        plt.xlabel(units)
+        plt.ylabel("Counts (normalised)")
+        plt.ylim(0, 0.04)
         plt.legend()
         plt.savefig(slice_path)
         plt.clf()
