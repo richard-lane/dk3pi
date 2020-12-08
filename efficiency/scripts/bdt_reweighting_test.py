@@ -241,8 +241,9 @@ def read_data():
 
         # Remove some more points to test the BDT
         elif 600 < sl_points[i][1] < 800:
-            if (0.2 + np.abs(sl_points[i][1] - 700) / 125.0) > np.random.random():
-                indices_to_delete.append(i)
+            if (800 < sl_points[i][0] < 900) and (1000 < sl_points[i][4] < 1200):
+                if (0.2 + np.abs(sl_points[i][1] - 700) / 125.0) > np.random.random():
+                    indices_to_delete.append(i)
 
     sl_points = np.delete(sl_points, indices_to_delete, axis=0)
     sl_weights = np.delete(sl_weights, indices_to_delete)
@@ -569,8 +570,8 @@ def plot_slices():
 
 
 if __name__ == "__main__":
-    #  plot_projections()
     #  n_calls = 250
     #  optimise(n_calls)
+    plot_projections()
     roc_score_test()
     plot_slices()
