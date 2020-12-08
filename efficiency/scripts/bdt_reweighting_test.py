@@ -238,6 +238,12 @@ def read_data():
     for i in range(len(sl_points)):
         if sl_points[i][1] < 900 * np.random.random():
             indices_to_delete.append(i)
+
+        # Remove some more points to test the BDT
+        elif 600 < sl_points[i][1] < 800:
+            if (0.2 + np.abs(sl_points[i][1] - 700) / 125.0) > np.random.random():
+                indices_to_delete.append(i)
+
     sl_points = np.delete(sl_points, indices_to_delete, axis=0)
     sl_weights = np.delete(sl_weights, indices_to_delete)
 
@@ -506,7 +512,8 @@ def roc_score_test():
     plt.xlabel("FPR")
     plt.ylabel("TPR")
     plt.title("ROC Curves for Binary Classification of Prompt/Semileptonic Phsp Data")
-    plt.show()
+    plt.savefig("roc_curve.png")
+    plt.clf()
 
 
 def plot_slices():
@@ -530,7 +537,7 @@ def plot_slices():
     )
 
     # Find prompt, SL, reweighted slices
-    num_slices = 8
+    num_slices = 12
     bin_limits = (200, 1800)
     num_bins = 50
     plot_index = 1
@@ -565,5 +572,5 @@ if __name__ == "__main__":
     #  plot_projections()
     #  n_calls = 250
     #  optimise(n_calls)
-    # roc_score_test()
+    roc_score_test()
     plot_slices()
