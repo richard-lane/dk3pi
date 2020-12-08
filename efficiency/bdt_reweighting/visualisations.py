@@ -125,12 +125,13 @@ def plot_slices(path, slices, labels, colours, hist_xlabel, slice_parameter: str
                 label=label,
                 marker="_",
                 linewidth=0.5,
+                markersize=0.0,
                 color=colour,
             )
         plt.title(f"{min_value} < {slice_parameter} < {max_value}")
         plt.xlabel(hist_xlabel)
         plt.ylabel("Counts (normalised)")
-        plt.ylim(0, 0.04)
+        plt.ylim(0, 0.03)
         plt.legend()
         plt.savefig(slice_path)
         plt.clf()
