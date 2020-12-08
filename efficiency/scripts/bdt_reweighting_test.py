@@ -18,6 +18,7 @@ sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
 import reweighting
 import reweight_utils
 import classification
+import visualisations
 
 
 def chi_squared(counts_source, counts_target):
@@ -237,6 +238,13 @@ def read_data():
     for i in range(len(sl_points)):
         if sl_points[i][1] < 900 * np.random.random():
             indices_to_delete.append(i)
+
+        # Remove some more points to test the BDT
+        elif 600 < sl_points[i][1] < 800:
+        #    if 800 < sl_points[i][0] < 900:
+            if (0.2 + np.abs(sl_points[i][1] - 700) / 125.0) > np.random.random():
+                indices_to_delete.append(i)
+
     sl_points = np.delete(sl_points, indices_to_delete, axis=0)
     sl_weights = np.delete(sl_weights, indices_to_delete)
 
@@ -505,11 +513,65 @@ def roc_score_test():
     plt.xlabel("FPR")
     plt.ylabel("TPR")
     plt.title("ROC Curves for Binary Classification of Prompt/Semileptonic Phsp Data")
-    plt.show()
+    plt.savefig("roc_curve.png")
+    plt.clf()
+
+
+def plot_slices():
+    # Read data
+    prompt_points, prompt_weights, sl_points, sl_weights = read_data()
+    training_prompt_data, test_prompt_data = np.array_split(prompt_points, 2)
+    training_sl_data, test_sl_data = np.array_split(sl_points, 2)
+    training_prompt_weights, test_prompt_weights = np.array_split(prompt_weights, 2)
+    training_sl_weights, test_sl_weights = np.array_split(sl_weights, 2)
+
+    # Reweight
+    print("Training BDT...")
+    bdt = reweighting.init(
+        training_sl_data,
+        training_prompt_data,
+        training_sl_weights,
+        training_prompt_weights,
+    )
+    efficiency_weights = reweighting.predicted_weights(
+        bdt, test_prompt_data, test_prompt_weights
+    )
+
+    # Find prompt, SL, reweighted slices
+    num_slices = 12
+    bin_limits = (200, 1800)
+    num_bins = 50
+    plot_index = 1
+    slice_index = 0
+
+    Prompt_Slices = visualisations.Slices(
+        num_slices, num_bins, bin_limits, plot_index, slice_index
+    )
+    SL_Slices = visualisations.Slices(
+        num_slices, num_bins, bin_limits, plot_index, slice_index
+    )
+    Reweighted_Slices = visualisations.Slices(
+        num_slices, num_bins, bin_limits, plot_index, slice_index
+    )
+
+    Prompt_Slices.add_points(test_prompt_data, test_prompt_weights)
+    SL_Slices.add_points(test_sl_data, test_sl_weights)
+    Reweighted_Slices.add_points(test_prompt_data, efficiency_weights)
+
+    # Plot them
+    visualisations.plot_slices(
+        "python",
+        (Prompt_Slices, SL_Slices, Reweighted_Slices),
+        ("Prompt", "SL", "Reweighted"),
+        ("red", "green", "blue"),
+        r"M($\pi_1\pi_2$) /MeV",
+        r"M($K\pi_1$) /MeV",
+    )
 
 
 if __name__ == "__main__":
-    #  plot_projections()
     #  n_calls = 250
     #  optimise(n_calls)
+    plot_projections()
     roc_score_test()
+    plot_slices()
