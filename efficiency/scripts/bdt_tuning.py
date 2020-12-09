@@ -3,11 +3,12 @@ Tune the efficiency BDT using a combined chi squared score
 
 """
 import numpy as np
+import matplotlib.pyplot as plt
 import skopt
-import joblib
 import sys
 import os
 import warnings
+import script_util
 
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
 import reweighting
@@ -90,7 +91,7 @@ def optimise(n_calls):
 
     """
     # Read data from files + perform phsp parametrisation
-    prompt_points, prompt_weights, sl_points, sl_weights = read_data()
+    prompt_points, prompt_weights, sl_points, sl_weights = script_util.read_data()
 
     # Split data into training + test data
     print("Splitting data...")
@@ -166,3 +167,7 @@ def optimise(n_calls):
         for chisq, params in zip(y, result.x_iters):
             f.write(f"{chisq}\t{params}\n")
         f.write("\n")
+
+if __name__ == "__main__":
+    n_calls = 10
+    optimise(n_calls)
