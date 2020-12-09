@@ -72,18 +72,16 @@ def read_data():
     for i in range(len(sl_points)):
         if sl_points[i][1] < 900 * np.random.random():
             sl_indices_to_delete.append(i)
+    sl_points = np.delete(sl_points, sl_indices_to_delete, axis=0)
+    sl_weights = np.delete(sl_weights, sl_indices_to_delete)
 
     # Remove some prompt points to test the BDT
     prompt_indices_to_delete = []
     for i in range(len(prompt_points)):
             #    if 800 < prompt_points[i][0] < 900:
-        if 600 < prompt_points[i][1] < 800:
-            if (0.2 + np.abs(prompt_points[i][1] - 700) / 125.0) > np.random.random():
+        if 700 < prompt_points[i][1] < 800:
+            if 0.2 + (np.abs(prompt_points[i][1] - 750) / 125.0) > np.random.random():
                 prompt_indices_to_delete.append(i)
-
-    sl_points = np.delete(sl_points, sl_indices_to_delete, axis=0)
-    sl_weights = np.delete(sl_weights, sl_indices_to_delete)
-
     prompt_points = np.delete(prompt_points, prompt_indices_to_delete, axis=0)
     prompt_weights = np.delete(prompt_weights, prompt_indices_to_delete)
 

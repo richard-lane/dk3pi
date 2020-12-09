@@ -206,11 +206,6 @@ def read_and_reweight():
         training_prompt_data,
         training_sl_weights,
         training_prompt_weights,
-        100,
-        0.5,
-        4,
-        500,
-        10.0,
     )
 
     # Reweight the test prompt data
