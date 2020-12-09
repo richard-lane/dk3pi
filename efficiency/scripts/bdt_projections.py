@@ -40,11 +40,17 @@ def save_plot(
     markersize = 0.0
     alpha = 0.5
     marker = "_"
+    # for count, err, colour, label in zip(
+    #    (prompt_counts, reweighted_counts, sl_counts),
+    #    (prompt_err, reweighted_err, sl_err),
+    #    ("red", "blue", "green"),
+    #    ("Prompt", "Reweighted", "SL"),
+    # ):
     for count, err, colour, label in zip(
-        (prompt_counts, reweighted_counts, sl_counts),
-        (prompt_err, reweighted_err, sl_err),
-        ("red", "blue", "green"),
-        ("Prompt", "Reweighted", "SL"),
+        (prompt_counts, sl_counts),
+        (prompt_err, sl_err),
+        ("red", "green"),
+        ("Prompt", "SL"),
     ):
         ax[0].errorbar(
             bin_centres,
@@ -174,9 +180,13 @@ def make_plots(
         print(f"Created {i}")
 
 
-def plot_projections():
+def read_and_reweight():
     """
-    Plot phsp projections with default BDT
+    Read data from ROOT files, train BDT + find weights
+
+    Trains the BDT on half the data; returns the other half
+
+    Returns prompt points, prompt weights, sl points, sl_weights, efficiency weights
 
     """
     # Read data from files + perform phsp parametrisation
@@ -196,6 +206,11 @@ def plot_projections():
         training_prompt_data,
         training_sl_weights,
         training_prompt_weights,
+        100,
+        0.5,
+        4,
+        500,
+        10.0,
     )
 
     # Reweight the test prompt data
@@ -204,38 +219,33 @@ def plot_projections():
         bdt, test_prompt_data, test_prompt_weights
     )
 
+    return (
+        test_prompt_data,
+        test_prompt_weights,
+        test_sl_data,
+        test_sl_weights,
+        efficiency_weights,
+    )
+
+
+def plot_projections(
+    prompt_points, prompt_weights, sl_points, sl_weights, efficiency_weights
+):
+    """
+    Plot phsp projections with default BDT
+
+    """
+
     # Plot phsp projections
     bins = np.linspace(200, 1800, 250)
     make_plots(
-        test_prompt_data,
-        test_sl_data,
-        test_prompt_weights,
-        test_sl_weights,
-        efficiency_weights,
-        bins,
+        prompt_points, sl_points, prompt_weights, sl_weights, efficiency_weights, bins
     )
 
 
-def plot_slices():
-    # Read data
-    prompt_points, prompt_weights, sl_points, sl_weights = script_util.read_data()
-    training_prompt_data, test_prompt_data = np.array_split(prompt_points, 2)
-    training_sl_data, test_sl_data = np.array_split(sl_points, 2)
-    training_prompt_weights, test_prompt_weights = np.array_split(prompt_weights, 2)
-    training_sl_weights, test_sl_weights = np.array_split(sl_weights, 2)
-
-    # Reweight
-    print("Training BDT...")
-    bdt = reweighting.init(
-        training_sl_data,
-        training_prompt_data,
-        training_sl_weights,
-        training_prompt_weights,
-    )
-    efficiency_weights = reweighting.predicted_weights(
-        bdt, test_prompt_data, test_prompt_weights
-    )
-
+def plot_slices(
+    prompt_points, prompt_weights, sl_points, sl_weights, efficiency_weights
+):
     # Find prompt, SL, reweighted slices
     num_slices = 12
     bin_limits = (200, 1800)
@@ -253,9 +263,9 @@ def plot_slices():
         num_slices, num_bins, bin_limits, plot_index, slice_index
     )
 
-    Prompt_Slices.add_points(test_prompt_data, test_prompt_weights)
-    SL_Slices.add_points(test_sl_data, test_sl_weights)
-    Reweighted_Slices.add_points(test_prompt_data, efficiency_weights)
+    Prompt_Slices.add_points(prompt_points, prompt_weights)
+    SL_Slices.add_points(sl_points, sl_weights)
+    Reweighted_Slices.add_points(prompt_points, efficiency_weights)
 
     # Plot them
     visualisations.plot_slices(
@@ -269,5 +279,13 @@ def plot_slices():
 
 
 if __name__ == "__main__":
-    plot_projections()
-    plot_slices()
+    prompt_points, prompt_weights, sl_points, sl_weights, efficiency_weights = (
+        read_and_reweight()
+    )
+    plot_projections(
+        prompt_points, prompt_weights, sl_points, sl_weights, efficiency_weights
+    )
+    plot_slices(
+        prompt_points, prompt_weights, sl_points, sl_weights, efficiency_weights
+    )
+
