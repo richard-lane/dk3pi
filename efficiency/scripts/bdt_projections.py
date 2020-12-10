@@ -40,17 +40,11 @@ def save_plot(
     markersize = 0.0
     alpha = 0.5
     marker = "_"
-    # for count, err, colour, label in zip(
-    #    (prompt_counts, reweighted_counts, sl_counts),
-    #    (prompt_err, reweighted_err, sl_err),
-    #    ("red", "blue", "green"),
-    #    ("Prompt", "Reweighted", "SL"),
-    # ):
     for count, err, colour, label in zip(
-        (prompt_counts, sl_counts),
-        (prompt_err, sl_err),
-        ("red", "green"),
-        ("Prompt", "SL"),
+        (prompt_counts, reweighted_counts, sl_counts),
+        (prompt_err, reweighted_err, sl_err),
+        ("red", "blue", "green"),
+        ("Prompt", "Reweighted", "SL"),
     ):
         ax[0].errorbar(
             bin_centres,
