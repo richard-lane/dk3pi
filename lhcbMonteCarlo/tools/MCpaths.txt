@@ -1,4 +1,67 @@
 Locations of relevant MC data in the bookkeeping
 
-/MC/2016/Beam6500GeV-2016-MagDown-Nu1.6-25ns-Pythia8/Sim09c/Trig0x6138160F/Reco16/Turbo03/Stripping28r1NoPrescalingFlagged/27265000/ALLSTREAMS.DST
+2011:
+    There is also MC with different Pythia, Sim versions... check the bookkeeping to be sure
+    MINT:
+        /MC/2011/27165004/Beam3500GeV-2011-MagDown-Nu2-Pythia8/Sim08d/Digi13/Trig0x40760037/Reco14a/Stripping20r1NoPrescalingFlagged/ALLSTREAMS.DST
+        /MC/2011/27165004/Beam3500GeV-2011-MagUp-Nu2-Pythia8/Sim08d/Digi13/Trig0x40760037/Reco14a/Stripping20r1NoPrescalingFlagged/ALLSTREAMS.DST
 
+2012:
+    There is also MC with different Pythia, Sim versions... check the bookkeeping to be sure
+    MINT:
+        /MC/2012/27165004/Beam4000GeV-2012-MagDown-Nu2.5-Pythia8/Sim08g/Digi13/Trig0x409f0045/Reco14c/Stripping20Filtered/D02HHHH.STRIPTRIG.DST
+        /MC/2012/27165004/Beam4000GeV-2012-MagUp-Nu2.5-Pythia8/Sim08g/Digi13/Trig0x409f0045/Reco14c/Stripping20Filtered/D02HHHH.STRIPTRIG.DST
+
+2015:
+    Phsp:
+        /MC/2015/27165070/Beam6500GeV-2015-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x411400a2/Reco15a/Turbo02/Stripping24r2NoPrescalingFlagged/Turbo02Filtered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2015/27165070/Beam6500GeV-2015-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x411400a2/Reco15a/Turbo02/Stripping24r2NoPrescalingFlagged/Turbo02Filtered/DSTARD02HHHH.HLTFILTER.MDST
+        
+    Phsp:
+        /MC/2015/27165071/Beam6500GeV-2015-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x411400a2/Reco15a/Turbo02/Stripping24r2NoPrescalingFlagged/Turbo02Filtered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2015/27165071/Beam6500GeV-2015-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x411400a2/Reco15a/Turbo02/Stripping24r2NoPrescalingFlagged/Turbo02Filtered/DSTARD02HHHH.HLTFILTER.MDST
+        
+    Phsp:
+        /MC/2015/27165072/Beam6500GeV-2015-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x411400a2/Reco15a/Turbo02/Stripping24r2NoPrescalingFlagged/Turbo02Filtered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2015/27165072/Beam6500GeV-2015-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x411400a2/Reco15a/Turbo02/Stripping24r2NoPrescalingFlagged/Turbo02Filtered/DSTARD02HHHH.HLTFILTER.MDST
+
+2016:
+    Phsp:
+        /MC/2016/27165070/Beam6500GeV-2016-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x6138160F/Reco16/Turbo03a/Stripping28r2NoPrescalingFlagged/Turbo03aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2016/27165070/Beam6500GeV-2016-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x6138160F/Reco16/Turbo03a/Stripping28r2NoPrescalingFlagged/Turbo03aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+
+    CF:
+        /MC/2016/27165071/Beam6500GeV-2016-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x6138160F/Reco16/Turbo03a/Stripping28r2NoPrescalingFlagged/Turbo03aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2016/27165071/Beam6500GeV-2016-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x6138160F/Reco16/Turbo03a/Stripping28r2NoPrescalingFlagged/Turbo03aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+
+    DCS:
+        /MC/2016/27165072/Beam6500GeV-2016-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x6138160F/Reco16/Turbo03a/Stripping28r2NoPrescalingFlagged/Turbo03aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2016/27165072/Beam6500GeV-2016-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x6138160F/Reco16/Turbo03a/Stripping28r2NoPrescalingFlagged/Turbo03aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+
+2017:
+    Phsp:
+        /MC/2017/27165070/Beam6500GeV-2017-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x62661709/Reco17/Turbo04a-WithTurcal/Stripping29r2NoPrescalingFlagged/Turbo04aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2017/27165070/Beam6500GeV-2017-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x62661709/Reco17/Turbo04a-WithTurcal/Stripping29r2NoPrescalingFlagged/Turbo04aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+
+    CF:
+        /MC/2017/27165071/Beam6500GeV-2017-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x62661709/Reco17/Turbo04a-WithTurcal/Stripping29r2NoPrescalingFlagged/Turbo04aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2017/27165071/Beam6500GeV-2017-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x62661709/Reco17/Turbo04a-WithTurcal/Stripping29r2NoPrescalingFlagged/Turbo04aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+        
+    DCS:
+        /MC/2017/27165072/Beam6500GeV-2017-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x62661709/Reco17/Turbo04a-WithTurcal/Stripping29r2NoPrescalingFlagged/Turbo04aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2017/27165072/Beam6500GeV-2017-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x62661709/Reco17/Turbo04a-WithTurcal/Stripping29r2NoPrescalingFlagged/Turbo04aFiltered/DSTARD02HHHH.HLTFILTER.MDST
+
+2018:
+    Phsp:
+        DDDB: dddb-20170721-3 Condition DB: sim-20190430-vc-md100
+        /MC/2018/27165070/Beam6500GeV-2018-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
+        DDDB: dddb-20170721-3 Condition DB: sim-20190430-vc-mu100
+        /MC/2018/27165070/Beam6500GeV-2018-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
+
+    CF:
+        /MC/2018/27165071/Beam6500GeV-2018-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2018/27165071/Beam6500GeV-2018-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
+
+    DCS:
+        /MC/2018/27165072/Beam6500GeV-2018-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
+        /MC/2018/27165072/Beam6500GeV-2018-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
