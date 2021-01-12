@@ -22,5 +22,5 @@ data  = BKQuery(bkPath, dqflag=['OK']).getDataset()
 j.inputdata = data
 j.backend = Dirac()
 j.splitter = SplitByFiles(filesPerJob=1)
-j.outputfiles = [DiracFile('*.root')]
+j.outputfiles = [LocalFile('*.root')]
 j.submit()
