@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import os
@@ -41,7 +42,7 @@ def read_data():
     """
     # Find phsp points for prompt + SL datasets
     print("Reading data...")
-    prompt_points = reweight_utils.inv_mass_parametrisation(
+    prompt_points = reweight_utils.read_invariant_masses(
         "cut_wg_rs_prompt.root",
         "DecayTree",
         ("D0_P0_PX", "D0_P0_PY", "D0_P0_PZ", "D0_P0_PE"),
@@ -49,7 +50,7 @@ def read_data():
         ("D0_P2_PX", "D0_P2_PY", "D0_P2_PZ", "D0_P2_PE"),
         ("D0_P3_PX", "D0_P3_PY", "D0_P3_PZ", "D0_P3_PE"),
     )
-    sl_points = reweight_utils.inv_mass_parametrisation(
+    sl_points = reweight_utils.read_invariant_masses(
         "cut_wg_rs_sl.root",
         "DecayTree",
         ("D0_P0_PX", "D0_P0_PY", "D0_P0_PZ", "D0_P0_PE"),
@@ -89,3 +90,92 @@ def read_data():
     prompt_weights = np.delete(prompt_weights, prompt_indices_to_delete)
 
     return prompt_points, prompt_weights, sl_points, sl_weights
+
+
+def hist_difference(hist1, hist2):
+    """
+    Takes a pair ofhistogram counts
+
+    Returns (hist1 - hist2 counts), (hist1 - hist2 errors) assuming Poisson statistics
+
+    """
+    assert len(hist1) == len(hist2)
+
+    # Find difference
+    diff = np.subtract(hist1, hist2)
+
+    # Find error on difference
+    err1 = np.sqrt(hist1)
+    err2 = np.sqrt(hist2)
+    err = np.sqrt(np.add(err1 ** 2, err2 ** 2))
+
+    return diff, err
+
+
+def plot_hist_diffs(
+    hist1, hist2, hist3, bin_centres, bin_widths, x_label, labels, diff_labels, title
+):
+    """
+    Show a plot of three histograms, and a plot of the delta of hist1 and hist2 with hist3
+
+    Errors assume Poisson statistics
+
+    """
+    fig, ax = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": [2.5, 1]})
+    line_width = 0.5
+    markersize = 0.0
+    alpha = 0.5
+    marker = "_"
+
+    err1 = np.sqrt(hist1)
+    err2 = np.sqrt(hist2)
+    err3 = np.sqrt(hist3)
+
+    # Plot the histograms
+    for count, err, colour, label in zip(
+        (hist1, hist2, hist3), (err1, err1, err3), ("red", "blue", "green"), labels
+    ):
+        ax[0].errorbar(
+            bin_centres,
+            count,
+            yerr=err,
+            xerr=bin_widths,
+            label=label,
+            alpha=alpha,
+            color=colour,
+            linewidth=line_width,
+            marker=marker,
+            markersize=markersize,
+            fmt=" ",
+        )
+
+    # Find the differences between hists
+    diff1, diff1_err = hist_difference(hist1, hist3)
+    diff2, diff2_err = hist_difference(hist2, hist3)
+
+    # Plot them
+    for diff, err, colour, label in zip(
+        (diff1, diff2), (diff1_err, diff2_err), ("red", "blue"), diff_labels
+    ):
+        ax[1].errorbar(
+            bin_centres,
+            diff,
+            yerr=err,
+            xerr=bin_widths,
+            label=label,
+            color=colour,
+            linewidth=line_width,
+            marker=marker,
+            markersize=markersize,
+            fmt=" ",
+        )
+
+    ax[0].legend()
+    ax[1].legend()
+    ax[0].set_ylabel("Counts")
+    ax[1].set_ylabel(r"$\Delta$Counts")
+    plt.xlabel(x_label)
+    fig.subplots_adjust(hspace=0)
+    fig.suptitle(title)
+
+    plt.show()

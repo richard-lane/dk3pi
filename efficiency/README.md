@@ -30,3 +30,5 @@ These are two different datasets, but they are drawn from the same distribution.
 It then uses the above methods to estimate the efficiency using the truth- and MC-level datasets.
 
 Finally, it reweights the "real" data using these efficiencies, and creates plots of the original + reweighted distributions.
+
+Oh btw you'll need to install some python libraries

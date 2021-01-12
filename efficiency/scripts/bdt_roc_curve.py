@@ -6,7 +6,6 @@ import script_util
 
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
 import reweighting
-import reweight_utils
 import classification
 
 

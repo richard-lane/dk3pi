@@ -12,7 +12,6 @@ import script_util
 
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
 import reweighting
-import reweight_utils
 
 
 def chi_squared(counts_source, counts_target):
@@ -167,6 +166,7 @@ def optimise(n_calls):
         for chisq, params in zip(y, result.x_iters):
             f.write(f"{chisq}\t{params}\n")
         f.write("\n")
+
 
 if __name__ == "__main__":
     n_calls = 10

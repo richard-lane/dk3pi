@@ -13,7 +13,6 @@ import script_util
 # Ideally i'd like to set a global python include path via the CMake build system...
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
 import reweighting
-import reweight_utils
 import visualisations
 
 

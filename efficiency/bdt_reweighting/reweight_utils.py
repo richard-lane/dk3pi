@@ -47,7 +47,27 @@ def plot_projection(phsp_points, i, label):
     return plt.hist(data, bins=np.linspace(200, 1800, 250))
 
 
-def inv_mass_parametrisation(
+def invariant_mass_parametrisation(k, pi1, pi2, pi3):
+    """
+    Given arrays of
+    ((k_px, k_py, k_pz, k_energy),
+     (pi1_px, pi1_py, pi1_pz, pi1_energy),
+     (pi2_px, pi2_py, pi2_pz, pi2_energy),
+     (pi3_px, pi3_py, pi3_pz, pi3_energy))
+
+    find the invariant mass parametrisation (kpi1, pi1pi2, pi2pi3, kpi1pi2, pi1pi2pi3)
+
+    """
+    kpi1 = invariant_masses(*np.add(k, pi1))
+    pi1pi2 = invariant_masses(*np.add(pi1, pi2))
+    pi2pi3 = invariant_masses(*np.add(pi2, pi3))
+    kpi1pi2 = invariant_masses(*np.add(np.add(k, pi1), pi2))
+    pi1pi2pi3 = invariant_masses(*np.add(np.add(pi1, pi2), pi3))
+
+    return np.column_stack((kpi1, pi1pi2, pi2pi3, kpi1pi2, pi1pi2pi3))
+
+
+def read_invariant_masses(
     file_name: str, tree_name: str, k_branches, pi1_branches, pi2_branches, pi3_branches
 ) -> np.ndarray:
     """
@@ -77,25 +97,9 @@ def inv_mass_parametrisation(
     pi3_pz = read_branch(file_name, tree_name, pi3_branches[2])
     pi3_e = read_branch(file_name, tree_name, pi3_branches[3])
 
-    # Find all invariant masses
-    k_pi1 = invariant_masses(k_px + pi1_px, k_py + pi1_py, k_pz + pi1_pz, k_e + pi1_e)
-    pi1_pi2 = invariant_masses(
-        pi1_px + pi2_px, pi1_py + pi2_py, pi1_pz + pi2_pz, pi1_e + pi2_e
+    return invariant_mass_parametrisation(
+        (k_px, k_py, k_pz, k_e),
+        (pi1_px, pi1_py, pi1_pz, pi1_e),
+        (pi2_px, pi2_py, pi2_pz, pi2_e),
+        (pi3_px, pi3_py, pi3_pz, pi3_e),
     )
-    pi2_pi3 = invariant_masses(
-        pi2_px + pi3_px, pi2_py + pi3_py, pi2_pz + pi3_pz, pi2_e + pi3_e
-    )
-    k_pi1_pi2 = invariant_masses(
-        k_px + pi1_px + pi2_px,
-        k_py + pi1_py + pi2_py,
-        k_pz + pi1_pz + pi2_pz,
-        k_e + pi1_e + pi2_e,
-    )
-    pi1_pi2_pi3 = invariant_masses(
-        pi1_px + pi2_px + pi3_px,
-        pi1_py + pi2_py + pi3_py,
-        pi1_pz + pi2_pz + pi3_pz,
-        pi1_e + pi2_e + pi3_e,
-    )
-
-    return np.column_stack((k_pi1, pi1_pi2, pi2_pi3, k_pi1_pi2, pi1_pi2_pi3))
