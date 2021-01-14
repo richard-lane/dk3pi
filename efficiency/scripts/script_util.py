@@ -116,9 +116,11 @@ def plot_hist_diffs(
     hist1, hist2, hist3, bin_centres, bin_widths, x_label, labels, diff_labels, title
 ):
     """
-    Show a plot of three histograms, and a plot of the delta of hist1 and hist2 with hist3
+    Create a plot of three histograms, and a plot of the delta of hist1 and hist2 with hist3
 
     Errors assume Poisson statistics
+
+    Doesn't show or save the plot- call plt.show() to show or plt.savefig() to save
 
     """
     fig, ax = plt.subplots(2, sharex=True, gridspec_kw={"height_ratios": [2.5, 1]})
@@ -177,5 +179,3 @@ def plot_hist_diffs(
     plt.xlabel(x_label)
     fig.subplots_adjust(hspace=0)
     fig.suptitle(title)
-
-    plt.show()

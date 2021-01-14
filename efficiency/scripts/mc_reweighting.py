@@ -1,9 +1,14 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import phasespace
 import sys
 import os
 from sklearn.model_selection import train_test_split
+
+# Don't attempt to create figure windows, since this will probably get run on lxplus
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
 import classification
@@ -72,58 +77,18 @@ def mc_k3pi_events(file_name, tree_name):
     return np.delete(mc_events, delete_indices, axis=0)
 
 
-def plot_projections(phsp, mc, weights):
+def plot_diffs(target, mc, weights, path, label):
     """
-    Plot phsp projections of phsp and un/weighted MC data
+    Save plots of phsp projections alongside their delta from MC
 
-    """
-    xlabels = (
-        r"$M(K\pi_1)$",
-        r"$M(\pi_1\pi_2)$",
-        r"$M(\pi_2\pi_3)$",
-        r"$M(K\pi_1\pi_2)$",
-        r"$M(\pi_1\pi_2\pi_3)$",
-    )
-    shape = (2, 6)
-    loc = ((0, 0), (0, 2), (0, 4), (1, 1), (1, 3))
-    bins = np.linspace(0, 2000, 125)
-    for i in range(5):
-        # We want 5 subplots for the figure
-        plt.subplot2grid(shape, loc[i], colspan=2)
+    Normalises the target disribution to have the same number of counts as mc
 
-        # Plot our flat events with no weighting
-        plt.hist(phsp[:, i], bins=bins, alpha=0.3, label="phsp", edgecolor="k")
-
-        # Plot LHCb MC events with no weighting
-        plt.hist(mc[:, i], bins=bins, alpha=0.3, label="MC", edgecolor="k")
-
-        # Plot the LHCb MC events with the BDT reweighting
-        plt.hist(
-            mc[:, i],
-            weights=weights,
-            bins=bins,
-            alpha=0.3,
-            label="Reweighted MC",
-            edgecolor="k",
-        )
-
-        # Only plot the legend on the first subplot
-        if not i:
-            plt.legend(loc="upper left")
-
-        plt.ylabel("Counts")
-        plt.xlabel(xlabels[i])
-
-    plt.suptitle("MC Phsp Projections")
-    plt.show()
-
-
-def plot_diffs(phsp, mc, weights):
-    """
-    Plot phsp projections along side their delta from MC
+    Saves to "diff_{path}_1.png", etc.
 
     """
-    # Need to bin data first
+    # Find what normalisation we need to apply to the target histograms
+    normalisation = len(mc) / len(target)
+
     kwargs = {"bins": 100, "range": (0, 2000)}
     xlabels = (
         r"$M(K\pi_1)$",
@@ -133,9 +98,13 @@ def plot_diffs(phsp, mc, weights):
         r"$M(\pi_1\pi_2\pi_3)$",
     )
     for i in range(5):
+        # Need to bin data
         mc_hist, bins = np.histogram(mc[:, i], **kwargs)
-        phsp_hist, _ = np.histogram(phsp[:, i], **kwargs)
+        target_hist, _ = np.histogram(target[:, i], **kwargs)
         mc_weighted, _ = np.histogram(mc[:, i], weights=weights, **kwargs)
+
+        # Normalise the target hist to the right number of events
+        target_hist = target_hist * normalisation
 
         # Find bin centres and widths
         centres = [(bins[i + 1] + bins[i]) / 2 for i in range(len(bins) - 1)]
@@ -144,21 +113,23 @@ def plot_diffs(phsp, mc, weights):
         script_util.plot_hist_diffs(
             mc_hist,
             mc_weighted,
-            phsp_hist,
+            target_hist,
             centres,
             np.divide(widths, 2),
             xlabels[i],
-            ("MC", "Reweighted", "Flat"),
-            ("MC-Flat", "Reweighted-Flat"),
+            ("MC", "Reweighted", label),
+            (f"MC-{label}", f"Reweighted-{label}"),
             "Phsp Projection",
         )
+        plt.savefig(f"diff_{path}_{i}.png")
 
 
-def roc_curve(mc, flat, weights):
+def roc_curve(mc, flat, weights, label):
     """
-    Show a plot of the ROC curves for a simple binary classifier, both before + after applying weights to the MC data
+    Create a plot of the ROC curves for a simple binary classifier, both before + after applying weights to the MC data
 
     """
+    plt.clf()
     curve_before = classification.roc_curve(
         mc, flat, np.ones_like(mc[:, 0]), np.ones_like(flat[:, 0])
     )
@@ -172,36 +143,40 @@ def roc_curve(mc, flat, weights):
     plt.legend()
     plt.xlabel("FPR")
     plt.ylabel("TPR")
-    plt.title("ROC for classification of MC and phsp events")
+    plt.title(f"ROC for classification of MC and {label} events")
+    plt.savefig(f"{label}.png")
 
-    plt.show()
 
+def flat_study():
+    """
+    Plot graphs, do reweighting etc. with flat phsp
 
-def main():
+    """
     file_name = "2018MCflat.root"
     tree_name = "TupleDstToD0pi_D0ToKpipipi/DecayTree"
 
     # Read phsp events from file
-    mc_events = mc_k3pi_events(file_name, tree_name)
+    print("Reading phsp MC file")
+    phsp_mc_events = mc_k3pi_events(file_name, tree_name)
 
     # Generate a load of flat d->k3pi events in phase space
-    flat_events = flat_k3pi_events(len(mc_events))
+    print("Generating phsp events")
+    phsp_flat_events = flat_k3pi_events(len(mc_events))
 
     # Split data into training and testing samples
-    mc_train, mc_test, flat_train, flat_test = train_test_split(mc_events, flat_events)
+    mc_train, mc_test, flat_train, flat_test = train_test_split(
+        phsp_mc_events, flat_events
+    )
 
     # Train the reweighting BDT
     print("Training BDT...")
     bdt = reweighting.init(flat_train, mc_train, learning_rate=0.15, n_estimators=80)
 
-    # Find the weights from this BDT for our training data
+    # Find the weights from this BDT for our test data
     print("Finding weights...")
     weights = reweighting.predicted_weights(
         bdt, mc_test, expected_num_points=len(mc_test)
     )
-
-    # Plot projections
-    plot_projections(flat_test, mc_test, weights)
 
     # Plot diffs
     plot_diffs(flat_test, mc_test, weights)
@@ -211,5 +186,109 @@ def main():
     roc_curve(mc_test, flat_test, weights)
 
 
+def ampgen_study(mc_file_name, tree_name, ampgen_file_name, RS: bool):
+    """
+    Helper fcn for doing the RS/WS study with AmpGen data
+
+    Boolean RS flag tells us whether the decay is RS or WS
+
+    """
+    # Ugly way of storing params
+    sign_str = "RS" if RS else "WS"
+    branches = (
+        (
+            ("_1_K#_Px", "_1_K#_Py", "_1_K#_Pz", "_1_K#_E"),
+            ("_2_pi~_Px", "_2_pi~_Py", "_2_pi~_Pz", "_2_pi~_E"),
+            ("_3_pi~_Px", "_3_pi~_Py", "_3_pi~_Pz", "_3_pi~_E"),
+            ("_4_pi#_Px", "_4_pi#_Py", "_4_pi#_Pz", "_4_pi#_E"),
+        )
+        if RS
+        else (
+            ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E"),
+            ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E"),
+            ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E"),
+            ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E"),
+        )
+    )
+
+    # Read MC events from file
+    print(f"{sign_str}: Reading MC...")
+    mc_events = mc_k3pi_events(mc_file_name, tree_name)
+
+    # Read AmpGen events from file
+    print(f"{sign_str}: Reading AmpGen...")
+    ampgen_events = reweight_utils.read_invariant_masses(
+        ampgen_file_name,
+        "DalitzEventList",
+        branches[0],
+        branches[1],
+        branches[2],
+        branches[3],
+    )
+
+    # Convert AmpGen events to MeV
+    ampgen_events *= 1000
+
+    # Split data into train/test
+    mc_train, mc_test = train_test_split(mc_events)
+    ampgen_train, ampgen_test = train_test_split(ampgen_events)
+
+    # Train the reweighting BDT
+    print(f"{sign_str}: Training bdt...")
+    bdt = reweighting.init(ampgen_train, mc_train, learning_rate=0.15, n_estimators=80)
+
+    # Find the weights for the testing data
+    print(f"{sign_str}: Finding weights...")
+    weights = reweighting.predicted_weights(bdt, mc_test)
+
+    # Plot diffs
+    plot_diffs(ampgen_test, mc_test, weights, f"{sign_str}_test", f"{sign_str} AmpGen")
+
+    # Plot diffs of training data. Just to check
+    plot_diffs(
+        ampgen_train,
+        mc_train,
+        reweighting.predicted_weights(bdt, mc_train),
+        f"{sign_str}_train",
+        f"{sign_str} AmpGen",
+    )
+
+    # Plot a ROC curve
+    print(f"{sign_str}: Calculating ROC curve...")
+    roc_curve(mc_test, ampgen_test, weights, sign_str)
+
+
+def ws_study():
+    """
+    Plot graphs etc. for RS data
+
+    """
+    ampgen_study(
+        "2018MC_WS.root",
+        "TupleDstToD0pi_D0ToKpipipi/DecayTree",
+        "ampgen_WS.root",
+        False,
+    )
+
+
+def rs_study():
+    """
+    Plot graphs etc. for RS data
+
+    """
+    ampgen_study(
+        "2018MC_RS.root", "TupleDstToD0pi_D0ToKpipipi/DecayTree", "ampgen_RS.root", True
+    )
+
+
+def main():
+    # flat_study()
+    ws_study()
+    rs_study()
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

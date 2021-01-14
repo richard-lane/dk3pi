@@ -59,6 +59,7 @@ Locations of relevant MC data in the bookkeeping
         /MC/2018/27165070/Beam6500GeV-2018-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
 
     CF:
+        DDDB: dddb-20170721-3 Condition DB: sim-20190430-vc-md100
         /MC/2018/27165071/Beam6500GeV-2018-MagDown-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
         /MC/2018/27165071/Beam6500GeV-2018-MagUp-Nu1.6-25ns-Pythia8/Sim09j-ReDecay01/Trig0x617d18a4/Reco18/Turbo05-WithTurcal/Stripping34NoPrescalingFlagged/Turbo05Filtered/DSTARD02HHHH.HLTFILTER.MDST
 

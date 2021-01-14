@@ -13,7 +13,7 @@ dtt.Inputs = ["/Phys/{0}/Particles".format(line)]
 
 # Add branches for each particle and the proper time of the D0
 dtt.setDescriptorTemplate(
-    "${Dstar}[D*(2010)+ -> ${D}(D0 -> ${K}K- ${pi1}pi+ ${pi2}pi+ ${pi3}pi-) ${pisoft}pi+]CC"
+    "${Dstar}[D*(2010)+ -> ${D}(D0 -> ${K}K+ ${pi1}pi- ${pi2}pi- ${pi3}pi+) ${pisoft}pi+]CC"
 )
 dtt.D.addTupleTool("TupleToolPropertime")
 
