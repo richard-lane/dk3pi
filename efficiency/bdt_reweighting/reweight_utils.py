@@ -103,6 +103,8 @@ def read_invariant_masses(
 
     branches should be iterables of branch names in the order [px, py, pz, pe]
 
+    Performs momentum ordering of pi1 and pi2 based on the momentum_order function
+
     """
     # Read the data from all the events
     k_px = read_branch(file_name, tree_name, k_branches[0])
@@ -124,6 +126,17 @@ def read_invariant_masses(
     pi3_py = read_branch(file_name, tree_name, pi3_branches[1])
     pi3_pz = read_branch(file_name, tree_name, pi3_branches[2])
     pi3_e = read_branch(file_name, tree_name, pi3_branches[3])
+
+    # Perform momentum ordering
+    # This sometimes does assignments that it doesn't need to but it should be ok
+    for i in range(len(k_px)):
+        # Assign i'th pi1 and pi2 params to the right things
+        (pi1_px[i], pi1_py[i], pi1_pz[i], pi1_e[i]),
+        (pi2_px[i], pi2_py[i], pi2_pz[i], pi2_e[i]) = momentum_order(
+            (k_px[i], k_py[i], k_pz[i], k_e[i]),
+            (pi1_px[i], pi1_py[i], pi1_pz[i], pi1_e[i]),
+            (pi2_px[i], pi2_py[i], pi2_pz[i], pi2_e[i]),
+        )
 
     return invariant_mass_parametrisation(
         (k_px, k_py, k_pz, k_e),
