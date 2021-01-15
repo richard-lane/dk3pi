@@ -3,6 +3,7 @@ import phasespace
 import sys
 import os
 from sklearn.model_selection import train_test_split
+from multiprocessing import Process
 
 # Don't attempt to create figure windows, since this will probably get run on lxplus
 import matplotlib
@@ -106,6 +107,11 @@ def plot_diffs(target, mc, weights, path, label):
         # Normalise the target hist to the right number of events
         target_hist = target_hist * normalisation
 
+        # Normalise the reweighted hist to the right number of events
+        n_reweighted = len(mc) * np.mean(weights)
+        n_target = np.sum(target_hist)
+        weights *= n_target / n_reweighted
+
         # Find bin centres and widths
         centres = [(bins[i + 1] + bins[i]) / 2 for i in range(len(bins) - 1)]
         widths = [bins[i + 1] - bins[i] for i in range(len(bins) - 1)]
@@ -119,7 +125,7 @@ def plot_diffs(target, mc, weights, path, label):
             xlabels[i],
             ("MC", "Reweighted", label),
             (f"MC-{label}", f"Reweighted-{label}"),
-            "Phsp Projection",
+            f"{label} Phsp Projection",
         )
         plt.savefig(f"diff_{path}_{i}.png")
 
@@ -170,7 +176,9 @@ def flat_study():
 
     # Train the reweighting BDT
     print("Training BDT...")
-    bdt = reweighting.init(flat_train, mc_train, learning_rate=0.15, n_estimators=80)
+    bdt = reweighting.init(
+        flat_train, mc_train, learning_rate=0.15, n_estimators=100, max_depth=4
+    )
 
     # Find the weights from this BDT for our test data
     print("Finding weights...")
@@ -283,8 +291,14 @@ def rs_study():
 
 def main():
     # flat_study()
-    ws_study()
-    rs_study()
+
+    ws = Process(target=ws_study)
+    ws.start()
+    rs = Process(target=rs_study)
+    rs.start()
+
+    ws.join()
+    rs.join()
 
 
 if __name__ == "__main__":
