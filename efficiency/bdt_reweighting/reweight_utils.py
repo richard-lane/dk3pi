@@ -19,19 +19,47 @@ def read_branch(file_name: str, tree_name: str, branch_name: str) -> np.ndarray:
     return tree.array(branch_name)
 
 
-def invariant_masses(px, py, pz, energy):
+def invariant_mass(px, py, pz, energy):
+    """
+    Find the invariant mass of a particle given its kinematic data
+
+    """
+    return np.sqrt(energy ** 2 - px ** 2 - py ** 2 - pz ** 2)
+
+
+def invariant_masses(
+    px: np.ndarray, py: np.ndarray, pz: np.ndarray, energy: np.ndarray
+):
     """
     Find the invariant masses of a collection of particles represented by their kinematic data
 
-    all arguments are 1d iterables of momentum/energy
+    all arguments are 1d np arrays of momentum/energy
+
+    Returns an array of invariant masses
 
     """
-    assert len(px) == len(py) == len(pz) == len(energy)
+    # Turns out invariant_mass as defined above just works with numpy arrays.
+    return invariant_mass(px, py, pz, energy)
 
-    p_squared = px ** 2 + py ** 2 + pz ** 2
-    mass_squared = energy ** 2 - p_squared
 
-    return np.sqrt(mass_squared)
+def momentum_order(k, pi1, pi2):
+    """
+    Order two pions based on the invariant mass M(Kpi)
+
+    params:
+      k: kaon parameters (px, py, pz, E)
+      pi1: pion parameters (px, py, pz, E)
+      pi2: pion parameters (px, py, pz, E)
+
+    returns (lower_mass_pion, higher_mass_pion)
+
+    """
+    m1 = invariant_mass(*np.add(k, pi1))
+    m2 = invariant_mass(*np.add(k, pi2))
+    if m1 < m2:
+        return pi1, pi2
+
+    return pi2, pi1
 
 
 def plot_projection(phsp_points, i, label):
