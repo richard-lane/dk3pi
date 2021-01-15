@@ -131,8 +131,12 @@ def read_invariant_masses(
     # This sometimes does assignments that it doesn't need to but it should be ok
     for i in range(len(k_px)):
         # Assign i'th pi1 and pi2 params to the right things
-        (pi1_px[i], pi1_py[i], pi1_pz[i], pi1_e[i]),
-        (pi2_px[i], pi2_py[i], pi2_pz[i], pi2_e[i]) = momentum_order(
+        (pi1_px[i], pi1_py[i], pi1_pz[i], pi1_e[i]), (
+            pi2_px[i],
+            pi2_py[i],
+            pi2_pz[i],
+            pi2_e[i],
+        ) = momentum_order(
             (k_px[i], k_py[i], k_pz[i], k_e[i]),
             (pi1_px[i], pi1_py[i], pi1_pz[i], pi1_e[i]),
             (pi2_px[i], pi2_py[i], pi2_pz[i], pi2_e[i]),
