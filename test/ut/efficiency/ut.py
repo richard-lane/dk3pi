@@ -33,8 +33,8 @@ def test_momentum_ordering():
     pi1 = [100, 200, 300, 399.349]  # Lower inv mass M(Kpi)
     pi2 = [50, -200, 150, 290.654]  # Higher inv mass M(Kpi)
 
-    assert reweight_utils.momentum_order(kaon, pi1, pi2) == (pi1, pi2)
-    assert reweight_utils.momentum_order(kaon, pi2, pi1) == (pi1, pi2)
+    assert np.array_equal(reweight_utils.momentum_order(kaon, pi1, pi2), (pi1, pi2))
+    assert np.array_equal(reweight_utils.momentum_order(kaon, pi2, pi1), (pi1, pi2))
 
 
 def test_momm_ordering_array():
