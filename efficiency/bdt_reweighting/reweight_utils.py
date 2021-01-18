@@ -110,44 +110,19 @@ def read_invariant_masses(
 
     """
     # Read the data from all the events
-    k_px = read_branch(file_name, tree_name, k_branches[0])
-    k_py = read_branch(file_name, tree_name, k_branches[1])
-    k_pz = read_branch(file_name, tree_name, k_branches[2])
-    k_e = read_branch(file_name, tree_name, k_branches[3])
-
-    pi1_px = read_branch(file_name, tree_name, pi1_branches[0])
-    pi1_py = read_branch(file_name, tree_name, pi1_branches[1])
-    pi1_pz = read_branch(file_name, tree_name, pi1_branches[2])
-    pi1_e = read_branch(file_name, tree_name, pi1_branches[3])
-
-    pi2_px = read_branch(file_name, tree_name, pi2_branches[0])
-    pi2_py = read_branch(file_name, tree_name, pi2_branches[1])
-    pi2_pz = read_branch(file_name, tree_name, pi2_branches[2])
-    pi2_e = read_branch(file_name, tree_name, pi2_branches[3])
-
-    pi3_px = read_branch(file_name, tree_name, pi3_branches[0])
-    pi3_py = read_branch(file_name, tree_name, pi3_branches[1])
-    pi3_pz = read_branch(file_name, tree_name, pi3_branches[2])
-    pi3_e = read_branch(file_name, tree_name, pi3_branches[3])
+    k =   np.array([read_branch(file_name, tree_name, branch) for branch in k_branches])
+    pi1 = np.array([read_branch(file_name, tree_name, branch) for branch in pi1_branches])
+    pi2 = np.array([read_branch(file_name, tree_name, branch) for branch in pi2_branches])
+    pi3 = np.array([read_branch(file_name, tree_name, branch) for branch in pi3_branches])
 
     # Perform momentum ordering
     # This sometimes does assignments that it doesn't need to but it should be ok
-    for i in range(len(k_px)):
+    for i in range(len(k)):
         # Assign i'th pi1 and pi2 params to the right things
-        (pi1_px[i], pi1_py[i], pi1_pz[i], pi1_e[i]), (
-            pi2_px[i],
-            pi2_py[i],
-            pi2_pz[i],
-            pi2_e[i],
-        ) = momentum_order(
-            (k_px[i], k_py[i], k_pz[i], k_e[i]),
-            (pi1_px[i], pi1_py[i], pi1_pz[i], pi1_e[i]),
-            (pi2_px[i], pi2_py[i], pi2_pz[i], pi2_e[i]),
+        pi1.T[i], pi2.T[i] = momentum_order(
+            k.T[i],
+            pi1.T[i],
+            pi2.T[i],
         )
 
-    return invariant_mass_parametrisation(
-        (k_px, k_py, k_pz, k_e),
-        (pi1_px, pi1_py, pi1_pz, pi1_e),
-        (pi2_px, pi2_py, pi2_pz, pi2_e),
-        (pi3_px, pi3_py, pi3_pz, pi3_e),
-    )
+    return invariant_mass_parametrisation(k, pi1, pi2, pi3)
