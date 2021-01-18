@@ -52,18 +52,14 @@ def test_momm_ordering_array():
     old_pi1, old_pi2 = pi1.copy(), pi2.copy()
 
     # Check the no-op ordering works
-    print()
-    print(pi1,"\n", pi2)
     pi1.T[0], pi2.T[0] = reweight_utils.momentum_order(kaon.T[0], pi1.T[0], pi2.T[0])
-    print(pi1, "\n",pi2)
     assert np.array_equal(pi1, old_pi1)
     assert np.array_equal(pi2, old_pi2)
 
     # Check the ordering works
     pi2.T[0], pi1.T[0] = reweight_utils.momentum_order(kaon.T[0], pi1.T[0], pi2.T[0])
-    print(pi1, "\n",pi2)
-    assert np.array_equal(pi1, old_pi1)
-    assert np.array_equal(pi2, old_pi2)
+    assert np.array_equal(pi2, old_pi1)
+    assert np.array_equal(pi1, old_pi2)
 
 
 def test_inv_mass_consistency():

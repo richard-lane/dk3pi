@@ -54,12 +54,15 @@ def momentum_order(k, pi1, pi2):
     returns (lower_mass_pion, higher_mass_pion)
 
     """
-    m1 = invariant_mass(*np.add(k, pi1))
-    m2 = invariant_mass(*np.add(k, pi2))
-    if m1 < m2:
-        return pi1, pi2
+    pi1_copy = np.copy(pi1)
+    pi2_copy = np.copy(pi2)
 
-    return pi2, pi1
+    m1 = invariant_mass(*np.add(k, pi1_copy))
+    m2 = invariant_mass(*np.add(k, pi2_copy))
+    if m1 < m2:
+        return pi1_copy, pi2_copy
+
+    return pi2_copy, pi1_copy
 
 
 def plot_projection(phsp_points, i, label):
