@@ -110,14 +110,20 @@ def read_invariant_masses(
 
     """
     # Read the data from all the events
-    k =   np.array([read_branch(file_name, tree_name, branch) for branch in k_branches])
-    pi1 = np.array([read_branch(file_name, tree_name, branch) for branch in pi1_branches])
-    pi2 = np.array([read_branch(file_name, tree_name, branch) for branch in pi2_branches])
-    pi3 = np.array([read_branch(file_name, tree_name, branch) for branch in pi3_branches])
+    k = np.array([read_branch(file_name, tree_name, branch) for branch in k_branches])
+    pi1 = np.array(
+        [read_branch(file_name, tree_name, branch) for branch in pi1_branches]
+    )
+    pi2 = np.array(
+        [read_branch(file_name, tree_name, branch) for branch in pi2_branches]
+    )
+    pi3 = np.array(
+        [read_branch(file_name, tree_name, branch) for branch in pi3_branches]
+    )
 
     # Perform momentum ordering
     # This sometimes does assignments that it doesn't need to but it should be ok
-    for i in range(len(k)):
+    for i in range(len(k[0])):
         # Assign i'th pi1 and pi2 params to the right things
         pi1.T[i], pi2.T[i] = momentum_order(
             k.T[i],
