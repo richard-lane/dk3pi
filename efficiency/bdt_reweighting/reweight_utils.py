@@ -42,6 +42,42 @@ def invariant_masses(
     return invariant_mass(px, py, pz, energy)
 
 
+def signature(k, pi1, pi2, pi3):
+    """
+    Returns the "signature" of a final state: i.e. sgn(det(M)), where M is a matrix [[k], [pi1], [pi2], [pi3]]
+
+    Intended for use with kinematic data in the order (px, py, pz, E), but it doesn't really matter as long as you're consistent
+
+    params:
+      k: kaon parameters (px, py, pz, E)
+      pi1: pion parameters (px, py, pz, E)
+      pi2: pion parameters (px, py, pz, E)
+      pi3: pion parameters (px, py, pz, E)
+
+    returns +1 or -1
+
+    """
+    return np.sign(np.linalg.det(np.row_stack((k, pi1, pi2, pi3))))
+
+
+def signatures(
+    k: np.ndarray, pi1: np.ndarray, pi2: np.ndarray, pi3: np.ndarray
+) -> np.ndarray:
+    """
+    Find the signatures of a collection of particles, where each is passed in as numpy arrays e.g.
+      k = [[k_px], [k_py], [k_pz], [E]]
+
+    """
+    n = len(k[0])
+    assert n == len(pi1[0]) == len(pi2[0]) == len(pi3[0])
+
+    sigs = np.zeros(n)
+    for i in range(n):
+        sigs[i] = signature(k.T[i], pi1.T[i], pi2.T[i], pi3.T[i])
+
+    return sigs
+
+
 def momentum_order(k, pi1, pi2):
     """
     Order two pions based on the invariant mass M(Kpi)

@@ -74,3 +74,42 @@ def test_inv_mass_consistency():
         np.array([particle[2]]),
         np.array([particle[3]]),
     )[0]
+
+
+def test_signature():
+    """
+    Check that the signature of a decay is correctly identified
+
+    """
+    assert (
+        reweight_utils.signature(
+            [1, 3, 5, 9],
+            [1, 3, 1, 7],
+            [4, 3, 9, 7],
+            [5, 2, 0, 9],
+        )
+        == -1
+    )
+    assert (
+        reweight_utils.signature(
+            [9, 3, 5, 1],
+            [7, 3, 1, 1],
+            [7, 3, 9, 4],
+            [9, 2, 0, 5],
+        )
+        == 1
+    )
+
+
+def test_signatures():
+    """
+    Check that the signatures of a collection of decays are correctly identified
+
+    """
+    k = np.array([[1, 9], [3, 3], [5, 5], [9, 1]])
+    pi1 = np.array([[1, 7], [3, 3], [1, 1], [7, 1]])
+    pi2 = np.array([[4, 7], [3, 3], [9, 9], [7, 4]])
+    pi3 = np.array([[5, 9], [2, 2], [0, 0], [9, 5]])
+
+    assert reweight_utils.signatures(k, pi1, pi2, pi3)[0] == -1
+    assert reweight_utils.signatures(k, pi1, pi2, pi3)[1] == 1
