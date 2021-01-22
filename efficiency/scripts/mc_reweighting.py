@@ -237,13 +237,25 @@ def ampgen_study(mc_file_name, tree_name, ampgen_file_name, RS: bool):
     # Convert AmpGen events to MeV
     ampgen_events *= 1000
 
+    # Throw away events with m(kpi1) > 900
+    # print("Deleting events...")
+    # ampgen_events = np.delete(ampgen_events, ampgen_events[:, 0] > 900, axis=0)
+    # mc_events = np.delete(mc_events, mc_events[:, 0] > 900, axis=0)
+
+
     # Split data into train/test
-    mc_train, mc_test = train_test_split(mc_events)
-    ampgen_train, ampgen_test = train_test_split(ampgen_events)
+    kwargs = {"test_size": 0.5}
+    mc_train, mc_test = train_test_split(mc_events, **kwargs)
+    ampgen_train, ampgen_test = train_test_split(ampgen_events, **kwargs)
 
     # Train the reweighting BDT
     print(f"{sign_str}: Training bdt...")
-    bdt = reweighting.init(ampgen_train, mc_train, learning_rate=0.15, n_estimators=80)
+    bdt = reweighting.init(
+        ampgen_train,
+        mc_train,
+        n_estimators=200,
+        learning_rate=0.05,
+    )
 
     # Find the weights for the testing data
     print(f"{sign_str}: Finding weights...")
