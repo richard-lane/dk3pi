@@ -220,37 +220,25 @@ def flat_study():
     roc_curve(mc_test, flat_test, weights, "Flat")
 
 
-def ampgen_study(mc_file_name, tree_name, ampgen_file_name, RS: bool):
+def ampgen_study(mc_file_name, tree_name, ampgen_file_name, label):
     """
     Helper fcn for doing the RS/WS study with AmpGen data
 
-    Boolean RS flag tells us whether the decay is RS or WS
-
     """
     # Ugly way of storing params
-    sign_str = "RS" if RS else "WS"
     branches = (
-        (
-            ("_1_K#_Px", "_1_K#_Py", "_1_K#_Pz", "_1_K#_E"),
-            ("_2_pi~_Px", "_2_pi~_Py", "_2_pi~_Pz", "_2_pi~_E"),
-            ("_3_pi~_Px", "_3_pi~_Py", "_3_pi~_Pz", "_3_pi~_E"),
-            ("_4_pi#_Px", "_4_pi#_Py", "_4_pi#_Pz", "_4_pi#_E"),
-        )
-        if RS
-        else (
             ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E"),
             ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E"),
             ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E"),
             ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E"),
-        )
     )
 
     # Read MC events from file
-    print(f"{sign_str}: Reading MC...")
+    print(f"{label}: Reading MC...")
     mc_events = mc_k3pi_events(mc_file_name, tree_name)
 
     # Read AmpGen events from file
-    print(f"{sign_str}: Reading AmpGen...")
+    print(f"{label}: Reading AmpGen...")
     ampgen_events = reweight_utils.read_invariant_masses(
         ampgen_file_name,
         "DalitzEventList",
@@ -274,90 +262,28 @@ def ampgen_study(mc_file_name, tree_name, ampgen_file_name, RS: bool):
     ampgen_train, ampgen_test = train_test_split(ampgen_events, **kwargs)
 
     # Train the reweighting BDT
-    print(f"{sign_str}: Training bdt...")
+    print(f"{label}: Training bdt...")
     bdt = train_bdt(ampgen_train, mc_train)
 
     # Find the weights for the testing data
-    print(f"{sign_str}: Finding weights...")
+    print(f"{label}: Finding weights...")
     weights = reweighting.predicted_weights(bdt, mc_test)
 
     # Plot diffs
-    plot_diffs(ampgen_test, mc_test, weights, f"{sign_str}_test", f"{sign_str} AmpGen")
+    plot_diffs(ampgen_test, mc_test, weights, f"{label}_test", f"{label} AmpGen")
 
     # Plot diffs of training data. Just to check
     plot_diffs(
         ampgen_train,
         mc_train,
         reweighting.predicted_weights(bdt, mc_train),
-        f"{sign_str}_train",
-        f"{sign_str} AmpGen",
+        f"{label}_train",
+        f"{label} AmpGen",
     )
 
     # Plot a ROC curve
-    print(f"{sign_str}: Calculating ROC curve...")
-    roc_curve(mc_test, ampgen_test, weights, sign_str)
-
-
-def train_on_ws_apply_to_rs():
-    """
-    Plot graphs etc. for a BDT trained on WS data, applied to RS data
-
-    Should in principle work since our efficiency function should only be a function of phase space point
-
-    """
-    print("Reading WS MC")
-    # mc_events = mc_k3pi_events("2018MC_WS.root", "TupleDstToD0pi_D0ToKpipipi/DecayTree")
-
-    print("Reading WS AmpGen")
-    # ws_branches = (
-    #     ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E"),
-    #     ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E"),
-    #     ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E"),
-    #     ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E"),
-    # )
-    # ampgen_events = reweight_utils.read_invariant_masses(
-    #     "ampgen_WS.root", "DalitzEventList", *ws_branches
-    # )
-
-    # Convert to MeV
-    # ampgen_events *= 1000
-
-    # Train the BDT
-    # print("Training BDT")
-    # bdt = train_bdt(ampgen_events, mc_events)
-    # mc_events = None
-    # ampgen_events = None
-
-    # Read RS Data
-    # rs_mc_events = mc_k3pi_events(
-    #     "2018MC_RS.root", "TupleDstToD0pi_D0ToKpipipi/DecayTree"
-    # )
-
-    # Find weights for RS data
-    # print("finding weights")
-    # weights = reweighting.predicted_weights(bdt, rs_mc_events)
-
-    # Read RS AmpGen data
-    # rs_branches = (
-    #     ("_1_K#_Px", "_1_K#_Py", "_1_K#_Pz", "_1_K#_E"),
-    #     ("_2_pi~_Px", "_2_pi~_Py", "_2_pi~_Pz", "_2_pi~_E"),
-    #     ("_3_pi~_Px", "_3_pi~_Py", "_3_pi~_Pz", "_3_pi~_E"),
-    #     ("_4_pi#_Px", "_4_pi#_Py", "_4_pi#_Pz", "_4_pi#_E"),
-    # )
-    # rs_ampgen_events = reweight_utils.read_invariant_masses(
-    #     "ampgen_RS.root", "DalitzEventList", *rs_branches
-    # )
-    # rs_ampgen_events *= 1000
-
-    # Plot diffs
-    # plot_diffs(rs_ampgen_events, rs_mc_events, weights, f"Mix", "RS AmpGen")
-    # plot_diffs(
-    #     ampgen_events,
-    #     mc_events,
-    #     reweighting.predicted_weights(bdt, mc_events),
-    #     "Mix_train",
-    #     "train",
-    # )
+    print(f"{label}: Calculating ROC curve...")
+    roc_curve(mc_test, ampgen_test, weights, label)
 
 
 def ws_study():
@@ -369,7 +295,7 @@ def ws_study():
         "2018MC_WS.root",
         "TupleDstToD0pi_D0ToKpipipi/DecayTree",
         "ampgen_WS.root",
-        False,
+        "WS",
     )
 
 
@@ -379,14 +305,18 @@ def rs_study():
 
     """
     ampgen_study(
-        "2018MC_RS.root", "TupleDstToD0pi_D0ToKpipipi/DecayTree", "ampgen_RS.root", True
+        "2018MC_RS.root",
+        "TupleDstToD0pi_D0ToKpipipi/DecayTree",
+        "ampgen_Dbar_RS.root",
+        "RS",
     )
 
 
 def mc_studies():
     ws = Process(target=ws_study)
-    ws.start()
     rs = Process(target=rs_study)
+
+    ws.start()
     rs.start()
 
     ws.join()
@@ -395,11 +325,7 @@ def mc_studies():
 
 def main():
     # flat_study()
-
-    # mc_studies()
-
-    # train_on_ws_apply_to_rs()
-    pass
+    mc_studies()
 
 
 if __name__ == "__main__":
