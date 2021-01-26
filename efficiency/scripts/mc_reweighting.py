@@ -22,11 +22,21 @@ def where(file_name: str, tree_name: str, branch_name: str, f):
     """
     Find indices on the specified branch where f(x) = True
 
+    Not very fast and possibly something already exists in numpy
+
     """
     data = reweight_utils.read_branch(file_name, tree_name, branch_name)
 
     # Might be slow for large arrays. Could use itertools.compress or numpy
     return [i for i, x in enumerate(data) if f(x)]
+
+
+def train_bdt(target, origin):
+    """
+    Helper fcn
+
+    """
+    return reweighting.init(target, origin, n_estimators=100, learning_rate=0.05)
 
 
 def flat_k3pi_events(num_events):
@@ -102,7 +112,6 @@ def plot_diffs(target, mc, weights, path, label):
         # Need to bin data
         mc_hist, bins = np.histogram(mc[:, i], **kwargs)
         target_hist, _ = np.histogram(target[:, i], **kwargs)
-        mc_weighted, _ = np.histogram(mc[:, i], weights=weights, **kwargs)
 
         # Normalise the target hist to the right number of events
         target_hist = target_hist * normalisation
@@ -111,6 +120,8 @@ def plot_diffs(target, mc, weights, path, label):
         n_reweighted = len(mc) * np.mean(weights)
         n_target = np.sum(target_hist)
         weights *= n_target / n_reweighted
+
+        mc_weighted, _ = np.histogram(mc[:, i], weights=weights, **kwargs)
 
         # Find bin centres and widths
         centres = [(bins[i + 1] + bins[i]) / 2 for i in range(len(bins) - 1)]
@@ -167,18 +178,26 @@ def flat_study():
 
     # Generate a load of flat d->k3pi events in phase space
     print("Generating phsp events")
-    phsp_flat_events = flat_k3pi_events(len(mc_events))
+    phsp_flat_events = flat_k3pi_events(len(phsp_mc_events))
+
+    # Delete the events with m(kPi1) > 1300
+    print("Deleting events...")
+    max_mkpi = 1200
+    phsp_flat_events = np.delete(
+        phsp_flat_events, phsp_flat_events[:, 0] > max_mkpi, axis=0
+    )
+    phsp_mc_events = np.delete(phsp_mc_events, phsp_mc_events[:, 0] > max_mkpi, axis=0)
 
     # Split data into training and testing samples
-    mc_train, mc_test, flat_train, flat_test = train_test_split(
-        phsp_mc_events, flat_events
-    )
+    (
+        mc_train,
+        mc_test,
+    ) = train_test_split(phsp_mc_events)
+    flat_train, flat_test = train_test_split(phsp_flat_events)
 
     # Train the reweighting BDT
     print("Training BDT...")
-    bdt = reweighting.init(
-        flat_train, mc_train, learning_rate=0.15, n_estimators=100, max_depth=4
-    )
+    bdt = train_bdt(flat_train, mc_train)
 
     # Find the weights from this BDT for our test data
     print("Finding weights...")
@@ -187,11 +206,18 @@ def flat_study():
     )
 
     # Plot diffs
-    plot_diffs(flat_test, mc_test, weights)
+    plot_diffs(flat_test, mc_test, weights, "Flat", "Phsp MC")
+    plot_diffs(
+        flat_train,
+        mc_train,
+        reweighting.predicted_weights(bdt, mc_train, expected_num_points=len(mc_test)),
+        "Flat_train",
+        "phsp",
+    )
 
     # Plot a ROC curve
     print("Calculating ROC curve...")
-    roc_curve(mc_test, flat_test, weights)
+    roc_curve(mc_test, flat_test, weights, "Flat")
 
 
 def ampgen_study(mc_file_name, tree_name, ampgen_file_name, RS: bool):
@@ -242,7 +268,6 @@ def ampgen_study(mc_file_name, tree_name, ampgen_file_name, RS: bool):
     # ampgen_events = np.delete(ampgen_events, ampgen_events[:, 0] > 900, axis=0)
     # mc_events = np.delete(mc_events, mc_events[:, 0] > 900, axis=0)
 
-
     # Split data into train/test
     kwargs = {"test_size": 0.5}
     mc_train, mc_test = train_test_split(mc_events, **kwargs)
@@ -250,12 +275,7 @@ def ampgen_study(mc_file_name, tree_name, ampgen_file_name, RS: bool):
 
     # Train the reweighting BDT
     print(f"{sign_str}: Training bdt...")
-    bdt = reweighting.init(
-        ampgen_train,
-        mc_train,
-        n_estimators=200,
-        learning_rate=0.05,
-    )
+    bdt = train_bdt(ampgen_train, mc_train)
 
     # Find the weights for the testing data
     print(f"{sign_str}: Finding weights...")
@@ -276,6 +296,68 @@ def ampgen_study(mc_file_name, tree_name, ampgen_file_name, RS: bool):
     # Plot a ROC curve
     print(f"{sign_str}: Calculating ROC curve...")
     roc_curve(mc_test, ampgen_test, weights, sign_str)
+
+
+def train_on_ws_apply_to_rs():
+    """
+    Plot graphs etc. for a BDT trained on WS data, applied to RS data
+
+    Should in principle work since our efficiency function should only be a function of phase space point
+
+    """
+    print("Reading WS MC")
+    # mc_events = mc_k3pi_events("2018MC_WS.root", "TupleDstToD0pi_D0ToKpipipi/DecayTree")
+
+    print("Reading WS AmpGen")
+    # ws_branches = (
+    #     ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E"),
+    #     ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E"),
+    #     ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E"),
+    #     ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E"),
+    # )
+    # ampgen_events = reweight_utils.read_invariant_masses(
+    #     "ampgen_WS.root", "DalitzEventList", *ws_branches
+    # )
+
+    # Convert to MeV
+    # ampgen_events *= 1000
+
+    # Train the BDT
+    # print("Training BDT")
+    # bdt = train_bdt(ampgen_events, mc_events)
+    # mc_events = None
+    # ampgen_events = None
+
+    # Read RS Data
+    # rs_mc_events = mc_k3pi_events(
+    #     "2018MC_RS.root", "TupleDstToD0pi_D0ToKpipipi/DecayTree"
+    # )
+
+    # Find weights for RS data
+    # print("finding weights")
+    # weights = reweighting.predicted_weights(bdt, rs_mc_events)
+
+    # Read RS AmpGen data
+    # rs_branches = (
+    #     ("_1_K#_Px", "_1_K#_Py", "_1_K#_Pz", "_1_K#_E"),
+    #     ("_2_pi~_Px", "_2_pi~_Py", "_2_pi~_Pz", "_2_pi~_E"),
+    #     ("_3_pi~_Px", "_3_pi~_Py", "_3_pi~_Pz", "_3_pi~_E"),
+    #     ("_4_pi#_Px", "_4_pi#_Py", "_4_pi#_Pz", "_4_pi#_E"),
+    # )
+    # rs_ampgen_events = reweight_utils.read_invariant_masses(
+    #     "ampgen_RS.root", "DalitzEventList", *rs_branches
+    # )
+    # rs_ampgen_events *= 1000
+
+    # Plot diffs
+    # plot_diffs(rs_ampgen_events, rs_mc_events, weights, f"Mix", "RS AmpGen")
+    # plot_diffs(
+    #     ampgen_events,
+    #     mc_events,
+    #     reweighting.predicted_weights(bdt, mc_events),
+    #     "Mix_train",
+    #     "train",
+    # )
 
 
 def ws_study():
@@ -301,9 +383,7 @@ def rs_study():
     )
 
 
-def main():
-    # flat_study()
-
+def mc_studies():
     ws = Process(target=ws_study)
     ws.start()
     rs = Process(target=rs_study)
@@ -311,6 +391,15 @@ def main():
 
     ws.join()
     rs.join()
+
+
+def main():
+    # flat_study()
+
+    # mc_studies()
+
+    # train_on_ws_apply_to_rs()
+    pass
 
 
 if __name__ == "__main__":
