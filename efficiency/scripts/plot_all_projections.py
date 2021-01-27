@@ -8,6 +8,7 @@ import sys
 import os
 import phasespace
 from multiprocessing import Process
+import script_util
 
 import matplotlib
 
@@ -186,24 +187,7 @@ def flat():
     mc = mc_particles("2018MCflat.root")
 
     # Generate flat data
-    pi_mass = 139.570
-    k_mass = 493.677
-    d_mass = 1864.84
-
-    # Find the kinematic information
-    # Could possibly make this more efficient by doing it in a loop, maybe
-    num_events = 500000
-    _, particles = phasespace.nbody_decay(
-        d_mass, (k_mass, pi_mass, pi_mass, pi_mass)
-    ).generate(n_events=num_events)
-
-    # Create labels for the particles to make it easier to code because im tired
-    flat = (
-        particles["p_0"].numpy().T,
-        particles["p_1"].numpy().T,
-        particles["p_2"].numpy().T,
-        particles["p_3"].numpy().T,
-    )
+    flat = script_util.flat_phsp_points(500000)
 
     two_body_histograms("flat/plot", *mc, *flat)
     three_body_histograms("flat/plot", *mc, *flat)

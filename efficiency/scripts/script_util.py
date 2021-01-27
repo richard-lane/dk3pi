@@ -2,9 +2,80 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import os
+import phasespace
+import tqdm
 
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
 import reweight_utils
+
+
+def flat_phsp_points(num_decays):
+    """
+    Return the K, pi1, pi2, pi3 kinematic parameters for a number of D->K3pi decays, uniformly distributed in phase space
+
+    Does not order the pions in any way; pi1/2/3 are indistinguishable
+
+    """
+    pi_mass = 139.570
+    k_mass = 493.677
+    d_mass = 1864.84
+    generator = phasespace.nbody_decay(
+        d_mass, (k_mass, pi_mass, pi_mass, pi_mass), names=("K", "pi1", "pi2", "pi3")
+    )
+
+    # Initialise particle arrays to the right shape
+    k = np.zeros((4, num_decays))
+    pi1 = np.zeros((4, num_decays))
+    pi2 = np.zeros((4, num_decays))
+    pi3 = np.zeros((4, num_decays))
+
+    # Seems like the maximum weight it is possible to generate is <0.12
+    max_weight = 0.12
+
+    # Progress bar
+    with tqdm.tqdm(total=num_decays) as pbar:
+        num_generated = 0
+
+        while num_generated < num_decays:
+            # Generate a chunk of our desired number of decays, since generating many particles is almost as fast as generating 1
+            chunk_size = num_decays * 2
+            weights, particles = generator.generate(
+                chunk_size, normalize_weights=True
+            )
+
+            # Generate a load of random numbers to compare to
+            random_numbers = max_weight * np.random.random(chunk_size)
+
+            # Iterate over the particles and weights we generated, exiting early if we overflow
+            for rnd, weight, this_k, this_pi1, this_pi2, this_pi3 in zip(
+                random_numbers,
+                weights,
+                particles["K"].numpy(),
+                particles["pi1"].numpy(),
+                particles["pi2"].numpy(),
+                particles["pi3"].numpy(),
+            ):
+                # Don't want to cut off our distribution by accident
+                assert weight < max_weight
+
+                # Check if our point is accepted and if so insert it into the array
+                if rnd < weight:
+                    try:
+                        k.T[num_generated] = this_k
+                        pi1.T[num_generated] = this_pi1
+                        pi2.T[num_generated] = this_pi2
+                        pi3.T[num_generated] = this_pi3
+
+                        num_generated += 1
+                        pbar.update(1)
+
+                    # If we overshoot the end of array, stop
+                    except IndexError:
+                        break
+
+                    # Would maybe be faster to generate smaller and smaller chunks as we iterate, but this is fine
+
+    return k, pi1, pi2, pi3
 
 
 def bin_data(
