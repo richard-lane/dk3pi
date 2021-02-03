@@ -3,7 +3,10 @@ import phasespace
 import sys
 import os
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
 from multiprocessing import Process
+import matplotlib.gridspec as gs
+from tqdm import tqdm
 
 # Don't attempt to create figure windows, since this will probably get run on lxplus
 import matplotlib
@@ -12,10 +15,113 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
+sys.path.append(os.path.dirname(__file__) + "/../goodness_of_fit/")
 import classification
 import reweight_utils
 import reweighting
 import script_util
+import goodness_of_fit
+
+
+def _train_classifier(mc, model, mc_weights=None, model_weights=None):
+    """
+    Create and train a GradientBoostingClassifier
+
+    Returns the trained classifier
+
+    """
+    if mc_weights is not None and len(mc_weights) != len(mc):
+        raise ValueError(
+            f"MC data and weights have {len(mc)} and {len(mc_weights)} entries respectively"
+        )
+
+    if model_weights is not None and len(model_weights) != len(model):
+        raise ValueError(
+            f"Model distribution and weights have {len(model)} and {len(model_weights)} entries respectively"
+        )
+
+    # Label training and testing data, and concatenate data into one contiguous thing
+    # 0 for MC, 1 for model
+    labels = np.concatenate((np.zeros(len(mc)), np.ones(len(model))))
+    data = np.concatenate((mc, model), axis=0)
+
+    if mc_weights is None and model_weights is None:
+        weights = None
+    elif mc_weights is None:
+        weights = np.concatenate((np.ones(len(mc_weights)), model_weights))
+    elif flat_weights is None:
+        weights = np.concatenate((mc_weights, np.ones(len(model_weights))))
+    else:
+        weights = np.concatenate((mc_weights, model_weights))
+
+    return GradientBoostingClassifier(n_estimators=200).fit(data, labels, weights)
+
+
+def _plots(
+    mc,
+    model,
+    mc_prob,
+    model_prob,
+    title,
+    chisq,
+    p,
+    prob_bins,
+    path,
+    label,
+    mc_weights=None,
+):
+    """
+    Make plots of the phsp projections of our model and MC data, and also plot the
+    classification probabilities
+
+    """
+    plt.figure()
+    gs.GridSpec(3, 4)
+    plt.suptitle(title)
+
+    # Use the first plot as a title
+    plt.subplot2grid((3, 4), (0, 0))
+    plt.text(0.2, 0.5, "Phase Space\nProjections", fontsize=16, bbox={"color": "white"})
+    plt.axis("off")
+
+    # Large plot to show classification probabilities
+    kw = {"alpha": 0.3}
+    plt.subplot2grid((3, 4), (0, 2), colspan=2, rowspan=3)
+    plt.hist(mc_prob, **kw, label="MC", bins=prob_bins, weights=mc_weights)
+    plt.hist(model_prob, **kw, label=label, bins=prob_bins)
+    plt.legend()
+    plt.yticks([])
+    plt.title("Classification probability")
+    plt.text(0.1, 0.9, f"$\chi^2$={chisq}\np={p}")
+
+    # Small plots to show phsp projections
+    for i, ax, ax_label in zip(
+        range(5),
+        ([0, 1], [1, 0], [1, 1], [2, 0], [2, 1]),
+        (
+            r"M($K\pi_1$)",
+            r"M($\pi_1\pi_2$)",
+            r"M($\pi_2\pi_3$)",
+            r"M($K\pi_1\pi_2$)",
+            r"M($\pi_1\pi_2\pi_3$)",
+            r" ",
+        ),
+    ):
+        plt.subplot2grid((3, 4), ax)
+        plt.hist(mc[:, i], **kw, label="MC", weights=mc_weights, bins=75)
+        plt.hist(model[:, i], **kw, label=label, bins=75)
+        plt.yticks([])
+        plt.title(ax_label)
+
+        # Only need one legend
+        if not i:
+            plt.legend()
+
+        # Bottom two need axis labels
+        if i in {3, 4}:
+            plt.xlabel("MeV")
+
+    plt.savefig(path)
 
 
 def where(file_name: str, tree_name: str, branch_name: str, f):
@@ -138,7 +244,7 @@ def plot_diffs(target, mc, weights, path, label):
             (f"MC-{label}", f"Reweighted-{label}"),
             f"{label} Phsp Projection",
         )
-        plt.savefig(f"diff_{path}_{i}.png")
+        plt.savefig(f"diff_{path}_{i}.png", dpi=600)
 
 
 def roc_curve(mc, flat, weights, label):
@@ -227,10 +333,10 @@ def ampgen_study(mc_file_name, tree_name, ampgen_file_name, label):
     """
     # Ugly way of storing params
     branches = (
-            ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E"),
-            ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E"),
-            ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E"),
-            ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E"),
+        ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E"),
+        ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E"),
+        ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E"),
+        ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E"),
     )
 
     # Read MC events from file
@@ -261,29 +367,69 @@ def ampgen_study(mc_file_name, tree_name, ampgen_file_name, label):
     mc_train, mc_test = train_test_split(mc_events, **kwargs)
     ampgen_train, ampgen_test = train_test_split(ampgen_events, **kwargs)
 
+    # Create a classifier to distinguish MC and AmpGen data
+    Classifier = _train_classifier(mc_train, ampgen_train)
+    # Weights to make the histograms the same area
+    norm_weights = np.ones(len(mc_train)) * (len(ampgen_train) / len(mc_train))
+    bins = np.concatenate(([0.0], np.linspace(0.2, 0.8, num=10), [1.0]))
+    mc_prob, ampgen_prob, chisq, p = goodness_of_fit.goodness_of_fit(
+        mc_test, ampgen_test, Classifier, bins, norm_weights
+    )
+
+    # Plot something
+    _plots(
+        mc_train,
+        ampgen_train,
+        mc_prob,
+        ampgen_prob,
+        f"Unweighted {label} prob",
+        chisq,
+        p,
+        bins,
+        f"unweighted_{label}.png",
+        label,
+        mc_weights=norm_weights,
+    )
+
     # Train the reweighting BDT
     print(f"{label}: Training bdt...")
     bdt = train_bdt(ampgen_train, mc_train)
 
-    # Find the weights for the testing data
+    # Find the weights for the testing data, scaling them
     print(f"{label}: Finding weights...")
     weights = reweighting.predicted_weights(bdt, mc_test)
+    weights *= len(ampgen_test) / (len(mc_test) * np.mean(weights))
 
-    # Plot diffs
-    plot_diffs(ampgen_test, mc_test, weights, f"{label}_test", f"{label} AmpGen")
-
-    # Plot diffs of training data. Just to check
-    plot_diffs(
-        ampgen_train,
+    # Plot something again
+    _plots(
         mc_train,
-        reweighting.predicted_weights(bdt, mc_train),
-        f"{label}_train",
-        f"{label} AmpGen",
+        ampgen_train,
+        mc_prob,
+        ampgen_prob,
+        f"Unweighted {label} prob",
+        chisq,
+        p,
+        bins,
+        f"weighted_{label}.png",
+        label,
+        mc_weights=norm_weights,
     )
 
+    # Plot diffs
+    # plot_diffs(ampgen_test, mc_test, weights, f"{label}_test", f"{label} AmpGen")
+
+    # Plot diffs of training data. Just to check
+    # plot_diffs(
+    #     ampgen_train,
+    #     mc_train,
+    #     reweighting.predicted_weights(bdt, mc_train),
+    #     f"{label}_train",
+    #     f"{label} AmpGen",
+    # )
+
     # Plot a ROC curve
-    print(f"{label}: Calculating ROC curve...")
-    roc_curve(mc_test, ampgen_test, weights, label)
+    # print(f"{label}: Calculating ROC curve...")
+    # roc_curve(mc_test, ampgen_test, weights, label)
 
 
 def ws_study():

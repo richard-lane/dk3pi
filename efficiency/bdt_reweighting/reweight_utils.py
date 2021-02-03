@@ -177,6 +177,7 @@ def read_invariant_masses(
 
     # Perform momentum ordering
     # This sometimes does assignments that it doesn't need to but it should be ok
+    # TODO function this
     for i in range(len(k[0])):
         # Assign i'th pi1 and pi2 params to the right things
         pi1.T[i], pi2.T[i] = momentum_order(k.T[i], pi1.T[i], pi2.T[i])

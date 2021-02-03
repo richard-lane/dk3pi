@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
+from scipy.stats import chi2 as scipy_chi2
 import numpy as np
 import sys
 import os
 import phasespace
+import warnings
 import tqdm
 
 sys.path.append(os.path.dirname(__file__) + "/../bdt_reweighting/")
@@ -39,9 +41,7 @@ def flat_phsp_points(num_decays):
         while num_generated < num_decays:
             # Generate a chunk of our desired number of decays, since generating many particles is almost as fast as generating 1
             chunk_size = num_decays * 2
-            weights, particles = generator.generate(
-                chunk_size, normalize_weights=True
-            )
+            weights, particles = generator.generate(chunk_size, normalize_weights=True)
 
             # Generate a load of random numbers to compare to
             random_numbers = max_weight * np.random.random(chunk_size)
@@ -250,3 +250,101 @@ def plot_hist_diffs(
     plt.xlabel(x_label)
     fig.subplots_adjust(hspace=0)
     fig.suptitle(title)
+
+
+def _bin_contents_and_errs(data, weights, bins):
+    """
+    Helper for chisq fcn
+
+    Returns weighted bin contents and the contribution to the error term
+
+    i.e. returns (bin contents, bin errors) where bin errors are the sum of the (weights squared)
+
+    Raises ValueError in case of under or overflows
+
+    """
+    num_bins = len(bins) - 1
+    bin_contents = np.zeros(num_bins)
+    bin_errs = np.zeros(num_bins)
+
+    # This won't be as fast as using numpy, but will be fine for my purposes
+    for x_i, w_x in zip(data, weights):
+        # Find which bin this point belongs in
+        bin_index = np.digitize(x_i, bins) - 1
+        if bin_index == -1 or bin_index == num_bins:
+            raise ValueError(
+                f"Bin over/underflow with point {x_i} and bin extrema {bins[0]},{bins[-1]}"
+            )
+
+        # Increment the right bin content
+        bin_contents[bin_index] += w_x
+
+        # Add weight squared to the error term for this bin
+        bin_errs[bin_index] += w_x ** 2
+
+    return bin_contents, bin_errs
+
+
+def chi_sq_distance(x, y, bins, x_weights=None, y_weights=None):
+    """
+    Find the chi squared distance between two 1d distributions x and y.
+
+    Bin the distributions x and y into the provided bins
+    and calculate the chi squared distance between them using the following formula:
+        $\chi^2 = \sum_i \frac{(x_i - y_i)^2}{\sum_{bin}w_x^2 + \sum_{bin}w_y^2}$
+    Where e.g. $w_x$ are x's weights in the given bin.
+    Warns if there are fewer than 10 (weighted) events in any bin.
+
+    :param x: a 1d iterable of data values in a distribution.
+    :param y: a 1d iterable of data values in a distribution.
+    :param bins: the bins to insert x and y into. For N bins, should have N+1 entries: i.e. must contain every bin edge.
+    :param x_weights: the weights to apply to x.
+    :param y_weights: the weights to apply to y.
+
+    :returns: the value of chisq calculated. Not normalised
+    :returns: the corresponding p value
+
+    :raises: `ValueError` if len(x) != len(x_weights) or len(y) != len(y_weights)
+    :raises: `ValueError` if a points under or overflows the provided bins
+
+    """
+    if x_weights is not None and len(x) != len(x_weights):
+        raise ValueError(
+            f"x data and weights have different lengths: {len(x)} and {len(x_weights)}"
+        )
+
+    if y_weights is not None and len(y) != len(y_weights):
+        raise ValueError(
+            f"y data and weights have different lengths: {len(y)} and {len(y_weights)}"
+        )
+
+    # Possibly slightly (memory) wasteful
+    if x_weights is None:
+        x_weights = np.ones_like(x)
+    if y_weights is None:
+        y_weights = np.ones_like(y)
+
+    # Find the contents and errors associated with each bin
+    x_contents, x_errs = _bin_contents_and_errs(x, x_weights, bins)
+    y_contents, y_errs = _bin_contents_and_errs(y, y_weights, bins)
+
+    # If any bin contains fewer than 10 (weighted) points, throw a warning
+    num_bins = len(bins) - 1
+    for contents, label in zip((x_contents, y_contents), ("x", "y")):
+        for content, i in zip(contents, range(num_bins)):
+            if content < 10:
+                warnings.warn(
+                    f"Fewer than 10 points ({content}) found in bin {i} for {label} distribution; chisq distance may be unreliable",
+                    category=RuntimeWarning,
+                )
+
+    # Sum up the bin differences and divide by bin errors to find chi squared
+    bin_diffs_sq = np.square(np.subtract(y_contents, x_contents))
+    bin_errs = np.add(x_errs, y_errs)
+    chisq = np.sum(np.divide(bin_diffs_sq, bin_errs))
+
+    # We want the two-tailed p-value ? TODO
+    p_value = scipy_chi2.sf(chisq, num_bins)
+
+    return chisq, p_value
+
