@@ -224,3 +224,18 @@ def test_chisq_overflow():
     with pytest.raises(ValueError):
         script_util.chi_sq_distance(bad, bad, bins)
 
+
+def test_fractional_err():
+    """
+    Mainline test case
+
+    """
+    bins = [0, 1]
+    numerator = [0.5] * 3
+    denominator = [0.5] * 5
+
+    assert np.allclose(
+        reweight_utils.fractional_ratio_error(bins, numerator, denominator),
+        [np.sqrt(1 / 3 + 1 / 5)],
+    )
+

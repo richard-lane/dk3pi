@@ -183,3 +183,41 @@ def read_invariant_masses(
         pi1.T[i], pi2.T[i] = momentum_order(k.T[i], pi1.T[i], pi2.T[i])
 
     return invariant_mass_parametrisation(k, pi1, pi2, pi3)
+
+
+def hist_error(bins, data):
+    """
+    Poisson errors on a binned dataset
+
+    :param bins: The bins to consider. Should be a sorted iterable of bin edges, containing the lower edge of every bin and the higher edge of the highest one.
+    :param data: The dataset to be binned
+
+    :returns: an iterable of the Poisson errors in each bin
+
+    """
+    binned_data, _ = np.histogram(data, bins=bins)
+
+    return np.sqrt(binned_data)
+
+
+def fractional_ratio_error(bins, numerator, denominator):
+    """
+    Fractional errors on a ratio of histograms.
+
+    Assumes Poisson errors for each histogram
+
+    :param bins: The bins to consider. Should be a sorted iterable of bin edges, containing the lower edge of every bin and the higher edge of the highest one.
+    :param numerator: numerator dataset
+    :param denominator: numerator dataset
+
+    :returns: an iterable of the fractional errors in each bin
+
+    """
+    numerator_binned, _ = np.histogram(numerator, bins=bins)
+    denominator_binned, _ = np.histogram(denominator, bins=bins)
+
+    # Fractional error is sqrt((n + d )/ (n * d))
+    hist_sum = np.add(numerator_binned, denominator_binned)
+    hist_prod = np.multiply(numerator_binned, denominator_binned)
+
+    return np.sqrt(np.divide(hist_sum, hist_prod))
