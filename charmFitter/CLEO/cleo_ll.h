@@ -1,7 +1,13 @@
+#ifndef CLEO_LL_H
+#define CLEO_LL_H
+
 #include <array>
 #include <complex>
 #include <math.h>
 #include <vector>
+
+namespace CLEO
+{
 
 double total(double const* x0, double const* x1)
 {
@@ -1429,3 +1435,7 @@ double cleo_ll(const double* parameters)
         2,    87,   16,   387,  93,    77,   24,  58,  23,  48,  18,  95,  17};
     return total(parameters, data);
 }
+
+} // namespace CLEO
+
+#endif // CLEO_LL_H
