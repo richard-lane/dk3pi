@@ -2,6 +2,9 @@
 #define CLEO_INTERFACE_H
 
 #include "cleo_ll.h"
+#include "fitterUtil.h"
+
+#include <map>
 
 namespace CLEO
 {
@@ -107,17 +110,20 @@ Bin binNumber(const double phase)
 
 /*
  * Find the CLEO likelihood
+ *
+ * Not multiplied by -2
  */
-double cleoLikelihood(const Bin phspBin, const DecayParams_t& params)
+double cleoLikelihood(const Bin phspBin, const FitterUtil::DecayParams_t& params)
 {
     // R and d (mag and phase of interference parameter) depend on the bin we're considering...
-    constexpr std::map<Bin, short> rIndices{{Bin::Bin0, 8}, {Bin::Bin1, 15}, {Bin::Bin2, 17}, {Bin::Bin3, 19}};
-    constexpr std::map<Bin, short> dIndices{{Bin::Bin0, 9}, {Bin::Bin1, 16}, {Bin::Bin2, 18}, {Bin::Bin3, 20}};
+    // These should really be constexpr, somehow
+    std::map<const Bin, const short> rIndices{{Bin::Bin1, 8}, {Bin::Bin2, 15}, {Bin::Bin3, 17}, {Bin::Bin4, 19}};
+    std::map<const Bin, const short> dIndices{{Bin::Bin1, 9}, {Bin::Bin2, 16}, {Bin::Bin3, 18}, {Bin::Bin4, 20}};
 
     // Need to convert Re and Im parts of Z to magnitude and phase
     const std::complex z{params.z_re, params.z_im};
     const double       mag   = std::abs(z);
-    const double       phase = 180.0 * z.arg() / M_PI;
+    const double       phase = 180.0 * std::arg(z) / M_PI;
 
     // Construct an array of the parameter we want to pass to the CLEO likelihood function
     std::array<double, numParams> cleoParams{};
