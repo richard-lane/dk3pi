@@ -1,11 +1,9 @@
 set(fitter
-  src/fitter/FitterUtils.cpp
-  src/fitter/BaseFitter.cpp
-  src/fitter/MinuitFitterBase.cpp
-  src/fitter/MinuitScannerBase.cpp
-  src/fitter/MinuitPolynomialFitter.cpp
-  src/fitter/PhysicalFitter.cpp
-  )
+  src/fitter/CharmFitterBase.cpp
+  src/fitter/PolynomialFitter.cpp
+  src/fitter/ConstrainedFitter.cpp
+  src/fitter/UnconstrainedFitter.cpp
+)
 
 add_library(charmFitter STATIC
   src/PhaseSpaceBinning.cpp
@@ -17,9 +15,9 @@ add_library(charmFitter STATIC
   )
 
 target_include_directories(charmFitter
-  PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include/"
-  PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include/fitter/"
-  PUBLIC "${CMAKE_SOURCE_DIR}/common/include/"
+  PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include"
+  PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include/fitter"
+  PUBLIC "${CMAKE_SOURCE_DIR}/common/include"
   )
 
 target_compile_features(charmFitter

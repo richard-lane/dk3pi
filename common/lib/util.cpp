@@ -63,8 +63,8 @@ size_t findBinIndex(const std::vector<double> &binLimits, const double value)
     double lowBin  = binLimits[0];
     double highBin = binLimits.back();
     if (value < lowBin || value > highBin) {
-        std::cerr << "bin limits from " << lowBin << " to " << highBin << " do not cover range of data from " << lowBin
-                  << " to " << highBin << std::endl;
+        std::cerr << "bin limits from " << lowBin << " to " << highBin << " do not cover range of data including "
+                  << value << std::endl;
         throw D2K3PiException();
     }
     size_t currentBin = 1;

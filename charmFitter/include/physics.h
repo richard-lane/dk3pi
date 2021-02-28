@@ -6,6 +6,11 @@
 
 #include "fitterUtil.h"
 
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <float.h>
+
 #define INTEGRAL_TOLERANCE (std::numeric_limits<double>::epsilon())
 #define INTEGRAL_REFINEMENTS (25)
 
@@ -44,7 +49,7 @@ inline double rateRatio(const double time, const FitterUtil::DecayParams_t &deca
 }
 
 /*
- * Efficiency function
+ * Example efficiency function
  *
  * tanh(time/tau)
  */
@@ -58,68 +63,56 @@ inline double efficiency(const double tau, const double time)
 }
 
 /*
- * CF decay rate with efficiency, parametrised by tau
+ * CF decay rate
  */
-inline double cfRate(const double time, const double width, const double tau)
+inline double cfRate(const double time, const double width)
 {
-    return exp(-1.0 * width * time) * efficiency(tau, time);
+    return exp(-1.0 * width * time);
 }
 
 /*
  * CF decay rate with efficiency parametrised by tau
  */
-inline double cfRate(const double time, const FitterUtil::DecayParams_t &decayParams, const double tau)
+inline double cfRate(const double time, const FitterUtil::DecayParams_t &decayParams)
 {
-    return cfRate(time, decayParams.width, tau);
+    return cfRate(time, decayParams.width);
 }
 
 /*
  * Expected DCS decay rate at a given time with efficiency parameterise by tau
  */
-inline double dcsRate(const double time, const FitterUtil::DecayParams_t &decayParams, const double tau)
+inline double dcsRate(const double time, const FitterUtil::DecayParams_t &decayParams)
 {
     auto abcParams = expectedParams(decayParams);
-    return rateRatio(time, abcParams) * cfRate(time, decayParams.width, tau);
+    return rateRatio(time, abcParams) * cfRate(time, decayParams.width);
 }
 
 /*
- * Expected DCS decay rate at a given time with efficiency parametrised by tau
+ * Expected DCS decay rate at a given time
  */
-inline double dcsRate(const double time, const std::array<double, 3> &abcParams, const double width, const double tau)
+inline double dcsRate(const double time, const std::array<double, 3> &abcParams, const double width)
 {
-    return rateRatio(time, abcParams) * cfRate(time, width, tau);
+    return rateRatio(time, abcParams) * cfRate(time, width);
 }
 
 /*
- * Integral of CF rate between limits, with efficiency
- * Uses 1/width as tau in the efficiency
- *
- * errorEstimate can be set to get an estimate of the error in the integral
+ * DCS decay rate
  */
-inline double
-cfIntegralWithEfficiency(const double low, const double high, const double width, const double efficiencyTimescale)
+inline double dcsRate(const double time, const std::vector<double> &params)
 {
-    // should really use std::bind
-    auto f = [&](double x) { return cfRate(x, width, efficiencyTimescale); };
-    return FitterUtil::gaussLegendreQuad(f, low, high);
+    // Assuming parameter ordering here
+    return dcsRate(time, FitterUtil::DecayParams_t{params[0], params[1], params[2], params[3], params[4], params[5]});
 }
 
 /*
- * Integral of DCS rate between limits with efficiency
- * Uses 1/width as tau in the efficiency
-
- * errorEstimate can be set to get an estimate of the error in the integral
+ * DCS decay rate using polynomial parameters
  */
-inline double dcsIntegralWithEfficiency(const double                 low,
-                                        const double                 high,
-                                        const std::array<double, 3> &abcParams,
-                                        const double                 width,
-                                        const double                 efficiencyTimescale)
+inline double dcsRatePoly(const double time, const std::vector<double> &params, const double width)
 {
-    // should really use std::bind
-    auto f = [&](double x) { return dcsRate(x, abcParams, width, efficiencyTimescale); };
-    return FitterUtil::gaussLegendreQuad(f, low, high);
-}
+    std::array<double, 3> paramArray;
+    std::copy_n(params.begin(), 3, paramArray.begin());
+    return dcsRate(time, paramArray, width);
+} // namespace Phys
 
 /*
  * Find the number of DCS decays we need to simulate, given the number of CF decays and our phase space parameters.
@@ -127,14 +120,14 @@ inline double dcsIntegralWithEfficiency(const double                 low,
  * The ratio of DCS to CF decays is calculated from the ratio of the integrals of their decay rates.
  * CF rate is exponential; DCS is exp * (a + bt + ct^2)
  *
+ * This function doesn't take efficiencies into account, since the ratio of RS/WS counts is agnostic to the form of the
+ * LHCb efficiency
+ *
  * Returns a double so e.g. can be used as the mean of a distribution. Cast to an integer type before using as a
  * count!
  *
  */
-double numDCSDecays(const size_t                     numCFDecays,
-                    const FitterUtil::DecayParams_t &phaseSpaceParams,
-                    double                           maxTime,
-                    double                           efficiencyTimescale);
+double numDCSDecays(const size_t numCFDecays, const FitterUtil::DecayParams_t &phaseSpaceParams, double maxTime);
 
 } // namespace Phys
 

@@ -1,217 +1,89 @@
-#ifndef DECAYSIMULATOR_CPP
-#define DECAYSIMULATOR_CPP
-
-#include <cmath>
-#include <iostream>
-#include <utility>
-
-#include <TGraphErrors.h>
-#include <TH1D.h>
-
-#include "D2K3PiError.h"
 #include "DecaySimulator.h"
+#include "fitterUtil.h"
 #include "physics.h"
-#include "util.h"
 
-#include <boost/math/tools/minima.hpp>
-
-SimulatedDecays::SimulatedDecays(const std::function<double(void)> &  generateTime,
-                                 const std::function<double(double)> &generatingPDF,
-                                 const std::function<double(double)> &cfRate,
-                                 const std::function<double(double)> &dcsRate,
-                                 const std::pair<double, double> &    timeDomain,
-                                 const std::shared_ptr<std::mt19937> &generator)
-    : _minTime(timeDomain.first), _maxTime(timeDomain.second)
+SimulatedDecays::SimulatedDecays(const std::pair<double, double>& timeDomain,
+                                 const FitterUtil::DecayParams_t& decayParams,
+                                 std::mt19937&                    rng)
+    : _minTime(timeDomain.first), _maxTime(timeDomain.second), _decayParams(decayParams), _gen(&rng)
 {
-    // Set our generator to the provided random device
-    _gen = generator;
-
-    // Set generating functions
-    _getRandomTime = generateTime;
-    _generatingPDF = generatingPDF;
-
-    // Set rate equations
-    _cfRate  = cfRate;
-    _dcsRate = dcsRate;
-
-    // Check that our generating pdf is normalised correctly
-    if (std::abs(FitterUtil::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) - 1.0) > 10 * DBL_EPSILON) {
-        std::cerr << "generating pdf not normalised; integral between " << _minTime << " and " << _maxTime
-                  << " evaluates to " << FitterUtil::gaussLegendreQuad(_generatingPDF, _minTime, _maxTime) << std::endl;
-        throw D2K3PiException();
-    }
-
-    // Find the maximum rates; we need these to perform the  accept-reject
-    _setMaxRatios();
+    _uniform    = std::uniform_real_distribution<double>(0.0, 1.0);
+    _maxWSRatio = _findMaxRatio();
 }
 
-void SimulatedDecays::test(const size_t numPoints, const std::vector<double> &binLimits)
+double SimulatedDecays::rsPoint()
 {
-    size_t              numBins = binLimits.size() - 1;
-    std::vector<double> binCentres(numBins, -1);
-    std::vector<double> binWidths(numBins, -1);
-    for (size_t i = 0; i < numBins; ++i) {
-        binCentres[i] = (binLimits[i] + binLimits[i + 1]) / 2;
-        binWidths[i]  = 0.5 * (binLimits[i + 1] - binLimits[i]);
-    }
+    double x = _uniform(*_gen);
+    double z = 1 - std::exp(-1 * _decayParams.width * _maxTime);
+    return (-1 / _decayParams.width) * std::log(1 - z * x);
+}
 
-    std::vector<double> expectedNormalisedBinPop(numBins, -1);
-    for (size_t i = 0; i < numBins; ++i) {
-        expectedNormalisedBinPop[i] = FitterUtil::gaussLegendreQuad(_generatingPDF, binLimits[i], binLimits[i + 1]);
-    }
+double SimulatedDecays::wsPoint()
+{
+    // Loop until we accept a point
+    while (true) {
+        // Generate a time from our exponential distribution
+        double exponentialTime{this->rsPoint()};
 
-    // Generate numPoints points and bin them
-    std::vector<double> generatedTimes(numPoints, -1);
+        // Check whether it is accepted
+        if (_isAccepted(exponentialTime)) {
+            return exponentialTime;
+        }
+    }
+}
+
+std::vector<double> SimulatedDecays::rsDecayTimes(const size_t numPoints)
+{
+    std::vector<double> times(numPoints);
+
     for (size_t i = 0; i < numPoints; ++i) {
-        generatedTimes[i] = _getRandomTime();
-    }
-    std::vector<size_t> generatedBinPopulations = util::binVector(generatedTimes, binLimits);
-
-    // Cast to a double cus im tired and dont want to think about it too hard
-    std::vector<double> normalisedBinPops(numBins, -1);
-    for (size_t i = 0; i < numBins; ++i) {
-        normalisedBinPops[i] = (double)generatedBinPopulations[i] / numPoints;
+        times[i] = rsPoint();
     }
 
-    // Plot a graph of number of points generated and overlay the theoretical thing
-    TGraphErrors *testPdf = new TGraphErrors(numBins, binCentres.data(), normalisedBinPops.data(), binWidths.data(), 0);
-    testPdf->SetTitle("Test Decay Simulator PDF;time;normalised PDF");
-
-    TGraphErrors *actualPdf = new TGraphErrors(numBins, binCentres.data(), expectedNormalisedBinPop.data(), 0, 0);
-
-    const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.7, .y2 = 0.9, .header = ""};
-
-    util::saveObjectsToFile<TGraphErrors>(std::vector<TObject *>{testPdf, actualPdf},
-                                          std::vector<std ::string>{"", "SAME"},
-                                          std::vector<std::string>{"Expected PDF", "Generated data"},
-                                          "testPDF.pdf",
-                                          legendParams);
-
-    delete actualPdf;
-    delete testPdf;
+    return times;
 }
 
-bool SimulatedDecays::isAccepted(const double time, const double uniformVal, bool rightSign)
+std::vector<double> SimulatedDecays::wsDecayTimes(const size_t numPoints)
 {
-    // a better implementation of this might pass in a function pointer or something
-    double funcVal{0};
-    if (rightSign) {
-        funcVal = _cfRate(time);
-    } else {
-        funcVal = _dcsRate(time);
-    }
-    double c = rightSign ? _maxCFRatio : _maxDCSRatio;
+    std::vector<double> times(numPoints);
 
-    // Check that the RHS of our acc-rej inequality is indeed between 0 and 1
-    double rhs = funcVal / (c * _generatingPDF(time));
-    if (rhs < 0 || rhs > 1.0) {
-        std::string rs = rightSign ? "Right" : "Wrong";
-        std::cerr << "For " << rs << " sign decay:" << std::endl;
-        std::cerr << "Accept-reject error: f(t)/c*exp(width*t) returned a value " << rhs << " out of range [0, 1]."
-                  << std::endl;
-        throw D2K3PiException();
+    for (size_t i = 0; i < numPoints; ++i) {
+        times[i] = wsPoint();
     }
 
-    return uniformVal < rhs;
+    return times;
 }
 
-void SimulatedDecays::findDcsDecayTimes(size_t numEvents)
+double SimulatedDecays::_rsRate(const double time) const
 {
-    // Initialise our vector of wrong-sign decay times to the right length
-    WSDecayTimes        = std::vector<double>(numEvents, -1);
-    size_t numGenerated = 0;
-
-    while (numGenerated < numEvents) {
-        double time = _getRandomTime();
-        double y    = _getRandomUniform();
-
-        if (isAccepted(time, y, false)) {
-            WSDecayTimes[numGenerated] = time;
-            numGenerated++;
-        }
-    }
+    return std::exp(-_decayParams.width * time);
 }
 
-void SimulatedDecays::findCfDecayTimes(size_t numEvents)
+double SimulatedDecays::_wsRate(const double time) const
 {
-    // Initialise our vector of right-sign decay times to the right length
-    RSDecayTimes        = std::vector<double>(numEvents, -1);
-    size_t numGenerated = 0;
-
-    while (numGenerated < numEvents) {
-        double time = _getRandomTime();
-        double y    = _getRandomUniform();
-
-        if (isAccepted(time, y, true)) {
-            RSDecayTimes[numGenerated] = time;
-            numGenerated++;
-        }
-    }
+    return Phys::rateRatio(time, _decayParams) * _rsRate(time);
 }
 
-void SimulatedDecays::_setMaxRatios(void)
+double SimulatedDecays::_findMaxRatio() const
 {
-    // Boost's minimising algorithm thing only finds minima, so find the minimum of -1 * rate/generating exponential
-    // to find the maximum value.
-    auto dcsRatioFunc = [&](double const &x) { return -1 * _dcsRate(x) / _generatingPDF(x); };
-    auto cfRatioFunc  = [&](double const &x) { return -1 * _cfRate(x) / _generatingPDF(x); };
+    // Find whether our ratio is higher at mintime or maxtime
+    const double minTimeRatio{Phys::rateRatio(_minTime, _decayParams)};
+    const double maxTimeRatio{Phys::rateRatio(_maxTime, _decayParams)};
+    double       maxRatio = minTimeRatio > maxTimeRatio ? minTimeRatio : maxTimeRatio;
 
-    // Find the minima as accurately as possible
-    int                       bits   = std::numeric_limits<double>::digits;
-    std::pair<double, double> dcsMin = boost::math::tools::brent_find_minima(dcsRatioFunc, _minTime, _maxTime, bits);
-    std::pair<double, double> cfMin  = boost::math::tools::brent_find_minima(cfRatioFunc, _minTime, _maxTime, bits);
-
-    // Set _maxDCSRatio to the maximum value of
-    _maxDCSRatio = -dcsMin.second;
-    _maxCFRatio  = -cfMin.second;
-}
-
-void SimulatedDecays::plotRates(const std::vector<double> &timeBinLimits)
-{
-    // Check tht WSDecayTimes and RSDecayTimes are set
-    if (WSDecayTimes.empty()) {
-        std::cerr << "WS Decay times not set" << std::endl;
-        throw D2K3PiException();
-    }
-    if (RSDecayTimes.empty()) {
-        std::cerr << "RS Decay times not set" << std::endl;
-        throw D2K3PiException();
+    // Find whether the potential turning point of (a + bt + ct^2) is in the range of allowed times
+    // If it is, find whether the ratio there is larger than at _minTime or _maxTime
+    const std::array abc{Phys::expectedParams(_decayParams)};
+    const double     tpTime{-abc[1] / (2 * abc[2])};
+    if (_minTime <= tpTime && tpTime <= _maxTime) {
+        maxRatio = Phys::rateRatio(tpTime, _decayParams) > maxRatio ? Phys::rateRatio(tpTime, _decayParams) : maxRatio;
     }
 
-    // Check our time bin limits are sorted
-    if (!std::is_sorted(timeBinLimits.begin(), timeBinLimits.end())) {
-        std::cerr << "Time bin limits should be sorted" << std::endl;
-        throw D2K3PiException();
-    }
-
-    size_t numBins = timeBinLimits.size() - 1;
-    TH1D * RSHist  = new TH1D("Times", "Favoured Decay Times;Time/ps;Counts", numBins, timeBinLimits.data());
-    TH1D * WSHist  = new TH1D("Times", "Suppressed Decay Times;Time/ps;Counts", numBins, timeBinLimits.data());
-
-    RSHist->FillN(RSDecayTimes.size(), RSDecayTimes.data(), nullptr);
-    WSHist->FillN(WSDecayTimes.size(), WSDecayTimes.data(), nullptr);
-    RSHist->SetStats(false);
-    WSHist->SetStats(false);
-
-    util::saveObjectToFile(RSHist, "RSHist.png");
-    util::saveObjectToFile(WSHist, "WSHist.png");
-    delete RSHist;
-    delete WSHist;
+    return maxRatio;
 }
 
-double SimulatedDecays::_getRandomUniform(void)
+bool SimulatedDecays::_isAccepted(const double time)
 {
-    return _uniform(*_gen);
+    // Find a random number uniformly between 0 and 1, then accept it if it is <= (a + bt + ct^2)/maxRatio
+    return _uniform(*_gen) < Phys::rateRatio(time, _decayParams) / _maxWSRatio;
 }
-
-double SimulatedDecays::maxDCSRatio(void)
-{
-    return _maxDCSRatio;
-}
-
-double SimulatedDecays::maxCFRatio(void)
-{
-    return _maxCFRatio;
-}
-
-#endif // DECAYSIMULATOR_CPP

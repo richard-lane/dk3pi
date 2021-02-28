@@ -1,5 +1,7 @@
 #include "fitterUtil.h"
 
+#include <cmath>
+
 namespace FitterUtil
 {
 

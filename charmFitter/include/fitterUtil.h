@@ -3,8 +3,6 @@
 
 #include <vector>
 
-#include <boost/math/quadrature/gauss.hpp>
-
 #include <TObject.h>
 
 namespace FitterUtil
@@ -37,16 +35,6 @@ typedef struct DecayParameters {
  * exp(-decayConstant * time)
  */
 std::vector<double> exponentialBinLimits(const double maxTime, const double decayConstant, const size_t numBins);
-
-/*
- * Use Gauss-Legendre quadrature to find an approximation to the integral of f between low and high limits
- *
- * Evaluates the function at 15 points, as the weights and abcissa have been precalculated for this number of points.
- */
-template <typename Func> double gaussLegendreQuad(Func f, const double low, const double high)
-{
-    return boost::math::quadrature::gauss<double, 15>::integrate(f, low, high);
-}
 
 } // namespace FitterUtil
 

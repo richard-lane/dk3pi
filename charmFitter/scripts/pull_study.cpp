@@ -3,11 +3,12 @@
  */
 #include <iostream>
 
+#include "ConstrainedFitter.h"
 #include "DecaySimulator.h"
 #include "FitterUtils.h"
-#include "MinuitPolynomialFitter.h"
-#include "PhysicalFitter.h"
+#include "PolynomialFitter.h"
 #include "RatioCalculator.h"
+#include "UnconstrainedFitter.h"
 #include "physics.h"
 #include "util.h"
 
@@ -39,65 +40,32 @@ void plot_parameter_distribution(std::string         title,
 }
 
 /*
- * Plot a fit
- *
- * This should be two functions
- */
-void plotFit(std::array<double, 3>& expectedFitParams,
-             const PhysicalFitter&  MyFitter,
-             const double           maxTime,
-             const size_t           i,
-             const bool             drawTrueFit = true)
-{
-    const util::LegendParams_t legend = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.1, .y2 = 0.3, .header = ""};
-    MyFitter.plot->SetTitle("Example Fit with Simulated Data;time/ps;DCS/CF ratio");
-
-    if (drawTrueFit) {
-        TF1* trueFit = new TF1("true fit", "[0] +[1]*x+[2]*x*x", 0, maxTime);
-        trueFit->SetParameter(0, expectedFitParams[0]);
-        trueFit->SetParameter(1, expectedFitParams[1]);
-        trueFit->SetParameter(2, expectedFitParams[2]);
-        trueFit->SetLineColor(kGray);
-
-        util::saveObjectsToFile<TGraph>(
-            std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get(), trueFit},
-            std::vector<std::string>{"AP", "SAME", "SAME"},
-            std::vector<std::string>{"Data", "best fit", "'True' fit"},
-            std::string{"fit" + std::to_string(i) + ".pdf"},
-            legend);
-        delete trueFit;
-    } else {
-        util::saveObjectsToFile<TGraph>(std::vector<TObject*>{MyFitter.plot.get(), MyFitter.bestFitFunction.get()},
-                                        std::vector<std::string>{"AP", "SAME"},
-                                        std::vector<std::string>{"Data", "best fit"},
-                                        std::string{"fit" + std::to_string(i) + ".pdf"},
-                                        legend);
-    }
-}
-
-/*
  * Generate a vector of {{x vals}, {y vals}} to use in our experiments
  */
 std::vector<std::vector<double>> generateXYvals(const std::shared_ptr<std::mt19937>& rndGen,
                                                 const size_t                         numExperiments)
 {
     std::vector<std::vector<double>> xyCovariance{
-        std::vector<double>{WORLD_AVERAGE_X_ERR * WORLD_AVERAGE_X_ERR,
-                            X_Y_CORRELATION * WORLD_AVERAGE_X_ERR * WORLD_AVERAGE_Y_ERR},
-        std::vector<double>{X_Y_CORRELATION * WORLD_AVERAGE_X_ERR * WORLD_AVERAGE_Y_ERR,
-                            WORLD_AVERAGE_Y_ERR * WORLD_AVERAGE_Y_ERR}};
+        std::vector<double>{CharmFitter::WORLD_AVERAGE_X_ERR * CharmFitter::WORLD_AVERAGE_X_ERR,
+                            CharmFitter::X_Y_CORRELATION * CharmFitter::WORLD_AVERAGE_X_ERR *
+                                CharmFitter::WORLD_AVERAGE_Y_ERR},
+        std::vector<double>{CharmFitter::X_Y_CORRELATION * CharmFitter::WORLD_AVERAGE_X_ERR *
+                                CharmFitter::WORLD_AVERAGE_Y_ERR,
+                            CharmFitter::WORLD_AVERAGE_Y_ERR * CharmFitter::WORLD_AVERAGE_Y_ERR}};
 
     return util::correlatedGaussianNumbers(
-        rndGen, numExperiments, std::vector<double>{WORLD_AVERAGE_X, WORLD_AVERAGE_Y}, xyCovariance);
+        rndGen,
+        numExperiments,
+        std::vector<double>{CharmFitter::WORLD_AVERAGE_X, CharmFitter::WORLD_AVERAGE_Y},
+        xyCovariance);
 }
 
 void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 {
     // Choose parameters to use when simulating
-    double width               = 2.4390;
-    double maxTime             = 10 / width;
-    size_t numBins             = 25;
-    double efficiencyTimescale = 1 / width;
+    double width   = 2.4390;
+    double maxTime = 10 / width;
+    size_t numBins = 25; // not actually the number of bins wtf
 
     // Create RNGs for numbers of decays
     std::random_device            rd;
@@ -121,6 +89,9 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
     std::vector<double> rCoverage(numExperiments, -1);
     std::vector<double> zCoverage(numExperiments, -1);
 
+    // No efficiency function
+    auto efficiency = [](const double) { return 1; };
+
     boost::progress_display showProgress(numExperiments);
 
     for (size_t i = 0; i < numExperiments; ++i) {
@@ -134,23 +105,10 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
             .z_re  = 0.7609,
             .width = width,
         };
-        double meanNumDcsEvents = Phys::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime, efficiencyTimescale);
+        double meanNumDcsEvents = Phys::numDCSDecays(meanNumCfEvents, phaseSpaceParams, maxTime);
 
         // Generator and PDF for random numbers
-        std::uniform_real_distribution<double> uniform;
-        auto cfRate  = [&](double x) { return Phys::cfRate(x, phaseSpaceParams, efficiencyTimescale); };
-        auto dcsRate = [&](double x) { return Phys::dcsRate(x, phaseSpaceParams, efficiencyTimescale); };
-
-        auto gen = [&](void) {
-            double x = uniform(*rndGen);
-            double z = 1 - std::exp(-1 * phaseSpaceParams.width * maxTime);
-            return (-1 / phaseSpaceParams.width) * std::log(1 - z * x);
-        };
-        auto genPDF = [&](double x) {
-            return std::exp(-phaseSpaceParams.width * x) * phaseSpaceParams.width /
-                   (1 - std::exp(-phaseSpaceParams.width * maxTime));
-        };
-        SimulatedDecays MyDecays = SimulatedDecays(gen, genPDF, cfRate, dcsRate, std::make_pair(0., maxTime), rndGen);
+        SimulatedDecays MyDecays = SimulatedDecays({0, maxTime}, phaseSpaceParams, *rndGen);
 
         // Find how many decays to simulate
         std::poisson_distribution<size_t> cfDist(meanNumCfEvents);
@@ -158,60 +116,43 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
         size_t                            numCfEvents  = cfDist(*rndGen);
         size_t                            numDcsEvents = dcsDist(*rndGen);
 
-        // Simulate them
-        MyDecays.findCfDecayTimes(numCfEvents);
-        MyDecays.findDcsDecayTimes(numDcsEvents);
-        MyDecays.plotRates(binLimits);
+        // Create a fitter here
+        // Have to do it inside the loop as the phaseSpaceParams were generated randomly
+        CharmFitter::ConstrainedFitter MyFitter(binLimits,
+                                                {phaseSpaceParams.x,
+                                                 phaseSpaceParams.y,
+                                                 phaseSpaceParams.r,
+                                                 phaseSpaceParams.z_im,
+                                                 phaseSpaceParams.z_re,
+                                                 phaseSpaceParams.width},
+                                                {1, 1, 1, 1, 1, 1});
 
-        // Time binning
-        std::vector<size_t> cfCounts  = util::binVector(MyDecays.RSDecayTimes, binLimits);
-        std::vector<size_t> dcsCounts = util::binVector(MyDecays.WSDecayTimes, binLimits);
-
-        // Find the ratio
-        std::pair<std::vector<double>, std::vector<double>> ratiosAndErrors =
-            RatioCalculator::ratioAndError(cfCounts, dcsCounts);
-
-        IntegralOptions_t integralOptions(true, phaseSpaceParams.width, binLimits, 0.5 * efficiencyTimescale);
-        FitData_t         MyFitData(binLimits, ratiosAndErrors.first, ratiosAndErrors.second);
-
-        // Fit data
-        PhysicalFitter MyFitter(MyFitData, integralOptions, true);
-        MyFitter.setFitParams(std::vector<double>{phaseSpaceParams.x,
-                                                  phaseSpaceParams.y,
-                                                  phaseSpaceParams.r,
-                                                  phaseSpaceParams.z_im,
-                                                  phaseSpaceParams.z_re,
-                                                  phaseSpaceParams.width},
-                              std::vector<double>(6, 1));
+        // Tell the fitter about the data
+        MyFitter.addRSPoints(MyDecays.rsDecayTimes(numCfEvents), std::vector<double>(numCfEvents, 1.0));
+        MyFitter.addWSPoints(MyDecays.wsDecayTimes(numDcsEvents), std::vector<double>(numDcsEvents, 1.0));
 
         // First perform a fit with fixed r, then store the value of chi squared.
-        MyFitter.fixParameters(std::vector<std::string>{"width", "z_im", "r"});
-        MyFitter.fit();
-        double chiSqFixedR = MyFitter.fitParams.fitStatistic;
-        MyFitter.freeParameters(std::vector<std::string>{"r"});
+        MyFitter.fixParameters(std::array{"width", "z_im", "r"});
+        const double chiSqFixedR = MyFitter.fit(efficiency).fitStatistic;
+        MyFitter.freeParameter("r");
 
         // Now perform a fit with fixed Z and store chisq
-        MyFitter.fixParameters(std::vector<std::string>{"z_re"});
-        MyFitter.fit();
-        double chiSqFixedZ = MyFitter.fitParams.fitStatistic;
-        MyFitter.freeParameters(std::vector<std::string>{"z_re"});
+        MyFitter.fixParameter("z_re");
+        const double chiSqFixedZ = MyFitter.fit(efficiency).fitStatistic;
+        MyFitter.freeParameter("z_re");
 
         // Finally perform a fit with r and Re(Z) free
-        MyFitter.fit();
-
         // Store the distance of our fit chisq from chisq when r was fixed
-        double deltaChiSqR = chiSqFixedR - MyFitter.fitParams.fitStatistic;
-        rCoverage[i]       = std::sqrt(std::fabs(deltaChiSqR));
-        double deltaChiSqZ = chiSqFixedZ - MyFitter.fitParams.fitStatistic;
-        zCoverage[i]       = std::sqrt(std::fabs(deltaChiSqZ));
-
-        auto expectedFitParams = Phys::expectedParams(phaseSpaceParams);
-        plotFit(expectedFitParams, MyFitter, maxTime, i);
+        const auto&  result      = MyFitter.fit(efficiency);
+        const double deltaChiSqR = chiSqFixedR - result.fitStatistic;
+        rCoverage[i]             = std::sqrt(std::fabs(deltaChiSqR));
+        const double deltaChiSqZ = chiSqFixedZ - result.fitStatistic;
+        zCoverage[i]             = std::sqrt(std::fabs(deltaChiSqZ));
 
         // Store parameter and chi squared
-        reZPull[i] = (MyFitter.fitParams.fitParams[4] - phaseSpaceParams.z_re) / MyFitter.fitParams.fitParamErrors[4];
-        rPull[i]   = (MyFitter.fitParams.fitParams[2] - phaseSpaceParams.r) / MyFitter.fitParams.fitParamErrors[2];
-        chiSquaredVals[i] = MyFitter.fitParams.fitStatistic;
+        reZPull[i]        = (result.fitParams[4] - phaseSpaceParams.z_re) / result.fitParamErrors[4];
+        rPull[i]          = (result.fitParams[2] - phaseSpaceParams.r) / result.fitParamErrors[2];
+        chiSquaredVals[i] = result.fitStatistic;
 
         ++showProgress;
     }
@@ -270,5 +211,5 @@ void pull_study(const size_t meanNumCfEvents, const size_t numExperiments)
 
 int main()
 {
-    pull_study(20000000, 10000);
+    pull_study(5000000, 100);
 }

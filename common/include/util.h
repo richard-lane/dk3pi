@@ -5,6 +5,7 @@
 #include <memory>
 #include <random>
 
+#include <boost/math/quadrature/gauss.hpp>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
 #include "D2K3PiError.h"
@@ -56,6 +57,8 @@ void saveObjectToFile(TObject *                   myObject,
  * The extension in the specified path determines the format of the file.
  *
  * A legend is mandatory; its parameters are encoded in legendParams
+ * 
+ * TODO: would be nicer if this took arrays
  *
  */
 template <typename T>
@@ -207,6 +210,16 @@ std::vector<std::vector<double>> correlatedGaussianNumbers(const std::shared_ptr
  * Returns lower triangular matrix L
  */
 std::vector<std::vector<double>> choleskyDecomp(const std::vector<std::vector<double>> &matrix);
+
+/*
+ * Use Gauss-Legendre quadrature to find an approximation to the integral of f between low and high limits
+ *
+ * Evaluates the function at 15 points, as the weights and abcissa have been precalculated for this number of points.
+ */
+template <typename Func> double gaussLegendreQuad(Func f, const double low, const double high)
+{
+    return boost::math::quadrature::gauss<double, 15>::integrate(f, low, high);
+}
 
 } // namespace util
 

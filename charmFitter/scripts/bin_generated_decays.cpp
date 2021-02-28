@@ -15,8 +15,9 @@
 #include "TH2D.h"
 #include "TRandom.h"
 
-#include "MinuitPolynomialFitter.h"
+#include "FitterUtils.h"
 #include "PhaseSpaceBinning.h"
+#include "PolynomialFitter.h"
 #include "RatioCalculator.h"
 #include "ReadAmpGen.h"
 #include "fitterUtil.h"
@@ -63,30 +64,29 @@ void bin_generated_decays(TFile *mixedDecays, TFile *favouredDecays)
     std::vector<PhspBinningData> BinnedFavouredData = FavouredDataBinner.performBinning();
 
     // Define time-space bin limits to perform ratio calculation with
-    std::vector<double> timeBinLimits = FitterUtil::exponentialBinLimits(0.006, 2500, 5);
-
-    std::cout << "Taking ratios" << std::endl;
-    // Calculate the ratios between the datasets in each bin
-    std::vector<std::pair<std::vector<double>, std::vector<double>>> ratiosAndErrors{};
-    for (size_t bin = 0; bin < numBins; ++bin) {
-        std::vector<size_t> cfCounts  = util::binVector(BinnedFavouredData[bin].decayTimes, timeBinLimits);
-        std::vector<size_t> dcsCounts = util::binVector(BinnedMixedData[bin].decayTimes, timeBinLimits);
-        ratiosAndErrors.push_back(RatioCalculator::ratioAndError(cfCounts, dcsCounts));
-    }
+    std::vector<double> timeBinLimits = FitterUtil::exponentialBinLimits(0.006, 2500, 25);
 
     // Fit each ratio to a plot
     std::cout << "performing fits" << std::endl;
-    std::vector<MinuitPolynomialFitter> fitters{};
-    IntegralOptions_t                   integralOptions(false, 0, timeBinLimits, 0);
-    const util::LegendParams_t          legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.7, .y2 = 0.9, .header = ""};
+    auto efficiency = [](const double) { return 1.0; };
+
+    std::vector<CharmFitter::CharmPolynomialFitter> fitters{};
+    const util::LegendParams_t legendParams = {.x1 = 0.9, .x2 = 0.7, .y1 = 0.7, .y2 = 0.9, .header = ""};
 
     for (size_t bin = 0; bin < numBins; ++bin) {
-        FitData_t thisBinFitData = FitData(timeBinLimits, ratiosAndErrors[bin].first, ratiosAndErrors[bin].second);
-        fitters.push_back(MinuitPolynomialFitter(thisBinFitData, integralOptions));
-        fitters[bin].setPolynomialParams({1, 1, 1}, {1, 1, 1});
-        fitters[bin].fit();
+        // Create fitter + perform fit
+        CharmFitter::CharmPolynomialFitter Fitter(
+            timeBinLimits, {1, 1, 1}, {1, 1, 1}, 2438.0); // 2438.0 is the D decay width in ps^-1
+        Fitter.addRSPoints(BinnedFavouredData[bin].decayTimes,
+                           std::vector<double>(BinnedFavouredData[bin].decayTimes.size(), 1.0));
+        Fitter.addWSPoints(BinnedMixedData[bin].decayTimes,
+                           std::vector<double>(BinnedMixedData[bin].decayTimes.size(), 1.0));
+
+        auto result{Fitter.fit(efficiency)};
+
+        // Create + save a plot for each phsp bin
         std::string title = "PhaseSpaceBin" + std::to_string(bin) + ".png";
-        fitters[bin].saveFitPlot("Phase Space Bin " + std::to_string(bin), title, &legendParams);
+        CharmFitter::savePlot(Fitter, result.bestFitFunction, title, title, legendParams);
     }
 
     // Find the invariant mass of each mixed event and plot them on a scatter plot
