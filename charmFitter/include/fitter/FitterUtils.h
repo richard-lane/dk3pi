@@ -7,6 +7,7 @@
 #define FITTERUTILS_H
 
 #include <vector>
+#include <memory>
 
 #include "Minuit2/FCNBase.h"
 #include "TMatrixD.h"
