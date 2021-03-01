@@ -90,7 +90,7 @@ constexpr double defaultCleoParams[numParams]{20418.9,    // D0{K-,pi+,pi+,pi-}_
  * Phase should be provided in degrees
  */
 enum class Bin { Bin1, Bin2, Bin3, Bin4 };
-Bin binNumber(const double phase)
+inline Bin binNumber(const double phase)
 {
     // Normalise phase to [-180, 180)
     double normPhase = fmod(phase + 180.0, 360.0);
@@ -113,7 +113,7 @@ Bin binNumber(const double phase)
  *
  * Not multiplied by -2
  */
-double cleoLikelihood(const Bin phspBin, const FitterUtil::DecayParams_t& params)
+inline double cleoLikelihood(const Bin phspBin, const FitterUtil::DecayParams_t& params)
 {
     // R and d (mag and phase of interference parameter) depend on the bin we're considering...
     // These should really be constexpr, somehow

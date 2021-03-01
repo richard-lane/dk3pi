@@ -3,6 +3,7 @@ set(fitter
   src/fitter/PolynomialFitter.cpp
   src/fitter/ConstrainedFitter.cpp
   src/fitter/UnconstrainedFitter.cpp
+  src/fitter/CleoCombinationFitter.cpp
 )
 
 add_library(charmFitter STATIC
@@ -15,6 +16,7 @@ add_library(charmFitter STATIC
   )
 
 target_include_directories(charmFitter
+  PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/CLEO"
   PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include"
   PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include/fitter"
   PUBLIC "${CMAKE_SOURCE_DIR}/common/include"

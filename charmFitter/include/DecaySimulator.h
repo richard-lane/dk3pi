@@ -28,7 +28,7 @@ class SimulatedDecays
      */
     SimulatedDecays(const std::pair<double, double>& timeDomain,
                     const FitterUtil::DecayParams_t& decayParams,
-                    std::mt19937&                    rng);
+                    std::mt19937& rng); // I've read in places that this isn't a good solution... but what is?
 
     /*
      * Generate a decay time from the RS distribution

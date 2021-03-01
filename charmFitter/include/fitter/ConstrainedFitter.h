@@ -57,9 +57,9 @@ class ConstrainedFitter : public CharmFitterBase
      * Fit our data to (r^2 + r(yRZ + xImZ)*Gamma*t + (x2 +y2)/4 (Gamma*t)2), constraining x and y to their world
      * average values
      */
-    FitResults_t fit(const std::function<double(double)>& efficiency) override;
+    virtual FitResults_t fit(const std::function<double(double)>& efficiency) override;
 
-  private:
+  protected:
     /*
      * Parameters used in the fit
      *

@@ -16,5 +16,8 @@ target_link_libraries(bin_decays.exe common charmFitter ${ROOT_LIBRARIES} ${Boos
 
 # Check the landscape of the CLEO likelihood
 add_executable(cleo_likelihood.exe cleo_likelihood.cpp)
-target_include_directories(cleo_likelihood.exe PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/CLEO/")
 target_link_libraries(cleo_likelihood.exe common charmFitter ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
+
+# Combine CLEO likelihood with toy data
+add_executable(cleo_combination.exe cleo_combination.cpp)
+target_link_libraries(cleo_combination.exe charmFitter common ${ROOT_LIBRARIES} ${Boost_LIBRARIES})

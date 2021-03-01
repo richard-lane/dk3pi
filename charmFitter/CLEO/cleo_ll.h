@@ -9,7 +9,7 @@
 namespace CLEO
 {
 
-double total(double const* x0, double const* x1)
+inline double total(double const* x0, double const* x1)
 {
     auto v4294505583 = (0.340523) +
                        (0.972) * x0[49] *
@@ -1420,7 +1420,7 @@ double total(double const* x0, double const* x1)
            std::lgamma((1.) + x1[191]) + x1[192] * log(v258677546) - v258677546 - std::lgamma((1.) + x1[192]);
 }
 
-double cleo_ll(const double* parameters)
+inline double cleo_ll(const double* parameters)
 {
     const double data[] = {
         4210, 5259, 1736, 7445, 10866, 7211, 21,  8,   1,   2,   2,   5,   10,  3,    0,   0,   3,   12,  4,   1,

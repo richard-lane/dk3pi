@@ -57,7 +57,7 @@ void saveObjectToFile(TObject *                   myObject,
  * The extension in the specified path determines the format of the file.
  *
  * A legend is mandatory; its parameters are encoded in legendParams
- * 
+ *
  * TODO: would be nicer if this took arrays
  *
  */
