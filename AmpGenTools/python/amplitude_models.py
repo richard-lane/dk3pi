@@ -105,3 +105,18 @@ def dcs_amplitude(event: np.ndarray, k_charge: int):
     retval = dcs_fcn(event_p, k_charge_ctype)
 
     return complex(retval.real, retval.imag)
+
+
+def phase(event: np.ndarray, k_charge: int):
+    """
+    Find the strong phase of an event, defined as arg(DCS x CF*)
+
+    :param event   : a 16-element array of kinematic parameters (kpx, kpy, kpz, kE, ...) for k, pi1, pi2, pi3
+    :param k_charge: the charge of the kaon, i.e. +1 or -1
+    :raises        : many things
+    :returns       : phase as a float within the range (-pi, pi]
+
+    """
+    return np.angle(
+        dcs_amplitude(event, k_charge) * cf_amplitude(event, k_charge).conjugate()
+    )
