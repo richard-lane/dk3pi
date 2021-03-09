@@ -8,6 +8,7 @@
 #include "TEllipse.h"
 #include "TGraph2D.h"
 #include "TH2D.h"
+#include "TMarker.h"
 
 #include <boost/progress.hpp>
 
@@ -15,14 +16,14 @@ namespace
 {
 
 /*
- * Generate N+1 points between -1 and 1
+ * Generate N points between -x and x, inclusive
  */
-template <size_t N> std::array<double, N + 1> _linspace(void)
+template <size_t N, typename T> std::array<double, N> _linspace(const T x)
 {
-    std::array<double, N + 1> vals{};
+    std::array<double, N> vals{};
 
-    for (size_t i = 0; i < N + 1; ++i) {
-        double val = -1.0 + (i * 2.0) / N;
+    for (size_t i = 0; i < N; ++i) {
+        double val = x * (-1.0 + (i * 2.0 / (N - 1)));
         vals[i]    = val;
     }
 
@@ -33,16 +34,16 @@ template <size_t N> std::array<double, N + 1> _linspace(void)
  * Generate toy data
  * Returns dcs times, cf times
  */
-std::pair<std::vector<double>, std::vector<double>> _toy_data(const FitterUtil::DecayParams_t& params,
-                                                              const double                     maxTime)
+std::pair<std::vector<double>, std::vector<double>>
+_toy_data(const FitterUtil::DecayParams_t& params, const double maxTime, std::mt19937& gen)
 {
-    std::random_device rd;
-    std::mt19937       gen{rd()};
-
     constexpr size_t numCfEvents{2000000};
+    const size_t     numDcsEvents{static_cast<size_t>(Phys::numDCSDecays(numCfEvents, params, maxTime))};
+
+    std::cout << numCfEvents << " CF events\t" << numDcsEvents << " DCS events" << std::endl;
 
     SimulatedDecays     DecaySimulator({0.0, maxTime}, params, gen);
-    std::vector<double> dcsTimes{DecaySimulator.wsDecayTimes(Phys::numDCSDecays(numCfEvents, params, maxTime))};
+    std::vector<double> dcsTimes{DecaySimulator.wsDecayTimes(numDcsEvents)};
     std::vector<double> cfTimes{DecaySimulator.rsDecayTimes(numCfEvents)};
 
     return {dcsTimes, cfTimes};
@@ -79,9 +80,9 @@ void _format(TGraph2D& graph, const std::vector<double>& contours)
 }
 
 /*
- * Plot a graph
+ * Plot a graph, and a star denoting a point
  */
-void _plot(TGraph2D& graph, const std::string& path)
+void _plot(TGraph2D& graph, const std::string& path, const std::pair<double, double>& point)
 {
     // Set colour palette
     constexpr unsigned short numColours{5};
@@ -95,10 +96,6 @@ void _plot(TGraph2D& graph, const std::string& path)
     std::vector<double> contours{0.0, 1.0, 2.0, 3.0, 4.0};
     _format(graph, contours);
 
-    // Draw a circle of the allowed Z values
-    std::unique_ptr<TEllipse> circle = std::make_unique<TEllipse>(0, 0, 0.56, 0.56);
-    circle->SetFillColorAlpha(0, 0);
-
     // Set canvas properties
     std::unique_ptr<TCanvas> c = std::make_unique<TCanvas>();
     c->cd();
@@ -106,21 +103,96 @@ void _plot(TGraph2D& graph, const std::string& path)
     c->SetLeftMargin(0.15);
     c->SetRightMargin(0.15);
 
-    // "Z" options draws a scale bar
-    graph.Draw("CONT4");
+    // Create a pad to draw stuff on
+    std::unique_ptr<TPad> pad = std::make_unique<TPad>("nullPad", "", 0, 0, 1, 1);
+    pad->Draw();
+    pad->cd();
+
+    graph.Draw("CONT4"); // "Z" options draws a scale bar
     graph.SetTitle("");
+
+    // Plot our point
+    std::unique_ptr<TMarker> pointPlot = std::make_unique<TMarker>(point.first, point.second, 0);
+    pointPlot->SetMarkerStyle(29);
+    pointPlot->SetMarkerSize(3);
+    pointPlot->SetMarkerColor(kYellow);
+
+    // The way to do this is to create a transparent pad on top of our current pad
+    std::unique_ptr<TPad> nullPad = std::make_unique<TPad>("nullPad", "", 0, 0, 1, 1);
+    nullPad->SetFillStyle(0);
+    nullPad->SetFrameFillStyle(0);
+    nullPad->Draw();
+    nullPad->cd();
+
+    double bm = pad->GetBottomMargin();
+    double lm = pad->GetLeftMargin();
+    double rm = pad->GetRightMargin();
+    double to = pad->GetTopMargin();
+    double x1 = graph.GetXaxis()->GetXmin();
+    double yf = graph.GetYaxis()->GetXmin();
+    double x2 = graph.GetXaxis()->GetXmax();
+    double y2 = graph.GetYaxis()->GetXmax();
+
+    double Xa = (x2 - x1) / (1 - lm - rm) - (x2 - x1);
+    double Ya = (y2 - yf) / (1 - bm - to) - (y2 - yf);
+    double LM = Xa * (lm / (lm + rm));
+    double RM = Xa * (rm / (lm + rm));
+    double BM = Ya * (bm / (bm + to));
+    double TM = Ya * (to / (bm + to));
+
+    nullPad->Range(x1 - LM, yf - BM, x2 + RM, y2 + TM);
+
+    pointPlot->Draw();
+
+    // Draw a circle of the allowed Z values
+    std::unique_ptr<TEllipse> circle = std::make_unique<TEllipse>(0, 0, 1.0, 1.0);
+    circle->SetFillColorAlpha(0, 0);
     circle->Draw();
+
     c->SaveAs(path.c_str());
 }
 
-} // namespace
-
-int main(void)
+/*
+ * Appends to vectors in place
+ */
+template <size_t N>
+void _cleoScan(const CLEO::Bin                  binNumber,
+               const FitterUtil::DecayParams_t& params,
+               const double                     nonsense,
+               const std::array<double, N>&     allowedReZ,
+               const std::array<double, N>&     allowedImZ,
+               std::vector<double>&             reZ,
+               std::vector<double>&             imZ,
+               std::vector<double>&             cleoChi2)
 {
-    // Generate allowed values for Z
-    constexpr unsigned short N{40};
-    const auto               allowedReZ = _linspace<N>();
-    const auto               allowedImZ = _linspace<N>();
+    for (const auto r : allowedReZ) {
+        for (const auto i : allowedImZ) {
+            reZ.push_back(r);
+            imZ.push_back(i);
+
+            // Construct a set of phsp params
+            FitterUtil::DecayParams_t theseParams{params};
+            theseParams.z_re = r;
+            theseParams.z_im = i;
+
+            // Calculate the CLEO likelihood
+            double l = -2 * CLEO::cleoLikelihood(binNumber, theseParams);
+            l        = std::isnan(l) ? nonsense : l;
+            cleoChi2.push_back(l);
+        }
+    }
+}
+
+template <size_t N>
+void _makePlots(const CLEO::Bin                  binNumber,
+                const double                     maxTime,
+                const FitterUtil::DecayParams_t& params,
+                const double                     nonsense,
+                const std::array<double, N>&     allowedReZ,
+                const std::array<double, N>&     allowedImZ,
+                const std::string&               prefix)
+{
+    auto paramsCopy = params;
 
     // Init empty vectors of reZ, imZ and chisqs
     std::vector<double> reZ{};
@@ -129,26 +201,25 @@ int main(void)
     std::vector<double> cleoChi2{};
     std::vector<double> combinedChi2{};
 
-    // Assign nonsense values of likelihood to 100.0
-    constexpr double nonsense{2000.0};
+    // Scan over Z finding the CLEO chi2 values
+    _cleoScan(binNumber, paramsCopy, nonsense, allowedReZ, allowedImZ, reZ, imZ, cleoChi2);
 
-    // Create toy data
-    FitterUtil::DecayParams_t params{
-        .x     = CharmFitter::WORLD_AVERAGE_X,
-        .y     = CharmFitter::WORLD_AVERAGE_Y,
-        .r     = 0.055,
-        .z_im  = 0.85,
-        .z_re  = 0.0,
-        .width = 2500.0,
-    };
-    constexpr double maxTime{0.004};
-    const auto [dcsTimes, cfTimes] = _toy_data(params, maxTime);
+    // Find where the minimum CLEO chi2 is
+    unsigned minCleoChi2Index = std::min_element(cleoChi2.begin(), cleoChi2.end()) - cleoChi2.begin();
+
+    // Create toy data with Z at this minimum
+    std::random_device rd;
+    std::mt19937       gen{rd()};
+
+    paramsCopy.z_im                = imZ[minCleoChi2Index];
+    paramsCopy.z_re                = reZ[minCleoChi2Index];
+    const auto [dcsTimes, cfTimes] = _toy_data(paramsCopy, maxTime, gen);
 
     // Create fitters
     constexpr unsigned short numBins{25};
-    std::vector<double>      binLimits = FitterUtil::exponentialBinLimits(maxTime, params.width, numBins);
-    const CLEO::Bin          binNumber{CLEO::Bin::Bin1};
-    std::array<double, 6> initialParameterGuess{params.x, params.y, params.r, params.z_im, params.z_re, params.width};
+    std::vector<double>      binLimits = FitterUtil::exponentialBinLimits(maxTime, paramsCopy.width, numBins);
+    std::array<double, 6>    initialParameterGuess{
+        paramsCopy.x, paramsCopy.y, paramsCopy.r, paramsCopy.z_im, paramsCopy.z_re, paramsCopy.width};
     std::array<double, 6> initialErrorsGuess{1, 1, 1, 1, 1, 1};
 
     CharmFitter::ConstrainedFitter ConstrainedFitter(binLimits, initialParameterGuess, initialErrorsGuess);
@@ -169,19 +240,6 @@ int main(void)
     boost::progress_display showProgress(allowedReZ.size() * allowedImZ.size());
     for (const auto r : allowedReZ) {
         for (const auto i : allowedImZ) {
-            reZ.push_back(r);
-            imZ.push_back(i);
-
-            // Construct a set of phsp params
-            FitterUtil::DecayParams_t theseParams{params};
-            theseParams.z_re = r;
-            theseParams.z_im = i;
-
-            // Calculate the CLEO likelihood
-            double l = -2 * CLEO::cleoLikelihood(binNumber, theseParams);
-            l        = std::isnan(l) ? nonsense : l;
-            cleoChi2.push_back(l);
-
             // Calculate the charm fitter only value
             ConstrainedFitter.setParameter("z_im", i);
             ConstrainedFitter.setParameter("z_re", r);
@@ -197,6 +255,7 @@ int main(void)
     }
 
     // Normalise each to std devs
+    std::cout << "Min CLEO chi2" << reZ[minCleoChi2Index] << " " << imZ[minCleoChi2Index] << std::endl;
     cleoChi2     = _chisq2sigma(cleoChi2);
     mixingChi2   = _chisq2sigma(mixingChi2);
     combinedChi2 = _chisq2sigma(combinedChi2);
@@ -209,9 +268,46 @@ int main(void)
     std::unique_ptr<TGraph2D> combinedGraph = std::make_unique<TGraph2D>(
         "combined", "Combination", combinedChi2.size(), reZ.data(), imZ.data(), combinedChi2.data());
 
-    _plot(*cleoGraph, "cleo.png");
-    _plot(*mixingGraph, "mixing.png");
-    _plot(*combinedGraph, "combined.png");
+    _plot(*cleoGraph, std::string{prefix + "cleo.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
+    _plot(*mixingGraph, std::string{prefix + "mixing.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
+    _plot(*combinedGraph, std::string{prefix + "combined.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
+}
+
+} // namespace
+
+/*
+ * Tell us what bin number to use via the CLI
+ */
+int main(const int argc, const char* argv[])
+{
+    assert(argc == 2 && "Pass 1 arg (CLEO phsp bin number [0-3])");
+
+    // Generate allowed values for Z
+    constexpr unsigned short N{45};
+    const auto               allowedReZ = _linspace<N>(1.1);
+    const auto               allowedImZ = _linspace<N>(1.1);
+
+    // Assign nonsense values of likelihood to a special value
+    constexpr double nonsense{5000.0};
+
+    // Other parameters that we need to simulate decays etc.
+    constexpr double          maxTime{0.004};
+    FitterUtil::DecayParams_t params{
+        .x     = CharmFitter::WORLD_AVERAGE_X,
+        .y     = CharmFitter::WORLD_AVERAGE_Y,
+        .r     = 0.055,
+        .z_im  = std::numeric_limits<double>::quiet_NaN(),
+        .z_re  = std::numeric_limits<double>::quiet_NaN(),
+        .width = 2500.0,
+    };
+
+    constexpr unsigned short               numBins{4};
+    std::array<const CLEO::Bin, numBins>   bins{CLEO::Bin::Bin1, CLEO::Bin::Bin2, CLEO::Bin::Bin3, CLEO::Bin::Bin4};
+    std::array<const std::string, numBins> names{"bin0_", "bin1_", "bin2_", "bin3_"};
+
+    const unsigned short i = std::atoi(argv[1]);
+    std::cout << "Using bin " << i << std::endl;
+    _makePlots(bins[i], maxTime, params, nonsense, allowedReZ, allowedImZ, names[i]);
 
     return 0;
 }
