@@ -6,7 +6,7 @@ API
 Implementation in python => expose a python API:
 
 ```
-efficiency(k_p, pi1_p, pi2_p, pi3_p, phase_difference, decay_time, kaon_charge)
+efficiency(k_p, pi1_p, pi2_p, pi3_p, phase_difference, decay_time, kaon_charge, year, magnet)
 ```
 
 ### Params
@@ -19,7 +19,14 @@ efficiency(k_p, pi1_p, pi2_p, pi3_p, phase_difference, decay_time, kaon_charge)
 |    `phase_difference`  | In range [-180, 180)     | Ampgen amplitude model phase difference  |
 | `decay_time` | float | Proper decay time of the D |
 | `kaon_charge` | +-1 | Charge of the Kaon |
+| `year` | Int in {2011..2018} | Data taking year |
+| `magnet` | String in {"MagUp", "MagDown"} | Magnetisation direction |
 
 
 ### Returns
 Estimated detector efficiency for the provided event, as a float.
+
+### Implementation
+ - Prerequisite: trained BDT for each data taking year/magnetisation/time bin/phsp bin, each pickled
+ - Look up the right BDT based on k charge, magnetisation, year, phsp bin
+ - Use it to return a weight
