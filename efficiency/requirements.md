@@ -9,6 +9,7 @@ Implementation in python => expose a python API:
 efficiency(k_p, pi1_p, pi2_p, pi3_p, phase_difference, decay_time, kaon_charge)
 ```
 
+### Params
 | Parameter   | Requirements |    Meaning       |
 | ---------   | ------------ | --------------   |
 |    `k_p`    | length 4, floats     | kaon 4-momentum  |
@@ -18,3 +19,7 @@ efficiency(k_p, pi1_p, pi2_p, pi3_p, phase_difference, decay_time, kaon_charge)
 |    `phase_difference`  | In range [-180, 180)     | Ampgen amplitude model phase difference  |
 | `decay_time` | float | Proper decay time of the D |
 | `kaon_charge` | +-1 | Charge of the Kaon |
+
+
+### Returns
+Estimated detector efficiency for the provided event, as a float.
