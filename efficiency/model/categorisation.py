@@ -21,8 +21,9 @@ PHSP_BINS = (-180.0, -39.0, 0.0, 43.0, 180.0)
 D_LIFETIME = 0.00041  # nanoseconds
 TIME_BINS = (-1.0, 0.0, 0.94, 1.185, 1.40, 1.62, 1.85, 2.13, 2.45, 2.87, 3.5, 8.0, 19.0)
 
-# Veto any events with M(pipi) in this range, for any pair of pions
-KS_VETO = (0.487614, 0.507614)
+# We will veto any events with M(pipi) in this range, for any pair of pions
+KS_MASS = 0.497614  # MeV
+VETO_WIDTH = 0.010
 
 
 def time_bin(time):
@@ -44,3 +45,16 @@ def time_bin(time):
     for i, edge in enumerate(TIME_BINS[1:]):
         if lifetimes < edge:
             return i
+
+
+def vetoed(mass):
+    """
+    Check whether a mass is within the veto range of the Ks
+
+    Intended to check the mass of a (pipi) system
+
+    :param: invariant mass in MeV
+    :returns: bool; whether the event is veto'd
+
+    """
+    return abs(mass - KS_MASS) < VETO_WIDTH
