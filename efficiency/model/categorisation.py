@@ -18,7 +18,29 @@ ALLOWED_YEAR = {
 PHSP_BINS = (-180.0, -39.0, 0.0, 43.0, 180.0)
 
 # Time bin boundaries in D-lifetimes
+D_LIFETIME = 0.00041  # nanoseconds
 TIME_BINS = (-1.0, 0.0, 0.94, 1.185, 1.40, 1.62, 1.85, 2.13, 2.45, 2.87, 3.5, 8.0, 19.0)
 
 # Veto any events with M(pipi) in this range, for any pair of pions
 KS_VETO = (0.487614, 0.507614)
+
+
+def time_bin(time):
+    """
+    Find which time bin an event belongs in
+
+    :param time: decay time in nanoseconds
+    :returns: Index of the required time bin
+
+    """
+    lifetimes = time / D_LIFETIME
+
+    # Over/underflow
+    if lifetimes < TIME_BINS[0] or lifetimes > TIME_BINS[-1]:
+        raise ValueError(
+            f"Time {time}ns out of range; time bins cover range [{TIME_BINS[0]}, {TIME_BINS[-1]}] lifetimes"
+        )
+
+    for i, edge in enumerate(TIME_BINS[1:]):
+        if lifetimes < edge:
+            return i
