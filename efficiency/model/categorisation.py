@@ -3,7 +3,14 @@ Definitions of things used to split up data; phsp bin, time bins, data taking ye
 
 NB: importing this file may run attempt to build the CF and DCS wrapper libraries, if they are not already built
 
+TODO make these better, we shouldn't have to read from the shared lib every time we call the function
+
 """
+import os
+import subprocess
+import ctypes
+import numpy as np
+
 ALLOWED_MAGNET = {"MagUp", "MagDown"}
 ALLOWED_YEAR = {
     "2011",
@@ -27,9 +34,13 @@ TIME_BINS = (-1.0, 0.0, 0.94, 1.185, 1.40, 1.62, 1.85, 2.13, 2.45, 2.87, 3.5, 8.
 KS_MASS = 0.497614  # MeV
 VETO_WIDTH = 0.010
 
-# If our shared libraries haven't been built, build them
+# Scale + rotate amplitudes so that dcs/cf amplitude ratio ~ 0.055 and relative strong phase ~ 0
+OFFSET_MAG = 0.0601387
+OFFSET_PHASE = 1.04827  # degrees
+DCS_OFFSET = OFFSET_MAG * np.exp((0 + 1j) * OFFSET_PHASE * np.pi / 180.0)
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "amplitude_models")
 
+# If our shared libraries haven't been built, build them
 if not os.path.exists(
     os.path.abspath(os.path.join(MODEL_DIR, "cf_wrapper.so"))
 ) or not os.path.exists(os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))):
