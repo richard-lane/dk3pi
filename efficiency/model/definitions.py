@@ -33,6 +33,10 @@ DCS_LIB = os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))
 
 BDT_PATHS = os.path.abspath(os.path.join(os.path.dirname(__file__), "bdt_paths.pickle"))
 
+# Tree names for WG productions
+RS_TREE = "Hlt2Dstp2D0Pip_D02KmPimPipPip_Tuple/DecayTree"
+WS_TREE = "Hlt2Dstp2D0Pip_D02KpPimPimPip_Tuple/DecayTree"
+
 # Paths to data generated with models, stored on lxplus.cern.ch
 RS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_Dbar_RS.root"
 WS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_WS.root"
