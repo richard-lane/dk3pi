@@ -166,6 +166,20 @@ def dcs_amplitude(event: np.ndarray, k_charge: int):
     return complex(retval.real, retval.imag)
 
 
+def relative_phase(event: np.ndarray, k_charge: int):
+    """
+    Find the relative phase between the DCS and CF models for a given event, subject to the dcs model offset
+    :param event   : a 16-element array of kinematic parameters (kpx, kpy, kpz, kE, ...) for k, pi1, pi2, pi3
+    :param k_charge: the charge of the kaon, i.e. +1 or -1
+    :returns       : relative phase in degrees
+
+    """
+    cf = cf_amplitude(event, k_charge)
+    dcs = dcs_amplitude(event, k_charge) * DCS_OFFSET
+
+    return np.angle(cf * dcs.conjugate(), deg=True)
+
+
 def time_bin(time):
     """
     Find which time bin an event belongs in
@@ -179,12 +193,12 @@ def time_bin(time):
     return _bin(lifetimes, TIME_BINS)
 
 
-def phsp_bin(event):
+def phsp_bin(event, k_charge):
     """
     Find which phase space bin an event belongs in
 
     """
-    ...
+    return _bin(relative_phase(event, k_charge), PHSP_BINS)
 
 
 def vetoed(mass):
