@@ -9,16 +9,7 @@ from subprocess import run, PIPE
 from numpy import pi, exp
 
 ALLOWED_MAGNET = {"MagUp", "MagDown"}
-ALLOWED_YEAR = {
-    "2011",
-    "2012",
-    "2013",
-    "2014",
-    "2015",
-    "2016",
-    "2017",
-    "2018",
-}  # Check these
+ALLOWED_YEAR = {"2016", "2017", "2018"}
 
 # Phsp bin boundaries in degrees; defined using Tim's amplitude models
 PHSP_BINS = (-180.0, -39.0, 0.0, 43.0, 180.0)
@@ -41,6 +32,10 @@ CF_LIB = os.path.abspath(os.path.join(MODEL_DIR, "cf_wrapper.so"))
 DCS_LIB = os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))
 
 BDT_PATHS = os.path.abspath(os.path.join(os.path.dirname(__file__), "bdt_paths.pickle"))
+
+# Paths to data generated with models, stored on lxplus.cern.ch
+RS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_Dbar_RS.root"
+WS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_WS.root"
 
 # If our shared libraries haven't been built, build them
 if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
