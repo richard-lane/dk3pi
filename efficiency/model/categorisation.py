@@ -1,4 +1,6 @@
 from . import definitions
+import ctypes
+import numpy as np
 
 class Complex(ctypes.Structure):
     """
