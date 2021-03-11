@@ -1,61 +1,4 @@
-"""
-Definitions of things used to split up data; phsp bin, time bins, data taking year, magnet polarity, etc.
-
-NB: importing this file may run attempt to build the CF and DCS wrapper libraries, if they are not already built
-
-TODO make these better, we shouldn't have to read from the shared lib every time we call the function
-
-"""
-import os
-import subprocess
-import ctypes
-import numpy as np
-
-ALLOWED_MAGNET = {"MagUp", "MagDown"}
-ALLOWED_YEAR = {
-    "2011",
-    "2012",
-    "2013",
-    "2014",
-    "2015",
-    "2016",
-    "2017",
-    "2018",
-}  # Check these
-
-# Phsp bin boundaries in degrees; defined using Tim's amplitude models
-PHSP_BINS = (-180.0, -39.0, 0.0, 43.0, 180.0)
-
-# Time bin boundaries in D-lifetimes
-D_LIFETIME = 0.00041  # nanoseconds
-TIME_BINS = (-1.0, 0.0, 0.94, 1.185, 1.40, 1.62, 1.85, 2.13, 2.45, 2.87, 3.5, 8.0, 19.0)
-
-# We will veto any events with M(pipi) in this range, for any pair of pions
-KS_MASS = 0.497614  # MeV
-VETO_WIDTH = 0.010
-
-# Scale + rotate amplitudes so that dcs/cf amplitude ratio ~ 0.055 and relative strong phase ~ 0
-OFFSET_MAG = 0.0601387
-OFFSET_PHASE = 1.04827  # degrees
-DCS_OFFSET = OFFSET_MAG * np.exp((0 + 1j) * OFFSET_PHASE * np.pi / 180.0)
-
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "amplitude_models")
-CF_LIB = os.path.abspath(os.path.join(MODEL_DIR, "cf_wrapper.so"))
-DCS_LIB = os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))
-
-# If our shared libraries haven't been built, build them
-if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
-    build_script = os.path.join(MODEL_DIR, "build.sh")
-    print(
-        f"Building AmpGen wrapper libs, required from \n\t{__file__} ...",
-        end="",
-        flush=True,
-    )
-    subprocess.run(
-        [build_script], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
-    )
-    print("done")
-
+from . import definitions
 
 class Complex(ctypes.Structure):
     """
@@ -129,7 +72,7 @@ def _bin_from_phase(phase):
     Returns bin numbered from 0
 
     """
-    return _bin(phase, PHSP_BINS)
+    return _bin(phase, definitions.PHSP_BINS)
 
 
 def cf_amplitude(event: np.ndarray, k_charge: int):
@@ -143,7 +86,7 @@ def cf_amplitude(event: np.ndarray, k_charge: int):
 
     """
     # Find the function that we need in our shared library
-    cf_fcn = _find_fcn(CF_LIB, "cf_wrapper")
+    cf_fcn = _find_fcn(defnitionsCF_LIB, "cf_wrapper")
 
     retval = _amplitude(cf_fcn, event, k_charge)
     return complex(retval.real, retval.imag)
@@ -160,7 +103,7 @@ def dcs_amplitude(event: np.ndarray, k_charge: int):
 
     """
     # Find the function that we need in our shared library
-    dcs_fcn = _find_fcn(DCS_LIB)
+    dcs_fcn = _find_fcn(definitions.DCS_LIB)
 
     retval = _amplitude(dcs_fcn, event, k_charge)
     return complex(retval.real, retval.imag)
@@ -175,7 +118,7 @@ def relative_phase(event: np.ndarray, k_charge: int):
 
     """
     cf = cf_amplitude(event, k_charge)
-    dcs = dcs_amplitude(event, k_charge) * DCS_OFFSET
+    dcs = dcs_amplitude(event, k_charge) * definitions.DCS_OFFSET
 
     return np.angle(cf * dcs.conjugate(), deg=True)
 
@@ -188,9 +131,9 @@ def time_bin(time):
     :returns: Index of the required time bin
 
     """
-    lifetimes = time / D_LIFETIME
+    lifetimes = time / definitions.D_LIFETIME
 
-    return _bin(lifetimes, TIME_BINS)
+    return _bin(lifetimes, definitions.TIME_BINS)
 
 
 def phsp_bin(event, k_charge):
@@ -198,7 +141,7 @@ def phsp_bin(event, k_charge):
     Find which phase space bin an event belongs in
 
     """
-    return _bin(relative_phase(event, k_charge), PHSP_BINS)
+    return _bin(relative_phase(event, k_charge), definitions.PHSP_BINS)
 
 
 def vetoed(mass):
@@ -211,4 +154,4 @@ def vetoed(mass):
     :returns: bool; whether the event is veto'd
 
     """
-    return abs(mass - KS_MASS) < VETO_WIDTH
+    return abs(mass - definitions.KS_MASS) < definitions.VETO_WIDTH
