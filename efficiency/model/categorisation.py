@@ -102,6 +102,36 @@ def _amplitude(fcn, event, k_charge):
     return fcn(event_p, k_charge_ctype)
 
 
+def _bin(data, bins):
+    """
+    Bin a data point into bins
+
+    :param data: data point
+    :param bins: left edge of each bin, and rightmost edge of highest bin
+    :returns: bin number, from 0
+    :raises ValueError: if data out of range
+
+    """
+    if data < bins[0] or data > bins[-1]:
+        raise ValueError(
+            f"{data} out of range; bins cover range [{bins[0]}, {bins[-1]}]"
+        )
+
+    for i, edge in enumerate(bins[1:]):
+        if data < edge:
+            return i
+
+
+def _bin_from_phase(phase):
+    """
+    Bin a phase in degrees into PHSP_BINS
+
+    Returns bin numbered from 0
+
+    """
+    return _bin(phase, PHSP_BINS)
+
+
 def cf_amplitude(event: np.ndarray, k_charge: int):
     """
     Find the CF amplitude of an event
@@ -146,15 +176,7 @@ def time_bin(time):
     """
     lifetimes = time / D_LIFETIME
 
-    # Over/underflow
-    if lifetimes < TIME_BINS[0] or lifetimes > TIME_BINS[-1]:
-        raise ValueError(
-            f"Time {time}ns out of range; time bins cover range [{TIME_BINS[0]}, {TIME_BINS[-1]}] lifetimes"
-        )
-
-    for i, edge in enumerate(TIME_BINS[1:]):
-        if lifetimes < edge:
-            return i
+    return _bin(lifetimes, TIME_BINS)
 
 
 def phsp_bin(event):
