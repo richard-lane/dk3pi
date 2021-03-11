@@ -10,6 +10,7 @@ from numpy import pi, exp
 
 ALLOWED_MAGNET = {"MagUp", "MagDown"}
 ALLOWED_YEAR = {"2016", "2017", "2018"}
+DECAY_CODES = {"Phsp": 27165070, "RS": 27165071, "WS": 27165072}
 
 # Phsp bin boundaries in degrees; defined using Tim's amplitude models
 PHSP_BINS = (-180.0, -39.0, 0.0, 43.0, 180.0)
