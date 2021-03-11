@@ -28,11 +28,12 @@ KS_MASS = 0.497614  # MeV
 VETO_WIDTH = 0.010
 
 # If our shared libraries haven't been built, build them
-model_dir = os.path.join(os.path.dirname(__file__), "amplitude_models")
+MODEL_DIR = os.path.join(os.path.dirname(__file__), "amplitude_models")
+
 if not os.path.exists(
-    os.path.abspath(os.path.join(model_dir, "cf_wrapper.so"))
-) or not os.path.exists(os.path.abspath(os.path.join(model_dir, "dcs_wrapper.so"))):
-    build_script = os.path.join(model_dir, "build.sh")
+    os.path.abspath(os.path.join(MODEL_DIR, "cf_wrapper.so"))
+) or not os.path.exists(os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))):
+    build_script = os.path.join(MODEL_DIR, "build.sh")
     print(
         f"Building AmpGen wrapper libs, required from \n\t{__file__} ...",
         end="",
