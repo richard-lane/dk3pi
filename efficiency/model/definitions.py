@@ -40,6 +40,8 @@ MODEL_DIR = os.path.join(os.path.dirname(__file__), "amplitude_models")
 CF_LIB = os.path.abspath(os.path.join(MODEL_DIR, "cf_wrapper.so"))
 DCS_LIB = os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))
 
+BDT_PATHS = os.path.abspath(os.path.join(os.path.dirname(__file__), "bdt_paths.pickle"))
+
 # If our shared libraries haven't been built, build them
 if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
     build_script = os.path.join(MODEL_DIR, "build.sh")
