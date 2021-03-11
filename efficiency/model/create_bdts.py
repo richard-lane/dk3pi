@@ -52,3 +52,20 @@ def find_weights(bdt_path, data, weights=None):
         bdt = pickle.load(f)
 
     return bdt.predict_weights(data, original_weight=weights)
+
+
+def main():
+    # Read 2018 MagDown MC
+    # Categorise events into time bins
+    # In each time bin, categorise events into phsp bins
+
+    # Read AmpGen
+    # Categorise events into bins
+    # In each time bin, categorise events into phsp bins
+
+    # For each time/phsp bin, train a BDT and pickle it at a location
+    ...
+
+
+if __name__ == "__main__":
+    main()
