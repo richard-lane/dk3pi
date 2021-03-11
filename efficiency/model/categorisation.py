@@ -1,6 +1,8 @@
 """
 Definitions of things used to split up data; phsp bin, time bins, data taking year, magnet polarity, etc.
 
+NB: importing this file may run attempt to build the CF and DCS wrapper libraries, if they are not already built
+
 """
 ALLOWED_MAGNET = {"MagUp", "MagDown"}
 ALLOWED_YEAR = {
@@ -25,6 +27,22 @@ TIME_BINS = (-1.0, 0.0, 0.94, 1.185, 1.40, 1.62, 1.85, 2.13, 2.45, 2.87, 3.5, 8.
 KS_MASS = 0.497614  # MeV
 VETO_WIDTH = 0.010
 
+# If our shared libraries haven't been built, build them
+model_dir = os.path.join(os.path.dirname(__file__), "amplitude_models")
+if not os.path.exists(
+    os.path.abspath(os.path.join(model_dir, "cf_wrapper.so"))
+) or not os.path.exists(os.path.abspath(os.path.join(model_dir, "dcs_wrapper.so"))):
+    build_script = os.path.join(model_dir, "build.sh")
+    print(
+        f"Building AmpGen wrapper libs, required from \n\t{__file__} ...",
+        end="",
+        flush=True,
+    )
+    subprocess.run(
+        [build_script], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+    )
+    print("done")
+
 
 def time_bin(time):
     """
@@ -45,6 +63,14 @@ def time_bin(time):
     for i, edge in enumerate(TIME_BINS[1:]):
         if lifetimes < edge:
             return i
+
+
+def phsp_bin(event):
+    """
+    Find which phase space bin an event belongs in
+
+    """
+    ...
 
 
 def vetoed(mass):
