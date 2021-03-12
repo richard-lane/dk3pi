@@ -122,4 +122,4 @@ def phsp_bin(event, k_charge):
     :returns       : the phase space bin that event belongs n, according to definitions.PHSP_BINS numbered from 0
 
     """
-    return util._unsafe_bin(relative_phase(event, k_charge), definitions.PHSP_BINS)
+    return util.unsafe_bin(relative_phase(event, k_charge), definitions.PHSP_BINS)

@@ -4,7 +4,7 @@ General utilities
 """
 
 
-def _unsafe_bin(data, bins):
+def unsafe_bin(data, bins):
     """
     Bin a data point into bins without bounds checking.
     Will return 0 if the point underflows; None if overflow
@@ -19,7 +19,7 @@ def _unsafe_bin(data, bins):
             return i
 
 
-def _bin(data, bins):
+def bin(data, bins):
     """
     Bin a data point into bins
 
