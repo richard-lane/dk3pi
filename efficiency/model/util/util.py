@@ -34,4 +34,4 @@ def bin(data, bins):
             f"{data} out of range; bins cover range [{bins[0]}, {bins[-1]}]"
         )
 
-    return _unsafe_bin(data, bins)
+    return unsafe_bin(data, bins)
