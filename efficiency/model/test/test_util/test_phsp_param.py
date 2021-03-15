@@ -1,6 +1,7 @@
 import numpy as np
 
 from util import phsp_parameterisation
+from math import sqrt
 
 
 def test_inv_mass():
@@ -94,3 +95,21 @@ def test_momm_ordering_array():
     )
     assert np.array_equal(pi2, old_pi1)
     assert np.array_equal(pi1, old_pi2)
+
+
+def test_inv_mass_parametrisation():
+    """
+    Check the result of the invariant mass parameterisation
+
+    """
+    k = [1, -1, 0, 5]
+    pi1 = [-1, 1, 0, 3]
+    pi2 = [1, 1, 1, 3]
+    pi3 = [-1, 1, 0, 3]
+
+    inv_masses = (8.0, sqrt(31), sqrt(31), sqrt(118), sqrt(70))
+
+    assert np.allclose(
+        inv_masses,
+        phsp_parameterisation.invariant_mass_parametrisation(k, pi1, pi2, pi3),
+    )
