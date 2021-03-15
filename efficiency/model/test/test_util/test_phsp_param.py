@@ -33,6 +33,23 @@ def test_inv_masses():
     )
 
 
+def test_inv_mass_consistency():
+    """
+    Consistency check that the invariant mass fcn using a single particle returns the same result as when using a numpy array
+
+    """
+    particle = [1, 2, 3, 4]
+    assert (
+        phsp_parameterisation.invariant_mass(*particle)
+        == phsp_parameterisation.invariant_masses(
+            np.array([particle[0]]),
+            np.array([particle[1]]),
+            np.array([particle[2]]),
+            np.array([particle[3]]),
+        )[0]
+    )
+
+
 def test_momentum_ordering():
     """
     Check that pions are returned in the correct order when passed to momentum_order
