@@ -32,6 +32,11 @@ MODEL_DIR = os.path.join(os.path.dirname(__file__), "amplitude_models")
 CF_LIB = os.path.abspath(os.path.join(MODEL_DIR, "cf_wrapper.so"))
 DCS_LIB = os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))
 
+# The function handles used to evaluate amplitudes
+# Will be set at run-time and cached here
+DCS_FCN = None
+CF_FCN = None
+
 BDT_PATHS = os.path.abspath(os.path.join(os.path.dirname(__file__), "bdt_paths.pickle"))
 
 # Tree names for WG productions
