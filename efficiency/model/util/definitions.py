@@ -32,11 +32,6 @@ MODEL_DIR = os.path.join(os.path.dirname(__file__), "amplitude_models")
 CF_LIB = os.path.abspath(os.path.join(MODEL_DIR, "cf_wrapper.so"))
 DCS_LIB = os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))
 
-# The function handles used to evaluate amplitudes
-# Will be set at run-time and cached here
-DCS_FCN = None
-CF_FCN = None
-
 BDT_PATHS = os.path.abspath(os.path.join(os.path.dirname(__file__), "bdt_paths.pickle"))
 
 # Tree names for WG productions
@@ -46,6 +41,11 @@ WS_TREE = "Hlt2Dstp2D0Pip_D02KpPimPimPip_Tuple/DecayTree"
 # Paths to data generated with models, stored on lxplus.cern.ch
 RS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_Dbar_RS.root"
 WS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_WS.root"
+
+# The function handles used to evaluate amplitudes
+# Will be set at run-time and cached here
+DCS_FCN = None
+CF_FCN = None
 
 # If our shared libraries haven't been built, build them
 if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
@@ -58,3 +58,12 @@ if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
     run([build_script], stdout=PIPE, stderr=PIPE, check=True)
     print("done")
 
+
+def assign_dcs(handle):
+    global DCS_FCN
+    DCS_FCN = handle
+
+
+def assign_cf(handle):
+    global CF_FCN
+    CF_FCN = handle
