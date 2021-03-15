@@ -18,7 +18,7 @@ def invariant_mass(px, py, pz, energy):
     :returns: invariant mass of the particle
 
     """
-    # Math sqrt slightly faster than np sqrt for
+    # Math sqrt slightly faster than np for sqrt
     return sqrt(energy ** 2 - px ** 2 - py ** 2 - pz ** 2)
 
 
