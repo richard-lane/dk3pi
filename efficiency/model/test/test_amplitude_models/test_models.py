@@ -1,7 +1,17 @@
 import phasespace
 import numpy as np
+import matplotlib.pyplot as plt
 
 from util import definitions
+from util.phsp_parameterisation import invariant_masses
+
+
+def mkpi1(k, pi1):
+    """
+    Find the masses M(K pi1) of a set of events
+
+    """
+    return invariant_masses(*np.add(k, pi1))
 
 
 def test_cf():
@@ -50,12 +60,18 @@ def test_cf():
 
             num_accepted += 1
 
-    k = np.resize(k, num_accepted)
-    pi1 = np.resize(pi1, num_accepted)
-    pi2 = np.resize(pi2, num_accepted)
-    pi3 = np.resize(pi3, num_accepted)
+    k = np.resize(k, (4, num_accepted))
+    pi1 = np.resize(pi1, (4, num_accepted))
+    pi2 = np.resize(pi2, (4, num_accepted))
+    pi3 = np.resize(pi3, (4, num_accepted))
+
+    print(k)
 
     # Weight according to CF amplitude model
+
     # Read AmpGen events
+
     # Plot projections of them both to see what they look like
+    plt.hist(mkpi1(k, pi1), bins=100)
+    plt.show()
     ...
