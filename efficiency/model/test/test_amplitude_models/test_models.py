@@ -1,3 +1,4 @@
+import pytest
 import phasespace
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,6 +16,7 @@ def mkpi1(k, pi1):
     return invariant_masses(*np.add(k, pi1))
 
 
+@pytest.mark.skip(reason="No way to reasonably generate enough phsp MC for comparison with AmpGen")
 def test_cf():
     """
     Test CF model for consistency with AmpGen
@@ -64,16 +66,20 @@ def test_cf():
     # Weight according to CF amplitude model
     definitions.assign_cf(phsp_binning._find_fcn(definitions.CF_LIB, "cf_wrapper"))
     definitions.assign_dcs(phsp_binning._find_fcn(definitions.DCS_LIB, "dcs_wrapper"))
-    cf_amplitude = [
+    cf_amplitudes = [
         phsp_binning._cf_amplitude(
             (np.concatenate((k.T[i], pi1.T[i], pi2.T[i], pi3.T[i]))), +1
         )
         for i in range(num_accepted)
     ]
 
+    cf_weights = [abs(x) for x in cf_amplitudes]
+
     # Read AmpGen events
 
     # Plot projections of them both to see what they look like
+    kw = {"bins": 100, "alpha": 0.3, "density": True}
     phsp_mkpi = mkpi1(k[:, 0:num_accepted], pi1[:, 0:num_accepted])
-    plt.hist(phsp_mkpi, bins=100)
+    plt.hist(phsp_mkpi, **kw)
+    plt.hist(phsp_mkpi, weights=cf_weights, **kw)
     plt.show()
