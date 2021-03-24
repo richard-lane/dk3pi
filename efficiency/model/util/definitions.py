@@ -28,7 +28,7 @@ OFFSET_MAG = 0.0601387
 OFFSET_PHASE = 1.04827  # degrees
 DCS_OFFSET = OFFSET_MAG * exp((0 + 1j) * OFFSET_PHASE * pi / 180.0)
 
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "amplitude_models")
+MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "amplitude_models")
 CF_LIB = os.path.abspath(os.path.join(MODEL_DIR, "cf_wrapper.so"))
 DCS_LIB = os.path.abspath(os.path.join(MODEL_DIR, "dcs_wrapper.so"))
 
@@ -47,8 +47,12 @@ WS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_WS.root"
 DCS_FCN = None
 CF_FCN = None
 
-# If our shared libraries haven't been built, build them
-if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
+
+def build_libs():
+    """
+    Build the AmpGen wrapper libraries
+
+    """
     build_script = os.path.join(MODEL_DIR, "build.sh")
     print(
         f"Building AmpGen wrapper libs, required from \n\t{__file__} ...",
@@ -57,6 +61,11 @@ if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
     )
     run([build_script], stdout=PIPE, stderr=PIPE, check=True)
     print("done")
+
+
+# If our shared libraries haven't been built, build them
+if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
+    build_libs()
 
 
 def assign_dcs(handle):
