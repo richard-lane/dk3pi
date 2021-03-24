@@ -43,10 +43,10 @@ def _amplitude(fcn, event, k_charge):
 
     """
     # Need to copy the event otherwise our array may not be contiguous, and so can't be read by ctypes
-    event = np.copy(event)
+    event_copy = np.copy(event)
 
     # Convert our arguments to compatible types
-    event_p = event.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+    event_p = event_copy.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
     k_charge_ctype = ctypes.c_int(k_charge)
 
     # Call the function
@@ -67,6 +67,8 @@ def _cf_amplitude(event: np.ndarray, k_charge: int):
     """
     Find the CF amplitude of an event
 
+    NB: definitions.CF_FCN should be defined before calling this, which is bad design
+
     :param event   : a 16-element array of kinematic parameters (kpx, kpy, kpz, kE, ...) for k, pi1, pi2, pi3
     :param k_charge: the charge of the kaon, i.e. +1 or -1
     :raises        : many things
@@ -74,9 +76,7 @@ def _cf_amplitude(event: np.ndarray, k_charge: int):
 
     """
     # Find the function that we need in our shared library
-    cf_fcn = _find_fcn(defnitionsCF_LIB, "cf_wrapper")
-
-    retval = _amplitude(cf_fcn, event, k_charge)
+    retval = _amplitude(definitions.CF_FCN, event, k_charge)
     return complex(retval.real, retval.imag)
 
 
@@ -84,16 +84,15 @@ def _dcs_amplitude(event: np.ndarray, k_charge: int):
     """
     Find the DCS amplitude of an event
 
+    NB: definitions.DCS_FCN should be defined before calling this, which is bad design
+
     :param event   : a 16-element array of kinematic parameters (kpx, kpy, kpz, kE, ...) for k, pi1, pi2, pi3
     :param k_charge: the charge of the kaon, i.e. +1 or -1
     :raises        : many things
     :returns       : the complex amplitude as an instance of the builtin complex
 
     """
-    # Find the function that we need in our shared library
-    dcs_fcn = _find_fcn(definitions.DCS_LIB)
-
-    retval = _amplitude(dcs_fcn, event, k_charge)
+    retval = _amplitude(definitions.DCS_FCN, event, k_charge)
     return complex(retval.real, retval.imag)
 
 

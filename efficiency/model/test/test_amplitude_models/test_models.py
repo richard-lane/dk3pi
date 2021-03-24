@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 from util import definitions
 from util.phsp_parameterisation import invariant_masses
+from util import phsp_binning
 
 
 def mkpi1(k, pi1):
@@ -60,18 +61,19 @@ def test_cf():
 
             num_accepted += 1
 
-    k = np.resize(k, (4, num_accepted))
-    pi1 = np.resize(pi1, (4, num_accepted))
-    pi2 = np.resize(pi2, (4, num_accepted))
-    pi3 = np.resize(pi3, (4, num_accepted))
-
-    print(k)
-
     # Weight according to CF amplitude model
+    definitions.assign_cf(phsp_binning._find_fcn(definitions.CF_LIB, "cf_wrapper"))
+    definitions.assign_dcs(phsp_binning._find_fcn(definitions.DCS_LIB, "dcs_wrapper"))
+    cf_amplitude = [
+        phsp_binning._cf_amplitude(
+            (np.concatenate((k.T[i], pi1.T[i], pi2.T[i], pi3.T[i]))), +1
+        )
+        for i in range(num_accepted)
+    ]
 
     # Read AmpGen events
 
     # Plot projections of them both to see what they look like
-    plt.hist(mkpi1(k, pi1), bins=100)
+    phsp_mkpi = mkpi1(k[:, 0:num_accepted], pi1[:, 0:num_accepted])
+    plt.hist(phsp_mkpi, bins=100)
     plt.show()
-    ...
