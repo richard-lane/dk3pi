@@ -47,6 +47,11 @@ WS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_WS.root"
 DCS_FCN = None
 CF_FCN = None
 
+# Useful for tests
+PI_MASS = 139.570
+K_MASS = 493.677
+D_MASS = 1864.84
+
 
 def build_libs():
     """
