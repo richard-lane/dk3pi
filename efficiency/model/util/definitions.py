@@ -66,7 +66,7 @@ D_LIFETIME = 0.00041  # nanoseconds
 TIME_BINS = (-1.0, 0.0, 0.94, 1.185, 1.40, 1.62, 1.85, 2.13, 2.45, 2.87, 3.5, 8.0, 19.0)
 
 # We will veto any events with M(pipi) in this range, for any pair of pions
-KS_MASS = 0.497614  # MeV
+KS_MASS = 0.497614  # GeV
 VETO_WIDTH = 0.010
 
 # Scale + rotate amplitudes so that dcs/cf amplitude ratio ~ 0.055 and relative strong phase ~ 0
@@ -89,9 +89,9 @@ RS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_Dbar_RS.root"
 WS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_WS.root"
 
 # Useful for tests
-PI_MASS = 139.570
-K_MASS = 493.677
-D_MASS = 1864.84
+PI_MASS = 0.139570
+K_MASS = 0.493677
+D_MASS = 0.186484
 
 
 # If our shared libraries haven't been built, build them
