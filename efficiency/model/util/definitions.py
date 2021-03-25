@@ -5,8 +5,54 @@ NB: importing this file may run attempt to build the CF and DCS wrapper librarie
 
 """
 import os
+import ctypes
 from subprocess import run, PIPE
 from numpy import pi, exp
+
+
+class Complex(ctypes.Structure):
+    """
+    Class that enables us to read a simple struct returned from C
+
+    """
+
+    _fields_ = [("real", ctypes.c_double), ("imag", ctypes.c_double)]
+
+
+def build_libs():
+    """
+    Build the AmpGen wrapper libraries
+
+    """
+    build_script = os.path.join(MODEL_DIR, "build.sh")
+    print(
+        f"Building AmpGen wrapper libs, required from \n\t{__file__} ...",
+        end="",
+        flush=True,
+    )
+    run([build_script], stdout=PIPE, stderr=PIPE, check=True)
+    print("done")
+
+
+def _find_fcn(lib_name, fcn_name):
+    """
+    Find the named function in a shared library
+
+    This will look in the shared library for the function of the provided name, and enforce that its
+    argument types are an array and an integer, and that it returns a Complex
+
+    :param lib_name: Location of the shared library to look in
+    :param fcn_name: Name of the function to return
+    :return        : A ctypes handle to the function
+
+    """
+    dll = ctypes.cdll.LoadLibrary(lib_name)
+    fcn = getattr(dll, fcn_name)
+    fcn.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+    fcn.restype = Complex
+
+    return fcn
+
 
 ALLOWED_MAGNET = {"MagUp", "MagDown"}
 ALLOWED_YEAR = {"2016", "2017", "2018"}
@@ -42,30 +88,10 @@ WS_TREE = "Hlt2Dstp2D0Pip_D02KpPimPimPip_Tuple/DecayTree"
 RS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_Dbar_RS.root"
 WS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_WS.root"
 
-# The function handles used to evaluate amplitudes
-# Will be set at run-time and cached here
-DCS_FCN = None
-CF_FCN = None
-
 # Useful for tests
 PI_MASS = 139.570
 K_MASS = 493.677
 D_MASS = 1864.84
-
-
-def build_libs():
-    """
-    Build the AmpGen wrapper libraries
-
-    """
-    build_script = os.path.join(MODEL_DIR, "build.sh")
-    print(
-        f"Building AmpGen wrapper libs, required from \n\t{__file__} ...",
-        end="",
-        flush=True,
-    )
-    run([build_script], stdout=PIPE, stderr=PIPE, check=True)
-    print("done")
 
 
 # If our shared libraries haven't been built, build them
@@ -73,11 +99,7 @@ if not os.path.exists(CF_LIB) or not os.path.exists(DCS_LIB):
     build_libs()
 
 
-def assign_dcs(handle):
-    global DCS_FCN
-    DCS_FCN = handle
-
-
-def assign_cf(handle):
-    global CF_FCN
-    CF_FCN = handle
+# The function handles used to evaluate amplitudes
+# They take a 16-element event and the sign of the kaon
+DCS_FCN = _find_fcn(DCS_LIB, "dcs_wrapper")
+CF_FCN = _find_fcn(CF_LIB, "cf_wrapper")

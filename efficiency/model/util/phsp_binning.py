@@ -17,26 +17,6 @@ class Complex(ctypes.Structure):
     _fields_ = [("real", ctypes.c_double), ("imag", ctypes.c_double)]
 
 
-def _find_fcn(lib_name, fcn_name):
-    """
-    Find the named function in a shared library
-
-    This will look in the shared library for the function of the provided name, and enforce that its
-    argument types are an array and an integer, and that it returns a Complex
-
-    :param lib_name: Location of the shared library to look in
-    :param fcn_name: Name of the function to return
-    :return        : A ctypes handle to the function
-
-    """
-    dll = ctypes.cdll.LoadLibrary(lib_name)
-    fcn = getattr(dll, fcn_name)
-    fcn.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int]
-    fcn.restype = Complex
-
-    return fcn
-
-
 def _amplitude(fcn, event, k_charge):
     """
     Find an amplitude from an event and amplitude fcn
