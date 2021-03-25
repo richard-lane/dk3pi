@@ -7,19 +7,6 @@ import definitions
 import pickle
 
 
-def vetoed(mass):
-    """
-    Check whether a mass is within the veto range of the Ks
-
-    Intended to check the mass of a (pipi) system
-
-    :param: invariant mass in MeV
-    :returns: bool; whether the event is veto'd
-
-    """
-    return abs(mass - definitions.KS_MASS) < definitions.VETO_WIDTH
-
-
 def train(target, original, path, year, magnetisation, phsp_bin, decay_code):
     """
     Train a BDT reweighter on the provided data, and dump the pickled BDT to the provided path.
