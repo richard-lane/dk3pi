@@ -5,6 +5,8 @@ The phase space parameterisation used to find BDT training variables
 from math import sqrt
 import numpy as np
 
+from . import definitions
+
 
 def invariant_mass(px, py, pz, energy):
     """
@@ -36,6 +38,19 @@ def invariant_masses(
 
     """
     return np.sqrt(energy ** 2 - px ** 2 - py ** 2 - pz ** 2)
+
+
+def vetoed(pi1, pi2):
+    """
+    Check whether a pi-pi system is within the veto range of the Ks
+
+    :param pi1: (px, py, pz, energy) of a pion
+    :param pi2: (px, py, pz, energy) of a pion
+    :returns: bool; whether the event is veto'd
+
+    """
+    mass = invariant_mass(*np.add(pi1, pi2))
+    return abs(mass - definitions.KS_MASS) < definitions.VETO_WIDTH
 
 
 def momentum_order(k, pi1, pi2):

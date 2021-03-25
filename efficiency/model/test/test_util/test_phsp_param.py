@@ -113,3 +113,20 @@ def test_inv_mass_parametrisation():
         inv_masses,
         phsp_parameterisation.invariant_mass_parametrisation(k, pi1, pi2, pi3),
     )
+
+
+def test_veto():
+    """
+    Check that particles are vetod correctly
+
+    """
+    # Ks mass
+    pi1 = [10.73263231, 203.18581596, 32.02300965, 248.807]
+    pi2 = [-10.73263231, -203.18581596, -32.02300965, 248.807]
+    assert phsp_parameterisation.vetoed(pi1, pi2)
+
+    # Not Ks mass
+    pi1 = [134.26039316, -33.93146458, -141.94811602, 242.5]
+    pi2 = [-134.26039316, 33.93146458, 141.94811602, 242.5]
+    assert not phsp_parameterisation.vetoed(pi1, pi2)
+
