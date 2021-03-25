@@ -1,25 +1,19 @@
 import pytest
 import phasespace
+from math import sqrt
 import numpy as np
-import matplotlib.pyplot as plt
 
 from util import definitions
-from util.phsp_parameterisation import invariant_masses
 from util import phsp_binning
+from util import phsp_parameterisation
 
 
-def mkpi1(k, pi1):
+@pytest.mark.flaky
+def test_models():
     """
-    Find the masses M(K pi1) of a set of events
+    Test models for consistency with what we expect
 
-    """
-    return invariant_masses(*np.add(k, pi1))
-
-
-@pytest.mark.skip(reason="No way to reasonably generate enough phsp MC for comparison with AmpGen")
-def test_cf():
-    """
-    Test CF model for consistency with AmpGen
+    By construction, we expect phsp events to have Z = 0.47, arg(Z) = 0, r = 0.055
 
     """
     # Generate phsp events
@@ -63,23 +57,46 @@ def test_cf():
 
             num_accepted += 1
 
-    # Weight according to CF amplitude model
-    definitions.assign_cf(phsp_binning._find_fcn(definitions.CF_LIB, "cf_wrapper"))
-    definitions.assign_dcs(phsp_binning._find_fcn(definitions.DCS_LIB, "dcs_wrapper"))
-    cf_amplitudes = [
-        phsp_binning._cf_amplitude(
-            (np.concatenate((k.T[i], pi1.T[i], pi2.T[i], pi3.T[i]))), +1
-        )
-        for i in range(num_accepted)
-    ]
+    num_dcs = 0.0
+    num_cf = 0.0
+    z = 0.0
+    for this_k, this_pi1, this_pi2, this_pi3 in zip(
+        k.T[0:num_accepted],
+        pi1.T[0:num_accepted],
+        pi2.T[0:num_accepted],
+        pi3.T[0:num_accepted],
+    ):
+        if not phsp_parameterisation.vetoed(
+            this_pi1, this_pi3
+        ) and not phsp_parameterisation.vetoed(this_pi2, this_pi3):
+            # Evaluate CF amplitude
+            cf_amp = phsp_binning._cf_amplitude(
+                (np.concatenate((this_k, this_pi1, this_pi2, this_pi3))), +1
+            )
 
-    cf_weights = [abs(x) for x in cf_amplitudes]
+            # Evaluate DCS amplitude
+            dcs_amp = (
+                phsp_binning._dcs_amplitude(
+                    (np.concatenate((this_k, this_pi1, this_pi2, this_pi3))), +1
+                )
+                * definitions.DCS_OFFSET
+            )
 
-    # Read AmpGen events
+            # Find Z for this event
+            z += cf_amp * dcs_amp.conjugate()
 
-    # Plot projections of them both to see what they look like
-    kw = {"bins": 100, "alpha": 0.3, "density": True}
-    phsp_mkpi = mkpi1(k[:, 0:num_accepted], pi1[:, 0:num_accepted])
-    plt.hist(phsp_mkpi, **kw)
-    plt.hist(phsp_mkpi, weights=cf_weights, **kw)
-    plt.show()
+            # Increment num_dcs and num_cf counters
+            num_cf += abs(cf_amp) ** 2
+            num_dcs += abs(dcs_amp) ** 2
+
+    R = abs(z) / sqrt(num_dcs * num_cf)
+    d = np.angle(z, deg=True)
+    r = sqrt(num_dcs / num_cf)
+
+    print(f"R = {R}; should be 0.47")
+    print(f"d = {d}; should be 0.0")
+    print(f"r = {r}; should be 0.055")
+
+    assert abs(R - 0.47) < 0.02
+    assert abs(d) < 1.0  # Less than 1 degree
+    assert abs(r - 0.055) < 0.005

@@ -91,7 +91,7 @@ WS_AMPGEN_PATH = "/eos/home-r/rilane/Documents/data/ampgen_WS.root"
 # Useful for tests
 PI_MASS = 0.139570
 K_MASS = 0.493677
-D_MASS = 0.186484
+D_MASS = 1.86484
 
 
 # If our shared libraries haven't been built, build them
