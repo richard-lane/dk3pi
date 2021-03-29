@@ -11,6 +11,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def _phsp_param(tree, kinematic_branches, time_branch):
+    """
+    Read the kinematic branches from the provided TTree and use them to find the phsp parametrisation.
+
+    Finds the phsp parametrisation of the events in the tree, removing events close to the Ks resonance according
+    to the veto criteria in util.definitions.
+    Orders the same-charge pions pi1, pi2 according to util.phsp_parameterisation.momentum_ordering
+
+    :param tree: TTree to read data from
+    :param kinematic_branches: 16 k, pi1, pi2, pi2 branch names in the order (k_px, kpy, kpz, ke...) etc for k, pi1, pi2, pi3
+    :param time_branch: branch name for the decay time
+
+    :returns: phsp parametrisation according to util.phsp_parametrisation.inv_mass_parametrisaion
+    :returns: decay times
+    :returns: array of phsp bin numbers, using the amplitude models in util.phsp_binning
+
+    """
+    ...
+
+
 def main():
     phsp_points = np.array([]).reshape(0, 5)
     phsp_bin = np.array([])  # Which phsp bin each phsp point belongs in
@@ -151,8 +171,6 @@ def main():
     d_lifetime = 4.101e-4
     times /= d_lifetime
     ag_times /= d_lifetime
-
-    times = times[times > 0]
 
     kw = {
         "bins": 100,
