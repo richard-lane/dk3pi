@@ -3,6 +3,7 @@ from model.creation import productions
 
 from model.util import definitions
 from model.util import phsp_parameterisation
+from model.util import phsp_binning
 
 import glob
 import uproot
@@ -12,6 +13,7 @@ import matplotlib.pyplot as plt
 
 def main():
     phsp_points = np.array([]).reshape(0, 5)
+    phsp_bin = np.array([])  # Which phsp bin each phsp point belongs in
     times = np.array([])
 
     # TODO SPLIT BY K CHARGES
@@ -66,20 +68,33 @@ def main():
             abs(pi1pi2_masses - definitions.KS_MASS) < definitions.VETO_WIDTH,
             abs(pi2pi3_masses - definitions.KS_MASS) < definitions.VETO_WIDTH,
         )
+
         phsp_points = np.delete(phsp_points, np.where(mask), axis=0)
 
         # Find array of decay times
         times = np.concatenate((times, tree["D0_TAU"].array()))
+        times = np.delete(phsp_points, np.where(mask))
+
+        # Find which phsp bin each event belongs in
+        events = [
+            np.concatenate((k.T[i], pi1.T[i], pi2.T[i], pi3.T[i]))
+            for i in range(len(k.T))
+        ]
+        bins = np.array([phsp_binning.phsp_bin(event, +1) for event in events])
+        phsp_bin = np.concatenate((phsp_bin, bins))
+        phsp_bin = np.delete(phsp_bin, np.where(mask))
+
+    print(phsp_bin)
 
     # Categorise events into phsp bins
 
     # Read AmpGen
     ag_times = None
     ag_phsp = None
+    ag_bins = None
 
     with uproot.open(definitions.RS_AMPGEN_PATH) as f:
         tree = f["DalitzEventList"]
-        ag_times = tree["Dbar0_decayTime"].array()
 
         k = np.array(
             [
@@ -122,6 +137,16 @@ def main():
             abs(pi2pi3_masses - definitions.KS_MASS) < definitions.VETO_WIDTH,
         )
         ag_phsp = np.delete(ag_phsp, np.where(mask), axis=0)
+
+        ag_times = tree["Dbar0_decayTime"].array()
+        ag_times = np.delete(ag_times, np.where(mask))
+
+        events = [
+            np.concatenate((k.T[i], pi1.T[i], pi2.T[i], pi3.T[i]))
+            for i in range(len(k.T))
+        ]
+        ag_bins = np.array([phsp_binning.phsp_bin(event, +1) for event in events])
+        ag_bins = np.delete(phsp_bin, np.where(mask))
 
     d_lifetime = 4.101e-4
     times /= d_lifetime

@@ -84,8 +84,8 @@ def _relative_phase(event: np.ndarray, k_charge: int):
     :returns       : relative phase in degrees
 
     """
-    cf = cf_amplitude(event, k_charge)
-    dcs = dcs_amplitude(event, k_charge) * definitions.DCS_OFFSET
+    cf = _cf_amplitude(event, k_charge)
+    dcs = _dcs_amplitude(event, k_charge) * definitions.DCS_OFFSET
 
     return np.angle(cf * dcs.conjugate(), deg=True)
 
@@ -101,4 +101,4 @@ def phsp_bin(event, k_charge):
     :returns       : the phase space bin that event belongs n, according to definitions.PHSP_BINS numbered from 0
 
     """
-    return util.unsafe_bin(relative_phase(event, k_charge), definitions.PHSP_BINS)
+    return util.unsafe_bin(_relative_phase(event, k_charge), definitions.PHSP_BINS)
