@@ -30,10 +30,18 @@ def _plots(mc_points, mc_times, ag_points, ag_times):
 
     ax[0][0].hist(mc_times, label="mc", **kw, range=(-10, 10))
     ax[0][0].hist(ag_times, label="AmpGen", **kw, range=(-10, 10))
+    ax[0][0].set_title("Decay Time")
 
-    for i, j in ((0, 1), (0, 2), (1, 0), (1, 1), (1, 2)):
+    for i, j, t in (
+        (0, 1, r"$M(K\pi_1)$"),
+        (0, 2, r"$M(\pi_1\pi_2)$"),
+        (1, 0, r"$M(\pi_2\pi_3)$"),
+        (1, 1, r"$M(K\pi_1\pi_2)$"),
+        (1, 2, r"$M(\pi_1\pi_2\pi_3)$"),
+    ):
         ax[i][j].hist(mc_points[:, i], **kw)
         ax[i][j].hist(ag_points[:, i], **kw)
+        ax[i][j].set_title(t)
 
     plt.savefig("tmp.png")
 
@@ -146,7 +154,9 @@ def main():
         phsp_bin = np.concatenate((phsp_bin, bins))
 
     # Read AmpGen
-    ampgen_tree = uproot.open(definitions.RS_AMPGEN_PATH)["DalitzEventList"]
+    ampgen_tree = uproot.open(
+        "/afs/cern.ch/user/j/jsmallwo/public/ForRichard/AmpGen/generator_mixing_RS_TD_100000.root"
+    )["DalitzEventList"]
     ag_phsp_points, ag_times, ag_bins = _phsp_param(
         ampgen_tree,
         (
@@ -167,7 +177,7 @@ def main():
             "_4_pi~_Pz",
             "_4_pi~_E",
         ),
-        "Dbar0_decayTime",
+        "D_decayTime",
         "GeV",
     )
 
