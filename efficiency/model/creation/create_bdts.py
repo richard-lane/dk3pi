@@ -2,8 +2,9 @@
 Utils for training, pickling and using bdts
 
 """
+from ..util import definitions
+
 import hep_ml.reweight
-import definitions
 import pickle
 
 

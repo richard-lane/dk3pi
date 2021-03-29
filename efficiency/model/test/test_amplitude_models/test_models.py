@@ -3,9 +3,9 @@ import phasespace
 from math import sqrt
 import numpy as np
 
-from util import definitions
-from util import phsp_binning
-from util import phsp_parameterisation
+from ...util import definitions
+from ...util import phsp_binning
+from ...util import phsp_parameterisation
 
 
 @pytest.mark.flaky

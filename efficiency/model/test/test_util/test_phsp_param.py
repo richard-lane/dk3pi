@@ -1,6 +1,6 @@
 import numpy as np
 
-from util import phsp_parameterisation
+from ...util import phsp_parameterisation
 from math import sqrt
 
 

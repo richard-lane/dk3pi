@@ -1,4 +1,4 @@
-from util import definitions
+from ...util import definitions
 from os.path import exists
 
 

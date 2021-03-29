@@ -1,5 +1,5 @@
 import pytest
-from util import util
+from ...util import util
 
 
 def test_time_bin_underflow():
