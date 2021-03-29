@@ -11,6 +11,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def _plots(mc_points, mc_times, ag_points, ag_times):
+    """
+    Make some plots to test things
+
+    """
+    d_lifetime = 4.101e-4
+    mc_times /= d_lifetime
+    ag_times /= d_lifetime
+
+    _, ax = plt.subplots(2, 3)
+
+    kw = {
+        "bins": 100,
+        "alpha": 0.3,
+        "density": True,
+    }
+
+    ax[0][0].hist(mc_times, label="mc", **kw, range=(-10, 10))
+    ax[0][0].hist(ag_times, label="AmpGen", **kw, range=(-10, 10))
+
+    for i, j in ((0, 1), (0, 2), (1, 0), (1, 1), (1, 2)):
+        ax[i][j].hist(mc_points[:, i], **kw)
+        ax[i][j].hist(ag_points[:, i], **kw)
+
+    plt.savefig("tmp.png")
+
+
 def _phsp_param(tree, kinematic_branches, time_branch, units):
     """
     Read the kinematic branches from the provided TTree and use them to find the phsp parametrisation.
@@ -118,8 +145,6 @@ def main():
         times = np.concatenate((times, t))
         phsp_bin = np.concatenate((phsp_bin, bins))
 
-    print(phsp_bin)
-
     # Read AmpGen
     ampgen_tree = uproot.open(definitions.RS_AMPGEN_PATH)["DalitzEventList"]
     ag_phsp_points, ag_times, ag_bins = _phsp_param(
@@ -146,34 +171,7 @@ def main():
         "GeV",
     )
 
-    d_lifetime = 4.101e-4
-    times /= d_lifetime
-    ag_times /= d_lifetime
-
-    kw = {
-        "bins": 100,
-        "alpha": 0.3,
-        "density": False,
-    }
-    plt.hist(phsp_points[:, 2], **kw)
-    plt.hist(ag_phsp_points[:, 2], **kw)
-    plt.hist(
-        np.linspace(
-            definitions.KS_MASS - definitions.VETO_WIDTH,
-            definitions.KS_MASS + definitions.VETO_WIDTH,
-            100000,
-        ),
-        **kw
-    )
-
-    plt.savefig("tmp.png")
-
-    plt.clf()
-    plt.hist(times, label="MC", **kw, range=(-10, 10))
-    plt.hist(ag_times, label="AmpGen", **kw, range=(-10, 10))
-    plt.legend()
-    plt.xlabel("D lifetimes")
-    plt.savefig("times.png")
+    _plots(phsp_points, times, ag_phsp_points, ag_times)
 
 
 if __name__ == "__main__":
