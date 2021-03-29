@@ -20,24 +20,37 @@ def main():
         tree = uproot.open(filename)[definitions.RS_TREE]
 
         # Find array of phsp points
-        k = [
-            tree[branch].array()
-            for branch in ("D0_P0_PX", "D0_P0_PY", "D0_P0_PZ", "D0_P0_PE")
-        ]
-        pi1 = [
-            tree[branch].array()
-            for branch in ("D0_P1_PX", "D0_P1_PY", "D0_P1_PZ", "D0_P1_PE")
-        ]
-        pi2 = [
-            tree[branch].array()
-            for branch in ("D0_P2_PX", "D0_P2_PY", "D0_P2_PZ", "D0_P2_PE")
-        ]
-        pi3 = [
-            tree[branch].array()
-            for branch in ("D0_P3_PX", "D0_P3_PY", "D0_P3_PZ", "D0_P3_PE")
-        ]
+        k = np.array(
+            [
+                tree[branch].array()
+                for branch in ("D0_P0_PX", "D0_P0_PY", "D0_P0_PZ", "D0_P0_PE")
+            ]
+        )
+        pi1 = np.array(
+            [
+                tree[branch].array()
+                for branch in ("D0_P1_PX", "D0_P1_PY", "D0_P1_PZ", "D0_P1_PE")
+            ]
+        )
+        pi2 = np.array(
+            [
+                tree[branch].array()
+                for branch in ("D0_P2_PX", "D0_P2_PY", "D0_P2_PZ", "D0_P2_PE")
+            ]
+        )
+        pi3 = np.array(
+            [
+                tree[branch].array()
+                for branch in ("D0_P3_PX", "D0_P3_PY", "D0_P3_PZ", "D0_P3_PE")
+            ]
+        )
 
         # Perform momentum ordering
+        # Should probably do this with the native arrays TODO
+        for i in range(len(k)):
+            pi1.T[i], pi2.T[i] = phsp_parameterisation.momentum_order(
+                k.T[i], pi1.T[i], pi2.T[i]
+            )
 
         phsp_points = np.concatenate(
             (
@@ -53,39 +66,44 @@ def main():
     # Categorise events into phsp bins
 
     # Read AmpGen
-    ag_times = np.array([])
-    ag_phsp = np.array([]).reshape(0, 5)
+    ag_times = None
+    ag_phsp = None
 
     with uproot.open(definitions.RS_AMPGEN_PATH) as f:
         tree = f["DalitzEventList"]
-        ag_times = np.concatenate((ag_times, tree["Dbar0_decayTime"].array()))
+        ag_times = ag_times, tree["Dbar0_decayTime"].array()
 
-        k = [
-            1000 * tree[branch].array()
-            for branch in ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E")
-        ]
-        pi1 = [
-            1000 * tree[branch].array()
-            for branch in ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E")
-        ]
-        pi2 = [
-            1000 * tree[branch].array()
-            for branch in ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E")
-        ]
-        pi3 = [
-            1000 * tree[branch].array()
-            for branch in ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E")
-        ]
-
-        # Perform momentum ordering
-
-        ag_phsp = np.concatenate(
-            (
-                ag_phsp,
-                phsp_parameterisation.invariant_mass_parametrisation(k, pi1, pi2, pi3),
-            ),
-            axis=0,
+        k = np.array(
+            [
+                1000 * tree[branch].array()
+                for branch in ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E")
+            ]
         )
+        pi1 = np.array(
+            [
+                1000 * tree[branch].array()
+                for branch in ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E")
+            ]
+        )
+        pi2 = np.array(
+            [
+                1000 * tree[branch].array()
+                for branch in ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E")
+            ]
+        )
+        pi3 = np.array(
+            [
+                1000 * tree[branch].array()
+                for branch in ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E")
+            ]
+        )
+
+        for i in range(len(k)):
+            pi1.T[i], pi2.T[i] = phsp_parameterisation.momentum_order(
+                k.T[i], pi1.T[i], pi2.T[i]
+            )
+
+        ag_phsp = phsp_parameterisation.invariant_mass_parametrisation(k, pi1, pi2, pi3)
 
     # Perform Ks veto
 
@@ -100,8 +118,8 @@ def main():
         "alpha": 0.3,
         "density": True,
     }
-    plt.hist(phsp_points[:, 4], **kw)
-    plt.hist(ag_phsp[:, 4], **kw)
+    plt.hist(phsp_points[:, 1], **kw)
+    plt.hist(ag_phsp[:, 1], **kw)
 
     plt.savefig("tmp.png")
 
