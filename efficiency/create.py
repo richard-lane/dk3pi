@@ -18,7 +18,6 @@ def main():
     for filename in glob.glob(productions.get("MagDown", 2018, "RS")):
         # Read the file
         tree = uproot.open(filename)[definitions.RS_TREE]
-        t = tree["D0_TAU"].array()
 
         # Find array of phsp points
         k = [
@@ -49,11 +48,18 @@ def main():
         )
 
         # Find array of decay times
-        times = np.concatenate((times, t))
+        times = np.concatenate((times, tree["D0_TAU"].array()))
 
     # Categorise events into phsp bins
 
     # Read AmpGen
+    ag_times = np.array([])
+    ag_phsp = np.array([]).reshape(0, 5)
+
+    with uproot.open(definitions.RS_AMPGEN_PATH) as f:
+        tree = f["DalitzEventList"]
+        ag_times = np.concatenate((ag_times, tree["Dbar0_decayTime"].array()))
+
     "_1_K~_Px"
     "_1_K~_Py"
     "_1_K~_Pz"
@@ -73,8 +79,27 @@ def main():
 
     # Perform Ks veto
 
+    d_lifetime = 4.101e-4
+    times /= d_lifetime
+    ag_times /= d_lifetime
+
+    times = times[times > 0]
+
+    kw = {
+        "bins": 100,
+        "alpha": 0.3,
+        "range": (-10, 10),
+        "density": True,
+    }
     plt.hist(phsp_points[:, 0], bins=100)
     plt.savefig("tmp.png")
+
+    plt.clf()
+    plt.hist(times, label="MC", **kw)
+    plt.hist(ag_times, label="AmpGen", **kw)
+    plt.legend()
+    plt.xlabel("D lifetimes")
+    plt.savefig("times.png")
 
 
 if __name__ == "__main__":
