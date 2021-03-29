@@ -2,58 +2,54 @@ from model.creation import create_bdts
 from model.creation import productions
 
 from model.util import definitions
+from model.util import phsp_parameterisation
 
 import glob
 import uproot
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def main():
-    # Read RS 2018 MagUp MC
-    (
-        kpx,
-        kpy,
-        kpz,
-        ke,
-        pi1px,
-        pi1py,
-        pi1pz,
-        pi1e,
-        pi2px,
-        pi2py,
-        pi2pz,
-        pi2e,
-        pi3px,
-        pi3py,
-        pi3pz,
-        pi3e,
-    ) = ([] for _ in range(16))
+    phsp_points = np.array([]).reshape(0, 5)
+    times = np.array([])
 
     # TODO SPLIT BY K CHARGES
-
     for filename in glob.glob(productions.get("MagDown", 2018, "RS")):
+        # Read the file
         tree = uproot.open(filename)[definitions.RS_TREE]
-        print(filename)
+        t = tree["D0_TAU"].array()
 
-        "D0_TAU"
+        # Find array of phsp points
+        k = [
+            tree[branch].array()
+            for branch in ("D0_P0_PX", "D0_P0_PY", "D0_P0_PZ", "D0_P0_PE")
+        ]
+        pi1 = [
+            tree[branch].array()
+            for branch in ("D0_P1_PX", "D0_P1_PY", "D0_P1_PZ", "D0_P1_PE")
+        ]
+        pi2 = [
+            tree[branch].array()
+            for branch in ("D0_P2_PX", "D0_P2_PY", "D0_P2_PZ", "D0_P2_PE")
+        ]
+        pi3 = [
+            tree[branch].array()
+            for branch in ("D0_P3_PX", "D0_P3_PY", "D0_P3_PZ", "D0_P3_PE")
+        ]
 
-        "D0_P0_PX"
-        "D0_P0_PY"
-        "D0_P0_PZ"
-        "D0_P0_E"
+        # Perform momentum ordering
 
-        "D0_P1_PX"
-        "D0_P1_PY"
-        "D0_P1_PZ"
-        "D0_P1_E"
-        "D0_P2_PX"
-        "D0_P2_PY"
-        "D0_P2_PZ"
-        "D0_P2_E"
-        "D0_P3_PX"
-        "D0_P3_PY"
-        "D0_P3_PZ"
-        "D0_P3_E"
+        phsp_points = np.concatenate(
+            (
+                phsp_points,
+                phsp_parameterisation.invariant_mass_parametrisation(k, pi1, pi2, pi3),
+            ),
+            axis=0,
+        )
+
+        # Find array of decay times
+        times = np.concatenate((times, t))
 
     # Categorise events into phsp bins
 
@@ -74,6 +70,11 @@ def main():
     "_4_pi~_Py"
     "_4_pi~_Pz"
     "_4_pi~_E"
+
+    # Perform Ks veto
+
+    plt.hist(phsp_points[:, 0], bins=100)
+    plt.savefig("tmp.png")
 
 
 if __name__ == "__main__":
