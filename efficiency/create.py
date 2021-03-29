@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def _phsp_param(tree, kinematic_branches, time_branch):
+def _phsp_param(tree, kinematic_branches, time_branch, units):
     """
     Read the kinematic branches from the provided TTree and use them to find the phsp parametrisation.
 
@@ -22,13 +22,62 @@ def _phsp_param(tree, kinematic_branches, time_branch):
     :param tree: TTree to read data from
     :param kinematic_branches: 16 k, pi1, pi2, pi2 branch names in the order (k_px, kpy, kpz, ke...) etc for k, pi1, pi2, pi3
     :param time_branch: branch name for the decay time
+    :param units: units that data is in. Should be one of MeV/GeV
 
     :returns: phsp parametrisation according to util.phsp_parametrisation.inv_mass_parametrisaion
     :returns: decay times
     :returns: array of phsp bin numbers, using the amplitude models in util.phsp_binning
 
     """
-    ...
+    assert units in {"MeV", "GeV"}
+    assert len(kinematic_branches) == 16
+
+    # Read branches
+    k = np.array([tree[branch].array() for branch in kinematic_branches[0:4]])
+    pi1 = np.array([tree[branch].array() for branch in kinematic_branches[4:8]])
+    pi2 = np.array([tree[branch].array() for branch in kinematic_branches[8:12]])
+    pi3 = np.array([tree[branch].array() for branch in kinematic_branches[12:16]])
+
+    # Perform momentum ordering
+    for i in range(len(k.T)):
+        pi1.T[i], pi2.T[i] = phsp_parameterisation.momentum_order(
+            k.T[i], pi1.T[i], pi2.T[i]
+        )
+
+    # Find phsp parameterisation
+    phsp_points = phsp_parameterisation.invariant_mass_parametrisation(k, pi1, pi2, pi3)
+
+    # Find decay time
+    decay_times = tree[time_branch].array()
+
+    # Find phsp bin for each point
+    events = [
+        np.concatenate((k.T[i], pi1.T[i], pi2.T[i], pi3.T[i])) for i in range(len(k.T))
+    ]
+    bins = np.array([phsp_binning.phsp_bin(event, +1) for event in events])
+
+    # Find which indices need to be thrown away because of the Ks veto
+    pi1pi3_masses = phsp_parameterisation.invariant_masses(*(np.add(pi1, pi3)))
+    pi2pi3_masses = phsp_parameterisation.invariant_masses(*(np.add(pi2, pi3)))
+
+    # We might have to convert to GeV
+    if units == "MeV":
+        pi1pi3_masses /= 1000.0
+        pi2pi3_masses /= 1000.0
+
+    delete_indices = np.where(
+        np.logical_and(
+            abs(pi1pi3_masses - definitions.KS_MASS) < definitions.VETO_WIDTH,
+            abs(pi2pi3_masses - definitions.KS_MASS) < definitions.VETO_WIDTH,
+        )
+    )
+
+    # Throw away the points we don't need
+    return (
+        np.delete(phsp_points, delete_indices, axis=0),
+        np.delete(decay_times, delete_indices),
+        np.delete(bins, delete_indices),
+    )
 
 
 def main():
@@ -82,7 +131,7 @@ def main():
             axis=0,
         )
 
-        pi1pi2_masses = phsp_parameterisation.invariant_masses(*(np.add(pi1, pi2)))
+        pi1pi2_masses = phsp_parameterisation.invariant_masses(*(np.add(pi1, pi3)))
         pi2pi3_masses = phsp_parameterisation.invariant_masses(*(np.add(pi2, pi3)))
         mask = np.logical_and(
             abs(pi1pi2_masses - definitions.KS_MASS) < definitions.VETO_WIDTH,
