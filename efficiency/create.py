@@ -60,22 +60,32 @@ def main():
         tree = f["DalitzEventList"]
         ag_times = np.concatenate((ag_times, tree["Dbar0_decayTime"].array()))
 
-    "_1_K~_Px"
-    "_1_K~_Py"
-    "_1_K~_Pz"
-    "_1_K~_E"
-    "_2_pi#_Px"
-    "_2_pi#_Py"
-    "_2_pi#_Pz"
-    "_2_pi#_E"
-    "_3_pi#_Px"
-    "_3_pi#_Py"
-    "_3_pi#_Pz"
-    "_3_pi#_E"
-    "_4_pi~_Px"
-    "_4_pi~_Py"
-    "_4_pi~_Pz"
-    "_4_pi~_E"
+        k = [
+            1000 * tree[branch].array()
+            for branch in ("_1_K~_Px", "_1_K~_Py", "_1_K~_Pz", "_1_K~_E")
+        ]
+        pi1 = [
+            1000 * tree[branch].array()
+            for branch in ("_2_pi#_Px", "_2_pi#_Py", "_2_pi#_Pz", "_2_pi#_E")
+        ]
+        pi2 = [
+            1000 * tree[branch].array()
+            for branch in ("_3_pi#_Px", "_3_pi#_Py", "_3_pi#_Pz", "_3_pi#_E")
+        ]
+        pi3 = [
+            1000 * tree[branch].array()
+            for branch in ("_4_pi~_Px", "_4_pi~_Py", "_4_pi~_Pz", "_4_pi~_E")
+        ]
+
+        # Perform momentum ordering
+
+        ag_phsp = np.concatenate(
+            (
+                ag_phsp,
+                phsp_parameterisation.invariant_mass_parametrisation(k, pi1, pi2, pi3),
+            ),
+            axis=0,
+        )
 
     # Perform Ks veto
 
@@ -88,15 +98,16 @@ def main():
     kw = {
         "bins": 100,
         "alpha": 0.3,
-        "range": (-10, 10),
         "density": True,
     }
-    plt.hist(phsp_points[:, 0], bins=100)
+    plt.hist(phsp_points[:, 4], **kw)
+    plt.hist(ag_phsp[:, 4], **kw)
+
     plt.savefig("tmp.png")
 
     plt.clf()
-    plt.hist(times, label="MC", **kw)
-    plt.hist(ag_times, label="AmpGen", **kw)
+    plt.hist(times, label="MC", **kw, range=(-10, 10))
+    plt.hist(ag_times, label="AmpGen", **kw, range=(-10, 10))
     plt.legend()
     plt.xlabel("D lifetimes")
     plt.savefig("times.png")
