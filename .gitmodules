@@ -1,0 +1,3 @@
+[submodule "dk3pi-efficiency-model"]
+	path = dk3pi-efficiency-model
+	url = https://gitlab.cern.ch/rilane/dk3pi-efficiency-model
