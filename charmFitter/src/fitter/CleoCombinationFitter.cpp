@@ -52,6 +52,12 @@ CLEOCombinationFitter::CLEOCombinationFitter(const std::vector<double>&   binLim
     _setParams(names, vals, errs);
 }
 
+CLEOCombinationFitter::CLEOCombinationFitter(const std::vector<double>&   binLimits,
+                                             const std::array<double, 6>& initialValues,
+                                             const std::array<double, 6>& initialErrors,
+                                             const int                     binNumber)
+    : CLEOCombinationFitter(binLimits, initialValues, initialErrors, static_cast<CLEO::Bin>(binNumber)) {}
+
 FitResults_t CLEOCombinationFitter::fit(const std::function<double(double)>& efficiency)
 {
     // This code is exactly the same as for the constrained fitter....

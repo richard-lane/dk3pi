@@ -66,6 +66,14 @@ class CLEOCombinationFitter : public ConstrainedFitter
                           const CLEO::Bin              binNumber);
 
     /*
+     * Same as above but construct with an int; for the python binding
+     */
+    CLEOCombinationFitter(const std::vector<double>&   binLimits,
+                          const std::array<double, 6>& initialValues,
+                          const std::array<double, 6>& initialErrors,
+                          const int binNumber);
+
+    /*
      * Fit our data to (r^2 + r(yRZ + xImZ)*Gamma*t + (x2 +y2)/4 (Gamma*t)2), constraining x and y to their world
      * average values
      *

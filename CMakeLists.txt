@@ -19,7 +19,7 @@ find_package( Boost 1.66.0 REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Some standard flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat-security -Werror -O0 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wformat-security -Werror -O0 -g -fPIC")
 
 # Debug
 set(CMAKE_BUILD_TYPE Debug)

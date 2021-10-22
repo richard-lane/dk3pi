@@ -27,3 +27,5 @@ target_compile_features(charmFitter
   )
 
 add_subdirectory(scripts)
+add_subdirectory(python)
+
