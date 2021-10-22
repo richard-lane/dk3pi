@@ -23,12 +23,27 @@ def _gen_x_y(n):
     return vals[:, 0], vals[:, 1]
 
 
+def _plot_fit(actual_params, fit_params, ratios, errors, bin_centres, bin_widths, path):
+    plt.clf()
+
+    a, b, c = libcleoScan.expectedParams(actual_params)
+    a_fit, b_fit, c_fit = libcleoScan.expectedParams(fit_params)
+
+    plt.errorbar(bin_centres, ratios, yerr=errors, xerr=bin_widths/2, fmt="b+")
+    plt.plot(bin_centres, [a_fit + b_fit*x + c_fit*x*x for x in bin_centres], "r", label="Fit")
+    plt.plot(bin_centres, [a + b*x + c*x*x for x in bin_centres], "k--", label="Ideal")
+    plt.legend()
+    plt.xlabel("time")
+    plt.ylabel(r"$\frac{WS}{RS}$ ratio")
+    plt.savefig(path)
+
+
 def main():
     # Define our parameters
     width = 2.5
     max_time = 5.0 / width
-    n_rs = 1_000_00  # Number of RS evts to generate each time
-    k = 5  # Number of times to repeat generation
+    n_rs = 10_000_000  # Number of RS evts to generate each time
+    k = 10  # Number of times to repeat generation
     num_experiments = 100
     actual_re_z, actual_r = -0.1, 0.055
 
@@ -78,6 +93,15 @@ def main():
 
          re_z_errs.append(re_z_err)
          r_errs.append(r_err)
+
+         # _plot_fit(decay_params,
+         #           result.fitParams,
+         #           np.array(Fitter.ratios()),
+         #           np.array(Fitter.errors()),
+         #           np.array(Fitter.getBinCentres()),
+         #           np.array(Fitter.getBinWidths()),
+         #           f"{i}.png")
+         # sys.exit(0)
 
     re_z_vals = np.array(re_z_vals)
     r_vals = np.array(r_vals)
