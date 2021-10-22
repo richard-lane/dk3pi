@@ -26,10 +26,10 @@ def _gen_x_y(n):
 def main():
     # Define our parameters
     width = 2.5
-    max_time = 10.0 / width
-    n_rs = 1_000_000  # Number of RS evts to generate each time
+    max_time = 5.0 / width
+    n_rs = 1_000_00  # Number of RS evts to generate each time
     k = 5  # Number of times to repeat generation
-    num_experiments = 10
+    num_experiments = 100
     actual_re_z, actual_r = -0.1, 0.055
 
     # Define bins
@@ -37,6 +37,12 @@ def main():
 
     # Generate X and Y values to use based on the world averages + their correlations/errors
     x_vals, y_vals = _gen_x_y(num_experiments)
+    plt.hist2d(x_vals, y_vals, bins=50)
+    plt.xlabel("x")
+    plt.xlabel("y")
+    plt.colorbar()
+    plt.savefig("xyvals.png")
+    plt.clf()
 
     # No efficiency
     efficiency = lambda x: 1
@@ -49,8 +55,7 @@ def main():
          decay_params = [x_vals[i], y_vals[i], actual_r, 0.7, actual_re_z, width]
 
          # Create a fitter
-         # Maybe some tension between CLEO and my vals?
-         Fitter = libcleoScan.CLEOCombinationFitter(bins, decay_params, [1]*6, 0)
+         Fitter = libcleoScan.ConstrainedFitter(bins, decay_params, [1]*6)
 
          for _ in range(k):
               print("\tgenerating")
@@ -84,9 +89,15 @@ def main():
     print(f"{np.mean(r_vals)=}\t{np.std(r_vals)=}")
 
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    kw = {"histtype": "step", "bins": np.linspace(-3, 3)}
 
-    ax[0].hist(re_z_vals)
-    ax[1].hist(r_vals)
+    ax[0].hist(re_z_vals, **kw)
+    ax[0].set_title(fr"{np.mean(re_z_vals):4.3}$\pm${np.std(re_z_vals):4.3}")
+    ax[0].set_xlabel(r"$Re(Z)$")
+
+    ax[1].hist(r_vals, **kw)
+    ax[1].set_title(fr"{np.mean(r_vals):4.3}$\pm${np.std(r_vals):4.3}")
+    ax[1].set_xlabel(r"$r$")
     plt.savefig("pull.png")
 
 if __name__ == "__main__":

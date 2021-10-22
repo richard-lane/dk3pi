@@ -40,6 +40,29 @@ static void initCleoFitter (pybind11::module_& m) {
 
 }
 
+// Would maybe be good to have some concept of inheritance here, but i don't really mind the copy-paste
+static void initConstrainedFitter (pybind11::module_& m) {
+    pybind11::class_<CharmFitter::ConstrainedFitter>(m, "ConstrainedFitter")
+        .def(pybind11::init<const std::vector<double>&,
+                            const std::array<double, 6>&,
+                            const std::array<double, 6>&>())
+        .def("addRSPoints", &CharmFitter::ConstrainedFitter::addRSPoints<std::vector<double>>)
+        .def("addWSPoints", &CharmFitter::ConstrainedFitter::addWSPoints<std::vector<double>>)
+        .def("addWSPoints", &CharmFitter::ConstrainedFitter::addWSPoints<std::vector<double>>)
+        .def("fixParameter", &CharmFitter::ConstrainedFitter::fixParameter)
+        .def("freeParameter", &CharmFitter::ConstrainedFitter::freeParameter)
+        .def("fixParameters", &CharmFitter::ConstrainedFitter::fixParameters<std::vector<std::string>>)
+        .def("freeParameters", &CharmFitter::ConstrainedFitter::freeParameters<std::vector<std::string>>)
+        .def("setParameter", &CharmFitter::ConstrainedFitter::setParameter)
+        .def("getBinCentres", &CharmFitter::ConstrainedFitter::getBinCentres)
+        .def("getBinWidths", &CharmFitter::ConstrainedFitter::getBinWidths)
+        .def("getRSBinContent", &CharmFitter::ConstrainedFitter::getRSBinContent)
+        .def("getWSBinContent", &CharmFitter::ConstrainedFitter::getWSBinContent)
+        .def("ratios", &CharmFitter::ConstrainedFitter::ratios)
+        .def("errors", &CharmFitter::ConstrainedFitter::errors)
+        .def("fit", &CharmFitter::ConstrainedFitter::fit);
+}
+
 static void initFitResults (pybind11::module_& m) {
     pybind11::class_<CharmFitter::FitResults_t>(m, "FitResults_t")
         .def_readwrite("fitStatistic", &CharmFitter::FitResults_t::fitStatistic)
@@ -61,6 +84,7 @@ PYBIND11_MODULE(libcleoScan, m) {
     initSimulator(m);
     initCleoScan(m);
     initCleoFitter(m);
+    initConstrainedFitter(m);
     initFitResults(m);
     initConstants(m);
 }
