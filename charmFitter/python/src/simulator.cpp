@@ -30,17 +30,17 @@ simulate(const size_t n,
 
     // Find how many WS evts to make
     double numWS = Phys::numDCSDecays(n, decayParams, maxTime);
-    std::cout << "Creating " << n << " RS and " << numWS << "WS evts" << std::endl;
+    //std::cout << "Creating " << n << " RS and " << numWS << "WS evts" << std::endl;
 
     // Create simulator
     std::mt19937    rng{seed};
     SimulatedDecays Simulator({0.0, maxTime}, decayParams, rng);
 
     // Simulate evts
-    std::cout << "creating RS..." << std::endl;
+    //std::cout << "creating RS..." << std::endl;
     std::vector<double> rsTimes = Simulator.rsDecayTimes(n);
 
-    std::cout << "creating WS..." << std::endl;
+    //std::cout << "creating WS..." << std::endl;
     std::vector<double> wsTimes = Simulator.wsDecayTimes(numWS);
 
     // Return
