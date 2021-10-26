@@ -6,10 +6,22 @@
 #include "simulator.h"
 #include "cleoFitter.h"
 #include "ConstrainedFitter.h"
+#include "physics.h"
+
+static double numWS(const size_t numRS, const std::array<double, 6>& decayParams, const double maxTime) {
+    const FitterUtil::DecayParams_t params = {decayParams[0],
+                                              decayParams[1],
+                                              decayParams[2],
+                                              decayParams[3],
+                                              decayParams[4],
+                                              decayParams[5]};
+    return Phys::numDCSDecays(numRS, params, maxTime);
+}
 
 static void initSimulator(pybind11::module_& m) {
     m.def("simulate", &simulate, "decay simulator wrapper");
     m.def("expectedParams", &expectedParamsBinding, "expected abc params");
+    m.def("numWS", &numWS, "Expected number of DCS evts");
 }
 
 static void initCleoScan (pybind11::module_& m) {
