@@ -8,6 +8,40 @@
 #include "CleoCombinationFitter.h"
 #include "bindings.h"
 
+std::vector<double> cleoLikelihoods(const std::vector<double>&   reZVals,
+                                    const std::vector<double>&   imZVals,
+                                    const std::array<double, 6>& decayParams,
+                                    const int                    binNumber)
+{
+    auto phspBin = static_cast<CLEO::Bin>(binNumber);
+
+    const auto nReVals = reZVals.size();
+    const auto nImVals = imZVals.size();
+
+    const unsigned nVals = nReVals * nImVals;
+    std::vector<double> likelihoods(nVals);
+
+    auto params = FitterUtil::DecayParams_t{decayParams[0],
+                                       decayParams[1],
+                                       decayParams[2],
+                                       decayParams[3],
+                                       decayParams[4],
+                                       decayParams[5]};
+
+    for (size_t i=0; i<nReVals; ++i) {
+        for (size_t j=0; j<nImVals; ++j) {
+            // Build decay param struct
+            params.z_re = reZVals[i];
+            params.z_im = imZVals[j];
+
+            const unsigned index = j + i * nImVals;  // TODO this might be wrong
+            likelihoods[index] = CLEO::cleoLikelihood(phspBin, params);
+        }
+    }
+
+    return likelihoods;
+}
+
 std::vector<double> cleoZScan(const std::vector<double>&  reZVals,
                              const std::vector<double>&   imZVals,
                              const std::vector<double>&   rsDecayTimes,

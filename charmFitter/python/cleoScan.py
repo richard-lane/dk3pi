@@ -21,6 +21,21 @@ _mungepath()
 
 import libcleoScan
 
+def cleoLikelihoods(reZVals: np.ndarray,
+             imZVals: np.ndarray,
+             decayParams: np.ndarray,
+             binNumber: int) -> np.ndarray:
+    """
+    Evaluate CLEO likelihoods, fixing Re(Z) and Im(Z) to the provided values; return an array of likelihoods
+
+    Return value indexed as (i + r * nImZVals) for imaginary+real (i, r)
+
+    """
+    return np.array(libcleoScan.cleoLikelihoods(reZVals,
+                                      imZVals,
+                                      decayParams,
+                                      binNumber))
+
 def cleoScan(reZVals: np.ndarray,
              imZVals: np.ndarray,
              rsDecayTimes: np.ndarray,

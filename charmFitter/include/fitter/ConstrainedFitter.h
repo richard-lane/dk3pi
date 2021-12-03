@@ -59,6 +59,8 @@ class ConstrainedFitter : public CharmFitterBase
      */
     virtual FitResults_t fit(const std::function<double(double)>& efficiency) override;
 
+    virtual ~ConstrainedFitter() = default;
+
   protected:
     /*
      * Parameters used in the fit

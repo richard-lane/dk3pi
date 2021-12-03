@@ -26,6 +26,7 @@ static void initSimulator(pybind11::module_& m) {
 
 static void initCleoScan (pybind11::module_& m) {
     m.def("cleoZScan", &cleoZScan, "cleo scan wrapper");
+    m.def("cleoLikelihoods", &cleoLikelihoods, "CLEO Likelihoods wrapper");
 }
 
 static void initCleoFitter (pybind11::module_& m) {

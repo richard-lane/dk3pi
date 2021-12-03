@@ -79,6 +79,7 @@ int main(void)
 
     std::unique_ptr<TH1D> hist = std::make_unique<TH1D>("", "", 100, -5.0, 260.0);
     hist->FillN(likelihood.size(), likelihood.data(), nullptr);
+    hist->SetTitle("CLEO Likelihoods;Likelihood;Count");
     util::saveObjectToFile(hist.get(), "hist.png");
 
     // Create a contour plot of the CLEO likelihood
