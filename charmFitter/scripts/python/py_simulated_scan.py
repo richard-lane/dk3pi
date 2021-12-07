@@ -8,7 +8,7 @@ import sys, os
 import matplotlib.pyplot as plt
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "python"))
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "build/charmFitter/python"))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "build/charmFitter/python"))
 
 import libcleoScan
 import common
@@ -20,8 +20,7 @@ def main():
     width = 2.5
     decay_params = [0.03, 0.06, 0.055, 0.5, 0.5, width]
     max_time = 3.0
-    n_rs = 1_000_000  # Number of RS evts to generate each time
-    k = 5  # Number of times to repeat generation
+    n_rs = 10_000_000  # Number of RS evts to generate each time
     bins = np.linspace(0, max_time, 15)
     
     # Simulate decays
@@ -62,6 +61,7 @@ def main():
     # Plot something
     print(l)
     plt.contourf(reZVals, imZVals, l, 100)
+    plt.colorbar()
     plt.savefig("py_scan.png")
 
 

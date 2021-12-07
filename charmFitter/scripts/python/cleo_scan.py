@@ -23,7 +23,7 @@ def main():
     nonsense = 0.0
 
     decay_params = [0.03, 0.06, 0.055, 0.5, 0.5, 2.5]
-    tmp = cleoScan.cleoLikelihoods(re_z, im_z, np.array(decay_params), 0)
+    tmp = cleoScan.cleoLikelihoods(re_z, im_z, np.array(decay_params), 3)
     tmp *= -2
     tmp[np.isnan(tmp)] = nonsense
 
