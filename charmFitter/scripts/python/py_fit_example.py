@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import quad
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "python"))
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "build/charmFitter/python"))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "build/charmFitter/python"))
 
 import libcleoScan
 
@@ -20,7 +20,7 @@ def main():
     decay_params = [0.03, 0.06, 0.055, 0.5, 0.5, width]  # Set these to the world avg x, y
     max_time = 3.0
     n_rs = 10_000_000  # Number of RS evts to generate each time
-    k = 50  # Number of times to repeat generation
+    k = 2  # Number of times to repeat generation
 
     # Find ideal a, b, c
     a, b, c = libcleoScan.expectedParams(decay_params)

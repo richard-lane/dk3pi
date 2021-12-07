@@ -1,7 +1,7 @@
 #ifndef CHARM_CONSTRAINED_FITTER_H
 #define CHARM_CONSTRAINED_FITTER_H
 
-#include "CharmFitterBase.h"
+#include "UnconstrainedFitter.h"
 
 namespace CharmFitter
 {
@@ -17,7 +17,7 @@ constexpr double X_Y_CORRELATION     = -0.301;
  *
  * Fits by integrating over the bins
  */
-class ConstrainXYFcn : public CharmBaseFcn
+class ConstrainXYFcn : public UnconstrainedChiSqFcn
 {
   public:
     /*

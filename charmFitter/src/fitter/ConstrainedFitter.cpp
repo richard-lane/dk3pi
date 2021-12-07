@@ -10,24 +10,14 @@ ConstrainXYFcn::ConstrainXYFcn(const std::vector<double>& data,
                                const std::vector<double>& times,
                                const std::vector<double>& errors,
                                const IntegralOptions_t&   integralOptions)
-    : CharmBaseFcn(data, times, errors, integralOptions)
+    : UnconstrainedChiSqFcn(data, times, errors, integralOptions)
 {
     ;
 }
 
 double ConstrainXYFcn::operator()(const std::vector<double>& parameters) const
 {
-    // Generate lambdas for our RS and WS rates, given this set of parameters
-    auto rsRate = [&parameters](const double x) { return Phys::cfRate(x, parameters[5]); };
-    auto wsRate = [&parameters](const double x) { return Phys::dcsRate(x, parameters); };
-
-    double chi2 = 0.0;
-    for (size_t i = 0; i < theMeasurements.size(); ++i) {
-        double model =
-            util::gaussLegendreQuad(wsRate, _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1]) /
-            util::gaussLegendreQuad(rsRate, _integralOptions.binLimits[i], _integralOptions.binLimits[i + 1]);
-        chi2 += std::pow((model - theMeasurements[i]) / theMVariances[i], 2);
-    }
+    double chi2 = UnconstrainedChiSqFcn::operator()(parameters);
 
     // Introduce constraint by modifying chi squared
     double dx         = parameters[0] - WORLD_AVERAGE_X;
