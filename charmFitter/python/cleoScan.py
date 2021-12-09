@@ -36,6 +36,33 @@ def cleoLikelihoods(reZVals: np.ndarray,
                                       decayParams,
                                       binNumber))
 
+def charmScan(reZVals: np.ndarray,
+              imZVals: np.ndarray,
+              rsDecayTimes: np.ndarray,
+              rsWeights: np.ndarray,
+              wsDecayTimes: np.ndarray,
+              wsWeights: np.ndarray,
+              binLimits: np.ndarray,
+              initialVals: np.ndarray,
+              initialErrs: np.ndarray) -> np.ndarray:
+    """
+    Python wrapper around my C++ lib so I can tell what's going on
+
+    Perform fits fixing Re(Z) and Im(Z) to the provided values; return an array of likelihoods
+
+    Return value indexed as (i + r * nImZVals) for imaginary+real (i, r)
+
+    """
+    return np.array(libcleoScan.charmLikelihoods(reZVals,
+                                      imZVals,
+                                      rsDecayTimes,
+                                      rsWeights,
+                                      wsDecayTimes,
+                                      wsWeights,
+                                      binLimits,
+                                      initialVals,
+                                      initialErrs))
+
 def cleoScan(reZVals: np.ndarray,
              imZVals: np.ndarray,
              rsDecayTimes: np.ndarray,

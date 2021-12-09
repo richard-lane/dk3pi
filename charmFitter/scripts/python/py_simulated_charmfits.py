@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "python"))
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "build/charmFitter/python"))
+print(sys.path)
 
 import cleoScan
 import libcleoScan
@@ -22,7 +23,7 @@ def main():
     decay_params = [0.0039183, 0.0065139, 0.055, 0.5, 0.0, width]
 
     max_time = 0.004
-    n_rs = 1_000_000  # Number of RS evts to generate each time
+    n_rs = 10_000_000  # Number of RS evts to generate each time
     bins = [0, 0.00003, 0.00008, 0.00015, 0.00020, 0.00030, 0.00045, 0.00058, 0.00060, 0.00085, 0.0012, 0.004]
 
     # Simulate decays
@@ -38,7 +39,7 @@ def main():
     initialErrs  = [1, 1, 1, 1, 1, 1]
 
     # Find chisqs
-    l_flat = cleoScan.cleoScan(reZVals,
+    l_flat = cleoScan.charmScan(reZVals,
              imZVals,
              rs_t,
              rsWeights,
@@ -46,8 +47,7 @@ def main():
              wsWeights,
              bins,
              decay_params,
-             initialErrs,
-             0)
+             initialErrs)
 
     # Subtract off minimum
     l_flat[np.nonzero(l_flat)] -= np.min(l_flat[np.nonzero(l_flat)])
@@ -61,7 +61,7 @@ def main():
     # Plot something
     plt.contourf(reZVals, imZVals, l, 10)
     plt.colorbar()
-    plt.savefig("py_scan.png")
+    plt.savefig("py_charm_scan.png")
 
 
 if __name__ == "__main__":

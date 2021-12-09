@@ -19,6 +19,20 @@ std::vector<double> cleoLikelihoods(const std::vector<double>&   reZVals,
                                     const int                    binNumber);
 
 /*
+ * Find likelihoods (chisqs?) at a series of Z points given charm mixing data
+ *
+ */
+std::vector<double> charmFitLikelihoods(const std::vector<double>&   reZVals,
+                                        const std::vector<double>&   imZVals,
+                                        const std::vector<double>&   rsDecayTimes,
+                                        const std::vector<double>&   rsWeights,
+                                        const std::vector<double>&   wsDecayTimes,
+                                        const std::vector<double>&   wsWeights,
+                                        const std::vector<double>&   binLimits,
+                                        const std::array<double, 6>& initialVals,
+                                        const std::array<double, 6>& initialErrs);
+
+/*
  * Perform fits fixing Re(Z) and Im(Z) to the provided values; return an array of likelihoods
  *
  * Return value indexed as (i + r * nImZVals) for imaginary+real (i, r)

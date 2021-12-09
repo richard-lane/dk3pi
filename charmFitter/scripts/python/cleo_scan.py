@@ -47,8 +47,7 @@ def main():
     plt.clf()
 
     # Contour plot of likelihoods
-    plt.set_cmap("jet")
-    plt.pcolormesh(re_z, im_z, l)
+    plt.contourf(re_z, im_z, l, 10)
     plt.colorbar()
     plt.savefig("py_cleo.png")
 
