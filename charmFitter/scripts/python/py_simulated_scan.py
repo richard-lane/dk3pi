@@ -38,7 +38,7 @@ def main():
     initialErrs  = [1, 1, 1, 1, 1, 1]
 
     # Find chisqs
-    l_flat = cleoScan.cleoScan(reZVals,
+    l = cleoScan.cleoScan(reZVals,
              imZVals,
              rs_t,
              rsWeights,
@@ -50,13 +50,10 @@ def main():
              0)
 
     # Subtract off minimum
-    l_flat[np.nonzero(l_flat)] -= np.min(l_flat[np.nonzero(l_flat)])
+    l[l != 0] -= np.min(l[l != 0])
 
     # Take sqrt to convert to sigmas
-    l_flat = np.sqrt(l_flat)
-
-    #Return value indexed as (i + r * nImZVals) for imaginary+real (i, r)
-    l = l_flat.reshape((n_re_z, n_im_z))
+    l = np.sqrt(l)
 
     # Plot something
     plt.contourf(reZVals, imZVals, l, 10)

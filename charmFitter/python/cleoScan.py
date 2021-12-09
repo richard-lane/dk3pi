@@ -28,13 +28,11 @@ def cleoLikelihoods(reZVals: np.ndarray,
     """
     Evaluate CLEO likelihoods, fixing Re(Z) and Im(Z) to the provided values; return an array of likelihoods
 
-    Return value indexed as (i + r * nImZVals) for imaginary+real (i, r)
-
     """
     return np.array(libcleoScan.cleoLikelihoods(reZVals,
                                       imZVals,
                                       decayParams,
-                                      binNumber))
+                                      binNumber)).reshape((len(reZVals), len(imZVals)))
 
 def charmScan(reZVals: np.ndarray,
               imZVals: np.ndarray,
@@ -50,8 +48,6 @@ def charmScan(reZVals: np.ndarray,
 
     Perform fits fixing Re(Z) and Im(Z) to the provided values; return an array of likelihoods
 
-    Return value indexed as (i + r * nImZVals) for imaginary+real (i, r)
-
     """
     return np.array(libcleoScan.charmLikelihoods(reZVals,
                                       imZVals,
@@ -61,7 +57,7 @@ def charmScan(reZVals: np.ndarray,
                                       wsWeights,
                                       binLimits,
                                       initialVals,
-                                      initialErrs))
+                                      initialErrs)).reshape((len(reZVals), len(imZVals)))
 
 def cleoScan(reZVals: np.ndarray,
              imZVals: np.ndarray,
@@ -77,8 +73,6 @@ def cleoScan(reZVals: np.ndarray,
     Python wrapper around my C++ lib so I can tell what's going on
 
     Perform fits fixing Re(Z) and Im(Z) to the provided values; return an array of likelihoods
-    
-    Return value indexed as (i + r * nImZVals) for imaginary+real (i, r)
 
     """
     return np.array(libcleoScan.cleoZScan(reZVals,
@@ -90,5 +84,5 @@ def cleoScan(reZVals: np.ndarray,
                                       binLimits,
                                       initialVals,
                                       initialErrs,
-                                      binNumber))
+                                      binNumber)).reshape((len(reZVals), len(imZVals)))
 
