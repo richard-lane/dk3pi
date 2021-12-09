@@ -87,6 +87,8 @@ def main(phsp_bin):
         a.set_title(t)
         a.set_xlabel(r"Re(Z)")
         a.set_ylabel(r"Im(Z)")
+        a.set_xlim(-1.0, 1.0)
+        a.set_ylim(-1.0, 1.0)
 
     fig.subplots_adjust(right=0.8)
     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
@@ -94,6 +96,14 @@ def main(phsp_bin):
     cbar.ax.set_ylabel(r"$\sigma$", rotation=90)
 
     fig.suptitle("$Phsp bin" + str(phsp_bin) + " : Z_\Omega^{K3\pi} Constraint$")
+
+    # Expected relationship between components of Z
+    decay_params = [0.0039183, 0.0065139, 0.055, 0.5, 0.0, width]
+    gradient = -decay_params[1] / decay_params[0]
+    intercept = decay_params[3] - gradient * decay_params[4]
+    expected_im_z = [intercept + gradient*x for x in reZVals]
+    for a in (ax[0], ax[2]):
+        a.plot(reZVals, expected_im_z, "k--")
 
     plt.savefig(f"py_scans_bin{phsp_bin}.png")
 
