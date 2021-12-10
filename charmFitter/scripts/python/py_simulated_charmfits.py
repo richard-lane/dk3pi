@@ -45,7 +45,8 @@ def main(phsp_bin):
     rs_t, ws_t = libcleoScan.simulate(n_rs, decay_params, max_time, seed)
 
     # Set up params
-    n_re_z, n_im_z = 50, 50
+    n_re_z = 50
+    n_im_z = n_re_z
     reZVals = np.linspace(-0.99, 0.99, n_re_z)
     imZVals = np.linspace(-0.99, 0.99, n_im_z)
     rsWeights = np.ones(len(rs_t))
@@ -82,11 +83,19 @@ def main(phsp_bin):
                                             phsp_bin))
 
     # Plot something
+    n_sigmas = 4
     titles = "Charm Mixing", "CLEO", "Both"
     fig, ax = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
     for a, l, t in zip(ax, (charm_likelihood, cleo_likelihood, combined_likelihood), titles):
-        contours = a.contourf(reZVals, imZVals, l, list(range(4)), cmap="turbo")
+        # Contour plot
+        contours = a.contourf(reZVals, imZVals, l, list(range(n_sigmas + 1)), cmap="turbo")
+
+        # Allowed region boundary
         a.add_patch(Circle((0, 0), 1.0, color="k", linestyle="--", fill=False))
+
+        # True Z
+        a.plot(*best_zs[phsp_bin], "y*")
+
         a.set_title(t)
         a.set_xlabel(r"Re(Z)")
         a.set_ylabel(r"Im(Z)")
@@ -98,17 +107,43 @@ def main(phsp_bin):
     cbar = fig.colorbar(contours, cax=cbar_ax)
     cbar.ax.set_ylabel(r"$\sigma$", rotation=90)
 
-    fig.suptitle("$Phsp bin" + str(phsp_bin) + " : Z_\Omega^{K3\pi} Constraint$")
+    fig.suptitle("Phsp bin " + str(phsp_bin) + " : $Z_\Omega^{K3\pi}$ Constraint")
 
     # Expected relationship between components of Z
-    decay_params = [0.0039183, 0.0065139, 0.055, 0.5, 0.0, width]
     gradient = -decay_params[1] / decay_params[0]
     intercept = decay_params[3] - gradient * decay_params[4]
-    expected_im_z = [intercept + gradient*x for x in reZVals]
+    expected_im_z = [intercept + gradient * x for x in reZVals]
     for a in (ax[0], ax[2]):
         a.plot(reZVals, expected_im_z, "k--")
 
     plt.savefig(f"py_scans_bin{phsp_bin}.png")
+
+    plt.clf()
+    vals = np.array([[r + i * 1.0j for r in reZVals] for i in imZVals])
+    magnitudes = np.abs(vals)
+    phases = np.angle(vals, deg=True)
+
+    fig, ax = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
+    for a, l, t in zip(ax, (charm_likelihood, cleo_likelihood, combined_likelihood), titles):
+        # Contour plot
+        contours = a.contourf(magnitudes, phases, l, list(range(n_sigmas + 1)), cmap="turbo")
+
+        # True Z
+        a.plot(np.sqrt(best_zs[phsp_bin][0]**2 + best_zs[phsp_bin][1]**2),
+               np.arctan2(best_zs[phsp_bin][1], best_zs[phsp_bin][0]) * 180. / np.pi,
+               "y*")
+
+        a.set_title(t)
+        a.set_xlabel("R")
+        a.set_ylabel("$\delta$")
+
+    fig.subplots_adjust(right=0.8)
+    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    cbar = fig.colorbar(contours, cax=cbar_ax)
+    cbar.ax.set_ylabel(r"$\sigma$", rotation=90)
+
+    fig.suptitle("Phsp bin " + str(phsp_bin) + " : $Z_\Omega^{K3\pi}$ Constraint")
+    plt.savefig(f"py_scans_bin{phsp_bin}_magphase.png")
 
 
 if __name__ == "__main__":
