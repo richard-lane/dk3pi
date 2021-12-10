@@ -29,9 +29,12 @@ def _normalise(l: np.ndarray):
 
 
 def main(phsp_bin):
+    # What I expect Z should be, roughly, from the CLEO likelihood
+    best_zs = {0: (-0.1, 0.7), 1: (-0.6, 0.6), 2: (-0.5, 0.2), 3: (0.25, 0.0)}
+
     # Define parameters used for simulating decays
     width = 2500.0
-    decay_params = [0.0039183, 0.0065139, 0.055, 0.5, 0.0, width]
+    decay_params = [0.0039183, 0.0065139, 0.055, best_zs[phsp_bin][1], best_zs[phsp_bin][0], width]
 
     max_time = 0.004
     n_rs = 10_000_000  # Number of RS evts to generate

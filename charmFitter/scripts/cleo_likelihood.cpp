@@ -45,7 +45,7 @@ int main(void)
                 .width = 2500.0,
             };
 
-            double l = -2 * CLEO::cleoLikelihood(CLEO::Bin::Bin1, phaseSpaceParams);
+            double l = -2 * CLEO::cleoLikelihood(CLEO::Bin::Bin4, phaseSpaceParams);
             l        = std::isnan(l) ? nonsense : l;
 
             likelihood.push_back(l);
