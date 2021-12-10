@@ -32,7 +32,7 @@ def cleoLikelihoods(reZVals: np.ndarray,
     return np.array(libcleoScan.cleoLikelihoods(reZVals,
                                       imZVals,
                                       decayParams,
-                                      binNumber)).reshape((len(reZVals), len(imZVals)))
+                                      binNumber)).reshape((len(reZVals), len(imZVals))).T
 
 def charmScan(reZVals: np.ndarray,
               imZVals: np.ndarray,
@@ -57,7 +57,7 @@ def charmScan(reZVals: np.ndarray,
                                       wsWeights,
                                       binLimits,
                                       initialVals,
-                                      initialErrs)).reshape((len(reZVals), len(imZVals)))
+                                      initialErrs)).reshape((len(reZVals), len(imZVals))).T
 
 def cleoScan(reZVals: np.ndarray,
              imZVals: np.ndarray,
@@ -84,5 +84,5 @@ def cleoScan(reZVals: np.ndarray,
                                       binLimits,
                                       initialVals,
                                       initialErrs,
-                                      binNumber)).reshape((len(reZVals), len(imZVals)))
+                                      binNumber)).reshape((len(reZVals), len(imZVals))).T
 
