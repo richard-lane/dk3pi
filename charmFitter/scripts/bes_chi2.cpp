@@ -29,6 +29,11 @@ int main(void)
     // Assign nonsense values to a chi2 of 0.0
     constexpr double nonsense = 0.0;
 
+    // Just so i only have to change the code in 1 place
+    const short                           binNumber{4}; // 1, 2, 3, or 4
+    std::map<const short, const BES::Bin> bins{
+        {1, BES::Bin::Bin1}, {2, BES::Bin::Bin2}, {3, BES::Bin::Bin3}, {4, BES::Bin::Bin4}};
+
     // For each pair, find the bes chi2
     for (const auto r : allowedReZ) {
         for (const auto i : allowedImZ) {
@@ -45,17 +50,21 @@ int main(void)
                 .width = 2500.0,
             };
 
-            double c = BES::besLikelihood(BES::Bin::Bin4, phaseSpaceParams);
+            double c = BES::besLikelihood(bins[binNumber], phaseSpaceParams);
             c        = std::isnan(c) ? nonsense : c;
 
             chi2.push_back(c);
         }
     }
 
+    // Remove the min chi2 from each value
+    const auto min = *std::min_element(chi2.begin(), chi2.end());
+    std::transform(chi2.begin(), chi2.end(), chi2.begin(), [&min](double x) { return x - min; });
+
     std::unique_ptr<TH1D> hist = std::make_unique<TH1D>("", "", 100, -5.0, 260.0);
     hist->FillN(chi2.size(), chi2.data(), nullptr);
     hist->SetTitle("BES chi2;chi2;Count");
-    util::saveObjectToFile(hist.get(), "bes_hist.png");
+    util::saveObjectToFile(hist.get(), (std::string{"bes_hist_"} + std::to_string(binNumber) + ".png").c_str());
 
     // Create a contour plot of the BES chi2
     constexpr short int             numContours{7};
@@ -70,7 +79,7 @@ int main(void)
     graph->SetMaximum(max);
 
     graph->GetHistogram()->SetContour(numContours, contours.data());
-    graph->SetTitle("BES constraint only (Phsp Bin 4)");
+    graph->SetTitle((std::string{"BES constraint only (Phsp Bin "} + std::to_string(binNumber) + ")").c_str());
     graph->GetZaxis()->SetTitle("\\sigma");
     graph->GetXaxis()->SetTitle("Re(Z)");
     graph->GetYaxis()->SetTitle("Im(Z)");
@@ -81,7 +90,7 @@ int main(void)
     c->SetLeftMargin(0.15);
     c->SetRightMargin(0.15);
     graph->Draw("CONT4Z");
-    c->SaveAs("bes.png");
+    c->SaveAs((std::string{"bes_"} + std::to_string(binNumber) + ".png").c_str());
 
     return 0;
 }
