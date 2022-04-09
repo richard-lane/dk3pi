@@ -25,3 +25,7 @@ target_link_libraries(bes_chi2.exe charmFitter common ${ROOT_LIBRARIES} ${Boost_
 # Combine CLEO likelihood with toy data
 add_executable(cleo_combination.exe cleo_combination.cpp)
 target_link_libraries(cleo_combination.exe charmFitter common ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
+
+# Combine BES likelihood with toy data
+add_executable(bes_combination.exe bes_combination.cpp)
+target_link_libraries(bes_combination.exe charmFitter common ${ROOT_LIBRARIES} ${Boost_LIBRARIES})

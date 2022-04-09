@@ -1,10 +1,13 @@
+#ifndef BESIII_CHI2_H
+#define BESIII_CHI2_H
+
 #include <TFile.h>
 #include <TMath.h>
 #include <TMatrixD.h>
 #include <TTree.h>
 #include <vector>
 
-Double_t total(const Double_t* par, std::vector<TMatrixD*> BESIII_CovMat)
+inline Double_t total(const Double_t* par, std::vector<TMatrixD*> BESIII_CovMat)
 {
     Double_t par0 = par[22];
     Double_t par1 = par[23];
@@ -588,9 +591,9 @@ Double_t total(const Double_t* par, std::vector<TMatrixD*> BESIII_CovMat)
     return chi2;
 }
 
-Double_t BESIII_chi2(const Double_t* parameters)
+inline Double_t BESIII_chi2(const Double_t* parameters)
 {
-    TFile*            fmatrix = new TFile("BESIII_CovMat.root", "open");
+    TFile*                 fmatrix = new TFile("BESIII_CovMat.root", "open");
     std::vector<TMatrixD*> BESIII_CovMat;
     BESIII_CovMat.push_back((TMatrixD*)fmatrix->Get("CPCOV"));
     BESIII_CovMat.push_back((TMatrixD*)fmatrix->Get("REkpi"));
@@ -620,3 +623,5 @@ Double_t BESIII_chi2(const Double_t* parameters)
     fmatrix->Close();
     return total(parameters, BESIII_CovMat);
 }
+
+#endif // BESIII_CHI2_H

@@ -4,6 +4,7 @@ set(fitter
   src/fitter/ConstrainedFitter.cpp
   src/fitter/UnconstrainedFitter.cpp
   src/fitter/CleoCombinationFitter.cpp
+  src/fitter/BesCombinationFitter.cpp
 )
 
 add_library(charmFitter STATIC

@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "CleoCombinationFitter.h"
+#include "BesCombinationFitter.h"
 #include "DecaySimulator.h"
 #include "physics.h"
 
@@ -156,14 +156,14 @@ void _plot(TGraph2D& graph, const std::string& path, const std::pair<double, dou
  * Appends to vectors in place
  */
 template <size_t N>
-void _cleoScan(const CLEO::Bin                  binNumber,
-               const FitterUtil::DecayParams_t& params,
-               const double                     nonsense,
-               const std::array<double, N>&     allowedReZ,
-               const std::array<double, N>&     allowedImZ,
-               std::vector<double>&             reZ,
-               std::vector<double>&             imZ,
-               std::vector<double>&             cleoChi2)
+void _besScan(const BES::Bin                   binNumber,
+              const FitterUtil::DecayParams_t& params,
+              const double                     nonsense,
+              const std::array<double, N>&     allowedReZ,
+              const std::array<double, N>&     allowedImZ,
+              std::vector<double>&             reZ,
+              std::vector<double>&             imZ,
+              std::vector<double>&             besChi2)
 {
     for (const auto r : allowedReZ) {
         for (const auto i : allowedImZ) {
@@ -175,16 +175,16 @@ void _cleoScan(const CLEO::Bin                  binNumber,
             theseParams.z_re = r;
             theseParams.z_im = i;
 
-            // Calculate the CLEO likelihood
-            double l = -2 * CLEO::cleoLikelihood(binNumber, theseParams);
-            l        = std::isnan(l) ? nonsense : l;
-            cleoChi2.push_back(l);
+            // Calculate the BES chi2
+            double c = BES::besLikelihood(binNumber, theseParams);
+            c        = std::isnan(c) ? nonsense : c;
+            besChi2.push_back(c);
         }
     }
 }
 
 template <size_t N>
-void _makePlots(const CLEO::Bin                  binNumber,
+void _makePlots(const BES::Bin                   binNumber,
                 const double                     maxTime,
                 const FitterUtil::DecayParams_t& params,
                 const double                     nonsense,
@@ -198,21 +198,21 @@ void _makePlots(const CLEO::Bin                  binNumber,
     std::vector<double> reZ{};
     std::vector<double> imZ{};
     std::vector<double> mixingChi2{};
-    std::vector<double> cleoChi2{};
+    std::vector<double> besChi2{};
     std::vector<double> combinedChi2{};
 
-    // Scan over Z finding the CLEO chi2 values
-    _cleoScan(binNumber, paramsCopy, nonsense, allowedReZ, allowedImZ, reZ, imZ, cleoChi2);
+    // Scan over Z finding the BES chi2 values
+    _besScan(binNumber, paramsCopy, nonsense, allowedReZ, allowedImZ, reZ, imZ, besChi2);
 
-    // Find where the minimum CLEO chi2 is
-    unsigned minCleoChi2Index = std::min_element(cleoChi2.begin(), cleoChi2.end()) - cleoChi2.begin();
+    // Find where the minimum BES chi2 is
+    unsigned minBesChi2Index = std::min_element(besChi2.begin(), besChi2.end()) - besChi2.begin();
 
     // Create toy data with Z at this minimum
     std::random_device rd;
     std::mt19937       gen{rd()};
 
-    paramsCopy.z_im                = imZ[minCleoChi2Index];
-    paramsCopy.z_re                = reZ[minCleoChi2Index];
+    paramsCopy.z_im                = imZ[minBesChi2Index];
+    paramsCopy.z_re                = reZ[minBesChi2Index];
     const auto [dcsTimes, cfTimes] = _toy_data(paramsCopy, maxTime, gen);
 
     // Create fitters
@@ -225,18 +225,18 @@ void _makePlots(const CLEO::Bin                  binNumber,
     CharmFitter::ConstrainedFitter ConstrainedFitter(binLimits, initialParameterGuess, initialErrorsGuess);
     ConstrainedFitter.fixParameters(std::array<std::string, 3>{"width", "z_im", "z_re"});
 
-    CharmFitter::CLEOCombinationFitter CleoFitter(binLimits, initialParameterGuess, initialErrorsGuess, binNumber);
-    CleoFitter.fixParameters(std::array<std::string, 3>{"width", "z_im", "z_re"});
+    CharmFitter::BESCombinationFitter BesFitter(binLimits, initialParameterGuess, initialErrorsGuess, binNumber);
+    BesFitter.fixParameters(std::array<std::string, 3>{"width", "z_im", "z_re"});
 
     ConstrainedFitter.addRSPoints(cfTimes, std::vector<double>(cfTimes.size(), 1.0));
     ConstrainedFitter.addWSPoints(dcsTimes, std::vector<double>(dcsTimes.size(), 1.0));
 
-    CleoFitter.addRSPoints(cfTimes, std::vector<double>(cfTimes.size(), 1.0));
-    CleoFitter.addWSPoints(dcsTimes, std::vector<double>(dcsTimes.size(), 1.0));
+    BesFitter.addRSPoints(cfTimes, std::vector<double>(cfTimes.size(), 1.0));
+    BesFitter.addWSPoints(dcsTimes, std::vector<double>(dcsTimes.size(), 1.0));
 
     const auto efficiency = []([[maybe_unused]] const double x) { return 1; };
 
-    // Scan over Z finding the charm fitter values, the CLEO values and the combined values
+    // Scan over Z finding the charm fitter values, the BES values and the combined values
     boost::progress_display showProgress(allowedReZ.size() * allowedImZ.size());
     for (const auto r : allowedReZ) {
         for (const auto i : allowedImZ) {
@@ -246,31 +246,31 @@ void _makePlots(const CLEO::Bin                  binNumber,
             mixingChi2.push_back(ConstrainedFitter.fit(efficiency).fitStatistic);
 
             // Calculate the combined fitter value
-            CleoFitter.setParameter("z_im", i);
-            CleoFitter.setParameter("z_re", r);
-            combinedChi2.push_back(CleoFitter.fit(efficiency).fitStatistic);
+            BesFitter.setParameter("z_im", i);
+            BesFitter.setParameter("z_re", r);
+            combinedChi2.push_back(BesFitter.fit(efficiency).fitStatistic);
 
             ++showProgress;
         }
     }
 
     // Normalise each to std devs
-    std::cout << "Min CLEO chi2" << reZ[minCleoChi2Index] << " " << imZ[minCleoChi2Index] << std::endl;
-    cleoChi2     = _chisq2sigma(cleoChi2);
+    std::cout << "Min BES chi2" << reZ[minBesChi2Index] << " " << imZ[minBesChi2Index] << std::endl;
+    besChi2      = _chisq2sigma(besChi2);
     mixingChi2   = _chisq2sigma(mixingChi2);
     combinedChi2 = _chisq2sigma(combinedChi2);
 
     // Make plots of each
-    std::unique_ptr<TGraph2D> cleoGraph =
-        std::make_unique<TGraph2D>("cleo", "CLEO", cleoChi2.size(), reZ.data(), imZ.data(), cleoChi2.data());
+    std::unique_ptr<TGraph2D> besGraph =
+        std::make_unique<TGraph2D>("bes", "BES", besChi2.size(), reZ.data(), imZ.data(), besChi2.data());
     std::unique_ptr<TGraph2D> mixingGraph =
         std::make_unique<TGraph2D>("mixing", "Mixing", mixingChi2.size(), reZ.data(), imZ.data(), mixingChi2.data());
     std::unique_ptr<TGraph2D> combinedGraph = std::make_unique<TGraph2D>(
         "combined", "Combination", combinedChi2.size(), reZ.data(), imZ.data(), combinedChi2.data());
 
-    _plot(*cleoGraph, std::string{prefix + "cleo.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
-    _plot(*mixingGraph, std::string{prefix + "mixing.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
-    _plot(*combinedGraph, std::string{prefix + "cleo_combined.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
+    _plot(*besGraph, std::string{prefix + "bes.png"}, {reZ[minBesChi2Index], imZ[minBesChi2Index]});
+    _plot(*mixingGraph, std::string{prefix + "mixing.png"}, {reZ[minBesChi2Index], imZ[minBesChi2Index]});
+    _plot(*combinedGraph, std::string{prefix + "bes_combined.png"}, {reZ[minBesChi2Index], imZ[minBesChi2Index]});
 }
 
 } // namespace
@@ -280,7 +280,7 @@ void _makePlots(const CLEO::Bin                  binNumber,
  */
 int main(const int argc, const char* argv[])
 {
-    assert(argc == 2 && "Pass 1 arg (CLEO phsp bin number [0-3])");
+    assert(argc == 2 && "Pass 1 arg (BES phsp bin number [0-3])");
 
     // Generate allowed values for Z
     constexpr unsigned short N{45};
@@ -302,7 +302,7 @@ int main(const int argc, const char* argv[])
     };
 
     constexpr unsigned short               numBins{4};
-    std::array<const CLEO::Bin, numBins>   bins{CLEO::Bin::Bin1, CLEO::Bin::Bin2, CLEO::Bin::Bin3, CLEO::Bin::Bin4};
+    std::array<const BES::Bin, numBins>    bins{BES::Bin::Bin1, BES::Bin::Bin2, BES::Bin::Bin3, BES::Bin::Bin4};
     std::array<const std::string, numBins> names{"bin0_", "bin1_", "bin2_", "bin3_"};
 
     const unsigned short i = std::atoi(argv[1]);
