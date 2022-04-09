@@ -16,7 +16,7 @@ namespace BES
 /*
  * BES 3 likelihood requires us to provide 78 parameters
  */
-constexpr short numParams{64};
+constexpr short numParams{78};
 
 /*
  * The BES-3 likelihood depends on a number of parameters, whose default values are provided here

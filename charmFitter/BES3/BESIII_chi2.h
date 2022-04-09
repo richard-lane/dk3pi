@@ -4,7 +4,7 @@
 #include <TTree.h>
 #include <vector>
 
-Double_t total(const Double_t* par, vector<TMatrixD*> BESIII_CovMat)
+Double_t total(const Double_t* par, std::vector<TMatrixD*> BESIII_CovMat)
 {
     Double_t par0 = par[22];
     Double_t par1 = par[23];
@@ -591,7 +591,7 @@ Double_t total(const Double_t* par, vector<TMatrixD*> BESIII_CovMat)
 Double_t BESIII_chi2(const Double_t* parameters)
 {
     TFile*            fmatrix = new TFile("BESIII_CovMat.root", "open");
-    vector<TMatrixD*> BESIII_CovMat;
+    std::vector<TMatrixD*> BESIII_CovMat;
     BESIII_CovMat.push_back((TMatrixD*)fmatrix->Get("CPCOV"));
     BESIII_CovMat.push_back((TMatrixD*)fmatrix->Get("REkpi"));
     BESIII_CovMat.push_back((TMatrixD*)fmatrix->Get("Sk3pi"));
