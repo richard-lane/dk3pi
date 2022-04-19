@@ -269,7 +269,7 @@ void _makePlots(const CLEO::Bin                  binNumber,
         "combined", "Combination", combinedChi2.size(), reZ.data(), imZ.data(), combinedChi2.data());
 
     _plot(*cleoGraph, std::string{prefix + "cleo.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
-    _plot(*mixingGraph, std::string{prefix + "mixing.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
+    _plot(*mixingGraph, std::string{prefix + "cleo_mixing.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
     _plot(*combinedGraph, std::string{prefix + "cleo_combined.png"}, {reZ[minCleoChi2Index], imZ[minCleoChi2Index]});
 }
 

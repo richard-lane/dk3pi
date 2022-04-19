@@ -269,7 +269,7 @@ void _makePlots(const BES::Bin                   binNumber,
         "combined", "Combination", combinedChi2.size(), reZ.data(), imZ.data(), combinedChi2.data());
 
     _plot(*besGraph, std::string{prefix + "bes.png"}, {reZ[minBesChi2Index], imZ[minBesChi2Index]});
-    _plot(*mixingGraph, std::string{prefix + "mixing.png"}, {reZ[minBesChi2Index], imZ[minBesChi2Index]});
+    _plot(*mixingGraph, std::string{prefix + "bes_mixing.png"}, {reZ[minBesChi2Index], imZ[minBesChi2Index]});
     _plot(*combinedGraph, std::string{prefix + "bes_combined.png"}, {reZ[minBesChi2Index], imZ[minBesChi2Index]});
 }
 

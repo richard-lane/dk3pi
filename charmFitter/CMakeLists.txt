@@ -19,6 +19,7 @@ add_library(charmFitter STATIC
 target_include_directories(charmFitter
   PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/CLEO"
   PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/BES3"
+  PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/charm_threshhold"
   PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include"
   PUBLIC "${CMAKE_SOURCE_DIR}/charmFitter/include/fitter"
   PUBLIC "${CMAKE_SOURCE_DIR}/common/include"
