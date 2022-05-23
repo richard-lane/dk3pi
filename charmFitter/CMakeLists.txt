@@ -6,6 +6,7 @@ set(fitter
   src/fitter/CleoCombinationFitter.cpp
   src/fitter/BesCombinationFitter.cpp
   src/fitter/CharmThreshholdFitter.cpp
+  src/fitter/multiBinFit.cpp
 )
 
 add_library(charmFitter STATIC

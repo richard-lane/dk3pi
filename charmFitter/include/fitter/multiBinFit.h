@@ -24,7 +24,10 @@ class MultiBinFitFcn : public ROOT::Minuit2::FCNBase
                    const std::vector<double>& bin3Data,
                    const std::vector<double>& bin4Data,
                    const std::vector<double>& times,
-                   const std::vector<double>& errors,
+                   const std::vector<double>& bin1Errors,
+                   const std::vector<double>& bin2Errors,
+                   const std::vector<double>& bin3Errors,
+                   const std::vector<double>& bin4Errors,
                    const IntegralOptions_t&   integralOptions);
 
     /*
@@ -41,14 +44,26 @@ class MultiBinFitFcn : public ROOT::Minuit2::FCNBase
      * Boilerplate that Minuit requires
      */
     virtual double      Up() const { return theErrorDef; };
-    std::vector<double> measurements() const { return theMeasurements; };
+    std::vector<double> measurements1() const { return theMeasurements1; };
+    std::vector<double> measurements2() const { return theMeasurements2; };
+    std::vector<double> measurements3() const { return theMeasurements3; };
+    std::vector<double> measurements4() const { return theMeasurements4; };
     std::vector<double> positions() const { return thePositions; };
-    std::vector<double> variances() const { return theMVariances; };
+    std::vector<double> variances1() const { return theMVariances1; };
+    std::vector<double> variances2() const { return theMVariances2; };
+    std::vector<double> variances3() const { return theMVariances3; };
+    std::vector<double> variances4() const { return theMVariances4; };
     void                setErrorDef(double def) { theErrorDef = def; };
 
-    std::vector<double> theMeasurements;
+    std::vector<double> theMeasurements1;
+    std::vector<double> theMeasurements2;
+    std::vector<double> theMeasurements3;
+    std::vector<double> theMeasurements4;
     std::vector<double> thePositions;
-    std::vector<double> theMVariances;
+    std::vector<double> theMVariances1;
+    std::vector<double> theMVariances2;
+    std::vector<double> theMVariances3;
+    std::vector<double> theMVariances4;
     double              theErrorDef;
 
   private:
@@ -59,8 +74,10 @@ class MultiBinFitFcn : public ROOT::Minuit2::FCNBase
 
     /*
      * For evaluating the likelihoods in each bin
+     *
+     * TODO would be nicer if this were an array whose length was set at compile time
      */
-    std::array<UnconstrainedChi2Fcn, 4> _likelihoods{};
+    std::vector<UnconstrainedChiSqFcn> _likelihoods{};
 };
 
 /*
