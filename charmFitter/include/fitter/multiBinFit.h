@@ -1,7 +1,7 @@
 #ifndef MULTI_BIN_FIT_H
 #define MULTI_BIN_FIT_H
 
-#include "ConstrainedFitter.h"
+#include "UnconstrainedFitter.h"
 
 namespace CharmFitter
 {
@@ -56,6 +56,11 @@ class MultiBinFitFcn : public ROOT::Minuit2::FCNBase
      * Bin edges + the form of the efficiency function
      */
     IntegralOptions_t _integralOptions;
+
+    /*
+     * For evaluating the likelihoods in each bin
+     */
+    std::array<UnconstrainedChi2Fcn, 4> _likelihoods{};
 };
 
 /*
