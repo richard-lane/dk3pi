@@ -5,6 +5,7 @@ set(fitter
   src/fitter/UnconstrainedFitter.cpp
   src/fitter/CleoCombinationFitter.cpp
   src/fitter/BesCombinationFitter.cpp
+  src/fitter/CharmThreshholdFitter.cpp
 )
 
 add_library(charmFitter STATIC

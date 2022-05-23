@@ -283,7 +283,7 @@ int main(const int argc, const char* argv[])
     assert(argc == 2 && "Pass 1 arg (BES phsp bin number [0-3])");
 
     // Generate allowed values for Z
-    constexpr unsigned short N{45};
+    constexpr unsigned short N{25};
     const auto               allowedReZ = _linspace<N>(1.1);
     const auto               allowedImZ = _linspace<N>(1.1);
 

@@ -593,7 +593,7 @@ inline Double_t total(const Double_t* par, std::vector<TMatrixD*> BESIII_CovMat)
 
 inline Double_t BESIII_chi2(const Double_t* parameters)
 {
-    TFile*                 fmatrix = new TFile("BESIII_CovMat.root", "open");
+    std::unique_ptr<TFile> fmatrix = std::make_unique<TFile>("BESIII_CovMat.root", "open");
     std::vector<TMatrixD*> BESIII_CovMat;
     BESIII_CovMat.push_back((TMatrixD*)fmatrix->Get("CPCOV"));
     BESIII_CovMat.push_back((TMatrixD*)fmatrix->Get("REkpi"));

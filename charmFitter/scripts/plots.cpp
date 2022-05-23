@@ -1,6 +1,7 @@
 /*
  * Make plots showing the generated histograms and fits to them using our different fit parametrisations
  */
+#include "CharmThreshholdFitter.h"
 #include "ConstrainedFitter.h"
 #include "DecaySimulator.h"
 #include "PolynomialFitter.h"
@@ -11,10 +12,6 @@
 #include <TCanvas.h>
 #include <TGraphErrors.h>
 #include <TH1D.h>
-
-namespace
-{
-}
 
 int main()
 {
@@ -72,6 +69,17 @@ int main()
     auto ConstrainedFunction{ConstrainedFitter.fit(efficiency).bestFitFunction};
     ConstrainedFunction.SetLineColor(kBlue);
 
+    CharmFitter::CharmThreshholdFitter CharmThreshholdFitter(
+        expBinLimits,
+        {decayParams.x, decayParams.y, decayParams.r, decayParams.z_im, decayParams.z_re, decayParams.width},
+        {1, 1, 1, 1, 1, 1},
+        BES::Bin::Bin1);
+    CharmThreshholdFitter.addRSPoints(rsTimes, std::vector(numRSEvents, 1.0));
+    CharmThreshholdFitter.addWSPoints(wsTimes, std::vector(numWSEvents, 1.0));
+    CharmThreshholdFitter.fixParameters(std::array{"width", "z_re", "z_im"});
+    auto CharmFunction{CharmThreshholdFitter.fit(efficiency).bestFitFunction};
+    CharmFunction.SetLineColor(kGreen);
+
     // Plot the fits
     TCanvas Canvas("", "", 1200, 1600);
     Canvas.Divide(1, 3, 0.0, 0.0);
@@ -86,6 +94,7 @@ int main()
     data.Draw("AP");
     PolyFunction.Draw("SAME");
     ConstrainedFunction.Draw("SAME");
+    CharmFunction.Draw("SAME");
 
     Canvas.cd(2);
     rsHist.Draw();
